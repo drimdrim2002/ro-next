@@ -1,0 +1,38 @@
+# The workflow receives the normalized request object created by the public API service.
+main:
+  params: [args]
+  steps:
+    - runAlnsBatches:
+        parallel:
+          for:
+            value: runNumber
+            range: [0, "${args.parameters.parallelRuns - 1}"]
+            steps:
+              - runBatch:
+                  call: http.post
+                  args:
+                    url: "${sys.get_env(\"WORKER_URL\") + \"/internal/batches\"}"
+                    auth:
+                      type: OIDC
+                    timeout: 900
+                    body:
+                      requestId: "${args.requestId}"
+                      inputUri: "${args.inputUri}"
+                      runNumber: "${runNumber}"
+                      seed: "${args.parameters.seed + runNumber}"
+                      iterations: "${args.parameters.iterationsPerRun}"
+                  retry: "${http.default_retry}"
+    - finalize:
+        call: http.post
+        args:
+          url: "${sys.get_env(\"WORKER_URL\") + \"/internal/finalize\"}"
+          auth:
+            type: OIDC
+          timeout: 300
+          body:
+            requestId: "${args.requestId}"
+            inputUri: "${args.inputUri}"
+        retry: "${http.default_retry}"
+        result: finalResult
+    - completed:
+        return: "${finalResult.body}"

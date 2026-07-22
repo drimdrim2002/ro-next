@@ -16,6 +16,7 @@
 | 6 | `06_practical_extensions.md` | Zone 제약, 차량 부족, optional customer, dummy vehicle, 외주/이월 |
 | 7 | `07_papers_and_benchmarks.md` | 관련 논문 핵심, 실험 결과, operator ranking, 한계 |
 | 8 | `coverage_map.md` | 원본 파일별 반영 위치와 누락 확인표 |
+| 9 | `08_gcp_architecture.md` | Java 25, Cloud Run, Workflows 기반 실행/확장 구조 |
 
 ## 권장 읽기 순서
 
@@ -64,4 +65,3 @@
 - `HGS_CVRP_QA_정리.md`
 - `alns_pdptw_paper_summary_ko.md`
 - `alns_vrp_paper_lecture_summary.md`
-

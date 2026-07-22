@@ -1,0 +1,9 @@
+.DS_Store
+.idea/
+.vscode/
+target/
+.serverless/
+.serverless_plugins/
+node_modules/
+.gcloud/
+.env

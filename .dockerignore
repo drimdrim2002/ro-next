@@ -1,0 +1,8 @@
+.git
+.DS_Store
+.idea
+.vscode
+target
+node_modules
+.serverless
+.gcloud
