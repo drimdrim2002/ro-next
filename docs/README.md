@@ -1,13 +1,15 @@
 # RPDPTW 설계 문서 지도
 
-이 폴더의 현재 최상위 진입점은 아래 두 문서다. 둘 다 상태가 `REVIEW`이므로 아직 승인된 구현 기준이나 conflict authority가 아니다.
+이 폴더의 현재 최상위 진입점은 아래 네 문서다. 모두 상태가 `REVIEW`이므로 아직 승인된 구현 기준이나 conflict authority가 아니다.
 
 | 순서 | 문서 | 상태 | 역할 |
 |---:|---|---|---|
 | 1 | [Master Design](master-design.md) | `REVIEW` | 향후 RPDPTW 구현의 전체 책임, 불변조건, 의존 순서와 검증 gate에 대한 검토 제안 |
 | 2 | [Master Design question register](master-design-open-questions.md) | `REVIEW` | 정확한 28개 질문의 해결·실험 대기·deferred 상태와 evidence/gate의 중앙 등록부 |
+| 3 | [Domain Design](domain-design.md) | `REVIEW` | Master의 domain/input/normalization/travel/state/evaluation/result 계약을 상세화한 검토 제안 |
+| 4 | [Architecture Design](architecture-design.md) | `REVIEW` | Java 25/Maven module, dependency, 고객 확장, provider-neutral runtime와 교체 가능한 AWS reference architecture |
 
-`REVIEW` 중 source authority와 승인 뒤 hierarchy는 [Master Design §1](master-design.md#1-문서-상태와-규범)을 따른다. 26개 interview 대상의 권위 있는 사용자 답변은 [세션 29](master-design-sessions/29-open-question-interview.md), 문서 반영·검증 기록은 [세션 30](master-design-sessions/30-open-question-integration.md)에 있다. 두 실험 대기 질문은 등록부의 승인 절차 없이 구현 default로 닫지 않는다.
+`REVIEW` 중 source authority와 승인 뒤 hierarchy는 [Master Design §1](master-design.md#1-문서-상태와-규범)을 따른다. 26개 interview 대상의 권위 있는 사용자 답변은 [세션 29](master-design-sessions/29-open-question-interview.md), Master·등록부 반영 기록은 [세션 30](master-design-sessions/30-open-question-integration.md), Domain Design 반영 기록은 [세션 31](master-design-sessions/31-domain-design-integration.md)에 있다. 두 실험 대기 질문은 등록부의 승인 절차 없이 구현 default로 닫지 않는다.
 
 ## 권장 읽기 순서
 
@@ -17,12 +19,14 @@
 docs/README.md
 → master-design.md
 → master-design-open-questions.md
+→ domain-design.md
+→ architecture-design.md
 → 필요한 master-design-sessions 상세 초안
 → arranged 연구 정리
 → orgin 원본 근거
 ```
 
-특정 결정의 근거를 추적할 때는 [세션 29 사용자 인터뷰](master-design-sessions/29-open-question-interview.md), [세션 30 통합 기록](master-design-sessions/30-open-question-integration.md), Master §17의 traceability, 관련 역사 세션 순으로 확인한다. 세션 19는 원래 28개 질문과 통합 baseline을, 세션 18은 문서 상태와 변경 절차를 제공한다.
+특정 결정의 근거를 추적할 때는 [세션 29 사용자 인터뷰](master-design-sessions/29-open-question-interview.md), [세션 30 Master 통합 기록](master-design-sessions/30-open-question-integration.md), [세션 31 Domain 통합 기록](master-design-sessions/31-domain-design-integration.md), Master §17과 Domain §18의 traceability, 관련 역사 세션 순으로 확인한다. 세션 19는 원래 28개 질문과 통합 baseline을, 세션 18은 문서 상태와 변경 절차를 제공한다.
 
 ## 문서 계층과 규범 지위
 
@@ -31,7 +35,8 @@ docs/README.md
 | [master-design.md](master-design.md) | 전체 Master 검토안 | `REVIEW`; 승인 전 conflict resolver가 아님 |
 | [master-design-open-questions.md](master-design-open-questions.md) | 중앙 질문 등록부 | `REVIEW`; 질문 답이나 승인 기록이 아님 |
 | [master-design-sessions/](master-design-sessions/) | 세션별 검토, 통합 초안과 evidence | 비규범 review input; Master 또는 승인 기록을 대체하지 않음 |
-| [domain-design.md](domain-design.md) | legacy 상세 inventory와 traceability evidence | 현재 Master가 명시한 범위에서 비규범 참고 자료 |
+| [domain-design.md](domain-design.md) | Domain/input/normalization/travel/state/evaluation/result 상세 설계 | `REVIEW`; Master보다 높은 conflict authority가 아님 |
+| [architecture-design.md](architecture-design.md) | Java/Maven project 구조, 확장 seam, runtime와 provider mapping | `REVIEW`; AWS reference는 `Q-INFRA-01` 해결·production 확정이 아님 |
 | [arranged/](arranged/) | 주제별로 정리한 연구·기존 문서 | 비규범 연구 evidence |
 | [orgin/](orgin/) | 원본 요약 보존 경로 | 비규범 original evidence |
 
