@@ -1,12 +1,12 @@
-# RPDPTW 통합 솔버 Master Design
+# RPDPTW 통합 솔버 Master Design — Revised Review Edition
 
 ```yaml
 status: REVIEW
-version: 3.2-review
+version: 4.0-review
 last_updated: 2026-07-24
 owner: RPDPTW 설계 책임 역할
 scope: 개발자가 RPDPTW 솔버를 구현하기 위한 전체 구조, 컴포넌트 책임, 계약, 구현 순서와 검증 evidence
-supersedes: 이 파일의 기존 legacy 통합 초안
+supersedes: none — master-design.md v3.2-review에서 파생한 REVIEW 개정 후보 (원본은 변경하지 않음)
 related_decisions:
   - master-design-sessions/29-open-question-interview.md
   - master-design-sessions/30-open-question-integration.md
@@ -79,7 +79,7 @@ related_decisions:
 - 구체 Java package/class/method, wire DTO, 저장 schema와 배포 topology
 - AWS, GCP 또는 특정 orchestration·worker·storage product
 - 실험 결과가 없는 phase별 `maxSteps`, phase-2 worker/round 수와 watchdog
-- 현재 범위 밖의 multi-trip/rotation, route pool/MIP 또는 선택 변형
+- 현재 core 경계를 넘어서는 multi-trip/rotation, route pool/MIP 또는 §2.3의 별도 승인 변형
 
 문서의 논리 컴포넌트명과 산출물명은 책임을 설명하는 구현 경계다. 사용자 답변으로 확정된 외부 field와 의미를 제외하면 그대로 API 이름이 되어야 한다는 뜻이 아니다.
 
@@ -111,6 +111,8 @@ related_decisions:
 | 그 밖의 `master-design-sessions` | 조사, 초안, review와 과거 판단 기록 | 현재 구현 진입점이나 독립 규범 문서가 아님 |
 
 Master는 “어떤 시스템을 어떤 순서로 구현하는가”를 소유하고, Domain Design은 “그 경계 안의 domain 의미를 어떻게 계산하고 검증하는가”를 상세화한다. 질문 등록부는 결정 상태만 소유한다. 세션 문서는 결정이 만들어지고 통합된 경위를 보존하며 Master의 구현 흐름을 대체하지 않는다.
+
+이 개정본은 질문 등록부의 현재 결정을 기준으로 Master 내부의 표현을 정합화했다. `REVIEW` 상태의 상세 문서에 다른 표현이 남아 있으면, 승인 전 같은 변경 단위에서 그 문서도 동기화해야 한다. 특히 현재 지원하는 `oneway`/고정 terminal fleet 의미, `Q-ALG-01`의 8개 portfolio 결정, coordinator의 정상 종료 의미를 과거 초안의 표현으로 되돌려 해석해서는 안 된다.
 
 ### 1.5 규범어, 결정 상태와 충돌 처리
 
@@ -173,20 +175,28 @@ Master는 “어떤 시스템을 어떤 순서로 구현하는가”를 소유�
 ### 2.3 명시적 비범위
 
 - route pool과 set-covering/set-partitioning MIP 후처리
-- MDVRP, OVRP, SDVRP 등 선택 변형 구현
+- **현재 core가 이미 표현하는 범위를 넘어서는** depot/종료지/수량 분할 변형: depot 또는 vehicle start terminal/roundtrip end terminal을 solver가 선택하는 모델, depot 개설·공유 자원·재고·처리량 최적화, 선택 가능한 종료지·후속 차량 재사용, 그리고 solver가 request 수량과 분할 횟수를 결정하는 split-delivery pickup-delivery 모델
 - 구체 cloud/provider/product/runtime, 실행·저장 service 또는 배포 단위
 - 실시간 동적 routing, 교통정보 결합, geocoding과 주소 정제
 - 승인되지 않은 multi-trip/rotation
 - 공식 수치가 없는 phase별 `maxSteps`, worker/round 수, watchdog과 성능 threshold
 - compliant integer `D/U`를 다시 받기 전 현재 Win fixture의 official baseline 사용
 
+여기서 약어만으로 `MDVRP`, `OVRP`, `SDVRP`를 비범위라고 쓰지 않는다. 문헌과 조직에 따라 rich routing framework의 변환 가능한 표현 범위가 다르고, 특히 `SDVRP`는 site-dependent 또는 split-delivery를 가리킬 수 있어 의미가 모호하다. 현재 core에는 다음이 **포함**된다.
+
+- 차량별 start terminal이 고정된 fleet이므로, 차량이 미리 소속된 복수 depot과 그 차량들 사이의 request 배정은 표현할 수 있다.
+- `trips=oneway`는 지정 depot/start terminal에서 한 번 출발해 마지막 service node에서 끝나는 open-route 의미다.
+- `roundtrip + multiRotation=0`은 같은 depot으로 한 번 복귀하는 single-trip 의미다.
+
+따라서 후속 요구는 변형 이름이 아니라 실제 의사결정의 추가 여부로 판정한다. 고정 depot/oneway를 단순 input normalization과 기존 pair/terminal/bank 계약으로 표현할 수 있으면 현재 core 경계 안이다. terminal 선택, depot 공유 자원, 종료지 선택, 차량 재사용 또는 부분 수량 상태가 필요하면 §16.3의 별도 feasibility·scope approval이 필요하다.
+
 ### 2.4 구현 완료의 의미
 
-여기서 구현 완료는 class를 만들거나 happy path를 한 번 실행했다는 뜻이 아니다. **입력 의미부터 공개 가능한 결과와 benchmark 비교까지의 모든 권위 경계가, 정상 사례와 실패 사례 모두에서 계약대로 작동한다는 재현 가능한 evidence가 있을 때** 이 Master의 목표를 충족한다. 아래 조건은 점수처럼 일부만 충족해도 되는 목록이 아니라 모두 필요한 AND gate다.
+여기서 구현 완료는 class를 만들거나 happy path를 한 번 실행했다는 뜻이 아니다. **입력 의미부터 공개 가능한 결과와 benchmark 비교까지의 모든 권위 경계가, 정상 사례와 실패 사례 모두에서 계약대로 작동한다는 재현 가능한 evidence가 있을 때** 이 Master의 전체 목표를 충족한다. 아래 조건은 전체 roadmap 완료 주장에는 모두 필요한 AND gate다. 다만 publishable result, official benchmark, application cutover처럼 더 좁은 하위 주장은 뒤의 목적별 gate만 충족했다고 정확히 표현해야 한다.
 
 | 완료 조건 | 구현이 보장해야 하는 것 | 필요한 evidence | 이것만으로는 부족한 것 |
 |---|---|---|---|
-| 1. 안정 해의 구조적 정확성 | 모든 committed solution에서 request는 완전한 pickup-delivery pair로 route 또는 `SearchRequestBank` 중 한 곳에만 있고, same-vehicle·precedence·terminal·single-trip·load/time hard constraint를 만족한다. | 정상 삽입·제거·교환뿐 아니라 거절, 예외, 취소와 rollback 뒤에도 partition과 route feasibility가 보존되는 property/fault test. | 대표 입력에서 route 하나가 feasible하게 나온 것, 또는 infeasible insertion을 단순히 거절한 것. |
+| 1. 안정 해의 구조적 정확성 | 모든 committed solution에서 request는 완전한 pickup-delivery pair로 route 또는 `SearchRequestBank` 중 한 곳에만 있고, same-vehicle·precedence·terminal policy·single-trip·load/time hard constraint를 만족한다. | 정상 삽입·제거·교환뿐 아니라 거절, 예외, 취소와 rollback 뒤에도 partition과 route feasibility가 보존되는 property/fault test. | 대표 입력에서 route 하나가 feasible하게 나온 것, 또는 infeasible insertion을 단순히 거절한 것. |
 | 2. 입력·travel·profile의 권위 고정 | Adapter가 해석한 business meaning, complete prepared directed travel, exact customer profile/preset과 algorithm config가 solve 전에 immutable snapshot·version·fingerprint·provenance로 결합된다. Search와 verifier는 raw input, `latest` profile, lazy travel fallback을 다시 해석하지 않는다. | 제공/생성 travel, adapter coercion, profile dependency와 version이 lineage에 남고, missing·ambiguous·fingerprint mismatch 입력이 solve 전에 거부되는 test. | JSON을 파싱해 candidate를 만들 수 있는 것, 또는 실행 중 누락 arc/profile을 비슷한 값으로 보완하는 것. |
 | 3. 고객별 정책의 격리 | 고객 차이는 constraint·metric·score·comparator·`SolvePlan` profile에서 조립되고, common propagation, pair invariant, candidate state와 ALNS core의 물리 의미는 고객 이름이나 preset에 따라 바뀌지 않는다. | 동일 problem facts에 서로 다른 승인 profile을 bind해 각각의 결과와 dependency closure를 검증하고, unknown/cross-customer fallback을 거부하는 test. | profile마다 `if (customer == ...)` 분기를 core에 추가해 우연히 요구를 통과시키는 것. |
 | 4. 계산의 진실성 | Route sequence, vehicle/terminal binding과 bank가 source of truth이며 cache·incremental aggregate·objective는 버리고 다시 계산할 수 있는 파생값이다. 어느 cache 상태에서도 feasibility, metric, score와 objective가 full recomputation과 같다. | 삽입, acceptance, best 선택과 finalization에서 cache-free 재계산 동등성; stale/poisoned cache, cache hit/miss와 rollback fault injection. | 성능이 좋은 cache, 또는 정상 경로에서만 cache 값이 맞는 것. |
@@ -223,6 +233,9 @@ Master는 “어떤 시스템을 어떤 순서로 구현하는가”를 소유�
 | `SolvePlan` | stage 순서, warm-start, 선행 목표 보호와 budget reference를 조정하는 상위 계약 |
 | `SearchRequestBank` | 탐색 중 정규 route에 없는 request ID membership |
 | final outcome | 검증된 최종 request의 `ASSIGNED` 또는 `UNASSIGNED` partition |
+| fixed-depot multi-depot 표현 | vehicle별 start terminal과 `roundtrip`의 같은-depot end terminal이 input에서 고정된 복수 depot fleet. 어느 vehicle에 request를 배정할지는 탐색할 수 있지만 terminal 자체는 선택하지 않음 |
+| `oneway` / open-route 의미 | 고정 start terminal에서 출발하여 마지막 실제 service node에서 끝나는 single-trip. 사용하지 않은 vehicle에는 service route를 만들지 않음 |
+| split-delivery pickup-delivery | solver가 하나의 원 request 수량을 여러 route에 나누고 각 분할량을 결정하는 모델. 현재 request-pair 원자성 범위 밖 |
 
 ### 3.2 확정 결정 색인
 
@@ -246,10 +259,10 @@ Master는 “어떤 시스템을 어떤 순서로 구현하는가”를 소유�
 | `C-16` | 4개 request-route 성장 정책과 2개 `DIRECT`-first vehicle 순서를 조합해 최대 8개 initial solution을 만든다. 각 후보는 fixed `screenMaxSteps` ALNS를 거친 뒤 comparator상 phase-1 champion 하나를 고르고, phase 2는 그 champion을 공통 warm start로 사용한다. |
 | `C-17` | route pool/MIP는 deferred다. |
 | `C-18` | Win PoC 전용 네 성분 comparator는 미배정 수, 배차 차량 수, 전체 거리, 전체 운영시간 순이며, official run은 고정 round plan의 완결된 verified champion을 사용한다. |
-| `C-19` | 선택 변형 문제는 구현이 아니라 deferred feasibility work다. |
+| `C-19` | 현재 pair/terminal/bank 경계를 넘는 depot 선택·종료지 선택·진정한 split-delivery 등 확장은 구현이 아니라 deferred feasibility work다. 고정-depot fleet과 `oneway`는 현재 core의 표현 범위다. |
 | `C-20` | 구체 infrastructure/product/deployment topology는 deferred이고 Master는 논리 port만 소유한다. |
 | `C-21` | 독립 verifier를 통과하지 않은 후보는 정상 publication 또는 benchmark 대상이 아니다. |
-| `C-22` | 강한 재현성은 고정 fingerprint/seed/order/step의 정상 `MAX_STEPS_REACHED` 실행에 한정한다. |
+| `C-22` | 강한 재현성은 고정 fingerprint/seed/order/step의 정상 deterministic 실행에 한정한다. Worker의 `MAX_STEPS_REACHED`와 coordinator의 `NO_STRICT_IMPROVEMENT`/`MAX_ROUNDS_REACHED`를 구분해 같은 실행 envelope에서 재현한다. |
 
 ### 3.3 잠정 설계 색인
 
@@ -431,12 +444,14 @@ Search cache, insertion table, aggregate와 solver summary는 어느 생명주�
 | pickup node | 물량이 차량 적재에 들어오는 논리 작업 |
 | delivery node | 같은 물량이 차량 적재에서 빠지는 논리 작업 |
 | vehicle | 용량, 하나의 vehicle size type, `vhclOwnTyp`, terminal 정책, 근무와 route-resource 데이터를 가진 자원 |
-| terminal | route의 고정 start/end solver node |
+| terminal policy | route 시작과 종료를 정하는 vehicle-bound 규칙. 모든 current route에는 start terminal이 있고, `roundtrip`에는 고정 end terminal이 추가되지만 `oneway`는 마지막 service node에서 끝난다 |
 | physical location | directed matrix endpoint. solver node와 별도 identity/index를 가짐 |
-| route | 한 vehicle에 결합된 single-trip ordered sequence. `oneway`는 start terminal에서 마지막 고객까지, `roundtrip`은 start terminal에서 같은 depot 복귀까지다. |
+| route | 한 vehicle에 결합된 non-empty single-trip ordered sequence. `oneway`는 start terminal에서 마지막 service node까지, `roundtrip`은 start terminal에서 같은 depot/end terminal 복귀까지다. |
 | solution | 안정 route 집합과 독립 `SearchRequestBank`의 request partition |
 
 외부 ID와 조밀한 core ID의 양방향 mapping은 정규화 결과에 포함하고 problem 생성 후 바꾸지 않는다. 여러 solver node가 같은 physical location을 참조할 수 있으며, 같은 위치라도 pickup, delivery와 terminal 역할은 합치지 않는다.
+
+사용하지 않은 vehicle은 의미상 service route를 만들지 않는 fleet의 미사용 자원이다. 구현이 편의를 위해 빈 route container를 유지할 수는 있지만, 그 container는 가상의 “마지막 customer”나 end terminal을 만들지 않고 travel/metric/dispatched vehicle count에 기여하지 않는다. 따라서 dispatched vehicle count와 route metric에는 request를 하나 이상 수행하는 route만 들어간다.
 
 ### 5.2 Service meaning
 
@@ -508,12 +523,12 @@ UNASSIGNED_IN_SEARCH
 각 안정 route는 다음을 MUST 만족한다.
 
 1. 정확히 하나의 vehicle에 결합한다.
-2. 첫 node는 그 vehicle의 start terminal이다. `oneway`의 마지막 node는 마지막 service node이고, `roundtrip`의 마지막 node는 같은 depot/end terminal이다.
+2. 사용 route의 첫 node는 그 vehicle의 start terminal이다. `oneway`의 마지막 node는 마지막 service node이고, `roundtrip`의 마지막 node는 같은 depot/end terminal이다. 미사용 vehicle은 service route를 갖지 않는다.
 3. 현재 single-trip에서는 내부 depot 재방문과 다른 vehicle의 terminal을 허용하지 않는다.
 4. 승인된 service pattern을 보존한다.
 5. 모든 load 차원에서 `0 <= load <= capacity`다.
 6. 실제 directed matrix, 승인된 time contract와 route-resource rule로 hard-feasible하다.
-7. 표준 single-trip의 완성 route는 request pair의 순변화가 0이어야 한다.
+7. 모든 real pickup-delivery pair는 pickup 적재와 delivery 하차의 순변화가 0이다. Delivery-only demand는 출발 전 initial load에 모두 반영되고 해당 delivery에서 빠져야 하므로, 완성된 single-trip은 각 load 차원에서 final load가 0이다. delivery-only를 virtual prefix pickup으로 표현하더라도 이 prefix는 실제 travel·stop·depot 방문을 만들지 않는다.
 8. 고객 service location이 직전 service location과 다를 때만 stop count를 1 증가시키며 depot은 세지 않는다. `maxStopCnt`는 route 전체 누적이고 vehicle/global 한도가 모두 있으면 `min`을 포함 상한으로 사용한다.
 9. 실제 통과 arc의 `D`와 vehicle-resolved `U`만 route 전체 `driveDist`/`driveTime`에 누적하며 대기·서비스·근무창 사이 휴식은 제외한다. 명시된 한도가 없으면 해당 추가 hard constraint가 없다.
 
@@ -808,18 +823,20 @@ Evaluator는 committed state를 바꾸지 않는다. 선택된 move를 atomic �
 
 ### 11.2 현재 범위의 initial-solution portfolio
 
-초기 portfolio는 4개의 request-route 성장 정책과 2개의 vehicle 순서를 조합한 최대 8개 independent construction을 MUST 생성한다. 각 조합은 route/bank/cache/random state를 공유하지 않는다.
+초기 portfolio는 4개의 request-route 성장 정책과 2개의 vehicle 순서를 조합한다. 필수 입력이 있는 각 조합은 independent construction 하나를 MUST 생성하므로 최대 8개가 된다. `CLOCK`처럼 명시된 필수 입력이 없는 조합만 `UNAVAILABLE`일 수 있고, 각 construction은 route/bank/cache/random state를 공유하지 않는다.
 
 | Request-route 성장 정책 | 규범 역할 |
 |---|---|
-| `CLOCK` | 선택 vehicle의 start terminal/depot을 원점으로, 0도에서 clockwise로 request entry location을 순회해 route를 성장. depot 또는 request entry location의 좌표가 없으면 이 조합은 `UNAVAILABLE`이다. |
-| `SEQ_FARTHEST` | depot에서 가장 먼 request를 seed로 선택하고, 이후 현재 route의 마지막 확정 service location에서 가까운 request를 우선한다. |
+| `CLOCK` | 선택 vehicle의 start terminal/depot을 원점으로, 좌표 정규화 뒤 0도 기준 clockwise angle과 stable request ID를 total order로 사용해 request entry location을 순회하며 route를 성장. start terminal 또는 request entry location의 좌표가 없으면 이 조합은 `UNAVAILABLE`이다. angle의 좌표축·0도 기준·동일 좌표 처리는 policy/config fingerprint에 명시한다. |
+| `SEQ_FARTHEST` | 선택 vehicle의 start terminal에서 가장 먼 request를 seed로 선택하고, 이후 현재 route의 마지막 확정 service location에서 가까운 request를 우선한다. |
 | `SEQ_LARGE_DEMAND` | 선택 vehicle 대비 weight/volume utilization이 큰 request를 seed로 선택하고, 동률이면 이른 `reqDate`, stable request ID 순으로 결정한 뒤 가까운 request로 route를 성장한다. |
 | `SEQ_EARLIEST_DEADLINE` | 가장 이른 `reqDate` request를 seed로 선택하고, 동률이면 utilization이 큰 request, stable request ID 순으로 결정한 뒤 가까운 request로 route를 성장한다. |
 
-두 vehicle 순서는 모두 feasible `DIRECT` vehicle을 `LEASE`보다 먼저 시도한다. `DIRECT_FIRST_LARGE`는 현재 candidate request에 대해 낮은 utilization을, `DIRECT_FIRST_SMALL`은 높은 utilization을 우선한다. 여기서 `utilization = max(requestWeight / vehicleWeightCapacity, requestVolume / vehicleVolumeCapacity)`이며, 두 capacity dimension의 정확한 missing/zero 처리와 동점 순서는 bound policy version에 포함한다. `Feature` 문자열의 숫자·나열 순서로 크기를 추론하지 않는다.
+두 vehicle 순서는 모두 feasible `DIRECT` vehicle을 `LEASE`보다 먼저 시도한다. `DIRECT_FIRST_LARGE`는 현재 candidate request에 대해 낮은 utilization, 즉 더 큰 남는 용량을 우선하고 `DIRECT_FIRST_SMALL`은 높은 utilization, 즉 더 촘촘한 적재를 우선한다. 여기서 `utilization = max(requestWeight / vehicleWeightCapacity, requestVolume / vehicleVolumeCapacity)`이며, 사용하지 않는 volume dimension은 §7.4의 정규화된 유한 capacity를 사용한다. 양의 demand에 대한 zero/negative capacity는 static infeasibility이고, 두 capacity dimension의 적용 여부와 동점 순서는 bound policy version에 포함한다. `Feature` 문자열의 숫자·나열 순서로 크기를 추론하지 않는다.
 
 정책은 request/vehicle 후보 순서만 정한다. 각 request는 공통 atomic pair evaluator를 통과해 pickup/delivery, time window, capacity, travel, zone과 capability를 모두 만족할 때만 삽입한다. “가까움”은 prepared directed distance `D[currentServiceLocation][request.entryLocation]`를 뜻하며, 실제 pickup-delivery request의 entry location은 pickup, delivery-only request의 entry location은 delivery다. 후보별 route는 source policy, vehicle policy, ordered sequence, metric과 fingerprint를 artifact로 기록한다.
+
+`UNAVAILABLE`은 policy의 선언된 필수 입력이 없어 construction을 시도하지 못했다는 뜻이고, request를 배정하지 못한 정상 candidate와 다르다. `CLOCK`만 `UNAVAILABLE`이면 남은 조합은 계속 실행한다. 모든 조합이 이 결정론적 `UNAVAILABLE` 상태이면 phase-1 champion을 임의로 만들지 않고 `INITIAL_PORTFOLIO_UNAVAILABLE`로 solve 시작을 거부한다. Construction 예외, invalid candidate 또는 cache-free validation failure는 이 상태로 바꾸지 않고 `FAILED` 또는 해당 검증 실패로 보존한다. 반대로 static/feasibility 사유로 모든 request가 bank에 남은 candidate는 stable partition과 cache-free validation을 통과하면 유효한 partial candidate다.
 
 ### 11.3 Phase-1 screen과 phase-2 ALNS
 
@@ -925,22 +942,23 @@ Copy-on-write는 현재 구현·운영 기본 경로다. Apply/undo는 roadmap�
 
 | 의미 | 지위 |
 |---|---|
-| `MAX_STEPS_REACHED` | 모든 계획 stage의 step budget과 handoff를 완료한 정상 종료 |
+| `MAX_STEPS_REACHED` | phase-1 screen 또는 individual phase-2 worker가 자신의 exact positive step budget을 완료한 정상 종료 |
 | `NO_STRICT_IMPROVEMENT` | 완결된 phase-2 worker batch의 round champion이 이전 champion보다 엄격히 좋지 않아 coordinator가 정상 종료 |
 | `MAX_ROUNDS_REACHED` | configured `maxRounds`의 모든 phase-2 batch를 완료한 정상 종료 |
+| `INITIAL_PORTFOLIO_UNAVAILABLE` | 모든 construction 조합이 선언된 필수 입력 부재로 결정론적 `UNAVAILABLE`인 시작 전 오류. Construction/validation failure를 숨기는 상태가 아니며 정상 search termination도 아님 |
 | `WATCHDOG_REACHED` | 병리적 장기 실행을 중단한 예외적 안전 종료 |
 | `CANCELLED` | 외부 취소 의도를 협력 처리한 종료 |
 | `RESOURCE_LIMIT_REACHED` | solver가 처리 가능한 자원 안전 한계 |
 | `PLATFORM_TIMEOUT` | 상위 실행 경계가 algorithm termination record 완성을 막은 상태 |
 | `FAILED` | 실행, 구현 또는 platform failure |
 
-입력/config binding 실패는 탐색 종료가 아니라 시작 전 오류다. 미완료 step은 completed count, acceptance/temperature와 adaptive state를 전진시키지 않고 candidate를 완전히 rollback/discard한다. Watchdog, cancellation, resource와 platform failure를 서로 또는 정상 종료로 다시 이름 붙여서는 안 된다.
+`MAX_STEPS_REACHED`는 phase-1 screen 또는 하나의 phase-2 worker가 자신의 exact step budget을 완료했음을 뜻한다. Overall solve의 phase-2 coordinator는 complete worker batch를 fan-in한 뒤 `NO_STRICT_IMPROVEMENT` 또는 `MAX_ROUNDS_REACHED`로 정상 종료할 수 있다. 입력/config binding과 `INITIAL_PORTFOLIO_UNAVAILABLE`은 탐색 종료가 아니라 시작 전 오류다. Construction/validation failure는 `INITIAL_PORTFOLIO_UNAVAILABLE`로 바꾸지 않고 `FAILED` 또는 verifier failure로 보존한다. 미완료 step은 completed count, acceptance/temperature와 adaptive state를 전진시키지 않고 candidate를 완전히 rollback/discard한다. Watchdog, cancellation, resource와 platform failure를 서로 또는 정상 종료로 다시 이름 붙여서는 안 된다.
 
 예외 종료 뒤 마지막 committed best가 있더라도 candidate solution verifier와 post-finalization result-integrity verifier를 통과한 경우에만 recovery candidate가 될 수 있다. 정상 완료나 공식 benchmark run으로 표시할 수 없으며 외부 노출 여부는 별도 product 계약이다.
 
 ### 13.2 Strong reproducibility envelope
 
-강한 재현성은 다음이 고정되고 `MAX_STEPS_REACHED`, `NO_STRICT_IMPROVEMENT` 또는 `MAX_ROUNDS_REACHED`로 정상 종료한 실행에 적용한다.
+강한 재현성은 다음이 고정되고, 모든 declared worker가 `MAX_STEPS_REACHED`를 완료한 뒤 coordinator가 `NO_STRICT_IMPROVEMENT` 또는 `MAX_ROUNDS_REACHED`로 정상 종료한 실행에 적용한다. Phase-2를 사용하지 않는 bounded screen은 자신의 `MAX_STEPS_REACHED`로 동일 원칙을 적용한다.
 
 ```text
 problem + normalized matrix + numeric/time/adapter fingerprints
@@ -1084,7 +1102,7 @@ Official benchmark는 manifest에 고정된 round plan을 정확히 실행한다
 5. round champion이 이전 champion보다 엄격히 좋으면 다음 round의 모든 worker가 이를 공통 warm start로 사용한다. 그렇지 않으면 `NO_STRICT_IMPROVEMENT`로 끝낸다.
 6. `maxRounds` 안의 마지막 verified champion만 전체 official result다.
 
-Manifest가 선언한 모든 worker는 exact `maxSteps`로 `MAX_STEPS_REACHED`하고 독립 검증을 통과해야 round가 완료된다. 실패 worker는 같은 round/run identity, seed와 warm start로 재시도할 수 있지만, 하나라도 끝내 완료되지 않으면 round와 전체 benchmark는 `INCOMPLETE`다. 성공한 일부 worker만으로 champion을 정하거나 다음 round를 시작할 수 없다.
+Manifest가 선언한 모든 worker는 자신의 exact `phase2MaxSteps`로 `MAX_STEPS_REACHED`하고 독립 검증을 통과해야 round가 완료된다. 실패 worker는 같은 round/run identity, seed와 warm start로 재시도할 수 있지만, 하나라도 끝내 완료되지 않으면 round와 전체 benchmark는 `INCOMPLETE`다. 성공한 일부 worker만으로 champion을 정하거나 다음 round를 시작할 수 없다. Phase-1 screen에는 별도 `screenMaxSteps`가 적용되며, 이 둘을 하나의 모호한 `maxSteps`로 합치지 않는다.
 
 Seed별 no-worse나 “좋은 seed” 선정은 official hard gate가 아니다. Worker 완료 순서와 물리 병렬 순서는 champion에 영향을 주지 않는다. 결과 의존 종료는 complete batch의 stable fan-in 뒤 `NO_STRICT_IMPROVEMENT` 판정에만 허용하며, worker 중간 종료나 전체 wall-clock quality deadline을 사용하지 않는다.
 
@@ -1170,7 +1188,7 @@ RM-9 = separate approval only
 | 구현 단위 | Side-effect-free atomic pair evaluator, 4 request-route 성장 정책 × 2 `DIRECT`-first vehicle 순서, 독립 candidate state, route artifact 기록과 cache-free validation |
 | Deliverable | 최대 8개의 verified initial candidates, source request/vehicle policy·config·evaluation lineage와 ordered route artifacts |
 | 금지 | Partial pair option, infeasible option ranking, policy별 feasibility 재구현, raw coordinate/matrix 재해석, `CLOCK` 좌표 누락 fallback |
-| Exit evidence | 8개 policy combination trace, `CLOCK` coordinate-unavailable case, request/vehicle tie-break, pair evaluator와 cache-free full recomputation equality, failed insertion rollback, candidate isolation과 artifact fingerprint |
+| Exit evidence | 가능한 8개 policy combination trace, `CLOCK` coordinate-unavailable case, all-policy `INITIAL_PORTFOLIO_UNAVAILABLE` rejection과 construction/validation failure의 `FAILED` 분리, request/vehicle tie-break, pair evaluator와 cache-free full recomputation equality, failed insertion rollback, candidate isolation과 artifact fingerprint |
 | 완료 후 소비자 | `RM-4` warm-start set과 first-round logical assignment |
 
 `CLOCK`이 좌표 누락으로 `UNAVAILABLE`이면 남은 조합은 정상적으로 생성할 수 있다. 8개 candidate의 quality screen은 `RM-4`가 담당하며, `RM-3`은 candidate 생성과 verifier 동등성만 책임진다.
@@ -1179,7 +1197,7 @@ RM-9 = separate approval only
 
 | 구분 | 계약 |
 |---|---|
-| Entry | `RM-3`의 verified initial candidates, `RM-2`의 bound stages/operators와 explicit phase-1/phase-2 run config |
+| Entry | `RM-3`의 verified initial candidate가 최소 하나 있으며(모든 조합이 결정론적으로 `UNAVAILABLE`이면 `INITIAL_PORTFOLIO_UNAVAILABLE`로 preflight 종료), `RM-2`의 bound stages/operators와 explicit phase-1/phase-2 run config |
 | 구현 단위 | Phase-1 per-candidate screen, stable phase-1 champion fan-in, phase-2 worker batch fan-out/fan-in, pair destroy/repair, stage guard/acceptance, adaptive update, changed-route COW와 independent bank, cache invalidation, step/round counter와 watchdog/cancellation/resource/failure handling |
 | Deliverable | Phase-1 champion, last committed phase-2 champion/solveBest, exact termination, completed step/round/operator/seed/warm-start lineage와 reproducibility record |
 | 금지 | Committed/best 직접 mutation, 기본 apply/undo, 미완료 worker로 round champion 확정, worker completion-order winner, wall-clock quality termination, worker 중간 plateau 종료 |
@@ -1242,11 +1260,11 @@ RM-9 = separate approval only
 
 ### 15.11 `RM-9` — 별도 승인 후속 roadmap
 
-`RM-9`는 자동 착수 phase가 아니다. Route pool/MIP, optional variants, academic benchmark expansion, multi-trip/rotation과 physical topology는 §16.3의 resume evidence와 별도 scope approval을 각각 받아 독립 roadmap으로 만든다.
+`RM-9`는 자동 착수 phase가 아니다. Route pool/MIP, 현재 core를 넘어서는 depot/terminal/split-delivery 변형, academic benchmark expansion, multi-trip/rotation과 physical topology는 §16.3의 resume evidence와 별도 scope approval을 각각 받아 독립 roadmap으로 만든다.
 
 다음 행위는 `RM-9` 준비로도 허용하지 않는다.
 
-- 현재 pair/terminal/bank invariant를 optional variant 가능성 때문에 미리 완화
+- 현재 pair/terminal-policy/bank invariant를 후속 변형 가능성 때문에 미리 완화
 - Route pool/MIP dependency나 type을 common core에 선반영
 - 특정 infrastructure product에 맞춰 logical round/result 의미 변경
 - Deferred 질문을 `Q-BENCH-02` 실험과 묶어 재질문하거나 활성화
@@ -1286,13 +1304,13 @@ Legacy 문서와 현재 코드 구조는 replacement inventory와 characterizati
 | 항목 | 현재 보존할 경계 | 재개 조건 |
 |---|---|---|
 | route pool/MIP | verified ordered route, lineage, metrics와 fingerprint export | Win baseline, verifier, reproducible portfolio/ALNS, measured value와 별도 solver/licensing/fallback 승인 |
-| optional variants | 현재 atomic pair, fixed terminal, bank와 matrix contract | [Q-VAR-01](master-design-open-questions.md#q-var-01)의 선택·시점 결정, 대표 fixture, hand result와 core-impact feasibility 승인 |
+| core-extending depot/terminal/split-delivery variants | 현재 atomic pair, vehicle-bound start terminal·termination policy, bank와 matrix contract | [Q-VAR-01](master-design-open-questions.md#q-var-01)의 선택·시점 결정, 대표 fixture, hand result와 core-impact feasibility 승인 |
 | physical topology | 논리 ports, status/artifact/idempotency/cancellation 책임 | verified result, workload, security/access/retention/audit, retry/recovery, performance/cost evidence와 별도 승인 |
 | academic benchmark expansion | Win manifest/card와 verifier 재사용 경계 | Win baseline, authoritative format/result, RPDPTW mapping과 separate manifest 승인 |
 | multi-trip/rotation | 현재 `oneway`/single `roundtrip`; 후속 trip도 pair crossing 금지와 depot `duration` 경계 보존 | `multiRotation` 값·trip/reset/depot window/resource 계약, 예제와 domain/algorithm/verifier 영향의 별도 승인 |
 | dynamic routing | immutable solve snapshot과 cancellation port | event/replanning, state continuity, conflict와 SLA 계약 승인 |
 
-선택 변형을 현재 pair invariant 완화로 미리 구현하거나, route pool/MIP dependency를 core에 선반영해서는 안 된다. Physical topology는 안정된 logical contracts와 workload evidence 뒤에 가장 마지막으로 결정한다.
+후속 depot/terminal/split-delivery 변형을 위해 현재 pair·termination policy·bank invariant를 미리 완화하거나, route pool/MIP dependency를 core에 선반영해서는 안 된다. Physical topology는 안정된 logical contracts와 workload evidence 뒤에 가장 마지막으로 결정한다.
 
 ## 17. Open questions와 traceability
 
@@ -1315,6 +1333,13 @@ Legacy 문서와 현재 코드 구조는 replacement inventory와 characterizati
 | [세션 31 — Domain Design 통합](master-design-sessions/31-domain-design-integration.md) | 세션 29 결정에 맞춘 상세 Domain Design 재구성 범위와 정합성 validation |
 
 [Domain Design](domain-design.md) v2는 이 Master의 domain/input/normalization/travel/state/evaluation/result 경계를 상세화한 `REVIEW` 문서다. 세션 31에서 legacy의 고정 numeric/time defaults, node-sized matrix, generic feature, multi-trip 기본 활성화와 mixed bank/result 의미를 제거했다. 두 문서가 여전히 충돌하면 현재 `REVIEW` 단계의 conflict 절차와 이 문서 §1의 authority 순서를 따른다.
+
+이 개정본을 `APPROVED` 후보로 올리기 전에는 Domain Design과 질문 등록부를 다음 항목으로 다시 대조해야 한다. 이는 새 요구를 만드는 작업이 아니라 동일한 현재 결정을 서로 다르게 서술하지 않기 위한 문서 정합화 gate다.
+
+- 고정-depot fleet과 `oneway`는 현재 core의 표현 범위이고, terminal/depot 선택·진정한 split-delivery만 후속 feasibility 대상인지
+- `Q-ALG-01`이 실험 대기가 아니라 8개 construction과 phase-1 champion을 확정했는지
+- worker의 `MAX_STEPS_REACHED`와 coordinator의 `NO_STRICT_IMPROVEMENT`/`MAX_ROUNDS_REACHED`가 서로 다른 정상 종료 계층인지
+- `SDVRP` 같은 약어 대신 실제 depot/종료지/수량 분할 의미를 썼는지
 
 연구 근거는 [문제 정의](arranged/01_problem_definition.md), [초기해 휴리스틱](arranged/02_initial_solution_heuristics.md), [ALNS](arranged/03_alns_metaheuristic.md), [local search](arranged/05_local_search_moves.md), [실무 확장](arranged/06_practical_extensions.md)과 [논문·benchmark](arranged/07_papers_and_benchmarks.md)에 있다. 연구 예시는 승인된 업무 계약을 대신하지 않는다.
 

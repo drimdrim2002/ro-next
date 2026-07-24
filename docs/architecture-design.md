@@ -2,10 +2,10 @@
 
 ```yaml
 status: REVIEW
-version: 1.0-review
+version: 1.1-review
 last_updated: 2026-07-24
 owner: RPDPTW Architecture·Application·Platform 설계 역할
-scope: Java 25와 Maven 기반 project/module 구조, 의존 방향, 확장 seam, runtime와 provider-neutral deployment architecture
+scope: Java 25와 Maven 기반 project/module 구조, 의존 방향, 확장 seam, logical execution·integration 경계
 supersedes: null
 related_documents:
   - master-design.md
@@ -28,7 +28,7 @@ related_documents:
 - Domain, evaluation, search, verification과 result module을 구현하는 개발자
 - 고객사별 rule, metric, score, objective와 input/output adapter를 추가하는 개발자
 - Local runner, API, worker와 multi-round coordinator를 구현하는 개발자
-- AWS reference adapter를 구현하거나 GCP 등 다른 provider로 교체하는 platform 개발자
+- logical port, local runner와 향후 infrastructure adapter의 경계를 구현하는 platform 개발자
 - Dependency, reproducibility, publication gate와 배포 변경을 검토하는 reviewer
 
 이 문서를 읽은 개발자는 최소한 다음에 답할 수 있어야 한다.
@@ -37,9 +37,8 @@ related_documents:
 2. 어떤 dependency는 허용되고 어떤 dependency는 build에서 차단해야 하는가?
 3. 고객 요구를 common core 수정 없이 어느 extension seam에 추가하는가?
 4. Local single-run과 distributed multi-round가 같은 core contract를 어떻게 재사용하는가?
-5. AWS Step Functions, Lambda와 ECS는 provider-neutral port에 어떻게 매핑되는가?
-6. GCP Workflows, Cloud Run과 Functions로 바꿀 때 무엇을 유지하고 무엇만 교체하는가?
-7. 어떤 순서로 구현하고 어떤 evidence가 있어야 다음 phase로 갈 수 있는가?
+5. logical port가 물리 topology·provider 선택을 어떻게 보류하는가?
+6. 어떤 순서로 구현하고 어떤 evidence가 있어야 다음 phase로 갈 수 있는가?
 
 ### 1.2 결정 종류
 
@@ -49,7 +48,6 @@ related_documents:
 |---|---|---|
 | **`[CONTRACT]`** | Master/Domain/질문 등록부에서 상속한 현재 계약. 이 문서가 새로 만든 결정이 아님 | 원문 결정과 Master §1 절차 |
 | **`[RECOMMENDED]`** | 위 계약을 구현하기 위한 이 문서의 구체 project architecture 제안 | Architecture review와 ADR 승인 |
-| **`[AWS-REFERENCE]`** | 사용자 요구에 따라 제시하는 교체 가능한 AWS 배포 예시 | `Q-INFRA-01` 재개 evidence와 별도 production 승인 |
 | **`[PORTABLE]`** | Provider/product에 독립적으로 유지해야 하는 logical contract | Application architecture와 compatibility test |
 | **`[OPEN-EXPERIMENT]`** | Protocol은 정해졌지만 공식 수치가 없는 항목 | 질문 등록부의 실험·승인 gate |
 | **`[DEFERRED]`** | 현재 활성화하거나 해결하지 않는 항목 | 질문 등록부의 resume gate |
@@ -67,17 +65,15 @@ related_documents:
 - 고객 profile/preset과 rule/metric/score/objective 조립·등록·검증
 - Local single-run과 distributed multi-round application flow
 - Provider-neutral port, idempotency, retry, cancellation과 result publication
-- AWS Step Functions + Lambda/ECS reference mapping
-- GCP 등 provider 교체 경계
+- 특정 provider/product를 선택하지 않는 infrastructure integration boundary
 - Configuration, secret, artifact, result, provenance와 observability
 - Module별 test/evidence와 구현 phase/gate
 
 다음은 비범위다.
 
 - 이 문서만으로 production infrastructure를 승인·활성화하는 일
-- AWS account, region, VPC, subnet, IAM role, bucket/table 이름과 구체 IaC
-- 비용·성능 evidence 없는 Lambda/ECS 최종 선택과 resource sizing
-- Scorer, randomized start, diverse `K`, light-search budget의 공식 수치
+- Provider/product, orchestration/worker/storage service, deployment topology와 구체 IaC
+- 비용·성능 evidence 없는 compute/runtime 선택과 resource sizing
 - Round/worker 수, worker별 `maxSteps`, watchdog의 공식 수치
 - Multi-trip/rotation, route pool/MIP와 optional variant 활성화
 - Canonical wire schema, database schema와 public API의 최종 승인
@@ -90,7 +86,7 @@ related_documents:
 | [Master Design](master-design.md) | 무엇을 어떤 책임과 gate로 구현하는가 | 논리 컴포넌트를 Maven module/application runtime으로 배치 |
 | [Domain Design](domain-design.md) | Domain 값과 propagation/evaluation/result가 정확히 무엇을 뜻하는가 | 그 의미를 깨지 않는 package, module과 extension seam 지정 |
 | [질문 등록부](master-design-open-questions.md) | 28개 질문의 상태·결정·evidence | Open/deferred 상태를 보존하고 architecture가 해결했다고 주장하지 않음 |
-| [세션 29](master-design-sessions/29-open-question-interview.md) | 사용자 답변 원문 | AWS 예시와 multi-round 요구의 원래 의도 추적 |
+| [세션 29](master-design-sessions/29-open-question-interview.md) | 사용자 답변 원문 | logical multi-round와 deferred infrastructure의 원래 의도 추적 |
 | [세션 30](master-design-sessions/30-open-question-integration.md) | Master/register 반영 기록 | 수치·infrastructure 확대 해석 방지 |
 | [세션 31](master-design-sessions/31-domain-design-integration.md) | Domain v2 반영 기록 | Legacy 의미를 목표 architecture로 재도입하지 않도록 검증 |
 
@@ -129,7 +125,7 @@ ro-next/
 
 1. 현재 endpoint, payload, storage key, workflow와 error behavior를 read-only characterization한다.
 2. 새 core module을 기존 `com.ronext.optimizer` package와 분리된 namespace에서 만든다.
-3. 기존 GCP 호출은 provider-neutral application port의 legacy GCP adapter로 격리한다.
+3. 기존 provider 호출은 provider-neutral application port 뒤의 legacy adapter로 격리한다.
 4. Core/result end-to-end가 두 verifier를 통과하기 전에는 기존 endpoint를 새 정상 result 경로로 바꾸지 않는다.
 5. Shadow comparison, versioned cutover와 rollback evidence 뒤에만 기존 경로를 교체한다.
 
@@ -161,11 +157,11 @@ volatile platform edge
 ### 3.2 핵심 원칙
 
 1. **Semantic ownership:** 한 의미에는 한 owner module만 둔다. 다른 module은 owner의 immutable contract를 소비한다.
-2. **Dependency inversion:** Application이 logical port를 소유하고 AWS/GCP/local module이 이를 구현한다.
+2. **Dependency inversion:** Application이 logical port를 소유하고 local 또는 향후 승인된 infrastructure adapter가 이를 구현한다.
 3. **No reinterpretation:** Adapter, search, verifier와 publisher가 앞 단계 의미를 다시 추정하거나 default로 보완하지 않는다.
 4. **Immutable handoff:** Canonical input 이후 problem, prepared travel, bound profile, manifest와 verified result는 단계 사이에서 immutable snapshot으로 전달한다.
 5. **Customer isolation:** Customer name, price label과 objective key를 common propagator/search 분기로 사용하지 않는다.
-6. **Provider isolation:** AWS/GCP SDK, ARN/URI, runtime event와 storage DTO를 core/application contract에 넣지 않는다.
+6. **Provider isolation:** Provider SDK, locator, runtime event와 storage DTO를 core/application contract에 넣지 않는다.
 7. **Independent verification:** Search cache와 solver summary가 verifier의 authority가 되지 않는다.
 8. **Evidence before optimization:** COW가 기본이며 apply/undo와 runtime 선택은 측정 evidence 뒤에 재검토한다.
 9. **Explicit versioning:** Schema, policy, profile, algorithm, build와 artifact는 exact version/fingerprint를 가진다. `latest` fallback을 금지한다.
@@ -204,7 +200,9 @@ Submission
   → exact profile/preset binding
   → immutable SolveSnapshot artifact
   → initial portfolio
-  → COW ALNS
+  → phase-1 per-candidate COW ALNS screen
+  → stable phase-1 champion
+  → phase-2 COW ALNS worker batches
   → committed candidate
   → candidate solution verifier
   → finalization + required insertion audit
@@ -214,7 +212,7 @@ Submission
   → retrieval
 ```
 
-Multi-round execution은 `SolveSnapshot` 뒤의 worker execution을 반복하되 각 worker가 같은 두 verification gate를 통과한 immutable result reference를 생성한다.
+Multi-round execution은 `SolveSnapshot` 뒤의 worker execution을 반복한다. 각 worker candidate는 cache-free candidate validation을 통과해야 fan-in에 참여할 수 있고, 최종 champion만 finalization과 result-integrity verification을 거쳐 publishable result가 된다.
 
 ### 4.3 주요 immutable artifact
 
@@ -290,15 +288,8 @@ ro-next/
 │   │   └── src/main/java/com/ronext/rpdptw/adapter/
 │   │       ├── json/
 │   │       └── local/
-│   ├── aws/                               # artifactId: rpdptw-adapter-aws
-│   │   └── src/main/java/com/ronext/rpdptw/adapter/aws/
-│   │       ├── artifact/
-│   │       ├── state/
-│   │       ├── workflow/
-│   │       ├── compute/
-│   │       └── telemetry/
-│   └── gcp/                               # artifactId: rpdptw-adapter-gcp
-│       └── src/main/java/com/ronext/rpdptw/adapter/gcp/
+│   └── <provider>/                         # DEFERRED: Q-INFRA-01 승인 뒤에만 추가
+│       └── src/main/java/com/ronext/rpdptw/adapter/<provider>/
 │           ├── artifact/
 │           ├── state/
 │           ├── workflow/
@@ -309,9 +300,7 @@ ro-next/
 │   ├── cli/                               # deployable artifactId: rpdptw-cli
 │   ├── api/                               # deployable artifactId: rpdptw-api
 │   └── worker/                            # deployable artifactId: rpdptw-worker
-├── deployment/
-│   ├── aws/                              # IaC/reference config; not core dependency
-│   └── gcp/                              # replaceable provider deployment
+├── deployment/                            # DEFERRED: provider/product 승인 뒤 별도 scope
 └── docs/
 ```
 
@@ -325,7 +314,7 @@ Maven leaf module은 `core`, `solver`, `verification`, `application`, 각 profil
 └── src/test/java/
 ```
 
-Integration test는 같은 module의 `src/test/java`에서 `*IT` suffix로 분리하고 Maven Failsafe가 실행한다. `rpdptw-core` 내부 package 경계는 package-private visibility와 architecture test로 강제한다. Cross-module/provider contract test는 `build/architecture-rules` 또는 해당 adapter module이 소유한다.
+Integration test는 같은 module의 `src/test/java`에서 `*IT` suffix로 분리하고 Maven Failsafe가 실행한다. `rpdptw-core` 내부 package 경계는 package-private visibility와 architecture test로 강제한다. Cross-module/logical-port contract test는 `build/architecture-rules` 또는 해당 adapter module이 소유한다.
 
 ### 5.2 Root parent 책임
 
@@ -336,7 +325,7 @@ Root `pom.xml`은 business dependency를 소유하지 않는 `packaging=pom` par
 - Compiler, Surefire, Failsafe, Enforcer, reproducible archive와 test report 정책을 중앙화한다.
 - Cloud SDK는 parent의 공통 `<dependencies>`에 넣지 않는다.
 - Customer profile module은 `rpdptw-core`의 compile dependency가 아니라 app assembly에서 선택한다.
-- `mvn verify`가 architecture rule, unit, property, integration과 provider contract test를 순서대로 실행하게 한다.
+- `mvn verify`가 architecture rule, unit, property, integration과 logical-port contract test를 순서대로 실행하게 한다.
 
 현재 root POM의 Java 25와 Maven Enforcer 설정은 유지 가능한 current-state input이지만 Google Cloud dependency와 shaded application main은 목표 root parent에서 provider/app module로 이동해야 한다.
 
@@ -365,7 +354,7 @@ Core 내부에서도 모든 package를 public API로 만들지 않는다. Extern
 
 | Package | 책임 |
 |---|---|
-| `solver.portfolio` | 네 construction policy, candidate validation/dedup와 warm-start selection |
+| `solver.portfolio` | 4개 construction policy × 2 vehicle order의 independent candidate, validation과 phase-1 champion selection |
 | `solver.search` | Pair destroy/repair, ALNS stage/acceptance/adaptive update |
 | `solver.state` | Changed-route COW, bank, cache invalidation, commit/discard |
 | `solver.termination` | Step counter, watchdog/cancellation/resource/failure separation |
@@ -393,7 +382,7 @@ Solver는 `rpdptw-core`만 의존하고 verifier, application, adapter 또는 cu
 | `application.service` | Core/solver/verifier use case 조립 |
 | `application.execution` | Run/round/worker identity, state transition, idempotency와 manifest |
 
-Application API가 port를 소유한다. Adapter가 AWS/GCP interface를 만들어 application이 그것을 구현하게 해서는 안 된다.
+Application API가 port를 소유한다. Adapter가 provider interface를 만들어 application이 그것을 구현하게 해서는 안 된다.
 
 추천 inbound use case는 다음 책임 단위다.
 
@@ -424,15 +413,14 @@ GetVerifiedResult
 | Module | 책임 |
 |---|---|
 | `adapters/common` | `adapter.json`과 `adapter.local` package; JSON mapping, local artifact/state/dispatch |
-| `adapters/aws` | 한 module 안의 AWS artifact/state/workflow/compute/telemetry package |
-| `adapters/gcp` | 한 module 안의 GCP artifact/state/workflow/compute/telemetry package |
+| `adapters/<provider>` | `Q-INFRA-01` 승인 뒤 선택된 provider의 artifact/state/workflow/compute/telemetry package |
 | `apps/cli` | Local/offline invocation과 human-readable failure |
 | `apps/api` | Submission/status/result transport entrypoint |
 | `apps/worker` | Headless prepare/search/verify/finalize process entrypoint |
 
 App module은 composition root다. SDK client, adapter, profile provider와 application runtime을 생성·주입하는 곳이며 domain/search 내부에서 global singleton이나 SDK default client를 만들지 않는다.
 
-JSON과 local 구현은 별도 Maven module로 쪼개지 않고 `adapters/common`의 package로 둔다. AWS와 GCP만 별도 module을 유지하는 이유는 서로 다른 SDK dependency가 core 또는 상대 provider의 runtime classpath로 전파되는 것을 막고 provider별 배포 assembly를 독립시키기 위해서다. 한 provider module 안에서는 S3/DynamoDB/Step Functions처럼 product마다 다시 module을 만들지 않고 package로 나눈다.
+JSON과 local 구현은 별도 Maven module로 쪼개지 않고 `adapters/common`의 package로 둔다. 구체 provider module과 deployment assembly는 `Q-INFRA-01`의 resume evidence와 별도 scope approval 뒤에만 추가한다. 선택 뒤에도 SDK dependency는 core·application classpath에서 격리하고 provider module 안의 세부 책임은 package로 나눈다.
 
 ## 7. Dependency direction와 cycle 방지
 
@@ -464,7 +452,7 @@ adapters/common
   → rpdptw-verification
   → rpdptw-application
 
-adapters/aws | adapters/gcp
+adapters/<provider> (승인 후)
   → rpdptw-application
   → adapters/common  # JSON/local shared contract가 필요할 때만
 
@@ -483,14 +471,14 @@ deployment/*
 
 | From | 금지 대상 | 이유 |
 |---|---|---|
-| `rpdptw-core`, `rpdptw-solver`, `rpdptw-verification` | `software.amazon.awssdk..`, `com.google.cloud..`, HTTP/framework package | Provider/runtime 침투 방지 |
+| `rpdptw-core`, `rpdptw-solver`, `rpdptw-verification` | Provider SDK, HTTP/framework package | Provider/runtime 침투 방지 |
 | `rpdptw-core` | Solver, verification, application, adapter/app/deployment | Stable kernel의 inward dependency 보존 |
 | `rpdptw-solver` | Verification, application, customer profile implementation, adapter | Customer branch와 미검증 publication 방지 |
 | `rpdptw-verification` | `rpdptw-solver`와 그 search/cache package | 독립 검증 |
-| `result.*` package | Cloud storage/database DTO | Result 의미와 저장 표현 분리 |
+| `result.*` package | Provider storage/database DTO | Result 의미와 저장 표현 분리 |
 | `profiles/*` | `search` 내부 package | Policy가 algorithm을 조작하는 것 방지 |
-| `rpdptw-application` | AWS/GCP SDK | Portable port 유지 |
-| `adapters/aws` | `adapters/gcp` 또는 반대 | Provider 간 transitive coupling 방지 |
+| `rpdptw-application` | Provider SDK | Portable port 유지 |
+| `adapters/<provider>` | 다른 provider adapter | Provider 간 transitive coupling 방지 |
 | 모든 module | 다른 module의 `.internal` package | Public contract 우회 방지 |
 
 ### 7.3 Enforcement
@@ -537,8 +525,7 @@ com.ronext.rpdptw.application.port.out
 com.ronext.rpdptw.application.service
 com.ronext.rpdptw.adapter.in.json
 com.ronext.rpdptw.adapter.out.local
-com.ronext.rpdptw.adapter.aws
-com.ronext.rpdptw.adapter.gcp
+com.ronext.rpdptw.adapter.<provider>  # Q-INFRA-01 승인 뒤에만 concrete name 확정
 com.ronext.rpdptw.profile.<stable_namespace>
 ```
 
@@ -548,7 +535,7 @@ com.ronext.rpdptw.profile.<stable_namespace>
 - 구현 세부는 `.internal`에 두고 다른 Maven module에서 참조하지 않는다.
 - 범용 `util`, `common`, `shared`, `manager`, `helper` package를 새 semantic owner 대신 사용하지 않는다.
 - DTO suffix는 external/application boundary type에만 사용한다. Domain value를 `*Dto`로 부르지 않는다.
-- AWS/GCP product name은 adapter/deployment package 밖에 나타나지 않는다.
+- Provider/product name은 `Q-INFRA-01` 승인 뒤 해당 adapter/deployment package 밖에 나타나지 않는다.
 - Customer identifier는 `profiles/` module과 그 resource/config 안에서만 허용한다.
 - `record`, sealed type와 immutable collection은 의미에 맞게 사용할 수 있지만 Java type 선택이 wire compatibility를 암묵적으로 결정하지 않는다.
 - Static mutable registry, global random, system clock과 unordered classpath discovery 결과를 core에서 사용하지 않는다.
@@ -732,22 +719,27 @@ exceptional:
 
 ```text
 immutable ExecutionManifest
-→ prepare first-round WorkerAssignment list
-→ fan-out declared logical workers
+→ build up to 8 independent initial candidates
+→ phase-1: run each available candidate with exact screenMaxSteps to MAX_STEPS_REACHED
+→ require normal completion + cache-free validation for every available screen candidate
+→ stable comparator/tie-break selects phase-1 champion
+→ prepare phase-2 WorkerAssignment list with that common warm start
+→ fan-out declared phase-2 logical workers
     → load identical SolveSnapshot and declared warm start
     → derive declared seed
-    → run exact search config
+    → run exact phase2MaxSteps search config to MAX_STEPS_REACHED
     → candidate verify
-    → finalize/audit
-    → result verify
-    → persist immutable WorkerOutcome reference
+    → persist immutable verified-candidate outcome reference
 → fan-in
     → require declared worker identity completeness
-    → reject mismatched fingerprints/termination/gates
+    → reject mismatched fingerprints/termination/candidate gate
     → stable comparator + deterministic tie-break
     → persist RoundChampion
-→ next round uses previous RoundChampion as common warm start
-→ last verified champion proceeds to publication
+→ compare RoundChampion with previous champion
+    → STRICTLY_BETTER: next round uses it as common warm start
+    → EQUAL or WORSE: NO_STRICT_IMPROVEMENT
+    → configured maxRounds complete: MAX_ROUNDS_REACHED
+→ final champion → finalize/audit → result verify → publication
 ```
 
 **`[CONTRACT]`** Official benchmark에서 선언된 worker 하나라도 정상 completion과 verification을 끝내 충족하지 못하면 round와 전체 실행은 `INCOMPLETE`다. 성공 worker 일부만으로 champion을 확정하거나 다음 round를 시작하지 않는다.
@@ -772,8 +764,8 @@ ArtifactDigest
 - 같은 submission idempotency key에 다른 input/profile/manifest digest가 오면 conflict다.
 - `WorkerRunId`는 logical round/worker/warm-start/config identity에 고정된다.
 - Retry `AttemptId`는 바뀔 수 있지만 seed, warm start, requested steps와 logical worker identity는 바뀌지 않는다.
-- 같은 logical worker의 duplicate success가 같은 result digest면 하나로 수렴할 수 있다.
-- 같은 logical worker identity에 서로 다른 success digest가 생기면 integrity violation이며 임의의 하나를 선택하지 않는다.
+- 같은 logical worker의 duplicate success가 같은 verified-candidate digest면 하나로 수렴할 수 있다.
+- 같은 logical worker identity에 서로 다른 verified-candidate digest가 생기면 integrity violation이며 임의의 하나를 선택하지 않는다.
 - Champion과 final publication은 compare-and-set으로 한 번만 확정한다.
 - Orchestrator completion order는 comparator input order가 아니다.
 
@@ -799,205 +791,61 @@ ArtifactDigest
 
 ### 12.2 Port boundary rules
 
-- Port method에 ARN, bucket name, GCS URI class, Step Functions event, Lambda context 또는 Cloud Run request type을 넣지 않는다.
+- Port method에 provider resource name/URI, workflow event, function context 또는 job request type을 넣지 않는다.
 - `ArtifactRef`의 provider location은 adapter-owned opaque locator다. Core는 digest와 schema identity만 사용한다.
 - `SecretResolver` 결과를 domain/profile fingerprint에 넣지 않는다. Secret value는 log/artifact에 쓰지 않는다.
 - Orchestration port는 route, matrix와 result 전체를 state payload로 운반하지 않는다.
 - Provider retry와 application retry를 구분한다. Logical attempt 기록 없이 SDK가 business operation을 무한 재시도하게 두지 않는다.
 
-## 13. AWS reference architecture
+## 13. Physical topology와 provider boundary
 
-### 13.1 지위
+**`[DEFERRED]`** `Q-INFRA-01`이 보류인 동안 provider/product, orchestration·worker·storage service, deployment topology, resource sizing과 IaC를 선택·권장·구현 roadmap에 넣지 않는다. 현재 GCP deployment 자료와 SDK usage는 §2의 migration characterization 대상일 뿐 목표 architecture가 아니다.
 
-**`[AWS-REFERENCE]`** 이 절은 사용자 요구에 따라 AWS에서 logical architecture를 구현하는 교체 가능한 reference mapping이다. Production target 확정, resource 생성, traffic cutover 또는 `Q-INFRA-01` 해결을 뜻하지 않는다.
+이 문서가 지금 고정하는 것은 논리 책임뿐이다.
 
-AWS Step Functions Standard Workflow는 durable/auditable orchestration과 job-run integration을 제공하며, ECS/Fargate는 `ecs:runTask.sync`, Lambda는 optimized invoke integration으로 연결할 수 있다. 제품 특성은 [AWS Step Functions workflow type](https://docs.aws.amazon.com/step-functions/latest/dg/choosing-workflow-type.html), [ECS/Fargate integration](https://docs.aws.amazon.com/step-functions/latest/dg/connect-ecs.html), [Lambda integration](https://docs.aws.amazon.com/step-functions/latest/dg/connect-lambda.html)의 공식 문서를 deployment review 시 다시 확인한다.
-
-### 13.2 Reference component mapping
-
-| Logical responsibility | AWS reference | 비고 |
+| Logical responsibility | 현재 고정할 contract | 물리 구현 |
 |---|---|---|
-| Public submission/status | API Gateway + Lambda 또는 ECS service | Transport only; application use case 호출 |
-| Durable orchestration | Step Functions **Standard** | Round loop, wait, retry, fan-out/fan-in state |
-| Lightweight control task | Lambda | Register, assignment materialization, status/CAS, small aggregation |
-| Solver/verification worker | ECS task on Fargate를 기본 검토안으로 사용 | CPU/memory/duration이 가변적인 Java workload |
-| Optional bounded worker | Lambda | Workload evidence와 safety margin을 만족할 때만 |
-| Immutable artifact | S3 | Input/snapshot/warm-start/worker/result reference |
-| Idempotency/run state | DynamoDB | Conditional write/CAS가 가능한 logical state |
-| Container image | ECR | Digest-pinned image |
-| Secret | Secrets Manager 또는 Parameter Store의 secret facility | Adapter/bootstrap only |
-| Config artifact | Signed/versioned S3 object 또는 approved config service | Exact version/digest를 manifest에 bind |
-| Logs/metrics/traces | CloudWatch + OpenTelemetry-compatible export | Provider-neutral correlation fields 유지 |
-| Encryption key | KMS-backed adapter configuration | Core에 key/ARN 노출 금지 |
+| Submission/status | idempotent submission identity와 verified retrieval | Deferred |
+| Orchestration | run/round/worker transition, declared fan-out/fan-in와 completeness | Deferred |
+| Worker execution | immutable assignment, exact seed/config, cooperative cancellation | Deferred |
+| Artifact | immutable reference, digest, schema identity | Deferred |
+| State/publication | CAS, retry identity, terminal state와 audit trail | Deferred |
+| Secret/config/telemetry | opaque secret, exact config identity, portable correlation field | Deferred |
 
-서비스 선택은 reference이며 storage/state/config product를 logical port 의미로 끌어올리지 않는다.
+Physical implementation은 artifact reference만 전달하고 domain/result 의미, seed derivation, ALNS step, comparator 또는 verifier를 재구현해서는 안 된다. Provider/product를 선택할 수 있는 시점은 Master §16.3의 workload, security/access/retention/audit, retry/recovery, performance/cost evidence와 별도 scope approval 뒤다.
 
-Reference deployable은 다음처럼 분리한다.
+## 14. Logical multi-round execution
 
-| Deployable | 포함 module | 역할 |
-|---|---|---|
-| Submission API | `apps/api` + `rpdptw-application` + `adapters/aws` | Submit/status/result use case, workflow start |
-| Control function | Application의 작은 orchestration use case + AWS adapter | Register/CAS, assignment materialization, completeness와 publication |
-| Solver worker image | `apps/worker` + core/solver/verification/application + selected profiles + `adapters/aws` | Prepare 또는 search/verify/finalize headless command |
-| State machine definition | `deployment/aws` | Reference-only durable transition와 service integration |
-| Migration/ops tool | 별도 app 또는 CLI assembly | Replay, status repair, artifact validation; solver core 변경 없음 |
-
-한 worker image가 prepare와 solve command를 모두 제공할 수 있지만 runtime command와 IAM role은 분리한다. Submission API에 solver/search package를 직접 노출하거나 control function이 customer comparator를 다시 구현하지 않는다.
-
-### 13.3 Reference state machine
+**`[PORTABLE]`** 물리 dispatcher와 storage가 정해지지 않아도 application은 다음 논리 흐름을 구현·test double로 검증할 수 있다.
 
 ```text
-StartExecution(manifestRef)
-  → RegisterOrResumeExecution
-  → PrepareSolveSnapshot
-  → ForEachRound
-      → BuildWorkerAssignments
-      → Map each declared WorkerAssignment
-          → Dispatch Lambda or ECS RunTask.sync
-          → Record WorkerOutcome ref
-      → CheckDeclaredWorkerCompleteness
-      → SelectVerifiedRoundChampion
-      → PersistChampionAndNextRoundLineage
-  → PublishFinalVerifiedChampion
-  → MarkSucceeded
+immutable ExecutionManifest
+→ build up to 8 independent initial candidates
+→ phase-1: run each available candidate with exact screenMaxSteps to MAX_STEPS_REACHED and cache-free validation
+→ stable comparator/tie-break selects phase-1 champion
+→ build declared phase-2 WorkerAssignment list with that common warm start
+→ dispatch phase-2 logical workers
+    → load identical SolveSnapshot and declared warm start
+    → derive declared seed
+    → run exact phase2MaxSteps search config to MAX_STEPS_REACHED
+    → candidate verify
+    → return immutable verified-candidate outcome reference
+→ require declared worker completeness
+→ stable comparator/tie-break selects one round champion
+→ strictly better champion becomes next-round common warm start
+→ otherwise NO_STRICT_IMPROVEMENT; max round ends MAX_ROUNDS_REACHED
+→ final champion → finalize/audit → result verify → publication
 ```
 
-Step Functions는 다음을 담당한다.
+Each retry preserves `WorkerRunId`, seed, warm start, requested steps and logical worker identity; only the attempt identity may change. One missing, failed or unverified declared worker makes the round and official execution `INCOMPLETE`. Completion order never decides the champion. The round/worker counts, step budgets, max rounds and watchdog have no official values before `Q-BENCH-02` calibration.
 
-- Durable phase/round transition
-- 선언 worker의 fan-out과 모든 branch fan-in
-- 같은 logical identity를 유지하는 bounded platform retry
-- Wait, timeout와 failure routing
-- Cancellation 요청의 orchestration
-- 상태·artifact reference 전달
-- 실패/미완료 workflow의 audit trail
+Cancellation is a cooperative intent. An incomplete COW candidate is discarded, and intent, actual worker termination and last completed boundary are recorded separately. A retained committed candidate is never a normal result without both verification gates.
 
-Step Functions는 다음을 담당하지 않는다.
+## 15. Deferred infrastructure selection gate
 
-- Numeric/time/travel normalization 의미
-- Constraint, metric, score와 objective 계산
-- Seed derivation, ALNS step와 champion comparator 구현
-- Candidate/result verification 판정
-- Search cache 또는 route/result payload 보관
-- 일부 성공 worker를 official champion으로 승격
+`Q-INFRA-01`은 나중에 기본 provider를 고르라는 요청이 아니다. Master §16.3의 resume evidence와 별도 scope approval 뒤에만 별도 결정을 시작할 수 있다. 그 결정은 artifact identity, state/CAS, retry identity, cancellation, complete batch fan-in, result retrieval과 두 gate publication을 이미 검증된 logical port와 대조해야 한다.
 
-Champion 선택은 `SelectRoundChampion` application use case가 artifact를 읽고 stable comparator로 수행한다. State machine JSON/ASL expression에 objective 순서나 customer rule을 복제하지 않는다.
-
-### 13.4 Fan-out/fan-in
-
-Worker assignment가 작고 execution history/concurrency 범위 안이면 Inline Map을 사용할 수 있다. 더 큰 payload/history/concurrency가 필요하면 Step Functions Distributed Map을 adapter 전략으로 검토할 수 있다. Distributed Map은 Standard Workflow에서 지원되고 child execution과 S3 result writer를 사용할 수 있으나, 이 제품 선택이 logical worker count나 quality budget을 결정하지 않는다. 세부 기능은 [AWS Distributed Map 공식 문서](https://docs.aws.amazon.com/step-functions/latest/dg/state-map-distributed.html)를 따른다.
-
-**`[OPEN-EXPERIMENT]`** Round/worker 수와 concurrency를 이 문서에서 정하지 않는다. Step Functions `MaxConcurrency`도 승인된 manifest와 downstream capacity evidence에서 공급하며 hidden deployment default로 official run 의미를 바꾸지 않는다.
-
-Official execution에서는 platform의 failure-tolerance option이 “성공 worker 일부로 champion 생성”을 허용하게 구성해서는 안 된다. Retry exhaustion 뒤 선언 worker가 완전하지 않으면 application completeness check가 `INCOMPLETE`로 닫는다.
-
-### 13.5 Idempotency와 retry mapping
-
-- Step Functions execution name 또는 input은 `SolveId + ManifestFingerprint`에 연결한다.
-- Worker input은 route/result가 아니라 `WorkerAssignmentRef`와 expected digest를 전달한다.
-- ECS/Lambda retry는 같은 `WorkerRunId`, seed, warm start와 run config를 사용한다.
-- Worker는 시작 시 state repository에서 이미 완료된 동일 digest outcome을 확인할 수 있다.
-- Artifact write는 content digest 또는 conditional create를 사용한다.
-- Aggregation과 publication은 conditional state transition으로 중복을 흡수한다.
-- SDK retry count/backoff는 platform config이며 algorithm `maxSteps`, watchdog과 다른 항목이다.
-
-### 13.6 Cancellation
-
-```text
-Cancel API
-→ persist CANCEL_REQUESTED
-→ request Step Functions stop
-→ request active worker stop where supported
-→ worker observes cooperative cancellation at safe point
-→ discard incomplete COW candidate
-→ persist actual terminal state and last completed boundary
-```
-
-Step Functions execution이 중단되었다고 worker가 모두 즉시 종료되었다고 가정하지 않는다. ECS stop, Lambda cooperative polling과 lease expiry는 provider adapter가 구현하되 application의 cancellation intent와 actual worker termination을 별도로 기록한다. Last committed candidate가 있어도 두 verifier 없이는 정상 result가 아니다.
-
-## 14. Lambda와 ECS workload decision
-
-### 14.1 Decision rule
-
-**`[AWS-REFERENCE]`** Solver/search worker의 기본 검토안은 ECS/Fargate task다. RPDPTW search는 CPU-bound, duration/memory가 입력과 configuration에 따라 달라지고 Java process/resource 관측이 중요하기 때문이다. Lambda worker는 실측 workload가 bounded 조건을 충족할 때 사용할 수 있는 adapter 선택이다.
-
-Lambda timeout은 platform hard boundary이며 algorithm watchdog이나 정상 step budget이 아니다. 현재 AWS Lambda 공식 문서는 configurable timeout의 상한을 설명하므로 deployment 선택 시 [Lambda timeout 공식 문서](https://docs.aws.amazon.com/lambda/latest/dg/configuration-timeout.html)를 다시 검증한다. ECS/Fargate task는 task definition에서 CPU/memory와 container 실행을 명시할 수 있으며 [ECS task definition](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definitions.html)을 기준으로 sizing한다.
-
-### 14.2 Decision matrix
-
-| 기준 | Lambda가 적합한 신호 | ECS/Fargate가 적합한 신호 |
-|---|---|---|
-| 역할 | 접수, 작은 validation, assignment 작성, CAS publication | Portfolio, ALNS, full verification, 큰 preparation/audit |
-| Duration | 충분한 platform safety margin 안에서 일관되게 종료 | 길거나 분산이 크고 platform timeout 근접 위험 |
-| CPU | 짧은 burst, 낮은 지속 CPU 요구 | 지속 CPU-bound, JVM/thread tuning 필요 |
-| Memory | 작고 예측 가능 | 큰 matrix/candidate/cache 또는 instance별 변동 |
-| Temporary data | 작은 artifact reference 중심 | 큰 local working set/temporary artifact |
-| Packaging | 단순 handler | Container image, JVM flag/native library 제어 필요 |
-| Startup sensitivity | Event-driven 호출이 중요 | Task startup보다 실행 안정성과 resource 격리가 중요 |
-| Cancellation | Safe-point polling만으로 충분 | Stop task + cooperative cancellation 필요 |
-| Observability | 짧은 request trace | 긴 phase/step/resource profile 필요 |
-| Cost model | 드문 짧은 invocation | 긴 compute 또는 높은 sustained utilization |
-
-### 14.3 Selection gate
-
-Lambda solver adapter를 production 후보로 승인하려면 대표 corpus에서 다음 evidence가 필요하다.
-
-- Preparation/search/verification/finalization별 duration distribution
-- Peak/steady memory와 temporary storage
-- Cold/warm startup 영향
-- Platform timeout과 algorithm watchdog 사이 safety margin
-- Cancellation 관측과 incomplete candidate discard
-- 동일 manifest의 ECS/local 결과 fingerprint 동등성
-- Retry/idempotency와 duplicate outcome test
-- 비용과 운영 복잡도 비교
-
-Evidence가 없거나 workload가 경계에 가까우면 ECS reference를 유지한다. 이 판단은 official algorithm 수치나 `Q-INFRA-01`을 자동 해결하지 않는다.
-
-## 15. GCP/other-provider replacement boundary
-
-### 15.1 AWS ↔ GCP mapping
-
-**`[PORTABLE]`** 다음 교체에서 application/core module은 유지하고 provider adapter와 deployment만 바꾼다.
-
-| Logical port/runtime | AWS reference | GCP replacement example | 유지되는 것 |
-|---|---|---|---|
-| Durable workflow | Step Functions Standard | Workflows | Logical state/round/completeness |
-| Worker dispatch | Lambda invoke / ECS `RunTask.sync` | Functions / Cloud Run Job execution | `WorkerAssignment`, retry identity |
-| Parallel fan-out | Map/Distributed Map | Workflows parallel loop/child workflow | Declared worker set, stable fan-in |
-| Job wait | ECS `.sync` | Workflows Cloud Run Jobs connector | Logical completion/status |
-| Artifact | S3 | Cloud Storage | Digest/schema/provenance |
-| Run state/CAS | DynamoDB | Firestore 또는 승인된 transactional store | Idempotency/state version |
-| Secret | Secrets Manager | Secret Manager | Opaque secret boundary |
-| Image | ECR | Artifact Registry | Build/image digest |
-| Telemetry | CloudWatch/X-Ray/OTel | Cloud Logging/Monitoring/Trace/OTel | Correlation/event schema |
-| Cancellation | Workflow stop + ECS stop/cooperative signal | Workflow cancel + Cloud Run Job cancel/cooperative signal | Intent와 actual termination 분리 |
-
-GCP Workflows는 parallel step을 제공하고 Cloud Run Jobs connector가 job operation completion을 기다릴 수 있다. 교체 설계 시 [Workflows parallel steps](https://cloud.google.com/workflows/docs/execute-parallel-steps)와 [Cloud Run Jobs connector](https://cloud.google.com/workflows/docs/reference/googleapis/run/v2/projects.locations.jobs/run), [Cloud Run job execution](https://cloud.google.com/run/docs/execute/jobs)의 공식 문서를 확인한다.
-
-### 15.2 교체되지 않는 것
-
-- Canonical input/domain/travel/profile fingerprint
-- Worker/round identity와 seed derivation
-- COW search와 termination 의미
-- Candidate/result verification contract
-- Official completeness와 champion selection
-- Result/outcome/provenance schema identity
-- Artifact digest와 compare-and-set publication 의미
-- Retry가 logical worker config를 바꾸지 않는 규칙
-
-### 15.3 교체되는 것
-
-- SDK client와 provider event mapping
-- Workflow definition language
-- Compute invocation/job status mapping
-- Artifact URI/conditional-write implementation
-- State store transaction/lease implementation
-- Secret/config resolution
-- IAM/service identity, network와 encryption configuration
-- Logs/metrics/traces exporter
-- IaC와 deployment pipeline
-
-Cloud provider migration은 core rebuild 없이 adapter/app assembly 변경으로 가능해야 한다. 동일 golden manifest를 local/AWS/GCP adapter contract test에서 실행하여 logical event와 final fingerprint parity를 확인한다.
+그때의 provider adapter는 SDK/event mapping, workflow language, compute invocation, artifact locator, state transaction/lease, secret resolution, network/encryption, telemetry exporter와 deployment pipeline만 바꿀 수 있다. Canonical input/travel/profile fingerprint, worker/round identity, termination semantics, candidate/result verification, champion selection, outcome/provenance identity 또는 retry semantics는 바꿀 수 없다.
 
 ## 16. Configuration, secret, artifact와 provenance
 
@@ -1016,7 +864,7 @@ Cloud provider migration은 core rebuild 없이 adapter/app assembly 변경으�
 
 Environment variable은 app bootstrap에서 platform config/secret locator를 제공할 수 있지만 core가 직접 읽지 않는다. Solve 시작 뒤 semantic/profile/algorithm config를 mutable remote config에서 다시 읽지 않는다.
 
-**`[OPEN-EXPERIMENT]`** `Q-ALG-01`, `Q-BENCH-02` 항목은 explicit experiment/test config로만 제공한다. Official default가 없을 때 생략을 숫자 default로 채우지 않고 binding/manifest creation을 거부한다.
+**`[OPEN-EXPERIMENT]`** `Q-BENCH-02`의 `screenMaxSteps`, phase-2 worker 수·`phase2MaxSteps`·`maxRounds`와 watchdog은 explicit experiment/test config로만 제공한다. Official default가 없을 때 생략을 숫자 default로 채우지 않고 official manifest creation을 거부한다. 8개 initial portfolio와 phase-1/phase-2 structure 자체는 `Q-ALG-01`의 확정 계약이다.
 
 ### 16.2 Artifact contract
 
@@ -1059,7 +907,7 @@ submission/input digest
 → published payload digest
 ```
 
-Provider execution ID, container image digest, Lambda version/ECS task definition 또는 GCP revision은 runtime compatibility metadata로 남기되 domain result identity를 provider product에 종속시키지 않는다.
+향후 provider execution ID, runtime/image digest와 deployment revision은 runtime compatibility metadata로 남길 수 있지만 domain result identity를 provider product에 종속시키지 않는다.
 
 ## 17. Observability, retry, failure와 security boundary
 
@@ -1148,13 +996,13 @@ Fixture와 expected result가 비준수 입력을 canonical contract로 바꾸�
 | Propagation | Hand-calculated load/time/window/wait/rest/stop/drive resource, full-arc restart |
 | Evaluation API/runtime | Dependency closure, duplicate/unit mismatch rejection, profile isolation, comparator transitivity/stable tie |
 | Profile modules | Approved preset availability, default exactness, missing objective, cross-customer denial, config fingerprint |
-| Search | Four policy trace, best warm start inclusion, pair atomicity, COW isolation, cache-free equality, fault/cancel discard |
+| Search | 8개 policy combination trace, `CLOCK` unavailable case, phase-1 champion selection, pair atomicity, COW isolation, cache-free equality, fault/cancel discard |
 | Candidate verifier | Corrupted pair/terminal/travel/metric/objective rejection, poisoned cache 무관성 |
 | Finalization | Static `PROVEN`, required exhaustive audit, feasible insertion 발견의 no-auto-fix, bounded diagnostic |
 | Result verifier | Outcome exactly-one, ownership reference, summary/payload corruption, both-gate publication block |
 | Application runtime | State transition, idempotency conflict, duplicate worker, retry identity, completeness, cancellation |
 | Local adapter | Atomic artifact write, digest check, deterministic same-process run |
-| AWS/GCP adapter | Port contract parity, SDK error mapping, CAS, artifact digest, stop/cancel and retry fault |
+| 승인된 provider adapter | Port contract parity, SDK error mapping, CAS, artifact digest, stop/cancel and retry fault |
 | Architecture rules | Forbidden SDK/customer dependency, package layer, cycle, test dependency leakage |
 
 ### 18.3 Independent verifier evidence
@@ -1174,7 +1022,7 @@ Search와 verifier가 같은 bug를 공유하지 않도록 expected result는 ha
 
 ### 18.4 Provider compatibility suite
 
-모든 provider adapter는 같은 abstract port test를 실행한다.
+`Q-INFRA-01` 승인 뒤의 모든 provider adapter는 같은 abstract port test를 실행한다.
 
 ```text
 idempotent submit
@@ -1188,7 +1036,7 @@ incomplete round rejection
 both-gate publication CAS
 ```
 
-Provider emulator만으로 IAM, timeout, cancellation과 service integration 의미가 충분히 검증되지 않으면 isolated test environment에서 operational rehearsal를 추가한다.
+Provider emulator만으로 access control, timeout, cancellation과 service integration 의미가 충분히 검증되지 않으면 isolated test environment에서 operational rehearsal를 추가한다.
 
 ## 19. Maven build order와 implementation phases
 
@@ -1203,10 +1051,9 @@ Maven은 dependency graph로 실제 순서를 계산하지만 review 기준의 t
 4. rpdptw-solver + rpdptw-verification + profile modules
 5. rpdptw-application
 6. adapters/common
-7. adapters/aws + adapters/gcp
-8. apps/cli + apps/api + apps/worker
-9. architecture-rules + provider/end-to-end verification
-10. deployment packaging
+7. apps/cli + apps/api + apps/worker
+8. architecture-rules + logical-port/end-to-end verification
+9. provider adapter/deployment packaging (DEFERRED: `Q-INFRA-01` 승인 뒤)
 ```
 
 `mvn -pl <module> -am verify`가 필요한 선행 module과 evidence를 함께 실행해야 한다. App packaging만 성공하고 core verification이 생략되는 별도 fast path를 release build로 사용하지 않는다.
@@ -1218,22 +1065,21 @@ Maven은 dependency graph로 실제 순서를 계산하지만 review 기준의 t
 | `AR-0 / RM-0` | Parent/aggregator skeleton, architecture rules, status/traceability baseline | Question count와 forbidden value check, no cycle, document/link validation |
 | `AR-1 / RM-1` | `rpdptw-core`의 input/domain/normalization/travel package | Immutable `ProblemInstance` + complete `PreparedTravel`; numeric/time/pair/matrix evidence |
 | `AR-2 / RM-2` | `rpdptw-core`의 propagation/evaluation package + profile registry | Immutable `BoundProfile`; package/profile isolation, dependency/comparator evidence |
-| `AR-3 / RM-3` | Core insertion evaluator + `rpdptw-solver` portfolio | Verified best + explicit-config diverse candidates; rollback/dedup/trace evidence |
+| `AR-3 / RM-3` | Core insertion evaluator + `rpdptw-solver` portfolio | 최대 8개 independent candidate와 policy/route artifact; rollback/trace evidence |
 | `AR-4 / RM-4` | `rpdptw-solver`의 COW ALNS, termination, cache | Fault/cancel isolation, cache-free equality, normal deterministic rerun |
 | `AR-5 / RM-5` | `rpdptw-verification`의 candidate/finalization/result packages | Corruption rejection, complete audit/outcomes, both-gate publishable result |
 | `AR-6 / RM-8-local` | `rpdptw-application`, `adapters/common`, CLI/worker | Idempotent local end-to-end, cancellation, artifact identity, retrieval |
 | `AR-7 / RM-6-logical` | Provider-neutral multi-round coordinator와 fake dispatcher | Completion-order independence, retry identity, incomplete round rejection |
-| `AR-8 / RM-8-provider` | AWS reference adapter/app assembly; optional GCP parity adapter | Port contract, security/failure/cancel rehearsal, no core SDK dependency |
-| `AR-9 / RM-6-official` | Approved manifest와 official workflow | 두 calibration 승인 + compliant integer travel + all-worker verified run |
+| `AR-8 / RM-8-cutover` | Versioned adapter와 logical-port application integration | Compatibility, idempotency/cancellation, shadow와 rollback evidence |
+| `AR-9 / RM-6-official` | Approved manifest와 official workflow | `Q-BENCH-02` calibration 승인 + compliant integer travel + all worker `MAX_STEPS_REACHED`/verification |
 | `AR-10 / RM-7` | COW profiling | COW 유지 또는 별도 evidence/ADR; 자동 apply/undo 전환 없음 |
-| `AR-11 / RM-9` | Optional topology/variant/multi-trip 후속 | 각 deferred resume evidence와 별도 scope 승인 |
+| `AR-11 / RM-9` | Physical topology/variant/multi-trip 후속 | 각 deferred resume evidence와 별도 scope 승인 |
 
 ### 19.3 Phase dependencies
 
 - Port interface와 fake/local adapter는 `AR-0` 이후 core와 병행할 수 있다.
-- Provider adapter prototype은 logical port contract 뒤 시작할 수 있지만 production cutover는 `AR-5`를 우회할 수 없다.
-- AWS reference workflow는 `Q-INFRA-01`을 해결하지 않은 상태에서 test/reference artifact로 구현할 수 있다. Production activation은 별도 infrastructure decision이 필요하다.
-- Official `AR-9`는 `Q-ALG-01`, `Q-BENCH-02` 승인 수치와 compliant integer `D/U` fixture 없이는 닫을 수 없다.
+- Provider adapter/deployment work는 `Q-INFRA-01`의 resume evidence와 별도 scope approval 뒤에만 시작하며 production cutover는 `AR-5`를 우회할 수 없다.
+- Official `AR-9`는 `Q-BENCH-02` 승인 수치와 compliant integer `D/U` fixture 없이는 닫을 수 없다.
 - Apply/undo, route pool/MIP, optional variant와 multi-trip은 앞 phase 편의를 위해 미리 core에 넣지 않는다.
 
 ## 20. Architecture invariants와 anti-pattern
@@ -1266,9 +1112,9 @@ Maven은 dependency graph로 실제 순서를 계산하지만 review 기준의 t
 | `customerId` switch in propagator/ALNS | Customer 요구가 core release를 강제 |
 | Generic rule expression이 raw route/object를 reflection으로 읽음 | Type/unit/verifier closure 상실 |
 | `Map<String,Object>` domain extension | Fingerprint, validation, hot-path 안정성 상실 |
-| Step Functions ASL에 objective/comparator 구현 | Provider migration과 semantic parity 불가 |
-| S3/GCS URI를 domain ID로 사용 | Storage migration이 result identity 변경 |
-| Lambda timeout을 `MAX_STEPS_REACHED`로 변환 | 정상 품질 종료와 platform failure 혼합 |
+| Provider workflow definition에 objective/comparator 구현 | Provider migration과 semantic parity 불가 |
+| Provider URI를 domain ID로 사용 | Storage migration이 result identity 변경 |
+| Platform timeout을 `MAX_STEPS_REACHED`로 변환 | 정상 품질 종료와 platform failure 혼합 |
 | Retry 때 새 seed/warm start 선택 | 동일 logical worker가 아님 |
 | 성공 worker 일부로 official champion 확정 | Multi-round completeness 계약 위반 |
 | Search cache를 verifier와 공유 | Independent verification 붕괴 |
@@ -1288,16 +1134,15 @@ Maven은 dependency graph로 실제 순서를 계산하지만 review 기준의 t
 | `ADR-ARCH-004` | Typed domain/propagation facet SPI | 실제 고객 seam 사례와 verifier 영향 |
 | `ADR-ARCH-005` | Artifact canonical encoding, digest와 CAS model | Size/retention/security evidence |
 | `ADR-ARCH-006` | Run state, lease, duplicate completion과 publication consistency | Fault/idempotency rehearsal |
-| `ADR-ARCH-007` | AWS worker Lambda vs ECS 최종 선택 | Workload/cost/cancel evidence; `Q-INFRA-01` 연계 |
-| `ADR-ARCH-008` | Step Functions Map mode, concurrency와 retry topology | `Q-BENCH-02` + downstream capacity |
+| `ADR-ARCH-007` | Physical topology/provider/worker/storage 선택 | `Q-INFRA-01 DEFERRED` resume evidence와 별도 scope approval |
+| `ADR-ARCH-008` | Logical dispatcher의 concurrency/retry adapter mapping | `Q-BENCH-02` + downstream capacity, provider 결정 뒤 |
 | `ADR-ARCH-009` | Cancellation/recovery result external exposure | Product/error contract 승인 |
-| `ADR-ARCH-010` | GCP adapter parity와 cutover/rollback | Golden manifest와 shadow evidence |
+| `ADR-ARCH-010` | Approved provider adapter parity와 cutover/rollback | Golden manifest와 shadow evidence |
 | `ADR-ARCH-011` | JPMS 사용 여부 | Dependency/toolchain compatibility |
 | `ADR-ARCH-012` | Infrastructure production topology | **`Q-INFRA-01 DEFERRED`** resume evidence와 별도 승인 |
 
 별도 backlog:
 
-- `Q-ALG-01`: scorer, randomized starts, diverse `K`, light-search budget calibration
 - `Q-BENCH-02`: round/worker, warm-start assignment, `maxSteps`, watchdog calibration
 - `Q-INFRA-01`: provider/product/deployment topology production decision
 - `Q-VAR-01`: Optional variant feasibility 시점/대상
@@ -1311,7 +1156,7 @@ Maven은 dependency graph로 실제 순서를 계산하지만 review 기준의 t
 | Architecture area | Master | Domain | 질문/세션 |
 |---|---|---|---|
 | Input/domain/travel modules | §4, §5~§8, `RM-1` | §4~§9 | `Q-NUM-*`, `Q-MTX-*`, `Q-TIME-*`, `Q-IN-*` |
-| Pair/propagation/search | §6, §11~§13, `RM-3~4` | §10~§12 | `Q-REQ-*`, `Q-ALG-02` |
+| Pair/propagation/search | §6, §11~§13, `RM-3~4` | §10~§12 | `Q-REQ-*`, `Q-ALG-01~02` |
 | Profile/policy extension | §9, `RM-2` | §12, §20 | `Q-OBJ-*`, `Q-COMP-*` |
 | Verification/result | §10, §14.1, `RM-5` | §13~§16 | `Q-RES-*` |
 | Multi-round application | §13~§14.4, `RM-6` | §14.3 | `Q-BENCH-01~03` |
@@ -1323,16 +1168,16 @@ Maven은 dependency graph로 실제 순서를 계산하지만 review 기준의 t
 **`[CONTRACT]`** 이 Architecture Design 작성 뒤에도 질문 상태는 다음과 같다.
 
 ```text
-RESOLVED 24
-OPEN — EXPERIMENT_REQUIRED 2
+RESOLVED 25
+OPEN — EXPERIMENT_REQUIRED 1
 DEFERRED 2
 TOTAL 28
 ```
 
 - `Q-ALG-02`: **`RESOLVED — KEEP_COW`**
-- `Q-ALG-01`: **`OPEN — EXPERIMENT_REQUIRED`**, 공식 수치 없음
+- `Q-ALG-01`: **`RESOLVED`**. 4개 request-route 성장 정책 × 2 vehicle 순서, phase-1 screen과 phase-2 champion warm start가 확정됨
 - `Q-BENCH-02`: **`OPEN — EXPERIMENT_REQUIRED`**, 공식 수치 없음
-- `Q-INFRA-01`: **`DEFERRED`**. AWS reference는 production topology 결정이 아님
+- `Q-INFRA-01`: **`DEFERRED`**. 논리 port만 유지하며 provider/product를 선택하지 않음
 - `Q-VAR-01`: **`DEFERRED`**
 
 ### 22.3 최종 architecture summary
@@ -1358,9 +1203,8 @@ portable:
   artifact/result/provenance
 
 replaceable:
-  AWS Step Functions/Lambda/ECS/S3/DynamoDB
-  GCP Workflows/Functions/Cloud Run/Cloud Storage/state store
+  Q-INFRA-01 승인 뒤에만 선택할 provider/product/deployment adapter
   local filesystem/in-memory execution
 ```
 
-구현의 기준은 “특정 cloud에서 실행된다”가 아니라 **같은 immutable semantic snapshot과 logical execution contract가 local/AWS/GCP 어디서든 같은 verified result 의미를 보존한다**는 것이다.
+구현의 기준은 “특정 cloud에서 실행된다”가 아니라 **같은 immutable semantic snapshot과 logical execution contract가 local runner와 향후 승인된 infrastructure adapter에서 같은 verified result 의미를 보존한다**는 것이다.

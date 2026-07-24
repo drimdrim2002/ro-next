@@ -6,7 +6,7 @@
 
 - 각 번호는 별도 검토 세션에서 작성했다.
 - 이 단계는 앞으로의 구현을 명확히 하기 위한 **문서 작업**이다.
-- 코드와 기존 `master-design.md`, `domain-design.md`는 수정하지 않았다.
+- 최초 세션 01~18 작성 단계에는 코드와 당시 `master-design.md`, `domain-design.md`를 수정하지 않았다.
 - 확정되지 않은 내용은 각 문서의 `남은 질문`에 기록했다.
 - 각 문서의 제안은 질문에 답한 뒤 통합 Master Design에 반영한다. 질문이 남은 제안을 곧바로 확정 설계로 간주하지 않는다.
 
@@ -42,8 +42,9 @@
 | 26~28 | [Master review](26-master-review.md), [수정 기록](27-review-corrections.md), [독립 재검토](28-master-re-review.md) | Verifier/governance correction과 `READY_FOR_REVIEW` 판정 |
 | 29 | [열린 질문 인터뷰](29-open-question-interview.md) | 26개 interview 대상의 권위 있는 사용자 답변 |
 | 30 | [열린 질문 통합](30-open-question-integration.md) | Master·질문 등록부·영향 세션 반영과 validation 기록 |
+| 31 | [Domain Design 통합](31-domain-design-integration.md) | 세션 29 결정에 맞춘 상세 Domain Design 재구성과 정합성 validation 기록 |
 
-세션 09~16과 20~24의 상단 “세션 30 통합 상태”는 본문의 과거 TBD/임시값이 현재 계약으로 오해되지 않도록 하는 최소 overlay다. 규범 의미는 Master와 질문 등록부를 따른다.
+세션 09~16과 20~24의 상단 “세션 30 통합 상태”는 본문의 과거 TBD/임시값이 현재 계약으로 오해되지 않도록 하는 최소 overlay다. 현재 상세 도메인 의미는 Master, 질문 등록부와 세션 31을 통해 갱신된 Domain Design을 함께 검토하되 conflict authority는 Master §1을 따른다.
 
 ## 권장 검토 순서
 
@@ -66,7 +67,7 @@
 
 ## 최초 검토 당시 다음 단계
 
-아래 항목은 세션 01~18 작성 당시의 역사적 계획이다. 현재 상태와 다음 gate는 [질문 등록부](../master-design-open-questions.md)와 [세션 30](30-open-question-integration.md)을 따른다.
+아래 항목은 세션 01~18 작성 당시의 역사적 계획이다. 현재 상태와 다음 gate는 [질문 등록부](../master-design-open-questions.md), [세션 30](30-open-question-integration.md)과 [세션 31](31-domain-design-integration.md)을 따른다.
 
 1. 각 문서의 `남은 질문`에 답변하거나 명시적으로 보류한다.
 2. 질문 답변을 해당 세션 문서에 반영해 `확정 사항`과 `잠정안`을 분리한다.

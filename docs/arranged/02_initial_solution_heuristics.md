@@ -308,7 +308,7 @@ score(i, u)
 | objective weighting | vehicle count, distance, waiting, slack preservation |
 | randomization | top-k random, softmax, noise, randomized seed |
 
-초기 추천 포트폴리오:
+초기 추천 포트폴리오(일반 연구 예시이며 현재 프로젝트의 확정 policy는 §11을 따른다):
 
 ```text
 P1: Sequential insertion - farthest seed
@@ -321,31 +321,26 @@ P7: Randomized nearest feasible neighbor
 P8: Randomized regret insertion
 ```
 
-## 11. Racing 전략
+## 11. 프로젝트의 two-phase portfolio ALNS
 
-단순 병렬 실행은 모든 정책에 같은 시간을 준다.
-
-```text
-1. 각 휴리스틱 정책 독립 실행
-2. 후보 solution 생성
-3. objective 기준 best 선택
-```
-
-Racing은 가능성이 낮은 run을 빨리 중단하고 유망한 run에 시간을 더 준다.
+현재 프로젝트의 initial portfolio는 request-route 성장 정책 4개와 vehicle 순서 2개를 조합한 최대 8개 candidate다. candidate 하나가 8개가 되는 것이 아니라, 8개 조합이 독립적으로 initial solution과 ordered route artifact를 하나씩 만든다.
 
 ```text
-0.00s ~ 0.20s:
-  빠른 construction 여러 개 생성
+Phase 1
+8개 initial candidate 생성
+→ candidate마다 고정 screenMaxSteps ALNS 실행
+→ comparator로 phase-1 champion 하나 선택
 
-0.20s ~ 0.60s:
-  상위 후보에 light local search 적용
-
-0.60s ~ 0.90s:
-  route elimination, regret repair 시도
-
-0.90s ~ 1.00s:
-  best solution과 diverse top-K 정리
+Phase 2
+phase-1 champion을 공통 warm start로 사용
+→ seed / destroy / repair config가 다른 worker batch 실행
+→ 모든 worker 종료·검증 후 round champion 선택
+→ strictly better면 다음 round
+→ equal/worse면 종료
+→ maxRounds에서도 종료
 ```
+
+Wall-clock 시간은 quality budget이 아니라 watchdog/관측값이다. `screenMaxSteps`, phase-2 worker 수·`phase2MaxSteps`·`maxRounds`는 calibration으로 정한다. worker 하나가 먼저 끝났거나 좋아 보인다는 이유로 batch를 중단하지 않으며, fan-in 뒤 stable comparator로만 champion과 plateau를 판정한다.
 
 ## 12. Route Elimination
 
@@ -403,19 +398,16 @@ route pool pruning 기준:
 
 ```text
 1. 공통 insertion evaluator
-2. construction 4개 구현
-   - sequential insertion - farthest seed
-   - sequential insertion - earliest-deadline seed
-   - parallel regret-2 insertion
-   - randomized regret-3 insertion
-3. light local search
-   - intra-route relocate
-   - intra-route 2-opt
-   - inter-route relocate
-   - limited 2-opt*
-4. route elimination
-5. portfolio runner
-6. ALNS initial solution 연결
-7. route pool과 MIP column 연결
+2. request-route 성장 정책 4개 구현
+   - CLOCK
+   - SEQ_FARTHEST
+   - SEQ_LARGE_DEMAND
+   - SEQ_EARLIEST_DEADLINE
+3. DIRECT-first vehicle 순서 2개 구현
+   - DIRECT_FIRST_LARGE
+   - DIRECT_FIRST_SMALL
+4. 4 × 2 portfolio runner와 route artifact 기록
+5. phase-1 per-candidate ALNS screen과 champion selection
+6. phase-2 worker batch, stable fan-in과 plateau/max-round 종료
+7. route pool export 경계와 MIP column 연결은 별도 승인 후 구현
 ```
-

@@ -2,7 +2,7 @@
 
 ```yaml
 status: REVIEW
-version: 2.1-review
+version: 2.2-review
 last_updated: 2026-07-24
 owner: RPDPTW Domain·Input·Evaluation·Result 설계 역할
 scope: Master Design의 도메인, 정규화, travel preparation, 해 상태, 전파, 평가와 결과 계약의 상세화
@@ -52,7 +52,7 @@ related_decisions:
 - MDVRP·OVRP·SDVRP 구현
 - 특정 cloud, orchestration product, storage와 deployment topology
 - 동적 교통, 실시간 replanning, geocoding과 주소 정제
-- `Q-ALG-01`, `Q-BENCH-02`의 evidence 없는 공식 수치
+- `Q-BENCH-02`의 calibration/approval evidence 없는 공식 실행 수치
 
 Multi-trip, infrastructure와 optional variant를 표현하기 위한 좁은 경계는 보존하되 활성화하지 않는다.
 
@@ -62,8 +62,10 @@ Multi-trip, infrastructure와 optional variant를 표현하기 위한 좁은 경
 external bytes/reference
 → versioned input adapter
 → canonical business input
-→ normalization + profile binding
+→ normalization
 → immutable ProblemInstance + prepared travel data
+→ exact profile/config binding
+→ immutable solve snapshot
 → portfolio/ALNS candidate state
 → candidate solution verifier
 → finalization audit + outcomes/diagnostics
@@ -83,7 +85,7 @@ external bytes/reference
 | Search state | Route sequence, bank membership, current/best | Final status와 final reason |
 | Finalization/result | Verified outcome, diagnostic, summary, provenance | Search mutation |
 
-의존 방향은 `adapter → application orchestration → domain/evaluation/algorithm`이다. Core는 backend timezone, cloud SDK, storage path와 customer name을 참조하지 않는다.
+외부 adapter와 infrastructure implementation은 application orchestration/logical port를 통해 domain·evaluation·algorithm의 immutable contract를 소비한다. Core는 backend timezone, provider SDK, storage path와 customer name을 참조하지 않는다.
 
 ### 3.1 Architecture package mapping
 
@@ -97,7 +99,7 @@ external bytes/reference
 | Candidate verification, finalization과 result verification | `rpdptw-verification` | `verification.candidate`, `result.finalization`, `verification.result` |
 | Use case, logical port와 distributed execution identity | `rpdptw-application` | `application.port`, `application.service`, `application.execution` |
 | Customer-specific composition | 독립 profile JAR | `profile.<stable_namespace>` |
-| JSON/local/cloud mapping | `adapters/common`, `adapters/aws`, `adapters/gcp` | `adapter.json`, `adapter.local`, `adapter.aws`, `adapter.gcp` |
+| JSON/local mapping과 future infrastructure mapping | `adapters/common`과 향후 승인된 provider adapter | `adapter.json`, `adapter.local`, 승인 후 확정할 provider package |
 
 Domain, normalization, travel, propagation과 evaluation이 같은 `rpdptw-core` Maven module에 있어도 이 절의 단방향 의미 책임은 합쳐지지 않는다. Package-private visibility와 architecture test가 다음 package 규칙을 강제해야 한다.
 
@@ -858,11 +860,11 @@ optional mandatoryUnassignedCount
 - LEASE vehicle이 입력됐지만 preset이 outsourced objective를 지원하지 않으면 bind error
 - 고정 `1:100`, 음수 score 또는 instance Big-M로 strict priority를 흉내 내지 않음
 
-### 12.4 Portfolio configuration boundary
+### 12.4 Portfolio와 phase configuration boundary
 
-Domain/evaluation은 네 construction policy의 candidate를 같은 bound comparator로 비교할 수 있어야 한다. Comparator상 best는 항상 ALNS warm-start에 포함되고 diverse set은 추가다.
+`Q-ALG-01`의 현재 계약은 4개 request-route 성장 정책(`CLOCK`, `SEQ_FARTHEST`, `SEQ_LARGE_DEMAND`, `SEQ_EARLIEST_DEADLINE`)과 2개 `DIRECT`-first vehicle 순서(`DIRECT_FIRST_LARGE`, `DIRECT_FIRST_SMALL`)를 조합한 최대 8개 독립 candidate다. 모든 construction은 같은 side-effect-free atomic pair evaluator와 bound comparator를 사용한다.
 
-Scorer 공식, randomized start 수, diverse `K`, light-search budget은 `Q-ALG-01`의 experiment-required 항목이다. Domain config는 explicit experiment/test value를 받을 수 있지만 hidden official default를 제공하지 않는다.
+각 available candidate는 exact `screenMaxSteps`의 phase-1 ALNS screen을 `MAX_STEPS_REACHED`로 완료하고, cache-free validation 뒤 stable comparator로 하나의 phase-1 champion을 고른다. Phase 2는 그 champion만 공통 warm start로 사용해 declared worker batch를 실행한다. `screenMaxSteps`, `phase2MaxSteps`, worker 수, `maxRounds`, watchdog의 공식 수치만 `Q-BENCH-02` calibration 전까지 없다. Domain config는 이 값에 hidden official default를 제공하지 않는다.
 
 ## 13. Finalization, outcomes와 diagnostics
 
@@ -1014,7 +1016,7 @@ next-round lineage
 
 ### 15.3 Termination과 result
 
-`MAX_STEPS_REACHED`만 정상 품질 종료다. Watchdog, cancellation, resource, platform timeout과 failure는 별도다. 예외 종료의 last committed best도 두 verifier를 통과해야 recovery candidate가 될 수 있고 official benchmark completion으로 표시하지 않는다.
+`MAX_STEPS_REACHED`(계획된 stage/worker step 완료), `NO_STRICT_IMPROVEMENT`(완결된 phase-2 batch의 stable champion이 이전 champion보다 엄격히 좋지 않음), `MAX_ROUNDS_REACHED`(configured round 완료)는 정상 품질 종료다. Watchdog, cancellation, resource, platform timeout과 failure는 별도다. 예외 종료의 last committed best도 두 verifier를 통과해야 recovery candidate가 될 수 있고 official benchmark completion으로 표시하지 않는다.
 
 ## 16. Acceptance evidence
 
@@ -1084,7 +1086,7 @@ seed derivation and actual seeds
 round/run/warm-start lineage
 stage maxSteps
 stable iteration/reduction/tie-break
-normal MAX_STEPS_REACHED termination
+normal `MAX_STEPS_REACHED`, `NO_STRICT_IMPROVEMENT` 또는 `MAX_ROUNDS_REACHED` termination
 ```
 
 ## 17. Deferred boundaries
@@ -1109,7 +1111,7 @@ normal MAX_STEPS_REACHED termination
 | Size/zone | `Q-COMP-01~02` | §5.3, §7.5 |
 | Service pattern/trip | `Q-REQ-01~02` | §5~§6 |
 | Profile/objective | `Q-OBJ-01~03` | §9 |
-| Candidate strategy | `Q-ALG-02`; `Q-ALG-01` experiment-required | §11~§12 |
+| Candidate strategy | `Q-ALG-01`, `Q-ALG-02` | §11~§12 |
 | Outcome/audit | `Q-RES-01~02` | §10, §14 |
 | Benchmark | `Q-BENCH-01`, `Q-BENCH-03`; `Q-BENCH-02` experiment-required | §14 |
 | Deferred | `Q-INFRA-01`, `Q-VAR-01` | §4, §16 |
@@ -1127,8 +1129,8 @@ Architecture 배치 traceability:
 Question status count:
 
 ```text
-RESOLVED 24
-OPEN — EXPERIMENT_REQUIRED 2
+RESOLVED 25
+OPEN — EXPERIMENT_REQUIRED 1
 DEFERRED 2
 TOTAL 28
 ```
@@ -1143,8 +1145,8 @@ TOTAL 28
 5. Size/capability/zone produce static facts and route-level zone constraint.
 6. Travel preparation preserves provided D/U and generates only missing values.
 7. Immutable problem/profile/plan snapshots are fingerprinted.
-8. Portfolio creates verified best plus experiment-configured diverse candidates.
-9. COW ALNS mutates request pairs atomically.
+8. Portfolio creates up to eight independent candidates; phase 1 selects one verified champion, then phase 2 improves it in complete worker batches.
+9. COW ALNS mutates request pairs atomically and completes normal termination only through the declared step/round contract.
 10. Candidate verifier recomputes the committed candidate cache-free.
 11. Finalization creates preliminary outcomes and audits required unassigned requests.
 12. Result-integrity verifier checks partition, audit confidence, summary and payload.
@@ -1183,6 +1185,6 @@ search membership ≠ final outcome/diagnostic
 logical execution ≠ physical infrastructure
 ```
 
-현재 기본은 immutable normalized problem, prepared travel data, atomic request pair, copy-on-write candidate와 two-gate publication이다. 남은 활성 질문은 수치가 없는 두 calibration protocol뿐이며, infrastructure와 variants는 deferred다.
+현재 기본은 immutable normalized problem, prepared travel data, atomic request pair, copy-on-write candidate와 two-gate publication이다. 남은 활성 질문은 `Q-BENCH-02`의 공식 실행 수치 calibration 하나뿐이며, infrastructure와 variants는 deferred다.
 
 Java/Maven 배치는 이를 `rpdptw-core`의 package 경계, 독립 `rpdptw-solver`와 `rpdptw-verification`, provider-neutral `rpdptw-application`, 교체 가능한 adapter/profile JAR로 구현한다. Maven module 수를 논리 계층 수와 같게 만들지 않으며, 같은 core module 안에서도 이 문서의 의미 경계는 package와 architecture test로 유지한다.
