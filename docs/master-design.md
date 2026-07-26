@@ -2,8 +2,8 @@
 
 ```yaml
 status: REVIEW
-version: 3.2-review
-last_updated: 2026-07-24
+version: 3.3-review
+last_updated: 2026-07-26
 owner: RPDPTW 설계 책임 역할
 scope: 개발자가 RPDPTW 솔버를 구현하기 위한 전체 구조, 컴포넌트 책임, 계약, 구현 순서와 검증 evidence
 supersedes: 이 파일의 기존 legacy 통합 초안
@@ -29,7 +29,7 @@ related_decisions:
   - **9. Extensible policy, evaluation과 profile architecture**
   - **10. Search solution과 final result**
 - 탐색과 실행 제어
-  - **11. Initial portfolio와 ALNS pipeline**
+  - **11. Initial portfolio, ALNS와 route-selection pipeline**
   - **12. Candidate state, cache와 rollback**
   - **13. Termination, reproducibility와 execution provenance**
 - 검증과 구현 전환
@@ -64,6 +64,16 @@ related_decisions:
 
 이 문서는 구현 완료 보고가 아니다. 현재 코드, 테스트, 배포 또는 benchmark가 아래 설계를 구현했다고 주장하지 않는다. 상태는 `REVIEW`이며 `APPROVED` 기준으로 인용할 수 없다.
 
+2026-07-26 inventory 기준 상태를 다음처럼 구분한다.
+
+| 구분 | 실제 상태 | 이 문서의 해석 |
+|---|---|---|
+| Current Java/GCP path | 입력 내용을 읽지 않고 합성 objective를 만드는 `AlnsBatchEngine` placeholder와 orchestration demo | Migration characterization 대상이며 ALNS 품질·feasibility evidence가 아님 |
+| Target ALNS | 본 문서의 immutable domain, pair destroy/repair, COW, adaptive search와 verifier | 상세 설계 단계이며 구현·benchmark 완료가 아님 |
+| Target route pool/MIP | §11.7~§11.10과 `RM-9A`~`RM-9C`의 optional hybrid contract | `C-17` gate 아래의 구현 가능한 설계. Solver·라이선스·실험 승인 전 production 활성화 아님 |
+
+이후 “현재 기본”은 실제 placeholder가 그 동작을 한다는 뜻이 아니라 **승인될 목표 구현의 기본 계약**을 뜻한다. 실제 구현 상태를 주장할 때는 source/test/evidence inventory를 별도로 제시해야 한다.
+
 ### 1.2 이 문서로 할 수 있는 일과 할 수 없는 일
 
 이 문서는 다음 용도로 사용한다.
@@ -79,7 +89,9 @@ related_decisions:
 - 구체 Java package/class/method, wire DTO, 저장 schema와 배포 topology
 - AWS, GCP 또는 특정 orchestration·worker·storage product
 - 실험 결과가 없는 phase별 `maxSteps`, phase-2 worker/round 수와 watchdog
-- 현재 범위 밖의 multi-trip/rotation, route pool/MIP 또는 선택 변형
+- 현재 코드가 목표 ALNS/MIP를 이미 구현했다는 주장
+- Route pool/MIP의 production 활성화, 특정 optimizer 제품·라이선스와 공식 수치의 승인
+- 현재 범위 밖의 multi-trip/rotation 또는 선택 변형
 
 문서의 논리 컴포넌트명과 산출물명은 책임을 설명하는 구현 경계다. 사용자 답변으로 확정된 외부 field와 의미를 제외하면 그대로 API 이름이 되어야 한다는 뜻이 아니다.
 
@@ -104,6 +116,7 @@ related_decisions:
 |---|---|---|
 | 이 Master | 구현할 전체 시스템, 컴포넌트 책임, 의존 방향, 구현 순서와 phase gate | 개발자가 시작하는 단일 상위 설계 |
 | [Domain Design](domain-design.md) | domain/input/normalization/travel/state/evaluation/result의 더 세밀한 규칙과 acceptance 사례 | Master 경계를 상세화하며 Master보다 높은 conflict authority를 갖지 않음 |
+| [Architecture Design](architecture-design.md) | Java/Maven module, package DAG, optimizer backend와 runtime/port 배치 | Master/Domain 의미를 구현 구조에 배치하며 별도 semantic authority를 만들지 않음 |
 | [질문 등록부](master-design-open-questions.md) | 28개 `Q-*`의 현재 상태, exact decision, evidence, owner와 gate | 질문 상태의 단일 색인 |
 | [세션 29](master-design-sessions/29-open-question-interview.md) | 사용자 답변과 해석 원문 | 질문 결정의 권위 있는 답변 근거 |
 | [세션 30](master-design-sessions/30-open-question-integration.md) | 세션 29 결정을 Master/register/역사 세션에 반영한 기록 | 통합 범위와 validation history |
@@ -121,6 +134,7 @@ Master는 “어떤 시스템을 어떤 순서로 구현하는가”를 소유�
 | **MAY** | 계약을 깨지 않는 선택 또는 확장점 |
 | **TBD** | 중앙 질문의 결정 없이는 의미를 확정할 수 없음 |
 | **DEFERRED** | 재개 조건과 별도 승인 전에는 현재 구현 범위가 아님 |
+| **GATED TARGET** | 상세 target contract는 설계·review할 수 있지만 구현 착수와 production default 활성화는 명시된 gate·별도 승인 전 금지 |
 
 결정 상태는 다음처럼 해석한다.
 
@@ -128,6 +142,7 @@ Master는 “어떤 시스템을 어떤 순서로 구현하는가”를 소유�
 - **질문 결정**: 질문 등록부의 `RESOLVED` 질문과 세션 29에 기록된 사용자 답변이다.
 - **잠정**: 사용자 결정으로 대체되지 않은 `P-*` 방향이다. 책임 경계는 검토 입력이지만 이름, API, 기본값 또는 활성 범위는 확정되지 않았다.
 - **실험 대기**: `OPEN — EXPERIMENT_REQUIRED`다. 프로토콜은 결정되었지만 공식 수치는 승인된 실험 결과 전까지 만들 수 없다.
+- **Gated target**: 의미·API 경계와 exit evidence를 구체화하되 predecessor evidence와 별도 scope approval 전에는 구현/활성화하지 않는다. `C-17` route pool/MIP가 여기에 해당한다.
 - **보류**: `DEFERRED`이며 현재 roadmap을 막지 않고 질문하거나 활성화하지 않는다.
 
 현재 질문 상태는 `RESOLVED 25`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 2`다. `Q-ALG-01`은 8개 초기해와 phase-1 선별 구조로 해결됐고, `Q-ALG-02`는 `RESOLVED — KEEP_COW`다. `Q-BENCH-02`만 수치 없는 실험 대기이며 `Q-INFRA-01`·`Q-VAR-01`은 보류다.
@@ -162,6 +177,9 @@ Master는 “어떤 시스템을 어떤 순서로 구현하는가”를 소유�
 - 고객사별 constraint, neutral metric, score, objective, `SolvePlan`과 immutable profile binding
 - 4개 request-route 성장 정책과 2개 vehicle 순서를 조합한 8개 initial portfolio, phase-1 ALNS 선별과 phase-2 병렬 ALNS 개선
 - request-pair ALNS, bounded improvement와 fleet attempt
+- **`[C-17 GATED TARGET]`** 수락 여부와 분리된 hard-feasible route 수집, immutable route pool snapshot과 deterministic merge
+- **`[C-17 GATED TARGET]`** Solver-neutral route-selection projection, exact set-partition 후보와 ALNS incumbent fallback
+- **`[C-17 GATED TARGET]`** Worker-local ALNS segment → route pool seal → optional MIP selection → full-evaluated next warm start의 inner hybrid phase
 - copy-on-write candidate state, cache 무효화와 rollback/discard
 - step 기반 정상 종료와 watchdog/cancellation/resource/failure 분리
 - search state와 final result의 분리 및 evidence-bounded diagnostic
@@ -172,7 +190,8 @@ Master는 “어떤 시스템을 어떤 순서로 구현하는가”를 소유�
 
 ### 2.3 명시적 비범위
 
-- route pool과 set-covering/set-partitioning MIP 후처리
+- Route pool/MIP를 production 기본값으로 활성화하거나 특정 상용 optimizer·라이선스를 승인하는 일
+- Route pool pruning 상한, MIP work/time budget과 official hybrid schedule의 실험 없는 고정
 - MDVRP, OVRP, SDVRP 등 선택 변형 구현
 - 구체 cloud/provider/product/runtime, 실행·저장 service 또는 배포 단위
 - 실시간 동적 routing, 교통정보 결합, geocoding과 주소 정제
@@ -194,6 +213,7 @@ Master는 “어떤 시스템을 어떤 순서로 구현하는가”를 소유�
 | 6. 정상 실행의 재현성 | 고정된 problem/travel/profile/config/build, seed lineage, step budget과 stable order에서 정상 종료한 실행은 같은 trace·solution·result fingerprint를 만든다. Watchdog, cancellation, resource limit과 failure는 정상 품질 종료와 구분된다. | fixed reproducibility envelope의 반복 실행에서 completed step/round, champion, solution/result fingerprint가 일치하는 trace; 중단된 step이 state를 전진시키지 않는 fault test. | seed만 같게 두는 것, 또는 시간 제한으로 우연히 같은 결과가 나온 한 번의 실행. |
 | 7. Win benchmark 비교의 정당성 | Official baseline과 challenger는 완전히 같은 immutable manifest의 fixture, contracts, profile, build, seed/step, metric과 verifier를 사용하며, 선언된 모든 worker가 정상 완료·검증된 champion만 비교한다. | complete-batch fan-in, retry identity, incomplete worker 차단, completion-order 독립성, 동일 manifest 재실행과 exact comparator 사례. | 일부 성공 worker의 가장 좋은 해, 다른 fingerprint의 결과, 또는 현재 비준수 fixture로 만든 baseline. |
 | 8. roadmap gate의 실제 종료 | 각 `RM-*` phase는 entry condition을 충족하고 다음 phase가 소비할 deliverable을 만들며, §15의 exit evidence로 계약과 failure handling을 입증한다. | phase별 evidence bundle과 traceability: 특히 `RM-1`~`RM-5` end-to-end verified result, `RM-6` official workflow, `RM-8` cutover/rollback rehearsal. | source file, test file, mock, demo 화면 또는 happy-path test가 존재하는 것만으로 phase를 `DONE` 처리하는 것. |
+| 9. Optional hybrid recombination의 진실성 | 활성화한 경우 pool의 모든 artifact는 immutable exact route이고, selector는 profile 의미를 exact column으로 투영하거나 명시적으로 skip하며, materialization/full evaluation 뒤 strictly better candidate만 warm start가 된다. | Rejected-route harvest, deterministic pool merge/dominance, tiny exact-model oracle, status/license/conversion fault fallback, adopted-only feedback와 incumbent fingerprint 보존. | MIP가 `ObjVal`을 반환한 것, raw selected route를 이어 붙인 것, 또는 ALNS보다 한 사례에서 좋아진 것. |
 
 완료 주장은 목적에 따라 필요한 gate를 구분해야 한다.
 
@@ -201,7 +221,7 @@ Master는 “어떤 시스템을 어떤 순서로 구현하는가”를 소유�
 - **Win PoC official baseline 또는 challenger 비교**는 여기에 `RM-6`의 compliant integer fixture와 `Q-BENCH-02` 승인 수치, complete verified worker evidence를 추가로 요구한다.
 - **실제 application cutover**는 여기에 `RM-8`의 semantic compatibility, idempotency/cancellation과 rollback evidence를 추가로 요구한다.
 - `RM-7`은 COW를 apply/undo로 바꾸기 위한 자동 관문이 아니다. COW 유지도 profiling evidence가 있으면 정상적인 완료 결과다.
-- `RM-9`의 route pool/MIP, 현재 core를 넘어서는 변형, physical topology는 이 Master의 자동 완료 항목이 아니며 별도 scope approval을 받아야 한다.
+- `RM-9A`~`RM-9C`는 route pool/MIP의 구현 가능한 상세 target이지만 `C-17`에 따라 자동 착수·production 활성화 항목은 아니다. Verified ALNS baseline, solver/licensing/fallback 승인과 별도 scope approval을 받아야 한다.
 
 따라서 “최적해를 찾았다”, “benchmark 숫자가 좋아졌다”, “API가 응답한다”는 각각 일부 관측일 뿐 구현 완료 증명은 아니다. 완료 evidence는 정확성, 의미 보존, 독립 검증, 재현성, 비교 가능성과 운영 전환 안전성을 함께 보여야 한다.
 
@@ -223,6 +243,10 @@ Master는 “어떤 시스템을 어떤 순서로 구현하는가”를 소유�
 | `SolvePlan` | stage 순서, warm-start, 선행 목표 보호와 budget reference를 조정하는 상위 계약 |
 | `SearchRequestBank` | 탐색 중 정규 route에 없는 request ID membership |
 | final outcome | 검증된 최종 request의 `ASSIGNED` 또는 `UNASSIGNED` partition |
+| evaluated route artifact | 하나의 hard-feasible immutable route와 authoritative evaluation을 보존하는 projection-independent pool 항목 |
+| projected route column | evaluated route artifact를 특정 exact projection으로 변환한 request/vehicle/resource/objective 계수와 stable ID |
+| route pool | 동일 solve authority에 속하는 evaluated route artifact를 deterministic merge한 저장소. Live pool이 아니라 sealed snapshot만 selector에 전달 |
+| hybrid phase | 한 worker 안의 ALNS segment, worker-local pool seal, optional route selection, reconstruction·full evaluation과 champion adoption을 하나의 commit 경계로 묶은 실행 |
 
 ### 3.2 확정 결정 색인
 
@@ -244,12 +268,12 @@ Master는 “어떤 시스템을 어떤 순서로 구현하는가”를 소유�
 | `C-14` | `ro_input_json_spec.pdf`는 legacy CVRPTW 사례이지 canonical RPDPTW schema가 아니다. |
 | `C-15` | search bank의 membership과 final `ASSIGNED`/`UNASSIGNED` outcome·diagnostic을 분리한다. 차량의 직영/외주 소유 유형은 outcome status가 아니다. |
 | `C-16` | 4개 request-route 성장 정책과 2개 `DIRECT`-first vehicle 순서를 조합해 최대 8개 initial solution을 만든다. 각 후보는 fixed `screenMaxSteps` ALNS를 거친 뒤 comparator상 phase-1 champion 하나를 고르고, phase 2는 그 champion을 공통 warm start로 사용한다. |
-| `C-17` | route pool/MIP는 deferred다. |
+| `C-17` | Route pool/MIP는 **GATED TARGET**이다. Solver-neutral target contract, fallback과 phase gate는 설계·review할 수 있지만 `RM-9A`~`RM-9C`의 predecessor evidence와 별도 scope approval 전에는 구현 착수와 production default 활성화를 금지한다. |
 | `C-18` | Win PoC 전용 네 성분 comparator는 미배정 수, 배차 차량 수, 전체 거리, 전체 운영시간 순이며, official run은 고정 round plan의 완결된 verified champion을 사용한다. |
 | `C-19` | 선택 변형 문제는 구현이 아니라 deferred feasibility work다. |
 | `C-20` | 구체 infrastructure/product/deployment topology는 deferred이고 Master는 논리 port만 소유한다. |
 | `C-21` | 독립 verifier를 통과하지 않은 후보는 정상 publication 또는 benchmark 대상이 아니다. |
-| `C-22` | 강한 재현성은 고정 fingerprint/seed/order/step의 정상 `MAX_STEPS_REACHED` 실행에 한정한다. |
+| `C-22` | 강한 재현성은 고정 fingerprint/seed/order/step 아래 모든 worker가 계획 step을 완료하고 coordinator가 `MAX_STEPS_REACHED`, `NO_STRICT_IMPROVEMENT` 또는 `MAX_ROUNDS_REACHED`로 정상 종료한 실행에 한정한다. |
 
 ### 3.3 잠정 설계 색인
 
@@ -271,6 +295,12 @@ Master는 “어떤 시스템을 어떤 순서로 구현하는가”를 소유�
 | `P-12` | versioned legacy adapter의 제한된 coercion과 alias 허용 | 허용 목록, canonical JSON과 unknown-field 정책 |
 | `P-13` | benchmark manifest/card에 fixture, round/worker plan과 전 계약 fingerprint 보존 | round/worker 수, `maxSteps`, watchdog은 `Q-BENCH-02` 실험 대기 |
 | `P-14` | 실행 경계를 논리 port로 분리 | transport, orchestrator, artifact store와 배포 단위 |
+| `P-15` | Route pool은 exact route identity와 dominance bucket을 분리하고 append/import에 같은 deterministic merge를 적용 | Pool cap, aging, Pareto pruning과 persistence 정책 |
+| `P-16` | Corrected route-selection 후보는 request별 explicit unassigned 변수와 실제 vehicle consumption을 가진 exact set partition | `SET_PARTITION_EXACT`의 production 기본 승격과 profile별 projection 지원 범위 |
+| `P-17` | `SET_COVER_THEN_CONVERT`는 OGC 2024 differential/compatibility 실험에만 격리 | Legacy converter의 장기 유지 여부 |
+| `P-18` | MIP no-incumbent, backend/license/native failure, invalid reconstruction 또는 non-improvement이면 해당 phase의 cache-free validated ALNS incumbent를 보존 | MIP-required product mode와 degraded-result 외부 노출 정책 |
+| `P-19` | Worker-local inner hybrid를 reference-adaptation baseline으로 사용 | Cross-worker pool fan-in과 중앙 route selection은 별도 scalability ADR/evidence 뒤 검토 |
+| `P-20` | Corrected ALNS는 중앙 pair editor, versioned operator registry, promising shortlist→exact insertion과 step-based acceptance/adaptation을 사용 | Production operator subset과 수치 default |
 
 ## 4. 구현 아키텍처와 책임 경계
 
@@ -289,7 +319,13 @@ external submission
   → pair evaluator + 8개 initial portfolio
   → phase-1 screen ALNS
   → phase-1 champion
-  → phase-2 parallel ALNS batches
+  → phase-2 parallel ALNS workers
+      → [optional hybrid worker] ALNS segment
+      → validated route collection + immutable pool snapshot
+      → solver-neutral route selection
+      → reconstruction + authoritative full evaluation
+      → ALNS incumbent와 selector candidate 중 full-evaluated adoption
+  → complete worker fan-in
   → committed solve best
   → committed candidate
   → candidate solution verifier
@@ -314,7 +350,11 @@ external submission
 | Profile binding | Normalized facts, exact customer/profile/preset/config version | Immutable bound constraints/metrics/score/comparator/`SolvePlan` snapshot | Unknown/latest fallback, missing dependency와 unit mismatch 금지 |
 | Portfolio construction | Immutable solve snapshot, exact request/vehicle policy matrix | 최대 8개의 independent initial candidates와 route artifacts | 불변조건·full evaluation 검증 실패 후보 제외 |
 | Phase-1 screen | Initial candidate, exact screen ALNS config | 각 candidate의 screen best와 phase-1 champion | 미완료·미검증 candidate는 champion 비교 제외 |
-| Phase-2 execution | Phase-1 champion, batch worker configs | Round champion, final solve best와 round/worker provenance | 미완료 worker가 있으면 round champion 확정 금지 |
+| Phase-2 execution | Phase-1 champion, batch worker configs | Worker별 ALNS 또는 optional hybrid champion, round champion과 provenance | 미완료 worker가 있으면 round champion 확정 금지 |
+| Route collection | Completed hard-feasible route, exact evaluation, discovery lineage | `RoutePoolDelta`; append/import가 같은 merge 규칙을 쓴 worker-local pool | Infeasible·aborted·rollback 중 route 수집 금지 |
+| Pool sealing | Incumbent-pinned pool, exact authority fingerprints, dominance policy | Stable-sorted immutable evaluated-artifact `RoutePoolSnapshot`과 digest | Live/mutable pool, 다른 solve/profile artifact 혼합 금지 |
+| Route selection | Pool snapshot, exact projection, feasible warm start, explicit budget/backend config | Provider-neutral status, selected `ProjectedColumnId`와 unassigned evidence | Status/incumbent 확인 전 값 접근, vendor 객체 노출 금지 |
+| Reconstruction/adoption | Selected projected columns, optional conversion policy, phase ALNS incumbent | Fresh materialization, authoritative full evaluation과 comparator adoption/fallback record | Raw MIP objective·중간 cover를 candidate로 취급 금지 |
 | Candidate verification | Problem/profile declaration, route order, bank, prepared travel | Cache-free `PASS` report와 verified solution 또는 `FAIL` | `PASS` 없이는 finalization 중단 |
 | Finalization·audit | Verified solution, immutable request universe, approved diagnostic sources | Exactly-one outcomes, required audit record, bounded diagnostics, outcome-derived summary | Audit 미완료·confidence 과장은 result verification 실패 |
 | Result verification | Candidate `PASS`, verified solution, outcomes/audit/summary/payload | Result-integrity `PASS`, canonical result/payload fingerprint | `PASS` 없이는 정상 publication 금지 |
@@ -338,6 +378,10 @@ external submission
 | Phase coordinator | Phase-1 screen fan-in, phase-2 worker batch fan-out/fan-in, stable champion·plateau 판정 | Comparator, cache-free validation, exact run configs | AWS SDK, worker 완료 순서 의존, 일부 성공 worker champion |
 | COW candidate state | Changed-route copy, 독립 bank, cache invalidation과 commit/discard 격리 | Immutable problem/profile과 committed snapshot | Best/current 직접 mutation, 기본 apply/undo |
 | ALNS engine | Pair destroy/repair, stage guard, acceptance, adaptive update와 step accounting | Pair evaluator, COW state, bound `SolvePlan` | 고객사 분기, wall-clock quality termination |
+| Route collector/pool | Acceptance와 독립적으로 completed hard-feasible route를 projection-independent immutable artifact로 수집하고 merge·pin·seal | Core full evaluator와 stable route identity | Pool route mutation, scalar-cost-only dominance, vendor solver |
+| Route-selection projection | Bound profile의 request/vehicle/resource/objective 의미를 exact column model로 투영 가능 여부와 계수로 변환 | Bound evaluation declaration | Hidden Big-M, 비가산 objective의 무음 근사 |
+| Route-selection solver port | Immutable model spec/projected columns/warm start/budget을 받아 provider-neutral outcome, projected-column ID와 unassigned evidence를 반환 | Solver backend adapter | Domain route mutation, final feasibility 판정, vendor status 노출 |
+| Reconstruction/adoption | Cover conversion이 필요하면 새 route로 변환하고 full evaluation 뒤 ALNS incumbent와 비교 | Core evaluator, bound comparator | Pool alias mutation, solver `ObjVal` 권위화 |
 | Candidate solution verifier | Candidate 구조·feasibility·metric·objective를 cache 없이 전체 재계산 | Immutable declaration과 prepared travel | Solver feasibility flag, search cache/summary 신뢰 |
 | Result finalizer/auditor | Preliminary partition, required exhaustive insertion audit, final outcomes/diagnostics/summary 생성 | Verified solution과 approved evidence sources | Search bank를 final status로 직렬화, 자동 수정·재탐색 |
 | Result-integrity verifier | Outcome partition, audit confidence, summary와 payload identity를 cache 없이 검증 | Candidate `PASS`, verified solution, final result artifacts | Candidate verifier 역할 대체, solver summary 신뢰 |
@@ -381,6 +425,10 @@ external adapters / infrastructure implementations
 | Bound profile/plan | Solve별 생성 뒤 immutable | Profile binder | Exact dependency closure, versions와 config fingerprint |
 | Search candidate | 한 step 내부에서만 mutable | COW candidate state | Accept 시 freeze한 committed snapshot, reject/interruption 시 아무것도 전달하지 않음 |
 | Current/stageBest/solveBest | Immutable snapshot 교체만 허용 | ALNS execution | Route/bank source of truth와 execution lineage |
+| Route pool delta/live pool | 한 worker의 hybrid execution 안에서만 누적 | Route collector | Exact-evaluated immutable route artifacts와 discovery lineage |
+| Route pool snapshot | Seal 뒤 immutable | Hybrid worker/application | Stable artifacts, incumbent pin, merge/pruning policy와 fingerprint |
+| Route-selection outcome | Solver 호출 뒤 immutable evidence | Solver adapter | Status, selected IDs, optional bound/gap와 solver fingerprint |
+| Materialized/evaluated selector candidate | 한 adoption 시도 동안만 존재 | Hybrid orchestration | Fresh routes/bank, authoritative full evaluation와 conversion record |
 | Verified solution | Candidate verifier `PASS` 뒤 immutable | Candidate verifier | Recomputed feasibility, metrics, objective와 identity |
 | Final outcomes/audit | Finalization 동안 생성 후 result verifier에 전달 | Finalizer/auditor | Exactly-one partition, evidence-bounded diagnostics와 summary |
 | Publishable result | Result-integrity `PASS` 뒤 immutable | Result verifier/publication | Payload fingerprint, both verifier reports와 full lineage |
@@ -396,6 +444,8 @@ Search cache, insertion table, aggregate와 solver summary는 어느 생명주�
 - **Atomicity:** Pair mutation은 성공 시 관련 route/bank/cache를 함께 바꾸고 실패·중단 시 관찰 가능한 상태를 남기지 않는다 (§6, §12).
 - **Policy separation:** Hard feasibility, neutral metric, score, comparator와 `SolvePlan`을 서로 대체하지 않는다 (§9).
 - **State/result separation:** Search bank는 membership이고 final outcome은 candidate `PASS` 뒤 finalization이 만든다 (§10).
+- **Pool isolation:** Pool artifact는 완전한 pair와 hard-feasible route만 포함하며, pool/projected-column/cover artifact는 stable solution이나 final outcome이 아니다 (§11.7~§11.10).
+- **Selector safety:** Raw MIP incumbent는 reconstruction, authoritative recomputation, candidate verification과 comparator adoption을 우회할 수 없다 (§11.8~§11.10).
 - **Independent verification:** Search와 finalization의 주장만으로 publication하지 않으며 두 verifier의 `PASS`가 필요하다 (§14.1).
 - **Deterministic normal completion:** 동일한 고정 envelope와 정상 step 종료는 동일한 canonical 결과를 만든다 (§13).
 - **No hidden official value:** 실험 대기 항목은 explicit test/experiment config만 사용하고 production default를 만들지 않는다 (§11.2, §14.4, §17.1).
@@ -415,7 +465,7 @@ Search cache, insertion table, aggregate와 solver summary는 어느 생명주�
 | `RM-6` | Official Win workflow 구축 | `RM-5` + 실험 승인 + compliant fixture | Immutable manifest와 verified final champion | 모든 worker normal completion, exact comparator, rerun/approval |
 | `RM-7` | COW baseline profiling | `RM-4`~`RM-6`의 측정 가능한 경로 | COW 유지 판정 또는 별도 변경 제안 | Measured bottleneck과 correctness/reproducibility evidence |
 | `RM-8` | Logical-port integration과 migration | Verified 선행 core/result | Versioned adapter/cutover/rollback evidence | Compatibility, idempotency/cancellation, shadow와 rollback |
-| `RM-9` | 별도 승인 후속 작업 | 각 resume evidence | 독립 roadmap | 현재 자동 착수 금지 |
+| `RM-9A~C` | Optional route pool→selector→hybrid feedback | `RM-4`, `RM-5` + scope/solver gate | Pool/model/selection/hybrid artifacts와 activation 판정 | Deterministic pool, tiny-model oracle, status/fallback, adopted-only feedback와 shadow evidence |
 
 `RM-8`의 port interface와 test double은 `RM-0` 뒤 병행할 수 있다. 다만 실제 cutover와 정상 publication은 `RM-1`~`RM-5`를 우회할 수 없다. `RM-6`은 `Q-BENCH-02`의 승인된 실험 수치와 compliant integer travel fixture 없이는 official baseline을 발행할 수 없다.
 
@@ -788,9 +838,9 @@ Post-finalization result-integrity verifier는 candidate verifier의 `PASS` repo
 
 Run 종료와 정상 solution publication은 별도 상태다. 서로 다른 run의 route와 metric 최솟값을 합쳐 가상 결과를 만들지 않는다.
 
-## 11. Initial portfolio와 ALNS pipeline
+## 11. Initial portfolio, ALNS와 route-selection pipeline
 
-§11.1~§11.2는 `RM-3`, §11.3은 `RM-4`의 주 구현 계약이다. 두 phase는 같은 atomic pair evaluator와 bound comparator를 사용해야 한다.
+§11.1~§11.2는 `RM-3`, §11.3~§11.6은 `RM-4`, §11.7~§11.10은 gated `RM-9A`~`RM-9C`의 주 구현 계약이다. 모든 phase는 같은 atomic pair evaluator와 bound comparator를 사용해야 한다.
 
 ### 11.1 공통 pair evaluator
 
@@ -850,6 +900,7 @@ committed current
 → bank 기반 pair repair
 → configured bounded in-step improvement
 → stable candidate validation/evaluation
+→ [hybrid mode] exact-evaluated feasible routes를 acceptance-independent pool delta에 수집
 → hard-feasibility + stage guard
 → acceptance
 → commit 또는 discard
@@ -860,13 +911,224 @@ committed current
 
 Destroy와 repair의 대상 수는 node가 아니라 request 수다. Repair 뒤 삽입되지 않은 request는 완전한 pair가 route에 없는 채 bank에 남는다. Candidate가 hard-infeasible이면 acceptance에 도달하지 않는다.
 
-지원 가능한 destroy/repair, local/fleet family는 bound registry/config가 명시하고 versioning한다. ALNS core는 고객사 ID, 가격 key 또는 Win PoC 순서를 열거하지 않는다. Non-improving feasible acceptance는 `current`만 바꿀 수 있고 verified `stageBest`/`solveBest`를 악화시킬 수 없다.
+`bounded in-step improvement`는 repair 뒤 실행하는 명시적 vehicle rebind, route elimination 또는 pair relocate/exchange family와 각 최대 attempt/work budget을 뜻한다. 무제한 local-search loop나 hidden wall-clock stop이 아니다. 지원 가능한 destroy/repair/local/fleet family는 bound registry/config가 ID·version·순서·budget과 함께 명시한다. ALNS core는 고객사 ID, 가격 key 또는 Win PoC 순서를 열거하지 않는다. Non-improving feasible acceptance는 `current`만 바꿀 수 있고 cache-free validated `stageBest`/`solveBest`를 악화시킬 수 없다.
 
-각 stage는 이전 verified best를 warm-start로 받는다. 선행 objective guard를 통과하지 못한 후보는 하위 목표 개선만으로 current/best가 될 수 없다. Stage 실패나 중단은 마지막 verified best를 보존한다.
+각 stage는 이전 cache-free validated best를 warm-start로 받는다. 선행 objective guard를 통과하지 못한 후보는 하위 목표 개선만으로 current/best가 될 수 없다. Stage 실패나 중단은 마지막 cache-free validated best를 보존한다. 독립 verifier의 `verified` 판정은 search 이후 publication gate에서만 사용한다.
 
-### 11.5 Deferred algorithm boundary
+### 11.5 Destroy, repair와 adaptive selection
 
-Route pool, column pruning/persistence와 MIP model/reconstruction은 현재 범위가 아니다. 현재는 verified ordered route, source policy/run, metrics와 solution fingerprint를 export할 논리 경계만 보존한다. 별도 승인 전에 MIP dependency나 타입을 core에 넣지 않는다.
+**`[P-20]`** ALNS의 operator는 node가 아니라 atomic `Request`를 다룬다. Destroy operator가 route를 직접 임의 수정하고 별도 ID 목록을 돌려주는 API는 금지한다. Operator는 ordered unique request IDs와 근거를 제안하고, 중앙 pair editor가 COW candidate에 pickup/delivery 제거와 bank 추가를 한 번에 적용한다.
+
+목표 registry는 최소 다음 family를 지원할 수 있어야 한다.
+
+| Family | 대상 선택 의미 | Canonical 보정 |
+|---|---|---|
+| Random removal | Assigned request에서 seeded random subset | Stable request universe와 전용 RNG stream |
+| Related/Shaw removal | Distance, time-window, demand/resource similarity로 seed 주변 선택 | Prepared travel·bound facts만 사용하고 고객 field를 직접 읽지 않음 |
+| Route removal | 선택 route의 request를 함께 제거 | Nonempty solution에서 0개 제거가 되지 않도록 policy가 최소/최대와 rounding을 명시 |
+| Historical edge/action removal | 낮은 품질 adjacency나 transition history를 흔듦 | Immutable service identity 사용, route index 사용 금지 |
+| Worst/Semi-worst removal | 제거 후 objective improvement가 클 것으로 보이는 request에 편향 | 실제 삭제는 중앙 editor가 수행하고 full comparator가 최종 권위 |
+| Location-oriented removal | Pickup, delivery 또는 service-entry location 관계로 선택 | Delivery-only와 real pair의 entry 의미를 구분 |
+
+`OGC2024_LEGACY_REPLAY` preset은 9개 선택 슬롯, request 비율 `5%..15%`, `maxDestroy=1000`, Shaw 가중치 `9/3/2`, worst rank exponent `3`을 재현할 수 있다. 이 값들은 general RPDPTW production default가 아니다. 일반 profile은 removal lower/upper bound, active operator IDs/versions와 tie order를 explicit algorithm config로 제공한다.
+
+반복 결과 분류는 다음과 같다.
+
+```text
+GLOBAL_BEST_IMPROVED
+CURRENT_IMPROVED
+ACCEPTED_NON_IMPROVING
+REJECTED
+INVALID_CANDIDATE
+INTERRUPTED
+```
+
+Adaptive policy는 이 분류를 보상으로 변환한다. Legacy preset의 `20 / 10 / 2 / 0`, update period `100`, reaction factor `0.5`, exploration floor `0.01`은 differential test 대상이다. 목표 기본 계약은 수치 자체가 아니라 다음이다.
+
+1. 분모가 0인 operator를 안전하게 처리한다.
+2. 모든 활성 operator의 선택 확률은 finite·positive이고 합이 정확한 허용오차 안에서 1이다.
+3. 미완료/invalid step은 보상, 온도, 호출 횟수와 completed-step을 전진시키지 않는다.
+4. 동일 result class와 pre-update snapshot에서 deterministic next snapshot을 만든다.
+5. Adaptive/history/acceptance state의 `RESET_EACH_ALNS_PHASE` 또는 `CARRY_ACROSS_HYBRID_PHASES`를 manifest에 명시한다. OGC 호환은 reset이며 production 선택은 실험·version 대상이다.
+
+Acceptance는 bound comparator의 stage guard를 먼저 통과한 feasible candidate에만 적용한다. Simulated Annealing을 사용할 경우 scalar energy projection, 초기 온도, step-based cooling과 scale을 config가 명시해야 한다. Lexicographic vector를 임의 Big-M 합으로 바꾸지 않는다. 첫 phase SA·후속 Hill Climbing은 legacy compatibility option이지 hidden lifecycle rule이 아니다.
+
+### 11.6 Promising repair와 exact insertion
+
+Repair의 hot path는 기준 구현의 가장 중요한 성능 아이디어인 **cheap shortlist → exact pair insertion**을 채택한다.
+
+```text
+bank의 repair 대상 request
+→ static compatibility/capacity/time-overlap fast gate
+→ 모든 existing route의 cheap promising score
+→ stable top-N 또는 seeded power-biased shortlist
+→ shortlist + 모든 합법 NEW_ROUTE/unused-vehicle option
+→ 공통 atomic pair evaluator의 exact insertion
+→ bound comparator + stable tie-break
+→ COW apply 또는 bank 유지
+```
+
+Promising score는 후보 수를 줄이는 ranking hint일 뿐 feasibility, objective delta 또는 final diagnostic의 권위 값이 아니다. Exact evaluator는 real pickup-delivery의 모든 합법 `pickupPosition < deliveryPosition`, delivery-only service 의미, directed travel, vehicle/terminal/work-window/capability/zone/resource를 평가한다. 모든 기존 route가 탈락해도 unused concrete vehicle의 `NEW_ROUTE` option은 같은 경쟁 집합에 들어간다.
+
+`OGC2024_LEGACY_REPLAY`는 다음 shortlist 식을 별도 preset으로 재현할 수 있다.
+
+$$
+N=\min(\max(12,\lfloor 2K/100\rfloor), candidateRouteCount)
+$$
+
+그리고 상위 `5N` 안의 power-biased sampling을 선택할 수 있다. General preset의 `N`, prefilter와 score coefficient는 instance size, route length와 exact-evaluation budget을 계측해 정하며 공식값은 config/version 없이 존재하지 않는다.
+
+한 request에서 \(R\)은 existing route 수, \(N\)은 exact shortlist 크기다. 대표 비용은 cheap scoring `O(R)`, route ranking `O(R log R)`, 선택된 `N`개 route의 pair-position exact evaluation 합이다. 성능 evidence는 wall-clock만이 아니라 `cheapCandidates`, `exactEvaluations`, `feasibleOptions`, `newRouteOptions`, allocation과 completed steps를 기록해야 한다.
+
+Repair 결과는 모든 request의 재삽입을 가정하지 않는다.
+
+```text
+COMPLETE_REINSERTION
+PARTIAL_REINSERTION
+NO_FEASIBLE_INSERTION
+DEFECT
+```
+
+`PARTIAL_REINSERTION`과 `NO_FEASIBLE_INSERTION`도 route/bank partition과 hard feasibility를 만족하면 commit 가능한 completed trial이 될 수 있고, commit 뒤에만 stable `SearchSnapshot`이다. 채택 여부는 unassigned dimension을 포함한 bound comparator가 결정한다. Repair scope가 `REMOVED_ONLY`인지 `REMOVED_PLUS_EXISTING_BANK`인지도 operator config와 trace에 남긴다.
+
+### 11.7 Immutable route pool
+
+Route pool은 solution acceptance와 별도다. Completed candidate가 hard-feasible full route evaluation을 끝낸 시점이면, 전체 solution이 거부되어도 그 안의 좋은 route를 `RoutePoolDelta`로 수집할 수 있다. Infeasible, interrupted, rollback 중이거나 derived cache만 평가된 route는 수집하지 않는다.
+
+Pool entry는 projection-independent evaluated route artifact다. MIP column은 snapshot seal/model-build에서 특정 projection으로 별도 생성한다.
+
+```text
+EvaluatedRouteArtifact
+  routeArtifactId/content digest
+  problem/preparedTravel/boundProfile fingerprints
+  concrete vehicle binding + terminal policy
+  ordered service visits + exact request coverage
+  authoritative route facts/metrics
+  discovery round/worker/phase/step/operator lineage
+  evaluation/version fingerprint
+
+ProjectedRouteColumn
+  projectedColumnId
+  routeArtifactId
+  exact request/vehicle/resource row coefficients
+  exact objective coefficients
+  projection fingerprint
+```
+
+Identity와 dominance를 분리한다.
+
+- `RouteSignature`: vehicle binding과 ordered service sequence를 포함한 exact identity
+- `RouteCoverageKey`: 같은 authority fingerprint, **같은 concrete vehicle**과 request coverage의 dominance bucket
+- `RouteArtifactId`: exact signature와 authoritative evaluation fingerprint의 stable content ID
+- `ProjectedColumnId`: route artifact, projection과 encoded coefficient digest의 stable content ID
+
+OGC의 `(rider type, sorted order IDs) → lowest scalar cost` key는 동질 vehicle와 단일 비용 전제에만 맞는다. 일반 RPDPTW에서는 같은 coverage라도 ordering, concrete vehicle, terminal/work window와 다차원 objective가 다를 수 있다. Base pool은 같은 coverage만으로 artifact를 제거하지 않는다. Pool-level route-fact dominance가 모든 소비 경로에 안전함이 versioned contract로 증명되거나, 특정 projection의 projected-column pruning이 같은 concrete vehicle에서 objective와 모든 hard/resource/linearization row coefficient의 component-wise dominance를 확인할 때만 제거한다. 그 밖에는 nondominated frontier를 유지한다. Vehicle-class aggregation은 별도 model mode와 equivalence proof 없이는 이 bucket에 섞지 않는다.
+
+Pool rule:
+
+1. Append와 import는 같은 validation·merge를 사용한다. 같은 signature/authority의 evaluation·coverage가 같으면 lineage를 합치고, 다르면 임의 tie-break 없이 integrity defect로 거부한다.
+2. Pool route는 절대 mutate하지 않는다. 주문 제거나 vehicle 변경은 새 route/signature/evaluation을 만든다.
+3. 다른 problem/travel/profile fingerprint의 artifact를 혼합하지 않는다. Projection mismatch는 pool import 문제가 아니라 model-build 단계의 typed incompatibility다.
+4. Incumbent route는 snapshot seal 전에 merge하고 pruning에서 pin한다.
+5. Selector는 stable-sorted immutable snapshot만 받는다.
+6. Pool cap, aging, pruning과 persistence는 정책/version/telemetry 없이 숨은 default로 활성화하지 않는다.
+
+### 11.8 Route-selection model boundary
+
+Route selection의 규범 수학 모델과 domain type은 [Domain Design §12.5~§12.8](domain-design.md#125-route-selection-projection과-exact-partition)이 소유한다. Master는 적용 원칙만 고정한다.
+
+- Corrected 후보 `SET_PARTITION_EXACT`는 request마다 route coverage와 explicit unassigned 변수를 합해 정확히 1로 만든다.
+- Concrete vehicle 하나는 최대 route 하나만 소비한다. Vehicle-class aggregation은 travel, capacity, work window, ownership과 objective가 완전히 동등하다는 증명이 있을 때만 허용한다.
+- Mandatory request를 무조건 hard infeasible로 만들지 않는다. Bound preset의 의미에 따라 mandatory-unassigned를 최우선 lexicographic dimension으로 최소화하거나, 별도 승인된 exact-assignment mode에서만 unassigned를 고정한다.
+- General objective는 `RouteSelectionProjection`이 route/unassigned 단위로 가산 또는 exact linearizable하다고 증명한 dimension만 투영한다.
+- Strict priority는 단계별 solve 또는 exact-priority backend capability로 구현한다. 단계 \(d\)의 optimality를 증명해 \(Q_d=Q_d^\*\)를 고정한 뒤에만 다음 dimension으로 진행하며 `FEASIBLE_LIMIT`에서 낮은 priority를 계속 최적화하지 않는다. 근거 없는 Big-M, `cost/K` 또는 scalar surrogate를 authoritative comparator로 사용하지 않는다.
+- `SET_COVER_THEN_CONVERT`는 \(\sum_{r\in R}a_{ir}x_r\ge1\)이고 \(u_i\)가 없는 complete-cover OGC 2024 compatibility/differential 실험 모드다. 중간 cover는 stable candidate가 아니며 immutable conversion 뒤 full evaluation을 거쳐야 한다.
+
+Solver port는 immutable model spec, projected columns, warm start, budget와 backend config를 받고 provider-neutral status, selected `ProjectedColumnId`와 selected-unassigned evidence만 반환한다. Gurobi 같은 vendor class, model, status와 native handle은 Architecture Design의 optional backend adapter 밖으로 나올 수 없다.
+
+### 11.9 Hybrid phase와 outer round
+
+기준 적용 baseline은 **worker-local inner hybrid**다. 현재 distributed phase-2 round와 용어·commit을 섞지 않는다.
+
+```text
+outer WorkerRun
+  → cache-free validated common ALNS warm start
+  → inner HybridPhase 0: ALNS segment + route collection
+  → seal worker-local RoutePoolSnapshot
+  → optional route selection
+  → reconstruct + authoritative full evaluation
+  → ALNS incumbent와 strict comparator adoption
+  → adopted champion을 next inner HybridPhase warm start로 사용
+  → configured inner phases 완료
+  → candidate verification
+  → immutable worker outcome
+
+outer coordinator
+  → declared worker completeness
+  → stable fan-in
+  → round champion
+  → next outer round common warm start
+```
+
+Worker-local pool은 inner phase 사이에 유지된다. Route pool 지속과 adaptive destroy/history/annealing state 지속은 서로 독립된 config다. `roundOrdinal`, `workerOrdinal`, `hybridPhaseOrdinal`과 `alnsRunOrdinal`을 별도 identity로 기록한다.
+
+여러 worker의 `RoutePoolDelta`를 중앙에서 합쳐 MIP를 한 번 수행하는 방식은 잠재적으로 더 큰 조합 공간과 적은 license concurrency를 제공하지만 reference baseline보다 큰 분산 설계다. `CROSS_WORKER_POOL_FAN_IN`은 pool artifact size, deterministic merge, partial-worker 처리, solver bottleneck과 license evidence를 가진 별도 ADR 전에는 기본 경로가 아니다.
+
+한 inner phase의 commit 순서는 다음이다.
+
+```text
+ALNS_COMPLETED
+→ POOL_SEALED
+├─ ROUTE_SELECTION_SKIPPED | NO_INCUMBENT | ROUTE_SELECTION_FAILED
+│  ├─ optional → INCUMBENT_RETAINED → HYBRID_PHASE_COMMITTED
+│  └─ required → HYBRID_PHASE_INCOMPLETE
+└─ ROUTE_SELECTION_WITH_INCUMBENT
+   → MATERIALIZED
+   ├─ FULL_EVALUATION_FAILED
+   │  ├─ optional → INCUMBENT_RETAINED → HYBRID_PHASE_COMMITTED
+   │  └─ required → HYBRID_PHASE_INCOMPLETE
+   └─ FULL_EVALUATED
+      → INCUMBENT_RETAINED | SELECTOR_CANDIDATE_ADOPTED
+      → HYBRID_PHASE_COMMITTED
+```
+
+다음 phase는 `HYBRID_PHASE_COMMITTED`의 stable champion만 소비한다. Cover selection, raw solver incumbent와 변환 중 route는 stable search state가 아니다.
+
+### 11.10 Status, adoption과 fallback
+
+Route-selection outcome은 최소 다음 범주를 구분한다.
+
+```text
+OPTIMAL
+FEASIBLE_LIMIT
+NO_INCUMBENT_LIMIT
+INFEASIBLE_MODEL
+NUMERICAL_FAILURE
+CANCELLED
+BACKEND_UNAVAILABLE
+LICENSE_UNAVAILABLE
+MODEL_BUILD_FAILED
+SOLVER_FAILED
+SKIPPED_NON_PROJECTABLE_PROFILE
+SKIPPED_NO_BUDGET
+```
+
+Backend는 incumbent 존재를 확인한 뒤에만 selected variables와 objective evidence를 읽는다. `BACKEND_UNAVAILABLE`은 capability/assembly 부재이고 `LICENSE_UNAVAILABLE`은 설치된 backend의 license 획득 실패다. `OPTIMAL` 또는 `FEASIBLE_LIMIT`이어도 raw result는 candidate가 아니다. 선택 projected column을 새 route/bank로 materialize하고, 필요한 cover-to-partition conversion, authoritative full recomputation과 stable partition check를 끝낸 뒤 해당 phase의 cache-free validated ALNS incumbent와 bound comparator로 비교한다.
+
+채택 가능한 후보와 champion은 다음과 같다.
+
+```text
+eligible = HybridPhaseIncumbent
+         + successfully full-evaluated selector candidate
+champion = bound comparator가 선택한 strictly better eligible candidate
+raw solver incumbent = never eligible
+```
+
+No incumbent, backend/license/native failure, exhausted budget, invalid conversion, full-evaluation failure, fingerprint mismatch 또는 `EQUAL/WORSE`이면 `HybridPhaseIncumbent` fingerprint를 그대로 보존한다. Optional MIP plan은 `DEGRADED_ALNS_ONLY`와 이유를 남기고 계속할 수 있다. MIP-required official plan은 같은 상황을 조용히 성공 처리하지 않고 `INCOMPLETE` 또는 명시적 failure로 끝낸다.
+
+ALNS의 exact step budget과 MIP의 solver work/time budget을 같은 재현성 등급으로 취급하지 않는다. Strong replay는 solver/version/thread/order/work-limit까지 deterministic한 backend profile에서만 주장한다. Deadline-limited multi-thread MIP는 model/pool/conversion lineage를 고정하더라도 `TIMEBOXED_HYBRID` 재현성 등급과 다중 실행 품질 evidence를 사용한다.
+
+`C-17`은 이 상세 설계의 production 활성화를 계속 gate한다. `RM-9A`~`RM-9C`의 evidence와 별도 scope approval 전에는 current reactor에 vendor dependency를 넣거나 default execution plan에서 MIP를 켜지 않는다.
 
 ## 12. Candidate state, cache와 rollback
 
@@ -904,7 +1166,7 @@ Route sequence, request ownership, vehicle/terminal binding과 bank가 source of
 
 ### 12.3 Later apply/undo gate
 
-Copy-on-write는 현재 구현·운영 기본 경로다. Apply/undo는 roadmap의 자동 전환 대상이나 필수 산출물이 아니다. COW baseline profiling에서 route copy·allocation·GC가 실제 병목으로 입증되고 별도 변경 제안이 승인된 경우에만 다음 동등성 gate를 갖춘 실험 후보가 될 수 있다.
+Copy-on-write는 목표 구현의 기본 경로다. 현재 placeholder가 이를 구현했다는 뜻이 아니다. Apply/undo는 roadmap의 자동 전환 대상이나 필수 산출물이 아니다. COW baseline profiling에서 route copy·allocation·GC가 실제 병목으로 입증되고 별도 변경 제안이 승인된 경우에만 다음 동등성 gate를 갖춘 실험 후보가 될 수 있다.
 
 1. 모든 move의 apply/undo round-trip 뒤 route, bank, fleet state와 fingerprint가 같다.
 2. 중간 예외, watchdog, cancellation과 resource signal fault injection 뒤 current/best가 보존된다.
@@ -951,13 +1213,17 @@ problem + normalized matrix + numeric/time/adapter fingerprints
 + round/run ordinal and warm-start lineage when using multi-round execution
 + stage maxSteps
 + stable iteration, reduction and tie-break order
++ hybrid 사용 시 pool/admission/projection/backend/conversion versions와 stable artifact/projected-column order
++ hybrid 사용 시 solver version, threads, seed, numeric parameters와 deterministic work/node budget
 ```
 
 이 envelope에서는 canonical step trace, verified solution, outcome partition, metrics/score/objective와 result fingerprint가 같아야 한다. Global random, unordered collection iteration, thread first-winner, clock-based tie-break와 cache hit/miss 의존을 금지한다.
 
+MIP `TimeLimit`와 multi-thread scheduling만으로 끝나는 실행은 위 strong envelope에 자동 포함되지 않는다. 이런 실행은 `TIMEBOXED_HYBRID`로 표시하고 pool/model/conversion identity, status와 candidate fingerprint를 보존하되 최종 품질은 반복 분포로 평가한다. `OPTIMAL` 또는 deterministic backend work limit만으로도 동일 결과가 보장되는지는 backend별 contract test와 version 고정으로 입증해야 한다.
+
 ### 13.3 Provenance
 
-관측 elapsed time은 metadata일 뿐 quality budget이나 fingerprint의 hidden input이 아니다. Execution record는 stage별 requested/completed steps, separate construction/local/fleet/audit/verifier work, actual base/derived seeds, round/run ordinal, warm-start candidate, selected initial candidate, operator/config versions, exact termination, 마지막 completed stage/step과 rollback integrity를 보존해야 한다. Seed는 “좋은 값”을 선별하는 품질 대상이 아니라 고정 manifest 안에서 서로 다른 탐색 경로를 만드는 다양성 입력이다.
+관측 elapsed time은 metadata일 뿐 ALNS quality budget이나 fingerprint의 hidden input이 아니다. Execution record는 stage별 requested/completed steps, separate construction/local/fleet/audit/verifier work, actual base/derived seeds, round/run ordinal, warm-start candidate, selected initial candidate, operator/config versions, exact termination, 마지막 completed stage/step과 rollback integrity를 보존해야 한다. Hybrid record는 추가로 `hybridPhaseOrdinal`, pool before/delta/after digest, evaluated-artifact/projected-column counts와 pruning, projection/model/warm-start fingerprint, backend capability/version/config, build/solve work와 elapsed, status/incumbent/bound/gap, selected projected-column/unassigned IDs, conversion/full-evaluation/adoption/fallback과 next warm-start fingerprint를 보존한다. Seed는 “좋은 값”을 선별하는 품질 대상이 아니라 고정 manifest 안에서 서로 다른 탐색 경로를 만드는 다양성 입력이다.
 
 ## 14. Independent verification, publication과 Win PoC benchmark
 
@@ -1034,7 +1300,7 @@ Search cache와 solver summary는 post-finalization result-integrity verifier의
 Win PoC 전용 품질 vector는 다음 exact lexicographic order다.
 
 ```text
-미배정 주문 수
+미배정 request 수
 → 배차 차량 수
 → 전체 거리
 → 전체 시간
@@ -1042,7 +1308,7 @@ Win PoC 전용 품질 vector는 다음 exact lexicographic order다.
 
 ```text
 (
-  unassigned order count,
+  unassigned request count,
   dispatched vehicle count,
   total distance,
   total time
@@ -1051,7 +1317,7 @@ Win PoC 전용 품질 vector는 다음 exact lexicographic order다.
 
 모든 성분은 작을수록 좋으며 첫 번째로 다른 성분만 승패를 결정한다.
 
-- `unassigned order count`: verified input vehicle route에 배정되지 않은 input request/order 수
+- `unassigned request count`: verified input vehicle route에 배정되지 않은 input request 수
 - `dispatched vehicle count`: request를 하나 이상 수행하는 고유 input vehicle 수
 - `total distance`: verifier가 actual directed route arcs에서 재계산한 합
 - `total time`: 모든 used route의 운영시간 합
@@ -1086,6 +1352,8 @@ Official benchmark는 manifest에 고정된 round plan을 정확히 실행한다
 
 Manifest가 선언한 모든 worker는 exact `maxSteps`로 `MAX_STEPS_REACHED`하고 독립 검증을 통과해야 round가 완료된다. 실패 worker는 같은 round/run identity, seed와 warm start로 재시도할 수 있지만, 하나라도 끝내 완료되지 않으면 round와 전체 benchmark는 `INCOMPLETE`다. 성공한 일부 worker만으로 champion을 정하거나 다음 round를 시작할 수 없다.
 
+`C-17` gate를 통과한 hybrid manifest라면 각 worker의 `phase2MaxSteps`는 모든 inner ALNS segment의 **completed-step 합**으로만 소비된다. Route-selection은 별도의 deterministic work/node/time budget과 downstream reserve를 가진다. Worker는 하나 이상의 `ALNS segment → pool seal → route selection/adoption` inner phase를 실행할 수 있으며, completion은 ALNS step 합뿐 아니라 마지막 pool/selector status/fallback, reconstruction/full evaluation과 final candidate verification까지 포함한다. MIP-required manifest의 fallback은 worker 정상 성공이 아니며, optional manifest만 `DEGRADED_ALNS_ONLY`를 정상 worker outcome으로 허용할 수 있다. ALNS-only와 hybrid result는 algorithm/pool/projection/backend fingerprint가 다르므로 같은 official comparison card에서 직접 quality regression으로 판정하지 않는다.
+
 Seed별 no-worse나 “좋은 seed” 선정은 official hard gate가 아니다. Worker 완료 순서와 물리 병렬 순서는 champion에 영향을 주지 않는다. 결과 의존 종료는 complete batch의 stable fan-in 뒤 `NO_STRICT_IMPROVEMENT` 판정에만 허용하며, worker 중간 종료나 전체 wall-clock quality deadline을 사용하지 않는다.
 
 `screenMaxSteps`, phase-2 round별 worker 수·`phase2MaxSteps`·`maxRounds`와 watchdog은 [Q-BENCH-02](master-design-open-questions.md#q-bench-02)의 확정된 calibration/approval protocol을 따라야 하지만 실제 공식 수치는 아직 없다. 인터뷰의 동작 설명용 수치나 기존 초안의 임시값을 공식값으로 사용하지 않는다. 논리 fan-out/fan-in은 provider-neutral하며 특정 cloud orchestration/worker product를 확정하지 않는다.
@@ -1118,6 +1386,7 @@ RM-9 = separate approval only
 ```
 
 - `RM-8`의 logical port/interface와 test double은 `RM-0` 뒤 병행할 수 있다. 실제 cutover는 `RM-1`~`RM-5`를 우회할 수 없다.
+- Optional hybrid branch는 `RM-4`의 cache-free validated ALNS baseline 뒤 `RM-9A` route pool → `RM-9B` solver-neutral selector → `RM-9C` feedback/shadow 순서로 진행한다. Publication 경로는 별도로 `RM-5` both-gate를 요구하며 `RM-9C` 전에는 default solve path를 바꾸지 않는다.
 - Verifier skeleton과 corruption fixture 설계도 일찍 시작할 수 있지만 `RM-5` 완료 주장은 `RM-1`~`RM-4`의 실제 권위 산출물에 대한 독립 검증 evidence가 필요하다.
 - 한 phase의 test double, experiment value 또는 partial implementation은 다음 phase의 production authority로 자동 승격되지 않는다.
 - 해결된 질문은 [세션 29](master-design-sessions/29-open-question-interview.md)의 exact decision을 소비한다.
@@ -1130,7 +1399,7 @@ RM-9 = separate approval only
 |---|---|
 | Entry | 선행 phase 없음. 이 Master와 질문 등록부는 `REVIEW` 상태 |
 | 구현 단위 | 적용할 `C-*`, `P-*`, `Q-*`, 문서 authority와 change-control rule을 개발 backlog/test trace의 기준으로 고정 |
-| Deliverable | `C-01`~`C-22` coverage, 28개 질문 상태, component/phase-to-contract traceability baseline |
+| Deliverable | `C-01`~`C-22`, `P-01`~`P-20` coverage, 28개 질문 상태, component/phase-to-contract traceability baseline |
 | Exit evidence | Local link/anchor와 Markdown lint, 결정/질문 수 검증, `REVIEW`를 구현 완료·benchmark 완료·topology 승인으로 오인하는 표현 0건 |
 | 완료 후 소비자 | 모든 후속 phase의 acceptance criteria와 change-impact review |
 
@@ -1168,7 +1437,7 @@ RM-9 = separate approval only
 |---|---|
 | Entry | `RM-2`의 bound profile/comparator/plan과 `RM-1`의 immutable problem |
 | 구현 단위 | Side-effect-free atomic pair evaluator, 4 request-route 성장 정책 × 2 `DIRECT`-first vehicle 순서, 독립 candidate state, route artifact 기록과 cache-free validation |
-| Deliverable | 최대 8개의 verified initial candidates, source request/vehicle policy·config·evaluation lineage와 ordered route artifacts |
+| Deliverable | 최대 8개의 cache-free validated initial candidates, source request/vehicle policy·config·evaluation lineage와 ordered route artifacts |
 | 금지 | Partial pair option, infeasible option ranking, policy별 feasibility 재구현, raw coordinate/matrix 재해석, `CLOCK` 좌표 누락 fallback |
 | Exit evidence | 8개 policy combination trace, `CLOCK` coordinate-unavailable case, request/vehicle tie-break, pair evaluator와 cache-free full recomputation equality, failed insertion rollback, candidate isolation과 artifact fingerprint |
 | 완료 후 소비자 | `RM-4` warm-start set과 first-round logical assignment |
@@ -1179,7 +1448,7 @@ RM-9 = separate approval only
 
 | 구분 | 계약 |
 |---|---|
-| Entry | `RM-3`의 verified initial candidates, `RM-2`의 bound stages/operators와 explicit phase-1/phase-2 run config |
+| Entry | `RM-3`의 cache-free validated initial candidates, `RM-2`의 bound stages/operators와 explicit phase-1/phase-2 run config |
 | 구현 단위 | Phase-1 per-candidate screen, stable phase-1 champion fan-in, phase-2 worker batch fan-out/fan-in, pair destroy/repair, stage guard/acceptance, adaptive update, changed-route COW와 independent bank, cache invalidation, step/round counter와 watchdog/cancellation/resource/failure handling |
 | Deliverable | Phase-1 champion, last committed phase-2 champion/solveBest, exact termination, completed step/round/operator/seed/warm-start lineage와 reproducibility record |
 | 금지 | Committed/best 직접 mutation, 기본 apply/undo, 미완료 worker로 round champion 확정, worker completion-order winner, wall-clock quality termination, worker 중간 plateau 종료 |
@@ -1240,16 +1509,48 @@ RM-9 = separate approval only
 
 `RM-8`은 core 의미를 application 환경에 맞춰 바꾸는 phase가 아니라, 검증된 core/result 계약을 논리 port 뒤에서 보존하는 phase다.
 
-### 15.11 `RM-9` — 별도 승인 후속 roadmap
+### 15.11 `RM-9` — Gated ALNS–MIP hybrid와 그 밖의 후속 roadmap
 
-`RM-9`는 자동 착수 phase가 아니다. Route pool/MIP, optional variants, academic benchmark expansion, multi-trip/rotation과 physical topology는 §16.3의 resume evidence와 별도 scope approval을 각각 받아 독립 roadmap으로 만든다.
+`RM-9A`~`RM-9C`는 구현자가 route pool/MIP를 활성화하기 전에 수행할 수 있는 순서와 exit evidence를 구체화한다. `C-17`에 따라 자동 착수나 production default 전환을 허용하지 않으며, 각 단계는 별도 scope approval과 predecessor evidence를 요구한다.
 
-다음 행위는 `RM-9` 준비로도 허용하지 않는다.
+#### `RM-9A` — Immutable route pool
 
-- 현재 pair/terminal/bank invariant를 optional variant 가능성 때문에 미리 완화
-- Route pool/MIP dependency나 type을 common core에 선반영
+| 구분 | 계약 |
+|---|---|
+| Entry | `RM-4`의 정확한 COW ALNS baseline과 cache-free route evaluation; route pool scope 승인 |
+| 구현 단위 | Acceptance-independent collector, `RouteSignature`/coverage key/route-artifact ID, append/import merge, incumbent pin, deterministic seal, telemetry와 bounded experiment policy |
+| Deliverable | Worker-local `RoutePoolDelta`와 stable `RoutePoolSnapshot`; live state와 분리된 artifact schema |
+| 금지 | Infeasible/aborted route 수집, pool route mutation, scalar-cost-only unsafe dominance, fingerprint 혼합, hidden pruning |
+| Exit evidence | Accepted/rejected feasible route harvest, interrupted candidate exclusion, import/append equality, immutable alias test, Pareto/conservative dominance oracle, deterministic digest, incumbent retention과 memory-growth profile |
+
+#### `RM-9B` — Solver-neutral route selection
+
+| 구분 | 계약 |
+|---|---|
+| Entry | `RM-9A` snapshot, profile projection capability와 solver/licensing/native/fallback 승인 |
+| 구현 단위 | Exact partition model spec, explicit unassigned와 concrete vehicle rows, lexicographic projection, warm start, provider-neutral solver status, optional compatibility converter와 backend adapter |
+| Deliverable | Stable projected-column selection outcome, model/warm-start/solver evidence와 materialized/full-evaluated candidate 또는 typed fallback |
+| 금지 | Vendor type의 core 침투, unsupported profile 무음 근사, hidden Big-M, status/incumbent 확인 전 attribute 접근, raw objective 채택 |
+| Exit evidence | Tiny-pool brute-force oracle, coefficient/range check, exact request/vehicle constraints, warm-start feasibility, status×incumbent matrix, license/model/native failure, conversion immutability와 resource cleanup |
+
+#### `RM-9C` — Hybrid feedback, verification과 shadow
+
+| 구분 | 계약 |
+|---|---|
+| Entry | `RM-9B`, `RM-5` both-gate path와 `SolvePlan`이 소유하는 approved explicit worker-local `HybridPhasePlan` extension |
+| 구현 단위 | ALNS→pool→selector→reconstruction→full evaluation→adoption, next-phase warm start, optional/required fallback, reproducibility class와 shadow comparison |
+| Deliverable | Immutable `HybridPhaseRecord`와 worker-level hybrid summary, adopted champion/fallback lineage와 production activation recommendation 또는 reject decision |
+| 금지 | Raw cover/solver incumbent를 warm start로 사용, invalid/worse candidate 채택, MIP failure로 ALNS incumbent 오염, timeboxed run에 strong replay 주장 |
+| Exit evidence | End-to-end hybrid fixtures, invalid/no-incumbent/license fallback fingerprint 보존, adopted-only feedback, fixed-envelope replay 또는 declared timeboxed statistics, ALNS-only 대비 quality/memory/native/license cost shadow |
+
+Cross-worker pool fan-in과 중앙 MIP는 `RM-9C`의 기본 완료조건이 아니다. Worker-local baseline 뒤 artifact size, complete-worker merge, idempotency, solver bottleneck과 license concurrency evidence로 별도 scalability ADR을 승인해야 한다.
+
+Optional variants, academic benchmark expansion, multi-trip/rotation과 physical topology는 계속 독립 후속 scope다. 다음 행위는 어느 `RM-9` 준비에서도 허용하지 않는다.
+
+- 현재 pair/terminal/bank invariant를 optional variant 가능성 때문에 완화
+- Vendor MIP dependency를 `rpdptw-core` 또는 solver-neutral package에 추가
 - 특정 infrastructure product에 맞춰 logical round/result 의미 변경
-- Deferred 질문을 `Q-BENCH-02` 실험과 묶어 재질문하거나 활성화
+- Deferred 질문을 `Q-BENCH-02` 실험과 묶어 자동 활성화
 
 ## 16. Risks, migration, deferred work와 non-scope
 
@@ -1267,6 +1568,12 @@ RM-9 = separate approval only
 | premature optimization | baseline 전에 complex undo/cache 최적화 | COW first, `RM-7` measured decision와 no-switch 허용 |
 | infrastructure coupling | core가 transport/runtime 타입을 참조 | logical ports와 dependency review |
 | result overclaim | bank/last failure가 proven status/reason이 됨 | conservative finalization과 evidence-bounded confidence |
+| unsafe route dominance | 같은 request set의 ordering/vehicle/objective trade-off 손실 | Exact identity 분리, proven component-wise dominance 또는 conservative retention |
+| pool/model growth | memory·seal·MIP build가 search budget을 잠식 | Admission/pruning provenance, incumbent pin, size/RSS/model telemetry와 experiment gate |
+| projection drift | Bound profile objective와 MIP coefficient의 의미 불일치 | Versioned projection capability, unsupported profile skip와 reconstructed full comparator |
+| solver/native/license failure | No incumbent, leak, license exhaustion이 전체 solve를 손상 | Optional backend 격리, status gate, deterministic cleanup와 ALNS incumbent fallback |
+| cover conversion corruption | Alias, stale metric, pair/vehicle 중복 | Immutable reconstruction, atomic pair removal, full propagation과 independent verification |
+| hybrid nondeterminism | Time-limited multi-thread MIP가 strong replay claim을 깨뜨림 | Reproducibility class, exact backend/version/order/budget lineage와 statistical evidence |
 
 ### 16.2 Migration
 
@@ -1285,14 +1592,14 @@ Legacy 문서와 현재 코드 구조는 replacement inventory와 characterizati
 
 | 항목 | 현재 보존할 경계 | 재개 조건 |
 |---|---|---|
-| route pool/MIP | verified ordered route, lineage, metrics와 fingerprint export | Win baseline, verifier, reproducible portfolio/ALNS, measured value와 별도 solver/licensing/fallback 승인 |
+| route pool/MIP production activation | §11.7~§11.10의 solver-neutral evaluated-artifact/projected-column types | `RM-9A`~`RM-9C`, verified ALNS/result baseline, measured value와 별도 solver/licensing/native/fallback 승인 |
 | optional variants | 현재 atomic pair, fixed terminal, bank와 matrix contract | [Q-VAR-01](master-design-open-questions.md#q-var-01)의 선택·시점 결정, 대표 fixture, hand result와 core-impact feasibility 승인 |
 | physical topology | 논리 ports, status/artifact/idempotency/cancellation 책임 | verified result, workload, security/access/retention/audit, retry/recovery, performance/cost evidence와 별도 승인 |
 | academic benchmark expansion | Win manifest/card와 verifier 재사용 경계 | Win baseline, authoritative format/result, RPDPTW mapping과 separate manifest 승인 |
 | multi-trip/rotation | 현재 `oneway`/single `roundtrip`; 후속 trip도 pair crossing 금지와 depot `duration` 경계 보존 | `multiRotation` 값·trip/reset/depot window/resource 계약, 예제와 domain/algorithm/verifier 영향의 별도 승인 |
 | dynamic routing | immutable solve snapshot과 cancellation port | event/replanning, state continuity, conflict와 SLA 계약 승인 |
 
-선택 변형을 현재 pair invariant 완화로 미리 구현하거나, route pool/MIP dependency를 core에 선반영해서는 안 된다. Physical topology는 안정된 logical contracts와 workload evidence 뒤에 가장 마지막으로 결정한다.
+선택 변형을 현재 pair invariant 완화로 미리 구현하거나 vendor MIP dependency를 core에 선반영해서는 안 된다. Solver-neutral target type의 설계와 licensed backend의 production 활성화는 별개다. Physical topology는 안정된 logical contracts와 workload evidence 뒤에 가장 마지막으로 결정한다.
 
 ## 17. Open questions와 traceability
 
@@ -1313,6 +1620,8 @@ Legacy 문서와 현재 코드 구조는 replacement inventory와 characterizati
 | [세션 29 — 사용자 인터뷰](master-design-sessions/29-open-question-interview.md) | 26개 interview 대상의 authoritative 사용자 답변과 두 실험 대기 protocol |
 | [세션 30 — 질문 통합](master-design-sessions/30-open-question-integration.md) | Master/register/영향 세션 반영 범위와 validation evidence |
 | [세션 31 — Domain Design 통합](master-design-sessions/31-domain-design-integration.md) | 세션 29 결정에 맞춘 상세 Domain Design 재구성 범위와 정합성 validation |
+| [Architecture Design](architecture-design.md) | Java 25/Maven package DAG, solver-neutral route-selection SPI, optional licensed backend와 native/fallback boundary |
+| [OGC 2024 DMS ALNS–MIP 분석](../../../optichallenge/2024/2024_algorithms_DMS_v1.0.0/OGC2024_DMS_ALNS_MIP_design_ko.md) | SHA-256 `fd71f3bf03eb04af970e84bf4df8b72d27679e482dd585ea430b165fd3481e84`; destroy/adaptation, promising repair, rejected-route pool과 Set Covering feedback의 non-normative transfer evidence. 원 환경의 동적 재실행을 완료한 자료가 아니며, all-pickups-first, 3 rider types, complete assignment, scalar cost와 확인된 코드 결함은 canonical 계약으로 채택하지 않음 |
 
 [Domain Design](domain-design.md) v2는 이 Master의 domain/input/normalization/travel/state/evaluation/result 경계를 상세화한 `REVIEW` 문서다. 세션 31에서 legacy의 고정 numeric/time defaults, node-sized matrix, generic feature, multi-trip 기본 활성화와 mixed bank/result 의미를 제거했다. 두 문서가 여전히 충돌하면 현재 `REVIEW` 단계의 conflict 절차와 이 문서 §1의 authority 순서를 따른다.
 
@@ -1325,6 +1634,9 @@ Legacy 문서와 현재 코드 구조는 replacement inventory와 characterizati
 | 표준 모델과 입력 | `C-01`, `C-05`~`C-14` | 세션 20 | `RM-1` | normalization, pair/property, boundary/overflow와 directed-matrix evidence |
 | 확장 평가 | `C-03`~`C-05`, `C-15`, `C-18` | 세션 21 | `RM-2` | profile isolation, bind rejection, full evaluation와 comparator/guard |
 | 탐색과 상태 | `C-06`, `C-08`~`C-09`, `C-13`, `C-16`~`C-17`, `C-22` | 세션 22 | `RM-3`, `RM-4`, `RM-7` | portfolio traces, rollback/cache equivalence, step rerun와 measured state decision |
+| ALNS operator/repair | `C-06`, `C-08`, `C-16`, `P-20` | OGC 분석 §3을 corrected adaptation | `RM-4` | Operator fixture, central pair edit, shortlist→exact gate, adaptive/acceptance trace |
+| Route pool | `C-17`, `P-15`, `P-19` | OGC 분석 §3.9의 immutable adaptation | `RM-9A` | Rejected-route harvest, append/import merge, dominance oracle, deterministic snapshot와 memory |
+| Route-selection/hybrid | `C-17`, `P-16`~`P-19` | Domain §12.5~§12.8, OGC 분석 §4 | `RM-9B`, `RM-9C` | Tiny-model oracle, materialization/full evaluation, status/license/fallback, adopted-only feedback와 hybrid provenance |
 | 결과와 benchmark | `C-15`, `C-18`, `C-21`~`C-22` | 세션 23 | `RM-5`, `RM-6` | verifier independence, result partition, manifest/cards와 deterministic champion |
 | 시스템과 migration | `C-02`, `C-19`~`C-20` | 세션 24 | `RM-0`, `RM-8`, `RM-9` | document audit, logical-port integration, compatibility/rollback와 resume approval |
 
