@@ -2,7 +2,7 @@
 
 ```yaml
 status: REVIEW
-version: 1.2-review
+version: 1.3-review
 last_updated: 2026-07-26
 owner: RPDPTW Architecture·Application·Platform 설계 역할
 scope: Java 25와 Maven 기반 project/module 구조, 의존 방향, 확장 seam, logical execution·integration 경계
@@ -37,7 +37,7 @@ related_documents:
 2. 어떤 dependency는 허용되고 어떤 dependency는 build에서 차단해야 하는가?
 3. 고객 요구를 common core 수정 없이 어느 extension seam에 추가하는가?
 4. Local single-run과 distributed multi-round가 같은 core contract를 어떻게 재사용하는가?
-5. logical port가 물리 topology·provider 선택을 어떻게 보류하는가?
+5. logical port가 선택된 AWS topology와 미래 provider 대체를 어떻게 분리하는가?
 6. 어떤 순서로 구현하고 어떤 evidence가 있어야 다음 phase로 갈 수 있는가?
 
 ### 1.2 결정 종류
@@ -65,7 +65,7 @@ related_documents:
 - 고객 profile/preset과 rule/metric/score/objective 조립·등록·검증
 - Local single-run과 distributed multi-round application flow
 - Provider-neutral port, idempotency, retry, cancellation과 result publication
-- 특정 provider/product를 선택하지 않는 infrastructure integration boundary
+- 선택된 AWS S3 + Step Functions + Lambda integration boundary와 미래 provider substitution boundary
 - Configuration, secret, artifact, result, provenance와 observability
 - Optional worker-local ALNS→route pool→route-selection hybrid와 optimizer backend isolation
 - Module별 test/evidence와 구현 phase/gate
@@ -73,7 +73,7 @@ related_documents:
 다음은 비범위다.
 
 - 이 문서만으로 production infrastructure를 승인·활성화하는 일
-- Provider/product, orchestration/worker/storage service, deployment topology와 구체 IaC
+- AWS resource 이름, IAM/IaC, network·retention·cost/resource sizing과 production activation
 - 비용·성능 evidence 없는 compute/runtime 선택과 resource sizing
 - Round/worker 수, worker별 `maxSteps`, watchdog의 공식 수치
 - Multi-trip/rotation과 optional variant 활성화
@@ -87,9 +87,9 @@ related_documents:
 |---|---|---|
 | [Master Design](master-design.md) | 무엇을 어떤 책임과 gate로 구현하는가 | 논리 컴포넌트를 Maven module/application runtime으로 배치 |
 | [Domain Design](domain-design.md) | Domain 값과 propagation/evaluation/result가 정확히 무엇을 뜻하는가 | 그 의미를 깨지 않는 package, module과 extension seam 지정 |
-| [질문 등록부](master-design-open-questions.md) | 28개 질문의 상태·결정·evidence | Open/deferred 상태를 보존하고 architecture가 해결했다고 주장하지 않음 |
-| [세션 29](master-design-sessions/29-open-question-interview.md) | 사용자 답변 원문 | logical multi-round와 deferred infrastructure의 원래 의도 추적 |
-| [세션 30](master-design-sessions/30-open-question-integration.md) | Master/register 반영 기록 | 수치·infrastructure 확대 해석 방지 |
+| [질문 등록부](master-design-open-questions.md) | 28개 질문의 상태·결정·evidence | `Q-INFRA-01`의 AWS target 선택과 남은 experiment/deferred 상태를 보존 |
+| [세션 29](master-design-sessions/29-open-question-interview.md) | 사용자 답변 원문 | logical multi-round와 historical deferred infrastructure 의도 추적 |
+| [세션 30](master-design-sessions/30-open-question-integration.md) | Master/register 반영 기록 | 수치·historical infrastructure 확대 해석 방지 |
 | [세션 31](master-design-sessions/31-domain-design-integration.md) | Domain v2 반영 기록 | Legacy 의미를 목표 architecture로 재도입하지 않도록 검증 |
 
 충돌 시 이 문서가 Master나 Domain의 의미를 바꾸지 않는다. 현재 모든 상위 설계는 `REVIEW`이며 Master §1의 authority와 변경 절차를 따른다.
@@ -123,7 +123,7 @@ ro-next/
 
 ### 2.2 Migration 해석
 
-**`[CONTRACT]`** 현재 code, root dependency와 GCP deployment는 characterization할 legacy/current-state inventory다. 목표 contract나 `Q-INFRA-01` 해결 근거로 승격하지 않는다.
+**`[CONTRACT]`** 현재 code, root dependency와 GCP deployment는 characterization할 legacy/current-state inventory다. AWS S3 + Step Functions + Lambda가 선택된 target/reference runtime이며, GCP path는 목표 topology나 `Q-INFRA-01` 해결 근거로 승격하지 않는다.
 
 **`[RECOMMENDED]`** Migration은 다음 원칙을 따른다.
 
@@ -324,7 +324,10 @@ ro-next/
 │   │       └── local/
 │   ├── route-selection-gurobi/            # OPTIONAL/GATED: artifactId rpdptw-route-selection-gurobi
 │   │   └── src/main/java/com/ronext/rpdptw/adapter/routeselection/gurobi/
-│   └── <provider>/                         # DEFERRED: Q-INFRA-01 승인 뒤에만 추가
+│   ├── object-s3/                          # selected AWS target adapter
+│   ├── workflow-aws-stepfunctions/         # selected AWS target adapter
+│   ├── compute-aws-lambda/                 # selected AWS target adapter
+│   └── <provider>/                         # future substitution adapter only
 │       └── src/main/java/com/ronext/rpdptw/adapter/<provider>/
 │           ├── artifact/
 │           ├── state/
@@ -336,7 +339,8 @@ ro-next/
 │   ├── cli/                               # deployable artifactId: rpdptw-cli
 │   ├── api/                               # deployable artifactId: rpdptw-api
 │   └── worker/                            # deployable artifactId: rpdptw-worker
-├── deployment/                            # DEFERRED: provider/product 승인 뒤 별도 scope
+├── deployment/
+│   └── aws/                               # selected target assembly; IaC/resource sizing remains separate
 └── docs/
 ```
 
@@ -459,14 +463,15 @@ GetVerifiedResult
 |---|---|
 | `adapters/common` | `adapter.json`과 `adapter.local` package; JSON mapping, local artifact/state/dispatch |
 | `adapters/route-selection-gurobi` | Optional `RouteSelectionSolverFactory`/session implementation, model/env lifecycle, status mapping과 licensed integration test |
-| `adapters/<provider>` | `Q-INFRA-01` 승인 뒤 선택된 provider의 artifact/state/workflow/compute/telemetry package |
+| `adapters/object-s3`, `workflow-aws-stepfunctions`, `compute-aws-lambda` | 선택된 AWS target의 artifact/state, durable workflow, compute/telemetry event mapping |
+| `adapters/<provider>` | ECS, GCP, Kubernetes 등 future substitution의 artifact/state/workflow/compute/telemetry package |
 | `apps/cli` | Local/offline invocation과 human-readable failure |
 | `apps/api` | Submission/status/result transport entrypoint |
 | `apps/worker` | Headless prepare/search/verify/finalize process entrypoint |
 
 App module은 composition root다. SDK client, optional route-selection backend, profile provider와 application runtime을 생성·주입하는 곳이며 domain/search 내부에서 global singleton, vendor model/env 또는 SDK default client를 만들지 않는다. Route-selection backend capability가 없는 assembly는 MIP 성공을 흉내 내는 fake가 아니라 typed `UnavailableRouteSelectionSolverFactory`를 주입하고 `BACKEND_UNAVAILABLE`로 optional fallback 또는 required failure를 명시한다. 설치된 backend의 license 획득 실패인 `LICENSE_UNAVAILABLE`과 구분한다.
 
-JSON과 local 구현은 별도 Maven module로 쪼개지 않고 `adapters/common`의 package로 둔다. 구체 provider module과 deployment assembly는 `Q-INFRA-01`의 resume evidence와 별도 scope approval 뒤에만 추가한다. 선택 뒤에도 SDK dependency는 core·application classpath에서 격리하고 provider module 안의 세부 책임은 package로 나눈다.
+JSON과 local 구현은 별도 Maven module로 쪼개지 않고 `adapters/common`의 package로 둔다. AWS module과 deployment assembly는 선택된 target이지만 `RM-8` parity/cutover gate 전에는 production 완료를 뜻하지 않는다. AWS SDK dependency는 domain·core·solver·verification·application classpath에 넣지 않고 해당 adapter/deployment module에만 격리한다. future provider도 같은 규칙을 따른다.
 
 ### 6.7 Route-selection backend contract
 
@@ -639,7 +644,10 @@ com.ronext.rpdptw.application.hybrid
 com.ronext.rpdptw.adapter.json
 com.ronext.rpdptw.adapter.local
 com.ronext.rpdptw.adapter.routeselection.gurobi  # optional/gated algorithm backend
-com.ronext.rpdptw.adapter.<provider>  # Q-INFRA-01 승인 뒤에만 concrete name 확정
+com.ronext.rpdptw.adapter.object.s3
+com.ronext.rpdptw.adapter.workflow.aws.stepfunctions
+com.ronext.rpdptw.adapter.compute.aws.lambda
+com.ronext.rpdptw.adapter.<provider>  # future substitution only
 com.ronext.rpdptw.profile.<stable_namespace>
 ```
 
@@ -649,7 +657,7 @@ com.ronext.rpdptw.profile.<stable_namespace>
 - 구현 세부는 `.internal`에 두고 다른 Maven module에서 참조하지 않는다.
 - 범용 `util`, `common`, `shared`, `manager`, `helper` package를 새 semantic owner 대신 사용하지 않는다.
 - DTO suffix는 external/application boundary type에만 사용한다. Domain value를 `*Dto`로 부르지 않는다.
-- Infrastructure provider/product name은 `Q-INFRA-01` 승인 뒤 해당 adapter/deployment package 밖에 나타나지 않는다. Gated optimizer vendor name은 해당 route-selection backend package와 explicit assembly/profile에만 나타난다.
+- AWS provider/product name과 SDK type은 AWS adapter/deployment package 밖에 나타나지 않는다. Gated optimizer vendor name은 해당 route-selection backend package와 explicit assembly/profile에만 나타난다.
 - Customer identifier는 `profiles/` module과 그 resource/config 안에서만 허용한다.
 - `record`, sealed type와 immutable collection은 의미에 맞게 사용할 수 있지만 Java type 선택이 wire compatibility를 암묵적으로 결정하지 않는다.
 - Static mutable registry, global random, system clock과 unordered classpath discovery 결과를 core에서 사용하지 않는다.
@@ -962,20 +970,20 @@ ArtifactDigest
 
 ## 13. Physical topology와 provider boundary
 
-**`[DEFERRED]`** `Q-INFRA-01`이 보류인 동안 provider/product, orchestration·worker·storage service, deployment topology, resource sizing과 IaC를 선택·권장·구현 roadmap에 넣지 않는다. 현재 GCP deployment 자료와 SDK usage는 §2의 migration characterization 대상일 뿐 목표 architecture가 아니다.
+**`[CONTRACT]`** 선택된 target/reference topology는 **AWS S3 (object storage) + AWS Step Functions (durable orchestration) + AWS Lambda (API/coordinator/worker compute)**다. 현재 GCP deployment 자료와 SDK usage는 §2의 migration characterization 대상이며 target architecture가 아니다. AWS 선택은 resource sizing, IaC, cost/security operations 또는 production cutover approval을 자동으로 포함하지 않는다.
 
 이 문서가 지금 고정하는 것은 논리 책임뿐이다.
 
 | Logical responsibility | 현재 고정할 contract | 물리 구현 |
 |---|---|---|
-| Submission/status | idempotent submission identity와 verified retrieval | Deferred |
-| Orchestration | run/round/worker transition, declared fan-out/fan-in와 completeness | Deferred |
-| Worker execution | immutable assignment, exact seed/config, cooperative cancellation | Deferred |
-| Artifact | immutable reference, digest, schema identity | Deferred |
-| State/publication | CAS, retry identity, terminal state와 audit trail | Deferred |
-| Secret/config/telemetry | opaque secret, exact config identity, portable correlation field | Deferred |
+| Submission/status | idempotent submission identity와 verified retrieval | AWS API Lambda adapter |
+| Orchestration | run/round/worker transition, declared fan-out/fan-in와 completeness | AWS Step Functions thin adapter |
+| Worker execution | immutable assignment, exact seed/config, cooperative cancellation | AWS Lambda worker adapter |
+| Artifact | immutable reference, digest, schema identity | AWS S3 adapter |
+| State/publication | CAS, retry identity, terminal state와 audit trail | AWS S3-backed adapter; application semantics remain portable |
+| Secret/config/telemetry | opaque secret, exact config identity, portable correlation field | AWS adapter/deployment boundary |
 
-Physical implementation은 artifact reference만 전달하고 domain/result 의미, seed derivation, ALNS step, comparator 또는 verifier를 재구현해서는 안 된다. Provider/product를 선택할 수 있는 시점은 Master §16.3의 workload, security/access/retention/audit, retry/recovery, performance/cost evidence와 별도 scope approval 뒤다.
+AWS implementation은 artifact reference만 전달하고 domain/result 의미, seed derivation, ALNS step, comparator 또는 verifier를 재구현해서는 안 된다. AWS SDK, ARN, event DTO와 retry client policy는 AWS adapter/deployment에만 둔다. Local runner와 AWS는 같은 input/profile/manifest에서 같은 semantic artifact/result fingerprint와 worker/round completion, retry identity, two-gate publication 의미를 보여야 한다. ECS, GCP, Kubernetes 등의 채택은 Master §16.3의 evidence, parity suite와 별도 approval 뒤에만 가능하다.
 
 ## 14. Logical multi-round execution
 
@@ -1012,11 +1020,11 @@ Hybrid execution adds `HybridPhaseOrdinal`, `RouteSelectionRunId`, pool/model/ba
 
 Cancellation is a cooperative intent. An incomplete COW candidate is discarded, and intent, actual worker termination and last completed boundary are recorded separately. A retained committed candidate is never a normal result without both verification gates.
 
-## 15. Deferred infrastructure selection gate
+## 15. Selected AWS target implementation gate
 
-`Q-INFRA-01`은 나중에 기본 provider를 고르라는 요청이 아니다. Master §16.3의 resume evidence와 별도 scope approval 뒤에만 별도 결정을 시작할 수 있다. 그 결정은 artifact identity, state/CAS, retry identity, cancellation, complete batch fan-in, result retrieval과 두 gate publication을 이미 검증된 logical port와 대조해야 한다.
+`Q-INFRA-01`은 2026-07-26 사용자 승인으로 AWS S3 + Step Functions + Lambda target/reference runtime을 선택했다. AWS adapter/deployment 구현과 cutover는 Master §15.10/§16.3의 evidence를 통과해야 하며, 선택 자체가 code, IaC 또는 production activation 완료를 뜻하지 않는다.
 
-그때의 provider adapter는 SDK/event mapping, workflow language, compute invocation, artifact locator, state transaction/lease, secret resolution, network/encryption, telemetry exporter와 deployment pipeline만 바꿀 수 있다. Canonical input/travel/profile fingerprint, worker/round identity, termination semantics, candidate/result verification, champion selection, outcome/provenance identity 또는 retry semantics는 바꿀 수 없다.
+AWS adapter는 SDK/event mapping, Step Functions definition, Lambda invocation, S3 locator, state transaction/lease, secret resolution, network/encryption, telemetry exporter와 deployment pipeline만 구현한다. Canonical input/travel/profile fingerprint, worker/round identity, termination semantics, candidate/result verification, champion selection, outcome/provenance identity 또는 retry semantics는 바꿀 수 없다. Future provider adapter도 같은 제한을 만족해야 한다.
 
 ## 16. Configuration, secret, artifact와 provenance
 
@@ -1220,7 +1228,7 @@ Search와 verifier가 같은 bug를 공유하지 않도록 expected result는 ha
 
 ### 18.4 Provider compatibility suite
 
-`Q-INFRA-01` 승인 뒤의 모든 provider adapter는 같은 abstract port test를 실행한다.
+선택된 AWS adapter와 이후의 모든 provider adapter는 같은 abstract port test를 실행한다.
 
 ```text
 idempotent submit
@@ -1252,7 +1260,7 @@ Maven은 dependency graph로 실제 순서를 계산하지만 review 기준의 t
 7. adapters/common
 8. apps/cli + apps/api + apps/worker
 9. architecture-rules + logical-port/end-to-end verification
-10. provider adapter/deployment packaging (DEFERRED: `Q-INFRA-01` 승인 뒤)
+10. selected AWS adapter/deployment packaging; future provider packaging is separately approved
 ```
 
 `mvn -pl <module> -am verify`가 필요한 선행 module과 evidence를 함께 실행해야 한다. App packaging만 성공하고 core verification이 생략되는 별도 fast path를 release build로 사용하지 않는다.
@@ -1275,12 +1283,13 @@ Maven은 dependency graph로 실제 순서를 계산하지만 review 기준의 t
 | `AR-H1 / RM-9A` | `rpdptw-solver` immutable evaluated-artifact pool/snapshot | Admission/merge/dominance/digest/memory evidence와 separate scope approval |
 | `AR-H2 / RM-9B` | Selection SPI + tiny fake/oracle + optional Gurobi backend | Exact model/warm-start/status/fallback/native cleanup; license-free default build |
 | `AR-H3 / RM-9C` | `AR-5/RM-5` both-gate application baseline과 `AR-H2/RM-9B` 위의 worker-local hybrid application + shadow | Adopted-only feedback, optional/required fallback, reproducibility class와 ALNS-only A/B |
-| `AR-11 / RM-9-other` | Physical topology/variant/multi-trip 후속 | 각 deferred resume evidence와 별도 scope 승인 |
+| `AR-11 / RM-8-aws` | AWS S3/Step Functions/Lambda adapter/deployment | Local↔AWS semantic parity, SDK isolation, retry/CAS/cancel fault, two-gate publication, shadow/rollback evidence |
+| `AR-12 / RM-9-other` | Future topology/variant/multi-trip 후속 | provider parity or deferred resume evidence와 별도 scope 승인 |
 
 ### 19.3 Phase dependencies
 
 - Port interface와 fake/local adapter는 `AR-0` 이후 core와 병행할 수 있다.
-- Provider adapter/deployment work는 `Q-INFRA-01`의 resume evidence와 별도 scope approval 뒤에만 시작하며 production cutover는 `AR-5`를 우회할 수 없다.
+- AWS adapter/deployment work는 선택된 target 범위에서 진행할 수 있지만 production cutover는 `AR-5`를 우회할 수 없고 `AR-11` parity/shadow/rollback evidence가 필요하다. Future provider work는 별도 approval을 요구한다.
 - Official `AR-9`는 `Q-BENCH-02` 승인 수치와 compliant integer `D/U` fixture 없이는 닫을 수 없다.
 - Apply/undo, optional variant와 multi-trip은 앞 phase 편의를 위해 미리 core에 넣지 않는다.
 - Route pool/MIP는 `AR-H1`~`AR-H3`의 별도 scope approval과 순서를 지킨다. `AR-H3`는 `AR-H2`뿐 아니라 `AR-5`의 independent both-gate verification과 application baseline을 선행조건으로 한다. Solver-neutral contract를 먼저 만들고 vendor backend를 generic solver/core에 넣지 않는다.
@@ -1347,19 +1356,19 @@ Maven은 dependency graph로 실제 순서를 계산하지만 review 기준의 t
 | `ADR-ARCH-004` | Typed domain/propagation facet SPI | 실제 고객 seam 사례와 verifier 영향 |
 | `ADR-ARCH-005` | Artifact canonical encoding, digest와 CAS model | Size/retention/security evidence |
 | `ADR-ARCH-006` | Run state, lease, duplicate completion과 publication consistency | Fault/idempotency rehearsal |
-| `ADR-ARCH-007` | Physical topology/provider/worker/storage 선택 | `Q-INFRA-01 DEFERRED` resume evidence와 별도 scope approval |
-| `ADR-ARCH-008` | Logical dispatcher의 concurrency/retry adapter mapping | `Q-BENCH-02` + downstream capacity, provider 결정 뒤 |
+| `ADR-ARCH-007` | AWS S3/Step Functions/Lambda adapter/deployment mapping | `Q-INFRA-01 RESOLVED`; local↔AWS parity, security/operations evidence |
+| `ADR-ARCH-008` | AWS logical dispatcher의 concurrency/retry adapter mapping | `Q-BENCH-02` + downstream capacity; future provider는 별도 parity ADR |
 | `ADR-ARCH-009` | Cancellation/recovery result external exposure | Product/error contract 승인 |
 | `ADR-ARCH-010` | Approved provider adapter parity와 cutover/rollback | Golden manifest와 shadow evidence |
 | `ADR-ARCH-011` | JPMS 사용 여부 | Dependency/toolchain compatibility |
-| `ADR-ARCH-012` | Infrastructure production topology | **`Q-INFRA-01 DEFERRED`** resume evidence와 별도 승인 |
+| `ADR-ARCH-012` | AWS production cutover 또는 future provider substitution | AWS cutover evidence 또는 future provider parity·별도 승인 |
 | `ADR-ARCH-013` | Route-selection production activation, exact partition vs compatibility mode와 profile projection 범위 | `C-17`, `RM-9A/B`, tiny-model/shadow evidence |
 | `ADR-ARCH-014` | Worker-local hybrid 유지 vs cross-worker pool fan-in/central selector | `RM-9C` 뒤 artifact/license/bottleneck/idempotency evidence |
 
 별도 backlog:
 
 - `Q-BENCH-02`: round/worker, warm-start assignment, `maxSteps`, watchdog calibration
-- `Q-INFRA-01`: provider/product/deployment topology production decision
+- AWS production cutover: `RM-8` parity/shadow/rollback 및 운영 승인
 - `Q-VAR-01`: Optional variant feasibility 시점/대상
 - Multi-trip/rotation: Exact trip/reset/depot/resource contract
 - Route pool/MIP production activation: Master §11.7~§11.10과 `RM-9A`~`RM-9C`; solver/licensing/native/fallback와 shadow decision
@@ -1376,7 +1385,7 @@ Maven은 dependency graph로 실제 순서를 계산하지만 review 기준의 t
 | Profile/policy extension | §9, `RM-2` | §12, §20 | `Q-OBJ-*`, `Q-COMP-*` |
 | Verification/result | §10, §14.1, `RM-5` | §13~§16 | `Q-RES-*` |
 | Multi-round application | §13~§14.4, `RM-6` | §14.3 | `Q-BENCH-01~03` |
-| Logical ports/migration | §4, §15.10, §16 | §3, §17 | `Q-INFRA-01` |
+| Logical ports/migration | §4, §15.10, §16 | §3, §17 | `Q-INFRA-01` AWS target + `RM-8` parity |
 | Deferred variant | §16.3, `RM-9` | §17 | `Q-VAR-01` |
 
 ### 22.2 질문 상태
@@ -1384,16 +1393,16 @@ Maven은 dependency graph로 실제 순서를 계산하지만 review 기준의 t
 **`[CONTRACT]`** 이 Architecture Design 작성 뒤에도 질문 상태는 다음과 같다.
 
 ```text
-RESOLVED 25
+RESOLVED 26
 OPEN — EXPERIMENT_REQUIRED 1
-DEFERRED 2
+DEFERRED 1
 TOTAL 28
 ```
 
 - `Q-ALG-02`: **`RESOLVED — KEEP_COW`**
 - `Q-ALG-01`: **`RESOLVED`**. 4개 request-route 성장 정책 × 2 vehicle 순서, phase-1 screen과 phase-2 champion warm start가 확정됨
 - `Q-BENCH-02`: **`OPEN — EXPERIMENT_REQUIRED`**, 공식 수치 없음
-- `Q-INFRA-01`: **`DEFERRED`**. 논리 port만 유지하며 provider/product를 선택하지 않음
+- `Q-INFRA-01`: **`RESOLVED`**. AWS S3 + Step Functions + Lambda가 target/reference runtime이며 SDK는 adapter/deployment 경계에만 위치
 - `Q-VAR-01`: **`DEFERRED`**
 
 ### 22.3 최종 architecture summary
@@ -1426,7 +1435,7 @@ portable:
   artifact/result/provenance
 
 replaceable:
-  Q-INFRA-01 승인 뒤에만 선택할 provider/product/deployment adapter
+  selected AWS adapter/deployment; future provider substitution is separately approved
   local filesystem/in-memory execution
 ```
 

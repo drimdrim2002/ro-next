@@ -2,15 +2,15 @@
 
 ```yaml
 status: REVIEW
-version: 1.2-review
+version: 1.3-review
 last_updated: 2026-07-26
 owner: RPDPTW Domain·Architecture·Application·Platform 설계 역할
 document_role: Domain 계약과 project architecture를 실제 구현 순서로 통합한 신규 설계안
 source_documents:
-  - architecture-design.md@1.2-review
+  - architecture-design.md@1.3-review
   - domain-design.md@2.3-review
   - master-design.md
-current_infrastructure_reference:
+selected_target_reference_runtime:
   storage: AWS S3
   orchestration: AWS Step Functions
   compute: AWS Lambda
@@ -74,7 +74,7 @@ supersedes: null
 
 충돌 시 이 문서가 승인된 상위 계약을 자동으로 대체하지 않는다. 변경이 필요하면 관련 ADR, 원문과 이 문서를 같은 변경 단위에서 갱신한다.
 
-기존 repository inventory에는 GCP 관련 legacy 자료가 남아 있지만, 이 문서는 이번 사용자 요구에 따라 AWS S3 + Step Functions + Lambda를 current reference runtime으로 기록한다. 실제 배포 상태가 repository inventory와 다르면 Phase 0에서 두 경로를 각각 characterization하고 production cutover 전 운영 사실을 ADR로 확정한다.
+기존 repository의 Java/GCP source와 deployment 자료는 legacy/current-state inventory로 남아 있으며 `AlnsBatchEngine`은 synthetic objective placeholder다. 2026-07-26 승인 결정에 따라 AWS S3 + Step Functions + Lambda가 선택된 target/reference runtime이다. GCP path의 존재는 migration characterization evidence일 뿐 목표 topology가 아니다. 실제 배포 상태가 inventory와 다르면 Phase 0에서 두 경로를 각각 characterization하고 AWS production cutover 전 운영 사실을 ADR로 확정한다.
 
 ### 1.4 통합 설계의 핵심 변경
 
@@ -397,7 +397,7 @@ Port interface와 deterministic fake는 Phase 0 이후 미리 scaffold할 수 �
 | Phase 8 | `AR-6 / RM-8-local` |
 | Phase 9 | 기존 logical artifact/state port의 no-DB object-storage 구체화 |
 | Phase 10 | `AR-7 / RM-6-logical` |
-| Phase 11~12 | 기존 `Q-INFRA-01` 경계의 current AWS reference 및 future substitution 구체화 |
+| Phase 11~12 | `Q-INFRA-01 RESOLVED`의 selected AWS target/reference 및 future substitution 구체화 |
 | Phase 13 | `AR-H1~H3 / RM-9A~C` |
 | Phase 14 | `AR-8~10`의 migration/calibration/cutover |
 
@@ -2681,11 +2681,11 @@ Assignment 전체 payload를 workflow state에 넣지 않고 immutable `Artifact
 - Cancellation intent vs actual termination
 - Publication CAS convergence
 
-## 15. Phase 11 — Current AWS reference distribution
+## 15. Phase 11 — Selected AWS target/reference distribution
 
 ### 15.1 현재 mapping
 
-**`[CURRENT-REFERENCE]`**
+**`[TARGET-REFERENCE]`** 2026-07-26에 선택된 기본 target runtime이며 현재 repository의 GCP deployment 또는 placeholder 구현이 이를 이미 제공한다는 뜻은 아니다.
 
 | Logical responsibility | AWS implementation |
 |---|---|
@@ -2695,7 +2695,7 @@ Assignment 전체 payload를 workflow state에 넣지 않고 immutable `Artifact
 | Secrets/credentials | AWS adapter/bootstrap |
 | Telemetry | AWS adapter exporter |
 
-AWS resource name, ARN, event DTO, SDK client와 retry policy는 `adapters/object-s3`, `adapters/workflow-aws-stepfunctions`, `adapters/compute-aws-lambda`, `distributions/aws-serverless`, `deployment/aws` 밖으로 나오지 않는다.
+AWS resource name, ARN, event DTO, SDK client와 retry policy는 `adapters/object-s3`, `adapters/workflow-aws-stepfunctions`, `adapters/compute-aws-lambda`, `distributions/aws-serverless`, `deployment/aws` 밖으로 나오지 않는다. 특히 domain/core/solver/verifier에는 AWS SDK dependency나 provider type이 0이어야 한다.
 
 ### 15.2 AWS request flow
 
@@ -2790,7 +2790,7 @@ Generic app/core POM에 AWS SDK를 넣지 않는다.
 - Access scope, encryption, secret/log redaction
 - Shadow run과 rollback rehearsal
 
-## 16. Phase 12 — ECS, GCP와 Kubernetes substitution
+## 16. Phase 12 — ECS, GCP와 Kubernetes future substitution
 
 ### 16.1 Orthogonal substitution
 
@@ -2799,7 +2799,7 @@ Storage, durable workflow와 worker compute를 독립적으로 바꾼다.
 | Distribution | Storage | Workflow | Worker compute |
 |---|---|---|---|
 | Local | Filesystem | In-process coordinator | Same process |
-| AWS current | S3 | Step Functions | Lambda |
+| AWS selected target/reference | S3 | Step Functions | Lambda |
 | AWS container candidate | S3 | Step Functions | ECS task/service |
 | GCP candidate | GCS | Google Cloud Workflows 또는 별도 승인한 durable workflow | Cloud Run service/job |
 | Kubernetes on AWS | S3 | Kubernetes controller 또는 승인된 scheduler | Kubernetes Job |
@@ -2925,7 +2925,7 @@ Step 2: S3 → GCS/Azure Blob, Kubernetes 유지
 
 | 실행 환경 | 적합한 변화 | 추가 adapter | 유지되는 것 | 특별 검증 |
 |---|---|---|---|---|
-| Lambda | 짧고 event-driven한 current reference | `compute-aws-lambda` | 전체 semantic/application 계약 | Duplicate event, remaining-time/watchdog 분리 |
+| Lambda | 짧고 event-driven한 selected target/reference | `compute-aws-lambda` | 전체 semantic/application 계약 | Duplicate event, remaining-time/watchdog 분리 |
 | ECS | AWS 안에서 container worker로 이동 | `compute-aws-ecs` | S3/Step Functions와 전체 core | Task start/stop, image digest, lost task/retry |
 | Cloud Run | GCP managed container compute | `compute-gcp-cloudrun` | GCS와 무관한 동일 compute port | HTTP/job 중복, timeout/cancel, scale concurrency |
 | Kubernetes | Provider-neutral cluster scheduling과 controller reconcile | `workflow-kubernetes-controller`, `compute-kubernetes-job` | 선택한 object storage와 전체 core | Reconcile idempotency, Job 재생성, namespace/tenant 격리 |
@@ -3603,8 +3603,8 @@ Expected result는 hand calculation, small exhaustive oracle 또는 independent 
 | `ADR-004` | Typed domain/propagation facet contract |
 | `ADR-005` | Artifact canonical encoding/digest/object key layout |
 | `ADR-006` | Object-storage CAS/state/publication consistency |
-| `ADR-007` | AWS Step Functions/Lambda thin orchestration mapping |
-| `ADR-008` | Worker dispatch/retry/cancellation mapping |
+| `ADR-007` | 선택된 AWS Step Functions/Lambda thin orchestration mapping; application semantic ownership 유지 |
+| `ADR-008` | AWS worker dispatch/retry/cancellation mapping; logical identity와 completion 의미 불변 |
 | `ADR-009` | GCS/Azure/Kubernetes/Cloud Run adoption |
 | `ADR-010` | Profile catalog repository resource vs external object artifact |
 | `ADR-011` | Optional route pool/MIP production activation/backend |
@@ -3618,7 +3618,7 @@ Q-BENCH-02 official execution values
 multi-trip/rotation
 optional variants
 route pool/MIP production activation
-future provider adoption timing
+AWS 이외 future provider adoption timing
 database/read-model introduction
 ```
 

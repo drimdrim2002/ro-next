@@ -2,14 +2,16 @@
 
 ```yaml
 status: REVIEW
-version: 2.1-review
+version: 2.2-review
 last_updated: 2026-07-24
 owner: 질문별 owner boundary
 scope: Master Design의 28개 질문에 대한 상태, 결정, evidence와 gate의 단일 등록부
-supersedes: version 1.0-review의 26 OPEN + 2 DEFERRED 상태
+supersedes: version 2.1-review의 25 RESOLVED + 1 OPEN + 2 DEFERRED 상태
 related_decisions:
   - master-design-sessions/29-open-question-interview.md
   - master-design-sessions/30-open-question-integration.md
+approval_records:
+  - 2026-07-26 user-approved AWS S3 + Step Functions + Lambda target runtime (`Q-INFRA-01`)
 source:
   - master-design-sessions/19-integration-plan.md
   - master-design-sessions/29-open-question-interview.md
@@ -58,20 +60,28 @@ source:
 | <a id="q-bench-01"></a>`Q-BENCH-01` | RESOLVED | `전체 시간`은 순수 주행시간인가, 대기·서비스를 포함한 route elapsed time인가? | Used routes의 `drive + customer wait + depot wait + service + inter-work-window rest` 합 | 세션 29 사용자 결정 / Benchmark·Product | `RM-6` fourth metric formula 확정 | [§14.3](master-design.md#143-win-poc-comparator) |
 | <a id="q-bench-02"></a>`Q-BENCH-02` | OPEN — EXPERIMENT_REQUIRED | phase-1 `screenMaxSteps`, phase-2 worker 수·`phase2MaxSteps`·`maxRounds`와 watchdog의 공식값은 무엇인가? | Phase 2는 phase-1 champion을 공통 warm start로 사용한다. 모든 선언 worker가 정상 완료·검증된 뒤 stable round champion을 고르고, 이전 champion보다 엄격히 좋지 않으면 `NO_STRICT_IMPROVEMENT`로 종료한다. 공식 수치는 calibration 승인 후 결정한다. | 2026-07-24 후속 사용자 결정 / Benchmark·Quality | Logical fan-out/fan-in test 가능; official `RM-6` numerical manifest/baseline 차단 | [§11.3](master-design.md#113-phase-1-screen과-phase-2-alns), [§14.4](master-design.md#144-multi-round-official-execution) |
 | <a id="q-bench-03"></a>`Q-BENCH-03` | RESOLVED | fixture의 `oneway + multiRotation=1`을 정확히 어떻게 해석하는가? | Oneway가 우선: depot 한 번 출발, 중간/최종 depot 복귀 없음, rotation 값은 비권위지만 raw provenance에는 보존 | 세션 29 사용자 결정 / Input·Product | `RM-1` adapter 의미 확정; integer matrix 전 `RM-6`는 별도 차단 | [§7.3](master-design.md#73-planning-period와-time), [§14.2](master-design.md#142-primary-fixture와-manifest) |
-| <a id="q-infra-01"></a>`Q-INFRA-01` | DEFERRED | 실제 provider/product/deployment topology는 무엇인가? | 결정·질문·활성화하지 않음. 논리 port만 유지. 특정 orchestration/worker service는 fan-out/fan-in 예시일 뿐 | 세션 29에서 의도적 비질문 / Application·Platform·Product | `RM-9` resume evidence와 별도 승인 전 차단 없음 | [§4](master-design.md#4-논리-시스템-context와-책임-경계) |
+| <a id="q-infra-01"></a>`Q-INFRA-01` | RESOLVED | 실제 provider/product/deployment topology는 무엇인가? | 선택된 target/reference runtime은 **AWS S3 (object storage) + AWS Step Functions (durable orchestration) + AWS Lambda (API/coordinator/worker compute)**다. 이 선택은 deployment/IaC·resource sizing 또는 solver 구현 완료를 뜻하지 않는다. SDK와 provider DTO는 AWS adapter/deployment 경계에만 두며, logical port·domain 의미·worker/round completion·retry identity·candidate/result verification·publication 의미는 변경하지 않는다. ECS, GCP, Kubernetes 등은 parity와 별도 승인 뒤의 미래 대체 후보이다. | **2026-07-26 사용자 승인 결정** / Application·Platform·Product. 이 등록부와 Master·Architecture 문서에 같은 변경 단위로 반영함 | 선택된 AWS target의 adapter/deployment 구현은 `RM-8` semantic parity, two-gate publication, shadow/cutover/rollback evidence를 통과해야 함. `Q-BENCH-02` 수치 gate와는 독립 | [Master §1·§4·§15.10·§16.3](master-design.md#1-이-문서의-목적-독자와-사용법), [Architecture §13·§15](architecture-design.md#13-physical-topology와-provider-boundary) |
 | <a id="q-var-01"></a>`Q-VAR-01` | DEFERRED | MDVRP·OVRP·SDVRP 중 어떤 제한형을 언제 feasibility study할 것인가? | 결정·질문·활성화하지 않고 현재 pair/terminal/bank 계약 유지 | 세션 29에서 의도적 비질문 / Product·Domain·Algorithm | `RM-9` variant evidence와 별도 승인 전 차단 없음 | [§16.3](master-design.md#163-deferred-resume-criteria) |
 
 ## 3. 상태 요약
 
 | 상태 | 수량 | 현재 의미 |
 |---|---:|---|
-| RESOLVED | 25 | `Q-ALG-01`의 후속 사용자 결정과 `Q-ALG-02`의 `RESOLVED — KEEP_COW`를 포함 |
+| RESOLVED | 26 | `Q-ALG-01`의 후속 사용자 결정, `Q-ALG-02`의 `RESOLVED — KEEP_COW`, 2026-07-26의 `Q-INFRA-01` AWS target 승인 포함 |
 | OPEN — EXPERIMENT_REQUIRED | 1 | `Q-BENCH-02`; protocol 확정, 공식 수치 미확정 |
-| DEFERRED | 2 | `Q-INFRA-01`, `Q-VAR-01`; 질문·활성화 금지, resume evidence와 별도 승인 필요 |
+| DEFERRED | 1 | `Q-VAR-01`만 해당; 질문·활성화 금지, resume evidence와 별도 승인 필요 |
 | 합계 | 28 | 세션 19의 canonical 질문 전체 |
 
 ## 4. 남은 gate
 
 - `Q-BENCH-02`: phase-1 `screenMaxSteps`, phase-2 worker 수·`phase2MaxSteps`·`maxRounds`와 watchdog을 calibration corpus와 실제 측정 결과로 승인해야 한다.
 - 현재 Win fixture의 소수 `D/U`는 해결된 정수 계약에 비준수이므로 compliant integer matrix 없이는 official baseline을 만들 수 없다.
-- `Q-INFRA-01`, `Q-VAR-01`은 계속 `DEFERRED`이며 위 실험 항목과 연결해 활성화하지 않는다.
+- `Q-INFRA-01`의 AWS target 선택은 완료됐지만 `Q-BENCH-02`의 공식 수치, `RM-8` parity/cutover evidence, 비용·성능 sizing과 미래 대체 provider 채택은 별도 gate다.
+- `Q-VAR-01`만 계속 `DEFERRED`이며 위 실험 항목과 연결해 활성화하지 않는다.
+
+## 5. 영향 문서
+
+- [Master Design](master-design.md): current Java/GCP placeholder와 AWS target inventory, `C-20`, logical-port 경계, `RM-8`, deferred criteria와 질문 상태를 갱신한다.
+- [Architecture Design](architecture-design.md): AWS provider mapping, adapter/deployment isolation, AWS parity gate와 미래 substitution 경계를 갱신한다.
+- [Architecture-domain implementation design](architecture-domain-implementation-design.md): AWS target/reference phase와 future substitution/ADR 표현을 갱신한다.
+- [문서 지도](README.md)와 [2026-07-26 이전 초안](2026-07-26-master-design.md): canonical authority와 historical GCP evidence의 위치를 갱신한다.

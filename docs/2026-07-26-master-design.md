@@ -1,11 +1,11 @@
 ---
-title: RPDPTW 통합 솔버 Master Design
-status: REVIEW
+title: RPDPTW 통합 솔버 Master Design (superseded draft)
+status: SUPERSEDED
 version: 4.0-review
 last_updated: 2026-07-26
 owner: RPDPTW 설계 책임 역할
 scope: 전체 목표, 완료 정의, 핵심 결정, 구현 흐름, ALNS-MIP 적용 개요, roadmap gate와 검증 evidence
-supersedes: master-design.md
+superseded_by: master-design.md
 related_documents:
   - 2026-07-26-domain-design.md
   - 2026-07-26-architecture-design.md
@@ -16,6 +16,8 @@ related_documents:
 ---
 
 # RPDPTW 통합 솔버 Master Design
+
+> **SUPERSEDED DRAFT — canonical authority:** 이 문서는 2026-07-26의 중복 통합 초안이다. 현재 목표·질문 상태·AWS runtime 결정은 [Master Design](master-design.md)과 [질문 등록부](master-design-open-questions.md)가 소유한다. 이 문서를 독립적으로 갱신하거나 현재 결정의 authority로 사용하지 않는다.
 
 ## 목차
 
@@ -115,11 +117,12 @@ RPDPTW는 여기서 **Rich Pickup and Delivery Problem with Time Windows**를 �
 
 ### 1.3 current placeholder와 target 설계를 구분하는 법
 
-> **구현 상태 경고:** 이 문서는 미래 목표 설계이며 구현 완료 보고가 아니다. 2026-07-26 inventory의 current Java/GCP path는 입력 내용을 읽지 않고 합성 objective를 만드는 `AlnsBatchEngine` placeholder와 orchestration demo다. 목표 ALNS, route pool, MIP, 두 verifier와 official benchmark가 구현·검증되었다는 evidence는 아직 없다.
+> **구현 상태 경고:** 2026-07-26 inventory의 current Java/GCP path는 입력 내용을 읽지 않고 합성 objective를 만드는 `AlnsBatchEngine` placeholder와 orchestration demo다. 이는 historical/legacy current-state이며 migration characterization 대상이다. 선택된 target/reference runtime은 **AWS S3 (object storage) + Step Functions (durable orchestration) + Lambda (API/coordinator/worker compute)**다. 이 선택은 목표 ALNS, route pool, MIP, 두 verifier와 official benchmark가 구현·검증되었다는 evidence가 아니다.
 
 | 구분 | 실제 의미 | 이 문서에서의 취급 |
 |---|---|---|
 | Current placeholder | orchestration과 integration 형태를 보여 주는 demo | migration characterization 대상. ALNS 품질·feasibility 근거가 아님 |
+| Target AWS runtime | S3 + Step Functions + Lambda | canonical Master/등록부가 소유하는 선택된 target/reference runtime; provider SDK는 adapter/deployment 경계에만 위치 |
 | Target ALNS | immutable domain, atomic pair 연산, COW state, adaptive search, 독립 검증 | `RM-1`~`RM-8`에서 구현하고 evidence로 종료해야 할 목표 |
 | Target route pool/MIP | exact route 수집과 solver-neutral route selection | `C-17` 아래의 **GATED TARGET**. `RM-9A`~`RM-9C`와 별도 승인 전 구현 착수·기본 활성화 금지 |
 
@@ -328,7 +331,7 @@ Hard violation은 finite penalty, SA temperature 또는 adaptive reward로 상�
 | `C-17` | Route pool/MIP는 **GATED TARGET**이다. Solver-neutral contract와 fallback을 설계할 수 있으나 `RM-9A`~`RM-9C` predecessor evidence와 별도 scope approval 전 구현 착수 및 production default 활성화를 금지한다. |
 | `C-18` | Win PoC comparator는 미배정 request 수 → 배차 차량 수 → 전체 거리 → 전체 운영시간이며 official run은 완결된 verified champion만 쓴다. |
 | `C-19` | 선택 변형 문제는 구현이 아니라 deferred feasibility work다. |
-| `C-20` | 구체 infrastructure/product/deployment topology는 deferred이고 Master는 logical port만 소유한다. |
+| `C-20` | **Superseded — canonical Master C-20을 따른다.** 선택된 target/reference topology는 AWS S3 + Step Functions + Lambda이며 Master는 logical port와 semantic contract만 소유한다. |
 | `C-21` | 독립 verifier를 통과하지 않은 후보는 정상 publication 또는 benchmark 대상이 아니다. |
 | `C-22` | 강한 재현성은 고정 fingerprint/seed/order/step 아래 모든 worker가 계획 step을 완료하고 정상 종료한 실행에 한정한다. |
 
@@ -773,7 +776,8 @@ Current placeholder와 legacy 문서는 목표 계약 evidence가 아니라 repl
 |---|---|---|
 | Route pool/MIP production activation | evaluated artifact/projected column/`HybridPhase`의 solver-neutral 계약 | `RM-9A~C`, verified baseline, measured value와 solver/license/native/fallback 승인 |
 | Optional variants | atomic pair, fixed terminal, bank, travel contract | [Q-VAR-01](master-design-open-questions.md#q-var-01)의 선택·시점, fixture와 core-impact 승인 |
-| Physical topology | logical ports와 status/artifact/idempotency/cancellation | workload, security/retention/recovery/performance/cost evidence와 별도 승인 |
+| AWS implementation/cutover | logical ports와 status/artifact/idempotency/cancellation | canonical Master의 `RM-8` parity, two-gate publication, shadow/cutover/rollback 및 운영 승인 |
+| AWS 이외 physical topology | AWS와 같은 logical contract | parity evidence와 별도 승인 |
 | Academic benchmark 확장 | Win manifest/verifier 재사용 경계 | authoritative format/result, RPDPTW mapping과 별도 manifest 승인 |
 | Multi-trip/rotation | current single-trip와 trip을 넘지 않는 pair | trip/reset/depot window/resource 계약과 영향 분석 승인 |
 | Dynamic routing | immutable solve snapshot과 cancellation port | event/replanning/state continuity/SLA 계약 승인 |
@@ -786,12 +790,13 @@ Current placeholder와 legacy 문서는 목표 계약 evidence가 아니라 repl
 
 ### 12.1 open question 상태
 
-28개 질문의 단일 등록부는 [Master Design open questions](master-design-open-questions.md)다. 현재 상태는 `RESOLVED 25`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 2`다.
+28개 질문의 단일 등록부는 [Master Design open questions](master-design-open-questions.md)다. 현재 상태는 `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1`다.
 
 - `Q-ALG-01`: 8개 initial solution과 phase-1 선별 구조로 해결.
 - [`Q-ALG-02`](master-design-open-questions.md#q-alg-02): `RESOLVED — KEEP_COW`.
 - [`Q-BENCH-02`](master-design-open-questions.md#q-bench-02): protocol은 확정됐지만 official 수치는 실험 대기.
-- [`Q-INFRA-01`](master-design-open-questions.md#q-infra-01), [`Q-VAR-01`](master-design-open-questions.md#q-var-01): `DEFERRED`.
+- [`Q-INFRA-01`](master-design-open-questions.md#q-infra-01): `RESOLVED`; AWS S3 + Step Functions + Lambda가 선택된 target/reference runtime.
+- [`Q-VAR-01`](master-design-open-questions.md#q-var-01): `DEFERRED`.
 
 새 질문 ID를 이 문서에서 만들지 않는다.
 

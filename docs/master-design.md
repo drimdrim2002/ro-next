@@ -2,7 +2,7 @@
 
 ```yaml
 status: REVIEW
-version: 3.3-review
+version: 3.4-review
 last_updated: 2026-07-26
 owner: RPDPTW 설계 책임 역할
 scope: 개발자가 RPDPTW 솔버를 구현하기 위한 전체 구조, 컴포넌트 책임, 계약, 구현 순서와 검증 evidence
@@ -11,6 +11,8 @@ related_decisions:
   - master-design-sessions/29-open-question-interview.md
   - master-design-sessions/30-open-question-integration.md
   - master-design-sessions/31-domain-design-integration.md
+approval_records:
+  - 2026-07-26 user-approved AWS S3 + Step Functions + Lambda target runtime (`Q-INFRA-01`)
 ```
 
 ## 목차
@@ -69,6 +71,7 @@ related_decisions:
 | 구분 | 실제 상태 | 이 문서의 해석 |
 |---|---|---|
 | Current Java/GCP path | 입력 내용을 읽지 않고 합성 objective를 만드는 `AlnsBatchEngine` placeholder와 orchestration demo | Migration characterization 대상이며 ALNS 품질·feasibility evidence가 아님 |
+| Target AWS runtime | S3 object storage, Step Functions durable orchestration, Lambda API/coordinator/worker compute | 선택된 target/reference runtime. 실제 AWS resource·IaC·solver 구현 완료 또는 production cutover evidence가 아님 |
 | Target ALNS | 본 문서의 immutable domain, pair destroy/repair, COW, adaptive search와 verifier | 상세 설계 단계이며 구현·benchmark 완료가 아님 |
 | Target route pool/MIP | §11.7~§11.10과 `RM-9A`~`RM-9C`의 optional hybrid contract | `C-17` gate 아래의 구현 가능한 설계. Solver·라이선스·실험 승인 전 production 활성화 아님 |
 
@@ -87,7 +90,8 @@ related_decisions:
 이 문서만으로 다음을 확정해서는 안 된다.
 
 - 구체 Java package/class/method, wire DTO, 저장 schema와 배포 topology
-- AWS, GCP 또는 특정 orchestration·worker·storage product
+- AWS target의 세부 resource 이름, IAM/IaC, network·retention·cost/resource sizing 또는 production activation
+- GCP/ECS/Kubernetes 등 미래 대체 후보의 채택
 - 실험 결과가 없는 phase별 `maxSteps`, phase-2 worker/round 수와 watchdog
 - 현재 코드가 목표 ALNS/MIP를 이미 구현했다는 주장
 - Route pool/MIP의 production 활성화, 특정 optimizer 제품·라이선스와 공식 수치의 승인
@@ -145,7 +149,7 @@ Master는 “어떤 시스템을 어떤 순서로 구현하는가”를 소유�
 - **Gated target**: 의미·API 경계와 exit evidence를 구체화하되 predecessor evidence와 별도 scope approval 전에는 구현/활성화하지 않는다. `C-17` route pool/MIP가 여기에 해당한다.
 - **보류**: `DEFERRED`이며 현재 roadmap을 막지 않고 질문하거나 활성화하지 않는다.
 
-현재 질문 상태는 `RESOLVED 25`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 2`다. `Q-ALG-01`은 8개 초기해와 phase-1 선별 구조로 해결됐고, `Q-ALG-02`는 `RESOLVED — KEEP_COW`다. `Q-BENCH-02`만 수치 없는 실험 대기이며 `Q-INFRA-01`·`Q-VAR-01`은 보류다.
+현재 질문 상태는 `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1`이다. `Q-ALG-01`은 8개 초기해와 phase-1 선별 구조로 해결됐고, `Q-ALG-02`는 `RESOLVED — KEEP_COW`다. `Q-INFRA-01`은 2026-07-26 사용자 승인으로 AWS S3 + Step Functions + Lambda target/reference runtime을 선택했다. `Q-BENCH-02`만 수치 없는 실험 대기이며 `Q-VAR-01`만 보류다.
 
 현재 `REVIEW` 단계에서 이 문서는 conflict resolver가 아니라 검토 제안이다. 승인된 기준과 충돌할 때 이 문서의 문장만으로 그 기준을 대체할 수 없다. 이 문서가 `APPROVED`가 된 뒤의 authority 순서는 다음과 같다.
 
@@ -271,7 +275,7 @@ Master는 “어떤 시스템을 어떤 순서로 구현하는가”를 소유�
 | `C-17` | Route pool/MIP는 **GATED TARGET**이다. Solver-neutral target contract, fallback과 phase gate는 설계·review할 수 있지만 `RM-9A`~`RM-9C`의 predecessor evidence와 별도 scope approval 전에는 구현 착수와 production default 활성화를 금지한다. |
 | `C-18` | Win PoC 전용 네 성분 comparator는 미배정 수, 배차 차량 수, 전체 거리, 전체 운영시간 순이며, official run은 고정 round plan의 완결된 verified champion을 사용한다. |
 | `C-19` | 선택 변형 문제는 구현이 아니라 deferred feasibility work다. |
-| `C-20` | 구체 infrastructure/product/deployment topology는 deferred이고 Master는 논리 port만 소유한다. |
+| `C-20` | 선택된 target/reference topology는 **AWS S3 + Step Functions + Lambda**다. Master는 logical port와 semantic contract를 소유하며 AWS SDK, ARN/event DTO, resource/IaC 세부를 소유하지 않는다. SDK는 adapter/deployment 경계에만 위치하고 provider 구현은 worker/round completion, retry identity, candidate/result verification 또는 publication 의미를 바꾸지 않는다. |
 | `C-21` | 독립 verifier를 통과하지 않은 후보는 정상 publication 또는 benchmark 대상이 아니다. |
 | `C-22` | 강한 재현성은 고정 fingerprint/seed/order/step 아래 모든 worker가 계획 step을 완료하고 coordinator가 `MAX_STEPS_REACHED`, `NO_STRICT_IMPROVEMENT` 또는 `MAX_ROUNDS_REACHED`로 정상 종료한 실행에 한정한다. |
 
@@ -414,7 +418,7 @@ external adapters / infrastructure implementations
 6. Publication은 verifier 판정을 소비하며 자체 feasibility나 summary를 추정하지 않는다.
 7. Infrastructure는 logical port를 구현할 뿐 round/worker, idempotency, cancellation과 result 의미를 역으로 정의하지 않는다.
 
-물리 topology는 [Q-INFRA-01](master-design-open-questions.md#q-infra-01)이 `DEFERRED`인 동안 결정하지 않는다. Logical port와 test double은 구현할 수 있지만 특정 service나 deployment 구성을 목표 설계로 고정할 수 없다.
+선택된 target/reference topology는 [Q-INFRA-01](master-design-open-questions.md#q-infra-01)의 AWS S3 + Step Functions + Lambda다. GCP Java/deployment path는 migration characterization inventory로 보존하며 target topology로 읽지 않는다. Logical port와 test double은 AWS adapter와 local runner 모두에 적용되고, AWS SDK·event DTO·resource locator는 adapter/deployment 밖으로 나갈 수 없다. ECS, GCP, Kubernetes 등은 같은 contract/parity evidence와 별도 승인 뒤의 대체 후보일 뿐 현재 기본 target이 아니다.
 
 ### 4.5 상태와 산출물의 생명주기
 
@@ -888,7 +892,7 @@ phase-1 champion
 → maxRounds 도달: MAX_ROUNDS_REACHED 종료
 ```
 
-한 worker의 결과만으로 round를 끝내거나, 일부 성공 worker로 champion을 만들 수 없다. `screenMaxSteps`, `phase2MaxSteps`, batch worker 수와 `maxRounds`는 [Q-BENCH-02](master-design-open-questions.md#q-bench-02)의 실험 대기 수치다. logical coordinator/worker는 core 계약이며 AWS Step Functions 같은 cloud orchestration은 이를 나중에 구현하는 adapter다.
+한 worker의 결과만으로 round를 끝내거나, 일부 성공 worker로 champion을 만들 수 없다. `screenMaxSteps`, `phase2MaxSteps`, batch worker 수와 `maxRounds`는 [Q-BENCH-02](master-design-open-questions.md#q-bench-02)의 실험 대기 수치다. logical coordinator/worker는 core 계약이며 선택된 AWS Step Functions/Lambda adapter는 그 contract를 구현할 뿐 의미를 소유하지 않는다.
 
 ### 11.4 ALNS step
 
@@ -1356,7 +1360,7 @@ Manifest가 선언한 모든 worker는 exact `maxSteps`로 `MAX_STEPS_REACHED`�
 
 Seed별 no-worse나 “좋은 seed” 선정은 official hard gate가 아니다. Worker 완료 순서와 물리 병렬 순서는 champion에 영향을 주지 않는다. 결과 의존 종료는 complete batch의 stable fan-in 뒤 `NO_STRICT_IMPROVEMENT` 판정에만 허용하며, worker 중간 종료나 전체 wall-clock quality deadline을 사용하지 않는다.
 
-`screenMaxSteps`, phase-2 round별 worker 수·`phase2MaxSteps`·`maxRounds`와 watchdog은 [Q-BENCH-02](master-design-open-questions.md#q-bench-02)의 확정된 calibration/approval protocol을 따라야 하지만 실제 공식 수치는 아직 없다. 인터뷰의 동작 설명용 수치나 기존 초안의 임시값을 공식값으로 사용하지 않는다. 논리 fan-out/fan-in은 provider-neutral하며 특정 cloud orchestration/worker product를 확정하지 않는다.
+`screenMaxSteps`, phase-2 round별 worker 수·`phase2MaxSteps`·`maxRounds`와 watchdog은 [Q-BENCH-02](master-design-open-questions.md#q-bench-02)의 확정된 calibration/approval protocol을 따라야 하지만 실제 공식 수치는 아직 없다. 인터뷰의 동작 설명용 수치나 기존 초안의 임시값을 공식값으로 사용하지 않는다. 논리 fan-out/fan-in은 provider-neutral하며 선택된 AWS Step Functions/Lambda adapter와 local runner가 같은 completion·retry·verification 의미를 구현해야 한다.
 
 ## 15. Implementation roadmap와 phase gates
 
@@ -1477,7 +1481,7 @@ RM-9 = separate approval only
 | Entry | `RM-5` publishable verified result 경로, compliant integer travel fixture, `Q-BENCH-02`의 승인된 calibration result |
 | 구현 단위 | Immutable comparison manifest/card, exact four-component comparator, fixed round/worker logical orchestration, retry identity, verified champion fan-in, next-round warm-start lineage와 challenger comparison |
 | Deliverable | 모든 선언 worker가 정상 완료·검증된 final champion, immutable baseline/comparison record와 full manifest fingerprints |
-| 금지 | 현재 decimal fixture의 official 사용, 일부 성공 worker champion, seed별 hard gate, worker 중간의 result-dependent stop, 다른 fingerprint 간 quality 판정, 특정 cloud product 확정 |
+| 금지 | 현재 decimal fixture의 official 사용, 일부 성공 worker champion, seed별 hard gate, worker 중간의 result-dependent stop, 다른 fingerprint 간 quality 판정, AWS implementation을 quality/semantic contract로 승격 |
 | Exit evidence | Exact comparator hand cases, phase-1 8-candidate selection, worker completion-order 독립성, incomplete/retry cases, 모든 worker `MAX_STEPS_REACHED`+verification, plateau/max-round lineage, identical-manifest deterministic rerun와 explicit approval |
 | 완료 후 소비자 | Regression/challenger workflow, `RM-7` performance profiling과 `RM-8` operational integration evidence |
 
@@ -1503,9 +1507,9 @@ RM-9 = separate approval only
 | Entry | Interface/test double은 `RM-0` 뒤 가능. Cutover는 최소 `RM-1`~`RM-5`의 verified end-to-end 필요 |
 | 구현 단위 | Submission/input, solve execution, cancellation, finalization, status/artifact와 retrieval port 구현, versioned legacy adapter, shadow/cutover/rollback |
 | Deliverable | Semantic compatibility matrix, input→result lineage, idempotent execution/status model, versioned cutover와 recoverable rollback plan |
-| 금지 | Legacy 동작을 목표 계약 evidence로 간주, infrastructure DTO의 core 침투, 미검증 candidate 노출, 특정 provider/product를 Master 결정으로 고정 |
+| 금지 | Legacy GCP 동작을 목표 계약 evidence로 간주, AWS infrastructure DTO/SDK의 core·domain·solver·verifier 침투, 미검증 candidate 노출, AWS 구현 때문에 logical 의미 변경 |
 | Exit evidence | Characterization와 shadow comparison, retry/idempotency/cancellation fault cases, both-gate end-to-end publication, artifact identity, versioned cutover와 rollback rehearsal |
-| 완료 후 소비자 | Product/application integration. Physical topology 선택은 별도 deferred decision |
+| 완료 후 소비자 | Product/application integration과 선택된 AWS target/reference runtime. 실제 cutover는 이 evidence와 운영 승인 뒤에만 가능 |
 
 `RM-8`은 core 의미를 application 환경에 맞춰 바꾸는 phase가 아니라, 검증된 core/result 계약을 논리 port 뒤에서 보존하는 phase다.
 
@@ -1545,7 +1549,7 @@ RM-9 = separate approval only
 
 Cross-worker pool fan-in과 중앙 MIP는 `RM-9C`의 기본 완료조건이 아니다. Worker-local baseline 뒤 artifact size, complete-worker merge, idempotency, solver bottleneck과 license concurrency evidence로 별도 scalability ADR을 승인해야 한다.
 
-Optional variants, academic benchmark expansion, multi-trip/rotation과 physical topology는 계속 독립 후속 scope다. 다음 행위는 어느 `RM-9` 준비에서도 허용하지 않는다.
+Optional variants, academic benchmark expansion, multi-trip/rotation과 **AWS 이외의 physical topology 채택**은 계속 독립 후속 scope다. 다음 행위는 어느 `RM-9` 준비에서도 허용하지 않는다.
 
 - 현재 pair/terminal/bank invariant를 optional variant 가능성 때문에 완화
 - Vendor MIP dependency를 `rpdptw-core` 또는 solver-neutral package에 추가
@@ -1594,18 +1598,19 @@ Legacy 문서와 현재 코드 구조는 replacement inventory와 characterizati
 |---|---|---|
 | route pool/MIP production activation | §11.7~§11.10의 solver-neutral evaluated-artifact/projected-column types | `RM-9A`~`RM-9C`, verified ALNS/result baseline, measured value와 별도 solver/licensing/native/fallback 승인 |
 | optional variants | 현재 atomic pair, fixed terminal, bank와 matrix contract | [Q-VAR-01](master-design-open-questions.md#q-var-01)의 선택·시점 결정, 대표 fixture, hand result와 core-impact feasibility 승인 |
-| physical topology | 논리 ports, status/artifact/idempotency/cancellation 책임 | verified result, workload, security/access/retention/audit, retry/recovery, performance/cost evidence와 별도 승인 |
+| AWS target implementation/cutover | 논리 ports, status/artifact/idempotency/cancellation와 local semantic parity | `RM-8` AWS adapter contract, two-gate publication, shadow/cutover/rollback, workload·security/access/retention/audit·retry/recovery·performance/cost 운영 승인 |
+| AWS 이외 physical topology 채택 | AWS와 동일한 논리 ports와 semantic contract | workload·security/access/retention/audit·retry/recovery·performance/cost evidence, provider parity suite와 별도 승인 |
 | academic benchmark expansion | Win manifest/card와 verifier 재사용 경계 | Win baseline, authoritative format/result, RPDPTW mapping과 separate manifest 승인 |
 | multi-trip/rotation | 현재 `oneway`/single `roundtrip`; 후속 trip도 pair crossing 금지와 depot `duration` 경계 보존 | `multiRotation` 값·trip/reset/depot window/resource 계약, 예제와 domain/algorithm/verifier 영향의 별도 승인 |
 | dynamic routing | immutable solve snapshot과 cancellation port | event/replanning, state continuity, conflict와 SLA 계약 승인 |
 
-선택 변형을 현재 pair invariant 완화로 미리 구현하거나 vendor MIP dependency를 core에 선반영해서는 안 된다. Solver-neutral target type의 설계와 licensed backend의 production 활성화는 별개다. Physical topology는 안정된 logical contracts와 workload evidence 뒤에 가장 마지막으로 결정한다.
+선택 변형을 현재 pair invariant 완화로 미리 구현하거나 vendor MIP dependency를 core에 선반영해서는 안 된다. Solver-neutral target type의 설계와 licensed backend의 production 활성화는 별개다. AWS target은 선택됐지만 AWS implementation/cutover와 AWS 이외 topology 채택은 안정된 logical contracts, parity와 운영 evidence를 각각 요구한다.
 
 ## 17. Open questions와 traceability
 
 ### 17.1 중앙 질문
 
-28개 질문의 상태와 결정 단일 등록부는 [Master Design open questions](master-design-open-questions.md)다. 세션 29의 24개 결정과 후속 사용자 결정 `Q-ALG-01`까지 25개가 해결됐고, `Q-BENCH-02`만 프로토콜이 확정된 `OPEN — EXPERIMENT_REQUIRED`다. `Q-INFRA-01`·`Q-VAR-01`은 `DEFERRED`다. 등록부는 exact decision, evidence, gate와 이 문서 반영 절을 보존한다. 새 질문 ID를 이 문서에서 만들지 않는다.
+28개 질문의 상태와 결정 단일 등록부는 [Master Design open questions](master-design-open-questions.md)다. 세션 29의 24개 결정, `Q-ALG-01` 후속 사용자 결정과 2026-07-26 `Q-INFRA-01` AWS target 승인까지 26개가 해결됐고, `Q-BENCH-02`만 프로토콜이 확정된 `OPEN — EXPERIMENT_REQUIRED`다. `Q-VAR-01`만 `DEFERRED`다. 등록부는 exact decision, evidence, gate와 이 문서 반영 절을 보존한다. 새 질문 ID를 이 문서에서 만들지 않는다.
 
 ### 17.2 상세 통합 입력
 
