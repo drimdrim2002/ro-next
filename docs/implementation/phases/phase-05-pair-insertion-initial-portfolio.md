@@ -2,7 +2,7 @@
 
 ```yaml
 document_status: REVIEWED_CHANGES_REQUIRED
-document_version: 1.2
+document_version: 1.3
 phase: "05"
 phase_name: pair-insertion-initial-portfolio
 baseline_date: 2026-07-28
@@ -12,6 +12,8 @@ review_status: INDEPENDENT_REVIEW_COMPLETED
 phase_acceptance_status: NOT_ACCEPTED
 entry_gate_status: BLOCKED_BY_UNACCEPTED_PREDECESSORS
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+implementation_direction_decision: ALNS_FIRST_BENCHMARK_BEFORE_OPTIONAL_MIP
+direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 scheduler_task_id: TBD_NOT_SUPPLIED
 owners:
   implementation: RPDPTW Pair/Insertion/Portfolio owner role
@@ -85,6 +87,18 @@ historical_cross_check:
 Phase 04/06 detailed와 independent review는 모두 actual이다. 두 review verdict는 `CHANGES_REQUIRED`이고 두 Phase 모두 implementation `NOT_STARTED`, evidence `NOT_PRODUCED`, acceptance `NOT_ACCEPTED`다. 서로가 서로의 whole-file SHA-256을 metadata에 넣으면 authoring 중 순환 drift가 생기므로 `DIRECTLY_READ` 상태와 exact section/verdict만 기록한다. Implementation entry에서는 accepted review가 승인한 immutable artifact/evidence digest를 handoff manifest에 pin하되, 이 상세 문서끼리 reciprocal whole-file hash를 복제하지 않는다.
 
 Final Domain §18의 `Q-INFRA-01 DEFERRED`와 `RESOLVED 25 / DEFERRED 2` 문구는 최신 질문 등록부보다 오래된 historical status이므로 Phase 05 상태 판정에 사용하지 않는다. 최신 exact 상태는 질문 등록부의 `Q-INFRA-01 RESOLVED`, `RESOLVED 26 / OPEN 1 / DEFERRED 1`이다.
+
+### 1.2 ALNS-first 방향 적용
+
+Phase 05는 ALNS 독립 구현 경로의 준비 단계다. Exit와 Phase 06 handoff는 optimizer
+vendor, MIP solver, license/server/token, native backend 또는 production authority를
+요구하지 않는다. Insertion의 `exact`는 모든 선언 위치를 Phase 03/04 propagation과
+hard constraint로 권위 평가한다는 뜻이며 MIP/exact optimizer 호출을 뜻하지 않는다.
+
+Phase 05 artifact와 oracle은 `05 → 06 → 07 → 08 → 14A` ALNS-only 경로를 우선
+지원한다. Phase 13은 Phase 14A의 `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT` 뒤에만 열리는
+후속 consumer이므로 Phase 05 API, portfolio 또는 evidence에 route pool/MIP 요구를
+선반영하지 않는다.
 
 ## 2. 목표, 범위와 비범위
 
@@ -1525,7 +1539,7 @@ Phase 05는 다음을 모두 만족할 때만 `ACCEPTED`다.
 | Identity encoding/hash | PROPOSED/OPEN | Architecture/Serialization | External compatibility와 evidence encoding | Semantic field set, internal package-private identity | Canonical encoding/version/migration review |
 | `Q-BENCH-02` official steps/workers/rounds/watchdog | OPEN — EXPERIMENT_REQUIRED | Benchmark·Quality | Phase 06 official run/Phase 14; Phase 05 deterministic construction은 안 막음 | Phase 05는 step/worker 숫자를 갖지 않음 | Calibration protocol, measured review, explicit approval |
 | `Q-ALG-02` | RESOLVED — KEEP_COW | Algorithm·Performance | Phase 06 state strategy; Phase 05 functional construction은 영향 없음 | Immutable seed snapshot | COW는 Phase 06에서 구현; apply/undo는 별도 evidence/승인 전 금지 |
-| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13/production default | Phase 05 seed portfolio only | Phase 06/07 baseline + C-17 scope + OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback 승인 |
+| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13/production default | Phase 05 seed portfolio only | Phase 06/07/08 accepted + Phase 14A `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`, C-17 scope + OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback 승인 |
 | `Q-VAR-01` | DEFERRED | Product·Domain·Algorithm | MDVRP/OVRP/SDVRP 질문/구현 | Fixed-terminal single-trip pair | Representative fixture, impact study와 별도 승인 |
 | Multi-trip/rotation | DEFERRED FEATURE | Product·Domain·Algorithm | Trip crossing/reset/depot revisit | Oneway + single roundtrip, pair non-crossing | Trip/resource/reset/window/pair 계약과 승인 |
 | Proposed public API/schema/numeric default | OPEN | Product/API/Data | External compatibility 약속 | Internal immutable contract/test-only values | Versioned contract, compatibility/security review와 approval |

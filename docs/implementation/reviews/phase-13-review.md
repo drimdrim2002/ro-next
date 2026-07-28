@@ -8,7 +8,7 @@ review_date: 2026-07-28
 review_timezone: Asia/Seoul
 reviewer_role: independent Phase 13 documentation reviewer
 target_document: docs/implementation/phases/phase-13-optional-hybrid-route-selection.md
-target_document_version_after_safe_fixes: 1.4
+target_document_version_after_safe_fixes: 1.5
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
 document_verdict: PASS_WITH_RESIDUAL_BLOCKERS
 phase_acceptance_verdict: GATED_NOT_STARTED_NOT_ACCEPTED
@@ -16,6 +16,9 @@ activation_status_observed: C17_GATE_CLOSED
 production_authority_observed: NOT_GRANTED
 implementation_status_observed: NOT_STARTED
 evidence_status_observed: NOT_PRODUCED
+alns_benchmark_acceptance_status_observed: NOT_PRODUCED
+direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
+direction_revision_verdict: PASS_DOCUMENTATION_ONLY_GATE_REMAINS_CLOSED
 scheduler_skip_receipt_status_observed: NOT_PRODUCED
 signed_applicability_receipt_status_observed: NOT_PRODUCED
 signing_trust_policy_status_observed: OPEN_GATED_NOT_APPROVED
@@ -49,14 +52,15 @@ backend_policy_cross_validation_verdict: PASS_NO_ACTIONABLE_FINDINGS
 ## 1. Scope와 결론
 
 이 review는 [Phase 13 대상 문서](../phases/phase-13-optional-hybrid-route-selection.md)의
-원문 계약, C-17 gate, Phase 06/07/12/14 경계, test/evidence 검출력과 실제 checkout을
+원문 계약, C-17 gate, Phase 06/07/08/12/14 경계, test/evidence 검출력과 실제 checkout을
 독립 대조했다. Java/POM/build/deployment, canonical source, Phase 12/14, progress/status와
 다른 review는 수정하지 않았다. Worktree를 만들거나 코드 구현을 하지 않았다.
 
 문서 verdict는 **`PASS_WITH_RESIDUAL_BLOCKERS`**다. Target 안에서 답이 안전하고
 명백한 6건은 v1.2에 직접 정정했고, 최종 live-status/reciprocal 정합성 교정은
 v1.3에 반영했다. v1.4는 사용자가 확정한 backend 정책을 Google OR-Tools direct
-CP-SAT로 전환했으며 구현 상태를 올리지 않았다. 특히 다음 의미를 고정했다.
+CP-SAT로 전환했으며 구현 상태를 올리지 않았다. v1.5는 ALNS benchmark acceptance를
+Phase 13의 선행 gate로 추가했으며 구현 상태를 올리지 않았다. 특히 다음 의미를 고정했다.
 
 - Target H1은 canonical `Phase 13 — Optional hybrid`이며 route selection은 부제다.
 - Phase 12 provider substitution은 Phase 13의 보편 predecessor가 아니다. Approved
@@ -71,6 +75,8 @@ CP-SAT로 전환했으며 구현 상태를 올리지 않았다. 특히 다음 �
 - Skip/Activated applicability는 Phase 14 consumption 전에 separate signed envelope와
   action-time trust/validity/revocation/freshness verification을 요구한다.
 - 인접 whole-file/section digest와 reciprocal fingerprint는 acceptance가 아니다.
+- Phase 06/07/08 accepted evidence와 Phase 14A의 immutable ALNS benchmark acceptance
+  receipt가 없으면 C-17 상태와 무관하게 Phase 13은 열리지 않는다.
 - Phase 13이 나중에 활성화되면 exact backend는 direct Java CP-SAT다. Boolean
   route/unassigned와 integer/fixed-point model이므로 `MPSolver`를 쓰지 않는다.
 - OR-Tools result는 selected IDs만 제공하며 fresh materialization/full
@@ -84,7 +90,7 @@ CP-SAT로 전환했으며 구현 상태를 올리지 않았다. 특히 다음 �
 Active residual finding은 2건이다. 첫째, Phase 03~07의 full-solution
 evaluation/comparator 계약이 아직 닫히지 않았다. 둘째, applicability signature
 algorithm/trust roots/revocation/time/freshness policy가 승인되지 않았고 실제 signed
-envelope/verification receipt도 없다. Phase 12 v1.2 conditional bounded handoff,
+envelope/verification receipt도 없다. Phase 12 v1.3 conditional bounded handoff,
 Phase 13 signed applicability envelope/action-time verification과 Phase 14 consumer
 seam 정렬로 과거 reciprocal dependency/hash drift는 해소됐다.
 
@@ -103,10 +109,10 @@ accepted predecessor/evidence, signing/trust 승인 또는 실제 signed receipt
 | [Final Architecture](../../2026-07-26-architecture-design.md) | 전체, 특히 §2~§6 | OR-Tools-free ALNS-only dependency, direct CP-SAT/native lifecycle, verifier isolation |
 | [Integrated design](../../architecture-domain-implementation-design.md) | 전체, 특히 §3, §10~§25, §27~§28 | Phase DAG, independent Phase 12 branch, Phase 13 optional branch와 Phase 14 conditional handoff |
 | [Question register](../../master-design-open-questions.md) | 전체 28개 항목 | `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1`; `C-17` 별도 gated |
-| [Master Realization Plan](../master-realization-plan.md) | 전체, 특히 §2~§7 Phase 06/07/12/13/14와 §8~§15 | Phase 06+07→13, Phase 10→12 독립 branch, Phase 14의 conditional hybrid |
+| [Master Realization Plan](../master-realization-plan.md) | 전체, 특히 §2~§7 Phase 06/07/08/12/13/14와 §8~§15 | Phase 06→07→08→14A acceptance 뒤 optional Phase 13, Phase 10→12 독립 branch, Phase 14B의 conditional hybrid |
 | [Phase 12](../phases/phase-12-provider-substitution.md) | 전체, 특히 §3, §14~§18.3 | `INFRASTRUCTURE_DECISION_INPUT_ONLY`; C-17/OR-Tools activation/hybrid/production authority를 부여하지 않음 |
 | [Phase 14](../phases/phase-14-official-calibration-cutover.md) | 전체, 특히 §3.1, §5.3, §9.1~§9.2와 §14~§18 | Gate-closed ALNS-only skip, signed applicability/trust/revocation/action-time verification, gate-open accepted Phase 13와 자체 official/production gates |
-| [Phase 00~14 reviews](./) | 15개 current review metadata와 relevant contract/blocker | `15/15` review 완료. Phase 12는 `CHANGES_REQUIRED/BLOCKED_NOT_IMPLEMENTED`, Phase 14는 `CHANGES_REQUIRED/BLOCKED_NOT_READY`; review 완료와 implementation/phase acceptance 분리 |
+| [Phase 00~14 reviews](./) | 15개 current review metadata와 relevant contract/blocker | `15/15` review 완료. Phase 12는 `CHANGES_REQUIRED/BLOCKED_NOT_IMPLEMENTED`; Phase 14는 `CHANGES_REQUIRED`, 14A `NOT_RUN/RECEIPT_NOT_PRODUCED`, 14B `NOT_STARTED/BLOCKED_NOT_READY`; review 완료와 implementation/phase acceptance 분리 |
 
 Final Domain §18과 Final Architecture §6의 과거 `Q-INFRA-01 DEFERRED`,
 `25/1/2`는 최신 Canonical Master/register의 `RESOLVED`, `26/1/1`로 해소했다.
@@ -155,9 +161,11 @@ architecture evidence가 아니다.
 - **Severity/status:** `HIGH — APPLIED`
 - **Finding:** Target v1.0 metadata, §2.4, §4, WP-13.0/13.8, §12~§14는 Phase 12의
   일곱 evidence와 accepted review를 모든 Phase 13 activation의 필수 선행조건으로 뒀다.
-- **Exact source evidence:** Canonical Master의 `RM-9A~C`/`C-17`, Integrated design의
-  Phase DAG와 Master Realization Plan §4/Phase 12~13은 Phase 06+07→13 optional branch와
-  Phase 10→12 provider-substitution branch를 분리한다. Phase 12 §18.3도 스스로
+- **Historical source evidence:** Canonical Master의 `RM-9A~C`/`C-17`, Integrated
+  design의 Phase DAG와 당시 Master Realization Plan §4/Phase 12~13은 Phase 06+07→13
+  optional branch와 Phase 10→12 provider-substitution branch를 분리했다. Current
+  plan은 이를 Phase 06→07→08→14A acceptance 뒤 optional Phase 13으로 강화했다.
+  Phase 12 §18.3도 스스로
   `INFRASTRUCTURE_DECISION_INPUT_ONLY`, `hybridImplementationAuthority=false`라고 제한한다.
 - **Risk:** Baseline runtime의 합법적 gate-open review를 무관한 infrastructure branch가
   영구 차단하거나, 반대로 Phase 12 parity가 C-17/OR-Tools activation authority처럼 오인될 수 있다.
@@ -271,8 +279,8 @@ architecture evidence가 아니다.
   status도 metadata에 보존했다.
 - **Exact source evidence:** Canonical phase label은 `Phase 13 — Optional hybrid`다.
   Actual checkout에는 Phase 00~14 detail과 review `15/15`가 모두 존재한다. Phase 12
-  v1.2는 `CHANGES_REQUIRED/BLOCKED_NOT_IMPLEMENTED`, Phase 14 v1.2는
-  `CHANGES_REQUIRED/BLOCKED_NOT_READY`다. 존재와 review 완료는
+  v1.3은 `CHANGES_REQUIRED/BLOCKED_NOT_IMPLEMENTED`, Phase 14 v1.4는
+  `CHANGES_REQUIRED`, 14A `NOT_RUN`, 14B `NOT_STARTED/BLOCKED_NOT_READY`다. 존재와 review 완료는
   implementation/evidence/acceptance가 아니다.
 - **Correction:** H1을 exact canonical label로 고치고 `Route selection`은 부제로만
   유지했다. Target v1.3 metadata/§1/§5.1에는 live review `15/15`, Phase 12/14의 exact
@@ -323,8 +331,9 @@ architecture evidence가 아니다.
 | User-locked authority와 `REVIEW` 비중단 | `PASS` | Current canonical/register 우선, historical-only 분리 |
 | `C-17` optional/gated 보존 | `PASS AFTER FIX` | Closed path absence, explicit unauthorized fail-closed, gate-open only assembly |
 | Signed Phase 13 applicability | `PASS PROPOSED CONTRACT / AUTHORITY BLOCKED` | Exact signed envelope와 action-time trust/validity/revocation/freshness fail-closed; policy/receipt NOT_PRODUCED |
-| Phase 12 substitution boundary | `PASS ALIGNED` | Phase 12 v1.2 bounded conditional input과 Phase 13 v1.4 contract 정렬; C-17/hybrid authority는 부여하지 않음 |
-| Phase 14 ALNS-only skip | `PASS DOCUMENT CONTRACT / EVIDENCE MISSING` | Scheduler-owned skip, Phase 13 refs absent, Phase 14 자체 gate 보존 |
+| Phase 12 substitution boundary | `PASS ALIGNED` | Phase 12 v1.3 bounded conditional input과 Phase 13 v1.5 contract 정렬; C-17/hybrid authority는 부여하지 않음 |
+| Phase 14A ALNS benchmark prerequisite | `PASS DOCUMENT CONTRACT / EVIDENCE MISSING` | Phase 06/07/08 acceptance + immutable benchmark receipt가 Phase 13보다 먼저이며 actual receipt `NOT_PRODUCED` |
+| Phase 14B ALNS-only skip | `PASS DOCUMENT CONTRACT / EVIDENCE MISSING` | Scheduler-owned skip, Phase 13 refs absent, Phase 14B 자체 gate 보존 |
 | Backend decision/hidden defaults | `PASS` | Direct CP-SAT policy만 fixed; version/checksum/workers/seed/time/gap/platform/cap/cadence/traffic/performance는 OPEN/GATED; `MPSolver` fallback 없음 |
 | Route pool/projection/materialization/adoption | `PASS DOCUMENT PLAN` | Exact/no-surrogate/full evaluation/strict adoption; actual source/evidence 0 |
 | Full-solution evaluator/comparator | `BLOCKED` | F-P13-005 cross-phase contract 미해결 |
@@ -340,7 +349,8 @@ architecture evidence가 아니다.
 ## 5. 적용 변경 요약
 
 Target v1.2에 앞선 6개 safe correction을 적용했고 v1.3에서 live-status와 reciprocal
-정합성을 보완했다. v1.4에서는 사용자 확정 backend 정책을 문서 계약에 반영했다.
+정합성을 보완했다. v1.4에서는 사용자 확정 backend 정책을 문서 계약에 반영했고,
+v1.5에서는 ALNS benchmark acceptance 선행 gate와 optional MIP branch를 명시했다.
 
 1. Universal Phase 12 predecessor를 selected substituted runtime의 conditional evidence로 교정.
 2. Scheduler-owned closed-path skip/rejection과 gate-open optional assembly를 분리.
@@ -353,6 +363,8 @@ Target v1.2에 앞선 6개 safe correction을 적용했고 v1.3에서 live-statu
 8. Exact backend를 Google OR-Tools direct CP-SAT로 고정하고 status × incumbent,
    cancellation, explicit reproducibility params, native Loader/cleanup,
    Apache-2.0/applicable notice/SBOM와 unchanged-ALNS fallback 계약으로 교체.
+9. Phase 06/07/08 accepted evidence와 Phase 14A ALNS benchmark acceptance receipt 뒤에만
+   Phase 13을 여는 ALNS-first gate, bounded candidate modes와 timeout/failure fallback을 추가.
 
 다른 Phase/review, canonical source, Java, POM, build/deployment, progress/status는 수정하지 않았다.
 
@@ -361,7 +373,8 @@ Target v1.2에 앞선 6개 safe correction을 적용했고 v1.3에서 live-statu
 | Blocker | Owner | 현재 막는 범위 | Last safe point | Restart condition |
 |---|---|---|---|---|
 | `C-17` scope/meaning/authority 미승인 | Product + Algorithm + Architecture | 모든 Phase 13 source/module/evidence | Canonical ALNS-only path | Separate immutable approval and exact scope receipt |
-| Phase 06/07 accepted artifact/evidence 없음 | Algorithm + Verification + independent reviewers | Pool source, both-gate handoff | Reviewed documents only | Accepted `E-P06-*`/`E-P07-*` and handoff identities |
+| Phase 06/07/08 accepted artifact/evidence 없음 | Algorithm + Verification + Application + independent reviewers | ALNS implementation, independent verification, application-boundary handoff | Reviewed documents only | Accepted `E-P06-*`/`E-P07-*`/`E-P08-*` and exact handoff identities |
+| Phase 14A ALNS benchmark acceptance receipt 없음 | Benchmark + Quality + independent reviewer/acceptance owner | Phase 13 entry 전체 | ALNS-only document path; no Phase 13 source/load | Complete immutable evidence bundle and independently reviewed/accepted `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT` |
 | Full-solution evaluation/comparator gap | Phase 03~07 Core/Profile/Algorithm/Verification | Materialization, strict adoption, publication | Route kernel + immutable routes/bank | Exact API/identity/failure/tie + equality/corruption tests |
 | Scheduler task/role/signed skip receipt 없음 | Total scheduler + Phase 14 Application | Closed skip evidence와 any implementation start | No Phase 13 path; ALNS-only, no Phase 14 action | Exact task/roles, signed scheduler receipt, action-time verifier, no-load/no-edge/unauthorized tests |
 | Applicability signing/trust policy 미승인 | Security + Release evidence-trust owner | Phase 14 consumption of Skip/Activated | Unsigned proposed schema/negative tests only | Signature profile/trust roots/revocation/time/freshness/canonicalization/verifier approval and evidence |
@@ -369,8 +382,9 @@ Target v1.2에 앞선 6개 safe correction을 적용했고 v1.3에서 live-statu
 | Pool/budget/cadence/traffic/performance 수치 | Performance/Product/FinOps | Experiment/official rollout | No value/default | Explicit experiment manifest, measured evidence and approval |
 | Phase 14 official/production gates | Benchmark/Quality/Product/Platform/Security/Ops | Official hybrid/ALNS cutover | Experiment-only, no traffic | `Q-BENCH-02`, compliant travel, accepted predecessors and production authority |
 
-Phase 12/13/14 reciprocal contract drift는 Phase 12 v1.2 conditional bounded handoff,
-Phase 13 v1.4 signed applicability/action-time verification과 Phase 14 v1.2 consumer
+Phase 12/13/14 reciprocal contract drift는 Phase 12 v1.3 conditional bounded handoff
+(introduced in v1.2),
+Phase 13 v1.5 signed applicability/action-time verification과 Phase 14 v1.4 14B consumer
 seam 정렬로 `RESOLVED`됐으며 active blocker 표에서 제거했다. 이 정리는 위 blocker나
 `C-17`, signing/trust approval, 실제 signed receipt 부재를 닫지 않는다.
 
@@ -406,7 +420,7 @@ evidence success를 뜻하지 않는다.
 | Validation | Result |
 |---|---|
 | 두 파일 non-empty | `PASS`; 두 경로 `test -s` exit 0 |
-| Live review/status inventory | `PASS`; Phase review 15개 모두 완료. Phase 12 `CHANGES_REQUIRED/BLOCKED_NOT_IMPLEMENTED`, Phase 14 `CHANGES_REQUIRED/BLOCKED_NOT_READY` |
+| Live review/status inventory | `PASS`; Phase review 15개 모두 완료. Phase 12 `CHANGES_REQUIRED/BLOCKED_NOT_IMPLEMENTED`; Phase 14 `CHANGES_REQUIRED`, 14A `NOT_RUN/RECEIPT_NOT_PRODUCED`, 14B `NOT_STARTED/BLOCKED_NOT_READY` |
 | Required metadata/scope/inventory/verdict/findings/change/blocker/commands | `PASS`; review §1~§8, recorded 8개 = non-resolved 7개(`HIGH 4/MEDIUM 2/LOW 1`) + resolved 1개; active residual 2개 |
 | Relative Markdown link/anchor | `PASS`; local target/GFM-style heading validator `PASS_LINKS_AND_ANCHORS files=2` |
 | Fence parity/trailing whitespace/EOF newline | `PASS`; target fence 48, review fence 4로 even, trailing match 0, EOF newline 정상 |
@@ -475,3 +489,17 @@ implementation/evidence는 `NOT_PRODUCED`다. 따라서 현재 사실은
 “Phase 13이 실행되지 않는다”이며 “hybrid-disabled implementation이 accepted됐다”가 아니다.
 Gate-open handoff, official hybrid, Phase 14 calibration/cutover와 production authority는
 모두 별도 blocker가 해제되고 accepted evidence/review가 생긴 뒤에만 재검토한다.
+
+## 10. ALNS-first direction revision review
+
+Phase 13 v1.5의 새 entry gate를 검토했다. Phase 06/07/08 accepted evidence와 Phase
+14A의 immutable `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`가 모두 선행하고, 그 뒤에도
+`C-17`, OR-Tools version/config/native/OSS/SBOM, security/operations/cost/admission/
+fallback/rollback 승인을 별도로 요구한다. 이 gate는 `PASS`이며 현재 모두
+미충족이므로 Phase 13은 계속 `GATED_NOT_STARTED_NOT_ACCEPTED`다.
+
+MIP 복잡도는 worst-case 및 instance/constraint/formulation/backend/hardware 민감성으로
+제한해 서술했고, solver-neutral route selection, bounded subproblem, warm-start,
+repair와 intensification을 proposed mode로만 둔다. Timeout/no-incumbent/model/native/
+resource failure와 invalid/equal/worse candidate의 ALNS incumbent 보존도 명시됐다.
+Evidence와 acceptance receipt는 `NOT_PRODUCED`다.

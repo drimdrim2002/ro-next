@@ -212,3 +212,11 @@ docs/implementation/reviews/phase-02-review.md
 | Review write scope | `PASS` | Reviewer가 수정한 source는 target Phase 02 하나이며 새로 만든 파일은 이 review 하나다. Adjacent Phase/Java/Maven은 read-only였다. |
 
 이 review 문서 자체는 구현 test/evidence가 아니며 root `mvn verify`를 Phase 02 green으로 대체하지 않는다. Root build는 target module/test 부재 상태를 phase evidence로 오인하지 않기 위해 이 review에서 실행하지 않았다.
+
+## ALNS-first direction revision addendum
+
+Task `019fa901-8776-7f61-b467-a8c6595b970d`에서 C-17 restart 조건이 Phase 06/07/08
+accepted evidence와 Phase 14A `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`를 선행하도록
+재검토했다. [Phase 02 target](../phases/phase-02-prepared-travel-immutable-problem.md)의
+travel/problem contract는 MIP 독립이며 기존 review verdict,
+implementation, acceptance와 evidence 상태는 변하지 않는다.

@@ -12,6 +12,8 @@ canonical_slug: phase-01-canonical-input-normalization
 plan_version: 1.0
 baseline_date: 2026-07-28
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
+direction_revision_status: ALNS_FIRST_GATE_OVERLAY_APPLIED_DOCUMENTATION_ONLY
 implementation_claim: NONE
 public_api_status: PROPOSED_NOT_APPROVED
 wire_schema_status: OPEN_REQUIRES_PRODUCT_API_DATA_OWNER_APPROVAL
@@ -31,13 +33,13 @@ prerequisites:
 planned_handoff:
   - phase-02-prepared-travel-immutable-problem.md
 source_fingerprints_sha256:
-  docs/master-design.md: 58554334b9f27586c93a685adc0facf0fbd7e79576c18890f0ac13891b2f803b
-  docs/2026-07-26-domain-design.md: 1870662f85a08cc9a1e48a1974b96278eccddfd1519721d71b356c56034ecaab
-  docs/2026-07-26-architecture-design.md: 3d4dbbfc7e4cbdb2f3985378d84fd5f717db770b04131573c00ed354a9f41614
-  docs/architecture-domain-implementation-design.md: ec513ac1b0bacd88149683bf48c36f7e6edcd53a9232498597e3b0d57c585875
+  docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
+  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
   docs/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
-  docs/implementation/master-realization-plan.md: 5921213ae419b9398bde8c91c3d6ada5aa64bf22a9b823e5b3889e1642085c05
-  docs/implementation/README.md: accf7758802c253ae47e3d0fe41e190728c507195d0b41f27f14a25804c8f23f
+  docs/implementation/master-realization-plan.md: 940fe8c2156bf0472deafcd450e0ea49f0036ab6b304d6d051f0148a38cd0f5d
+  docs/implementation/README.md: 6454238185af7b7c420f468adf42609a0ec045d6c70c16cc7601f0342fa74358
 historical_cross_check_sha256:
   docs/2026-07-26-master-design.md: 5da9fd05a027e748b642517d33c0edab86ec818645d5b78c2a0d573fa968419a
 source_sections:
@@ -991,7 +993,7 @@ NormalizedInputArtifact
 | Canonical comparator/encoding name | `PROPOSED INTERNAL` | Domain·Architecture | Stable fingerprint compatibility | Test-only versioned comparator | Review/ADR와 replay/migration rule 승인 |
 | Current Win fixture decimal `D/U` | `BLOCKER FOR OFFICIAL USE ONLY` | Input·Matrix + Benchmark | 해당 fixture의 compliant/official use | Negative rejection fixture | Integer matrix 제공 또는 명시적 contract/migration 승인 |
 | `Q-BENCH-02` values | `OPEN — EXPERIMENT_REQUIRED` | Benchmark·Quality | Phase 14 official manifest | Phase 01 unaffected | Calibration + measured review + explicit approval |
-| `C-17` route pool/MIP | `GATED TARGET` | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13 | Phase 01 unaffected | Phase 06/07 baseline + C-17 scope + OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback 승인 |
+| `C-17` route pool/MIP | `GATED TARGET` | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13 | Phase 01 unaffected | Phase 06/07/08 accepted + Phase 14A `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`, C-17 scope + OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback 승인 |
 | `Q-VAR-01` | `DEFERRED` | Product·Domain·Algorithm | Optional variants | Current pair/trip facts only | Variant/fixture/core-impact approval |
 | Multi-trip/rotation | `DEFERRED FEATURE` | Product·Domain·Algorithm | Non-single-trip input | Reject unsupported input | Trip/reset/depot/resource contract와 승인 |
 

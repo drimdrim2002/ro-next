@@ -14,14 +14,16 @@ inventory_checkout:
   branch: codex/domain-design
   commit: 3424277
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
+direction_revision_status: ALNS_FIRST_GATE_OVERLAY_APPLIED_DOCUMENTATION_ONLY
 source_fingerprints_sha256:
-  docs/master-design.md: 58554334b9f27586c93a685adc0facf0fbd7e79576c18890f0ac13891b2f803b
-  docs/2026-07-26-domain-design.md: 1870662f85a08cc9a1e48a1974b96278eccddfd1519721d71b356c56034ecaab
-  docs/2026-07-26-architecture-design.md: 3d4dbbfc7e4cbdb2f3985378d84fd5f717db770b04131573c00ed354a9f41614
-  docs/architecture-domain-implementation-design.md: ec513ac1b0bacd88149683bf48c36f7e6edcd53a9232498597e3b0d57c585875
+  docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
+  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
   docs/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
-  docs/implementation/master-realization-plan.md: 5921213ae419b9398bde8c91c3d6ada5aa64bf22a9b823e5b3889e1642085c05
-  docs/implementation/README.md: accf7758802c253ae47e3d0fe41e190728c507195d0b41f27f14a25804c8f23f
+  docs/implementation/master-realization-plan.md: 940fe8c2156bf0472deafcd450e0ea49f0036ab6b304d6d051f0148a38cd0f5d
+  docs/implementation/README.md: 6454238185af7b7c420f468adf42609a0ec045d6c70c16cc7601f0342fa74358
   docs/2026-07-26-master-design.md: 5da9fd05a027e748b642517d33c0edab86ec818645d5b78c2a0d573fa968419a
 source_sections:
   canonical_master: "§1.1~§1.5, §2.4, §3.2~§3.3, §4.3~§4.7, §15.1~§15.3, §16, §17"
@@ -80,13 +82,13 @@ Fingerprint는 이 문서 작성 시 읽은 bytes의 SHA-256이다. 원문이 �
 
 | 역할 | 입력과 SHA-256 | Phase 00에서 직접 적용하는 section |
 |---|---|---|
-| Canonical Master | [Master Design](../../master-design.md), `58554334b9f27586c93a685adc0facf0fbd7e79576c18890f0ac13891b2f803b` | §1.1~§1.5, §2.4, §3.2~§3.3, §4.3~§4.7, §15.1~§15.3, §16, §17 |
-| Final Domain | [2026-07-26 Domain Design](../../2026-07-26-domain-design.md), `1870662f85a08cc9a1e48a1974b96278eccddfd1519721d71b356c56034ecaab` | §1, §3의 Maven/package mapping, §7~§8의 immutable/COW 경계, §17~§18의 evidence와 drift 확인 |
-| Final Architecture | [2026-07-26 Architecture Design](../../2026-07-26-architecture-design.md), `3d4dbbfc7e4cbdb2f3985378d84fd5f717db770b04131573c00ed354a9f41614` | §1.2~§1.5, §2.1~§2.7, §5.6, §6.1~§6.5 |
-| 구현 중심 통합 설계 | [Architecture-domain implementation design](../../architecture-domain-implementation-design.md), `ec513ac1b0bacd88149683bf48c36f7e6edcd53a9232498597e3b0d57c585875` | §1.1~§1.5, §2, §3.1~§3.6, §4, §22~§25, §27~§28 |
+| Canonical Master | [Master Design](../../master-design.md), `e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd` | §1.1~§1.5, §2.4, §3.2~§3.3, §4.3~§4.7, §15.1~§15.3, §16, §17 |
+| Final Domain | [2026-07-26 Domain Design](../../2026-07-26-domain-design.md), `1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac` | §1, §3의 Maven/package mapping, §7~§8의 immutable/COW 경계, §17~§18의 evidence와 drift 확인 |
+| Final Architecture | [2026-07-26 Architecture Design](../../2026-07-26-architecture-design.md), `1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed` | §1.2~§1.5, §2.1~§2.7, §5.6, §6.1~§6.5 |
+| 구현 중심 통합 설계 | [Architecture-domain implementation design](../../architecture-domain-implementation-design.md), `883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571` | §1.1~§1.5, §2, §3.1~§3.6, §4, §22~§25, §27~§28 |
 | 질문 등록부 | [Master Design open questions](../../master-design-open-questions.md), `b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b` | §1~§4 전체, 특히 `Q-BENCH-02`, `Q-INFRA-01`, `Q-VAR-01` exact 행 |
-| 총괄 실행 계획 | [Master Realization Plan](../master-realization-plan.md), `5921213ae419b9398bde8c91c3d6ada5aa64bf22a9b823e5b3889e1642085c05` | §1~§4, §6~§7의 Phase 00, §8~§15 |
-| 구현 문서 지도 | [Implementation README](../README.md), `accf7758802c253ae47e3d0fe41e190728c507195d0b41f27f14a25804c8f23f` | §1~§7 전체 |
+| 총괄 실행 계획 | [Master Realization Plan](../master-realization-plan.md), `993979f67e8c07cf80a27c3aa3bd5bc379b12bc27657c4520ff44b093fda99be` | §1~§4, §6~§7의 Phase 00, §8~§15 |
+| 구현 문서 지도 | [Implementation README](../README.md), `ad7534e51a967528efebe045926edca2c800d85437eda87e4bac6f29365a97cb` | §1~§7 전체 |
 | Historical cross-check only | [2026-07-26 Master Design — SUPERSEDED](../../2026-07-26-master-design.md), `5da9fd05a027e748b642517d33c0edab86ec818645d5b78c2a0d573fa968419a` | §1.3~§1.5, §4, §10~§12를 현재 결정의 누락·퇴행 확인에만 사용 |
 
 ### 1.2 규범 표기
@@ -1227,7 +1229,7 @@ Phase 00은 다음을 모두 만족해야만 `ACCEPTED`다.
 | Archive timestamp derivation | OPEN internal build choice | Build/Release | Reproducible gate seal 금지 | UTF-8/current build baseline | Explicit deterministic value/derivation ADR와 two-build proof |
 | `Q-BENCH-02` official values | OPEN — EXPERIMENT_REQUIRED | Benchmark·Quality | Phase 00을 막지 않음; 수치 default 금지 | No official numeric manifest | Calibration + explicit approval |
 | Current Win fixture decimal `D/U` | Blocker for official fixture only | Input·Matrix + Benchmark | Phase 00을 막지 않음 | Fixture read-only | Compliant integer matrix 또는 계약 변경 승인 |
-| `C-17` route pool/MIP | GATED TARGET; backend policy = direct OR-Tools CP-SAT | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain owners | Module/package/OR-Tools dependency 생성 금지 | ALNS-only DAG | Phase 06/07 baseline, scope와 OR-Tools version/config/native/OSS-license/SBOM/fallback 승인 |
+| `C-17` route pool/MIP | GATED TARGET; backend policy = direct OR-Tools CP-SAT | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain owners | Module/package/OR-Tools dependency 생성 금지 | ALNS-only DAG | Phase 06/07/08 accepted + Phase 14A `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`, scope와 OR-Tools version/config/native/OSS-license/SBOM/fallback 승인 |
 | `Q-VAR-01` optional variants | DEFERRED | Product·Domain·Algorithm | 질문·skeleton·구현 금지 | Single-trip boundary | Variant/fixture/core-impact 승인 |
 | Multi-trip/rotation | Deferred feature | Product·Domain·Algorithm | Phase 01 skeleton에 hook 미리 추가 금지 | Current single-trip contract | Trip/reset/depot/resource 계약과 승인 |
 | AWS implementation/cutover | Selected target, implementation gated | Platform·Operations·Security | AWS module/IaC 생성 금지 | Provider-neutral target DAG | Phase 10/11 entry, parity/security/operations approval |

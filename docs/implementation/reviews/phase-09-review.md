@@ -414,3 +414,10 @@ Restart 시 reviewer는 stable source section과 accepted artifact/evidence iden
 실제 reactor module에서 discovered test count/skip/failure를 fail-closed 대조해야 한다.
 Object/list/event 존재, root placeholder build success, 계획 문서나 reciprocal digest는
 implementation, publication 또는 Phase acceptance evidence가 아니다.
+
+## ALNS-first direction revision addendum
+
+Task `019fa901-8776-7f61-b467-a8c6595b970d`에서 Phase 09 storage branch는 Phase 14A
+ALNS benchmark의 선행조건이 아니며, AWS ALNS-only 14B 경로의 별도 branch임을
+재확인했다. C-17/Phase 13은 Phase 14A benchmark acceptance 뒤에만 열리고 기존
+review verdict, implementation, acceptance와 evidence 상태는 변하지 않는다.

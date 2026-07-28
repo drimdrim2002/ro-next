@@ -22,12 +22,12 @@ finding_counts:
   medium: 2
   low: 0
 canonical_source_fingerprints_sha256:
-  docs/master-design.md: 58554334b9f27586c93a685adc0facf0fbd7e79576c18890f0ac13891b2f803b
-  docs/2026-07-26-domain-design.md: 1870662f85a08cc9a1e48a1974b96278eccddfd1519721d71b356c56034ecaab
-  docs/2026-07-26-architecture-design.md: 3d4dbbfc7e4cbdb2f3985378d84fd5f717db770b04131573c00ed354a9f41614
-  docs/architecture-domain-implementation-design.md: ec513ac1b0bacd88149683bf48c36f7e6edcd53a9232498597e3b0d57c585875
+  docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
+  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
   docs/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
-  docs/implementation/master-realization-plan.md: 5921213ae419b9398bde8c91c3d6ada5aa64bf22a9b823e5b3889e1642085c05
+  docs/implementation/master-realization-plan.md: 940fe8c2156bf0472deafcd450e0ea49f0036ab6b304d6d051f0148a38cd0f5d
 neighbor_validation_policy:
   rule: NO_ADJACENT_OR_RECIPROCAL_DIGEST_ACCEPTANCE
   method: stable cited-section semantic comparison plus accepted artifact/evidence identity
@@ -434,3 +434,10 @@ Phase 10 문서는 v1.3 교정 뒤 provider-neutral coordinator의 core semantic
 `NOT_STARTED / NOT_PRODUCED / BLOCKED / NOT_READY`다. Phase 11은 이 리뷰를
 acceptance receipt로 사용하지 말고, blocker가 해소된 accepted Phase 10 handoff를
 stable section 의미와 artifact/evidence identity로 다시 검증해야 한다.
+
+## ALNS-first direction revision addendum
+
+Task `019fa901-8776-7f61-b467-a8c6595b970d`에서 coordinator는 ALNS-only AWS branch를
+유지하고 Phase 13을 필수 dependency로 만들지 않는지 검토했다. C-17 restart에는
+Phase 06/07/08 acceptance와 Phase 14A benchmark acceptance receipt가 추가되며 기존
+review verdict, implementation, acceptance와 evidence 상태는 변하지 않는다.

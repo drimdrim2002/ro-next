@@ -7,6 +7,9 @@ registry_owner: 총괄 스케줄러
 current_documentation_task_id: 019fa5c8-4efa-70a3-b6b6-205a4230e0af
 master_plan_task_id: 019fa5c9-3acf-78d2-ac5d-93f14ec0a137
 final_audit_task_id: 019fa6ad-495d-7cd1-87f3-9815ed58145d
+alns_first_direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
+implementation_direction_decision: ALNS_FIRST_BENCHMARK_BEFORE_OPTIONAL_MIP
+direction_overlay_contract_version: ALNS_FIRST_1.0
 implementation_completion_claim: NONE
 execution_success_fixture: data/win_poc_case_floor.json
 execution_success_status: NOT_RUN
@@ -31,6 +34,13 @@ fixture_migration_status: COMPLETE_VERIFIED
 `FLOOR(original)` 일치를 검증했다. 이것은 fixture 준비 완료이며 solver 실행 완료가 아니다.
 
 이 문서 세트의 총괄 scheduler task는 `019fa5c8-4efa-70a3-b6b6-205a4230e0af`다. 전체 계획 1개, Phase 상세 15개, Phase review 15개, 최종 read-only audit 1개로 별도 작업 32개를 생성·추적했다. 보완 turn은 기존 작업을 재사용했으며 새 작업 수에 더하지 않는다.
+
+2026-07-28 후속 문서 revision
+`019fa901-8776-7f61-b467-a8c6595b970d`는 위 32개 역사 기록을 대체하거나 그 수에
+소급 포함하지 않는다. 이 revision은 ALNS-first 구현 방향을 현재 implementation
+문서 전체에 반영하는 별도 documentation task다. 코드, Phase implementation,
+benchmark run과 evidence를 만들지 않았으며 registry의 구현 acceptance는 계속
+`0/15`다.
 
 **이 baseline 이후 task registry, phase status와 result summary를 갱신할 수 있는 주체는 총괄 스케줄러뿐이다.** 구현자·reviewer는 evidence와 review 결과를 제출하지만 이 파일의 authoritative 상태를 직접 승격하지 않는다. 수정이 필요하면 총괄 스케줄러가 source task/evidence/review를 확인한 뒤 한 번에 갱신한다.
 
@@ -70,6 +80,22 @@ DEFERRED
 
 Phase 상태의 정확한 의미와 DoD는 [Master Realization Plan §10~§11](master-realization-plan.md#10-상태-전이와-진행률)을 따른다.
 
+Phase 14는 파일과 최종 Phase acceptance는 하나지만 scheduler 상태는 두 substage로
+분리한다.
+
+```text
+14A ALNS benchmark qualification:
+NOT_RUN → READY → IN_PROGRESS → REVIEW_PENDING → RECEIPT_ACCEPTED
+
+14B official calibration/cutover:
+NOT_STARTED → READY → IN_PROGRESS → REVIEW_PENDING → ACCEPTED
+```
+
+14A의 `READY` 판단에는 Phase 00~08 accepted evidence와 승인된 benchmark
+corpus/protocol/criteria가 필요하지만 Phase 13, MIP/backend, provider adoption 또는
+production authority는 필요하지 않다. 14B와 전체 Phase 14 acceptance는 별도의
+official/provider/production gate를 계속 적용한다.
+
 ### 2.3 진행률을 혼동하지 않는 계산
 
 | 지표 | 계산 | 현재값 | 의미 |
@@ -95,6 +121,7 @@ Phase 12/13처럼 조건부 branch의 applicability가 총괄 스케줄러에 �
 | Phase 독립 review | 아래 §5의 15개 task | `15/15 COMPLETED` | Source 대조, finding 보고, 안전 교정, residual blocker 보존 |
 | 전체 정합성 감사·재감사 | `019fa6ad-495d-7cd1-87f3-9815ed58145d` | `PASS_WITH_RESIDUAL_BLOCKERS` | 33개 파일 확인; owner 보완 후 broken link·stale live status·cycle·hidden default/gate bypass·구조·whitespace 오류 모두 0 |
 | Scheduler registry 최종화 | `019fa5c8-4efa-70a3-b6b6-205a4230e0af` | `COMPLETED` | README와 이 문서에 actual task/result 및 residual blocker 기록 완료 |
+| ALNS-first 방향 revision | `019fa901-8776-7f61-b467-a8c6595b970d` | `COMPLETED_DOCUMENTATION_REVISION` | Phase 05→06→07→08→14A benchmark acceptance를 선행 경로로 고정하고 Phase 13을 그 receipt 뒤 optional branch로 재-gate; 구현/evidence/status 승격 없음 |
 
 ## 4. 산출물 목록
 
@@ -128,9 +155,13 @@ Phase 12/13처럼 조건부 branch의 applicability가 총괄 스케줄러에 �
 | 11 | [actual](phases/phase-11-aws-reference-distribution.md) | `019fa605-5d74-7580-bc4d-ec3b7cf32ebe` | `019fa673-06d4-78e3-ae1b-33980d334eaa` | `CHANGES_REQUIRED` | `BLOCKED_NOT_IMPLEMENTED` |
 | 12 | [actual/gated](phases/phase-12-provider-substitution.md) | `019fa626-879f-72a3-b1f6-eced5799a6b0` | `019fa68f-3ed1-7cb3-b7d7-a3f3ad657f24` | `CHANGES_REQUIRED` | `GATED / BLOCKED_NOT_IMPLEMENTED` |
 | 13 | [actual/gated](phases/phase-13-optional-hybrid-route-selection.md) | `019fa626-d527-7eb3-8ad2-2766169dbb8d` | `019fa68f-88c2-79b0-8dec-37f7b678ce9c` | `PASS_WITH_RESIDUAL_BLOCKERS` | `C17_GATE_CLOSED / NOT_ACCEPTED` |
-| 14 | [actual/gated](phases/phase-14-official-calibration-cutover.md) | `019fa627-22f6-7440-91ad-3a4cfd87e4e5` | `019fa68f-c518-72b3-a222-a10efef2d7fe` | `CHANGES_REQUIRED` | `BLOCKED_NOT_READY` |
+| 14 | [actual/gated](phases/phase-14-official-calibration-cutover.md) | `019fa627-22f6-7440-91ad-3a4cfd87e4e5` | `019fa68f-c518-72b3-a222-a10efef2d7fe` | `CHANGES_REQUIRED` | `14A NOT_RUN / RECEIPT_NOT_PRODUCED; 14B NOT_STARTED / BLOCKED_NOT_READY` |
 
-`BLOCKED`인 Phase 14는 구현이 어렵다는 뜻이 아니라, 공식값·fixture·production authority라는 현재 미충족 entry gate가 명시되어 있다는 뜻이다. Gate가 충족되면 총괄 스케줄러가 evidence를 확인해 `READY`로 전이한다.
+Phase 14 전체와 14B의 `BLOCKED_NOT_READY`는 구현이 어렵다는 뜻이 아니라
+official/provider/production entry gate가 아직 충족되지 않았다는 뜻이다. 이것을
+14A 차단으로 해석하지 않는다. 14A는 Phase 00~08 acceptance와 승인된
+corpus/protocol/criteria가 준비되면 production authority 없이 총괄 스케줄러가
+`READY`로 전이할 수 있다. 14A receipt는 14B 또는 production을 자동 시작하지 않는다.
 
 ## 6. Result summary
 
@@ -147,13 +178,19 @@ Phase 12/13처럼 조건부 branch의 applicability가 총괄 스케줄러에 �
 - 테스트, evidence bundle, 상태 전이, DoD, 변경/rollback/위험/보안/운영/관측/재현성 전략을 연결했다.
 - OPEN/GATED/deferred와 owner/restart condition을 보존했다.
 - 문서 작성률과 구현 accepted-gate 완료율을 분리했다.
+- 후속 ALNS-first revision에서 MIP를 선행 core/필수 production path에서 제거하고,
+  Phase 14를 `14A ALNS benchmark qualification`과 `14B official cutover`의 독립
+  gate로 분리했다.
+- Benchmark acceptance에 dataset/fixture, seed/repeat, hardware/runtime,
+  correctness oracle, both-verifier, objective/quality, timeout/resource,
+  variance/replay와 immutable independent acceptance evidence를 요구했다.
 
 ### 6.2 Review 수정 요약
 
 - Phase 00~07: Maven/architecture/evaluation/identity/portfolio/ALNS/verifier의 false-green, ownership, replay와 handoff 결함을 교정했다.
 - Phase 08~12: `GateIncomplete`, non-ambient authority boundary, immutable storage/CAS, coordinator crash-resume, AWS authority separation와 provider conformance DAG를 교정했다.
 - Phase 13: `C-17` closed path를 scheduler-owned no-load/fail-closed/signed applicability 계약으로 고정했다.
-- Phase 14 review baseline 당시에는 Q-BENCH-02·official integer fixture·Great Circle·ALNS values·signing trust·deployment·production authority가 없어 `BLOCKED_NOT_READY`였다. 이후 FLOOR fixture가 local 실행 기준으로 추가됐지만 나머지 production gate는 유지된다.
+- Phase 14 review baseline 당시에는 Q-BENCH-02·official integer fixture·Great Circle·ALNS values·signing trust·deployment·production authority가 없어 전체 Phase/14B가 `BLOCKED_NOT_READY`였다. 이후 FLOOR fixture가 local 실행 기준으로 추가됐지만 나머지 14B production gate는 유지된다. 이 상태는 별도 14A benchmark qualification을 production authority로 차단하지 않는다.
 - 안전하게 결정할 수 없는 cross-Phase/API/운영 계약은 임의 값으로 닫지 않고 §8의 residual blocker로 유지했다.
 
 #### 2026-07-28 Phase 13 backend 정책 addendum — registry/status 불변
@@ -171,6 +208,29 @@ OS/architecture와 native packaging/temp cleanup, explicit workers/seed/time/gap
 Apache-2.0 및 applicable bundled/transitive notice·SBOM, security/operations/cost와
 rollback evidence다. 상용 solver license/server/token/capacity lease는 Phase 13
 전제가 아니다.
+
+#### 2026-07-28 ALNS-first implementation-direction addendum — registry/status 불변
+
+사용자 결정에 따라 ALNS는 MIP solver/license/production authority 없이 Phase 05~08의
+local 경로에서 구현·독립 검증할 수 있어야 한다. Phase 14A가 승인된 corpus/protocol로
+correctness·quality·performance·reproducibility evidence를 만들고 독립 review가
+`ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`를 발행한 뒤에만 Phase 13 applicability를
+검토한다.
+
+Phase 13은 계속 `C17_GATE_CLOSED / NOT_ACCEPTED`, evidence `NOT_PRODUCED`다.
+MIP 후보는 solver-neutral interface, bounded subproblem, warm-start, repair 또는
+intensification experiment로 제안할 수 있지만 숨은 기본값은 없다. Timeout,
+resource exhaustion, no incumbent, backend/native/model failure와 invalid/equal/worse
+candidate는 ALNS incumbent를 보존하는 typed fallback으로 끝나야 한다.
+
+Phase 14A acceptance corpus, threshold, repeat 수, budget와 variance 기준은 아직
+`OPEN — EXPERIMENT_REQUIRED`다. Phase 14B production authority도 `NOT_GRANTED`다.
+
+이 revision의 영향 문서는 core 3개, Phase 00~14 상세 15개와 review 15개로
+`docs/implementation/`의 필수 33개 전부다. Master plan/README/progress는 DAG,
+registry와 gate를 기록하고, 각 Phase/review는 C-17 restart 또는 직접 handoff가
+Phase 14A acceptance를 우회하지 않는지 정렬했다. Canonical source,
+`docs/codex/`, Java/POM/test/deployment 파일은 수정하지 않는다.
 
 ### 6.3 현재 구현 결과
 
@@ -196,6 +256,52 @@ rollback evidence다. 상용 solver license/server/token/capacity lease는 Phase
 
 이 표는 문서 자체 검증 결과다. Review 작업이 실행한 root Maven 성공은 기존 placeholder test 1건 확인일 뿐 Java implementation, provider integration, benchmark 또는 Phase evidence로 사용하지 않는다.
 
+### 7.1 ALNS-first direction revision 재감사
+
+Task `019fa901-8776-7f61-b467-a8c6595b970d`의 documentation-only revision 뒤
+다음 검사를 전체 `docs/implementation/`에 다시 수행했다.
+
+| 검사 | 결과 |
+|---|---|
+| 필수 inventory/번호/H1 | `PASS`; Markdown 33, Phase 15, review 15, canonical Phase 00~14 title exact |
+| Link/fragment | `PASS`; local Markdown link 1,072, fragment 310, broken 0 |
+| Prev/next와 review target | `PASS`; 모든 Phase의 canonical neighbor link와 각 review→target link 누락 0 |
+| Source fingerprint | `PASS`; current structured fingerprint 92개를 실제 bytes와 재계산해 stale 0. 과거 Phase 08 review-time hash는 historical snapshot으로 명시 |
+| Current version reference | `PASS_AFTER_CORRECTION`; semantic contract 변경 Phase 12를 v1.3으로 올리고 current/latest/actual Phase 08/11/12/13/14 참조를 metadata와 정렬. Historical v1.1/v1.2 resolution evidence는 historical 문맥으로 보존 |
+| Source→requirement→test/evidence | `PASS`; Phase 15/15에 traceability 및 Requirement/Test/Evidence marker 존재, ALNS benchmark requirement/evidence key 추가 |
+| DAG/gate | `PASS`; `05→06→07→08→14A`, `14A receipt→13 optional`, `14A+11→14B`, official hybrid일 때만 `13→14B`; direct `06/07→13`, `13→14A`, `14B→13` shortcut 0 |
+| Benchmark evidence contract | `PASS`; fixture, seed/repeat, hardware/runtime, oracle, both-verifier, quality, timeout/resource, variance/replay, immutable independent review/acceptance 모두 존재 |
+| Hidden numeric/provider default | `PASS`; 새 threshold/repeat/budget/variance/solver/provider 수치 발명 0, 미승인 값은 `OPEN — EXPERIMENT_REQUIRED/GATED` |
+| Legacy 11-phase | `PASS`; 3개 match 모두 `docs/codex` historical reuse 금지 문맥, live Phase map 15 |
+| Scope/status/history | `PASS`; tracked diff는 필수 33개 `docs/implementation/*.md`뿐, historical 32 task 보존, implementation `0/15`, evidence `NOT_PRODUCED`, canonical/code/POM/test/deployment 변경 0 |
+| Whitespace | `PASS`; trailing whitespace/fence/EOF 검사와 `git diff --check` 오류 0 |
+
+Checkout에 revision 전부터 있던 untracked
+`docs/implementation/.master-realization-plan.md.swp`는 사용자 작업으로 간주해
+읽거나 수정·삭제하지 않았다.
+
+### 7.2 새 세션 corrective review
+
+후속 새 세션의 read-only review가 기존 구조 audit에서 다루지 않았던 current version
+label과 Phase 14 substage registry를 추가로 검사했다. 다음 documentation correction을
+적용했으며 implementation/evidence/status acceptance는 승격하지 않았다.
+
+1. §2.2, §5와 §9에서 Phase 14A benchmark 상태/receipt와 Phase 14B
+   production/cutover 상태를 분리했다.
+2. Base version이 유지되거나 없는 Phase도 revision 전 계약과 구별되도록
+   `ALNS_FIRST_1.0` overlay version과 direction task ID를 합성 계약 identity로
+   명시했다.
+3. ALNS-first/C-17 restart 계약이 직접 추가된 Phase 12를 v1.3으로 올리고 review
+   target version과 current adjacent-document references를 정렬했다.
+4. 과거 reciprocal-cycle 해소를 증명하는 Phase 11/12 v1.2 표기는 historical
+   resolution evidence로 유지하고 current/latest/actual label과 구별했다.
+5. Link/fragment뿐 아니라 current version label이 target metadata와 일치하는지
+   별도 검사했다.
+
+이 corrective review에는 별도 scheduler task ID가 제공되지 않았으므로 task ID나
+구현 task를 임의 생성하지 않았다. 기존 ALNS-first direction task와 32개 역사
+task 기록은 그대로 보존한다.
+
 ## 8. 현재 blockers, open gates와 남은 이슈
 
 | 항목 | 상태 | 영향 | 다음 행동/owner |
@@ -205,10 +311,11 @@ rollback evidence다. 상용 solver license/server/token/capacity lease는 Phase
 | Authorization/failure/worker commit | `RESIDUAL CROSS-PHASE BLOCKER` | Phase 08/09 public/async authority와 lossless failure contract 차단 | Application/Security/Storage owner가 non-ambient binding, sealed failure와 exact commit operation 승인 |
 | Publication/cancellation/deadline/S3 ownership | `RESIDUAL CROSS-PHASE BLOCKER` | Phase 09~12 CAS race, crash-resume와 adapter evidence acceptance 차단 | Phase 08~12 + Operations/Architecture가 precondition, same-state cancel fence, durable deadline와 Phase 09/11 owner 승인 |
 | Signed applicability trust와 actual receipt | `OPEN / NOT_PRODUCED` | Phase 13 handoff와 Phase 14 applicability consumption 차단 | Scheduler + Security/Release가 algorithm/trust/validity/revocation policy 승인 후 signed envelope/verification receipt 생성 |
+| ALNS benchmark corpus/protocol/acceptance receipt | `OPEN — EXPERIMENT_REQUIRED / NOT_PRODUCED` | Phase 13 착수와 ALNS quality/performance acceptance 주장 차단 | Benchmark·Quality + Independent Review가 corpus/criteria/seed-repeat/resource/variance policy 승인 후 Phase 06/07/08 evidence로 immutable bundle/review/receipt 생성 |
 | `Q-BENCH-02` official 실행 수치 | `OPEN — EXPERIMENT_REQUIRED` | Phase 14 official manifest/baseline/cutover 차단 | Benchmark·Quality가 calibration/승인 |
 | Raw `win_poc_case.json` decimal `D/U` | `RESOLVED_FOR_PLAN_EXECUTION` | 원본 직접 canonical 실행만 차단 | 승인 script/FLOOR fixture/digest 검증 완료; 원본은 provenance/negative fixture 유지 |
 | `win_poc_case_floor.json` final run | `NOT_RUN` | 사용자 고정 구현 성공 gate 미충족 | 실제 solver 실행, both-verifier PASS, deterministic replay와 결과 제시 |
-| `C-17` route pool/MIP | `GATED TARGET`; direct CP-SAT policy only resolved | Phase 13 착수/production activation 차단 | Product·Algorithm·Architecture와 OR-Tools/Legal/Supply-chain/Security/Operations/Cost owners가 scope 및 version/config/native/SBOM/security/operations/cost/compute-admission/fallback/rollback evidence를 별도 승인 |
+| `C-17` route pool/MIP | `GATED TARGET`; direct CP-SAT policy only resolved | Phase 13 착수/production activation 차단 | 유효한 ALNS benchmark acceptance receipt 뒤 Product·Algorithm·Architecture와 OR-Tools/Legal/Supply-chain/Security/Operations/Cost owners가 scope 및 version/config/native/SBOM/security/operations/cost/compute-admission/fallback/rollback evidence를 별도 승인 |
 | `Q-VAR-01` | `DEFERRED` | Optional variant 질문/구현 금지 | Product·Domain·Algorithm restart evidence 전 유지 |
 | Multi-trip/rotation | Deferred feature | Current single-trip 밖 기능 차단 | 별도 domain/algorithm/verifier 계약 승인 |
 | Phase 12 target provider | Provider별 미선택 | 특정 future adapter 구현/cutover 차단 | Platform·Operations·Security adoption decision |
@@ -220,7 +327,7 @@ rollback evidence다. 상용 solver license/server/token/capacity lease는 Phase
 
 총괄 스케줄러는 상태를 바꿀 때 한 logical update에서 다음을 모두 기록한다.
 
-1. 실제 scheduler task ID와 Phase.
+1. 실제 scheduler task ID와 Phase 및 해당하는 substage/conditional branch.
 2. 이전 상태 → 다음 상태와 timestamp.
 3. Entry/exit gate 판단 근거.
 4. Implementation commit/build/artifact fingerprint.
@@ -234,10 +341,13 @@ rollback evidence다. 상용 solver license/server/token/capacity lease는 Phase
 
 ```text
 phase:
+substage_or_branch:
+applicability:
 scheduler_task_id:
 previous_status:
 next_status:
 evidence_ref:
+acceptance_receipt_ref:
 review_ref:
 result_summary:
 blocker_or_limit:

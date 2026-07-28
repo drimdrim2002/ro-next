@@ -16,6 +16,8 @@ phase_acceptance_status: NOT_ACCEPTED
 evidence_status: NOT_PRODUCED
 entry_gate_status: BLOCKED_BY_UNACCEPTED_PREDECESSORS
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
+direction_revision_status: ALNS_FIRST_GATE_OVERLAY_APPLIED_DOCUMENTATION_ONLY
 public_api_status: PROPOSED_NOT_APPROVED
 descriptor_format_status: OPEN_REQUIRES_ADR_003_AND_PRODUCT_API_DATA_REVIEW
 facet_status: OPEN_REQUIRES_ADR_004
@@ -44,13 +46,13 @@ planned_evidence:
   - E-P04-ISOLATION
   - E-P04-FACET
 source_fingerprints_sha256:
-  docs/master-design.md: 58554334b9f27586c93a685adc0facf0fbd7e79576c18890f0ac13891b2f803b
-  docs/2026-07-26-domain-design.md: 1870662f85a08cc9a1e48a1974b96278eccddfd1519721d71b356c56034ecaab
-  docs/2026-07-26-architecture-design.md: 3d4dbbfc7e4cbdb2f3985378d84fd5f717db770b04131573c00ed354a9f41614
-  docs/architecture-domain-implementation-design.md: ec513ac1b0bacd88149683bf48c36f7e6edcd53a9232498597e3b0d57c585875
+  docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
+  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
   docs/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
-  docs/implementation/master-realization-plan.md: 5921213ae419b9398bde8c91c3d6ada5aa64bf22a9b823e5b3889e1642085c05
-  docs/implementation/README.md: accf7758802c253ae47e3d0fe41e190728c507195d0b41f27f14a25804c8f23f
+  docs/implementation/master-realization-plan.md: 940fe8c2156bf0472deafcd450e0ea49f0036ab6b304d6d051f0148a38cd0f5d
+  docs/implementation/README.md: 6454238185af7b7c420f468adf42609a0ec045d6c70c16cc7601f0342fa74358
 historical_cross_check:
   file: docs/2026-07-26-master-design.md
   status: SUPERSEDED_NOT_AUTHORITY
@@ -1226,7 +1228,7 @@ Generic Phase 04 acceptance는 production 고객 profile의 존재나 활성화�
 | Actual Phase 05 consumer acceptance pending | DOWNSTREAM GATE, NOT A PHASE04 DESIGN BLOCKER | Phase 05 owner | Downstream implementation/compile handoff acceptance | This document + actual Phase 05 proposed consumer contract | Phase 04 accepted artifact/digest 뒤 Phase 05 directional reference·review 갱신 |
 | `Q-BENCH-02` official values | OPEN — EXPERIMENT_REQUIRED | Benchmark·Quality | Phase 14 official manifest; Phase 04 generic binding은 안 막음 | No official numeric field in profile | Calibration review and explicit approval |
 | Current Win fixture decimal `D/U` | BLOCKER FOR OFFICIAL USE | Input·Matrix + Benchmark | Official fixture/baseline; Phase 04 test-only integer problem은 안 막음 | Generic integer fixtures | Compliant integer matrix or explicit contract/migration approval |
-| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13/production default | Bound profile may declare no selector capability | Phase 06/07 baseline, C-17 scope, OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
+| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13/production default | Bound profile may declare no selector capability | Phase 06/07/08 accepted + Phase 14A `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`, C-17 scope와 OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
 | `Q-VAR-01` | DEFERRED | Product·Domain·Algorithm | Optional variant profile/capability 질문·구현 | Current fixed-terminal single-trip contract | Representative fixture, core-impact feasibility, separate approval |
 | Multi-trip/rotation | DEFERRED FEATURE | Product·Domain·Algorithm | Trip/facet/profile activation | Oneway + single roundtrip | Exact trip/reset/depot/resource/pair contract and approval |
 | Proposed public API/wire schema | OPEN | Product/API/Data | External compatibility promise | Internal proposed types | Versioned contract, compatibility/security review and approval |

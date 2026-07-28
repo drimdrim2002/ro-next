@@ -2,7 +2,7 @@
 
 ```yaml
 document_status: REVIEWED_WITH_CORRECTIONS
-document_version: 1.1
+document_version: 1.2
 document_workflow_status: INDEPENDENT_REVIEW_COMPLETE_CHANGES_REQUIRED
 phase: "07"
 phase_name: independent-verification-final-result
@@ -15,6 +15,8 @@ review_document: ../reviews/phase-07-review.md
 entry_gate_status: BLOCKED_BY_UNACCEPTED_PREDECESSORS
 handoff_status: NOT_READY
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+implementation_direction_decision: ALNS_FIRST_BENCHMARK_BEFORE_OPTIONAL_MIP
+direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 scheduler_task_id: TBD_NOT_SUPPLIED
 owners:
   implementation: RPDPTW Verification/Result owner role
@@ -22,6 +24,7 @@ owners:
   upstream_authority: Phase 02 Domain/Travel and Phase 04 Capability/Profile owner roles
   independent_oracle: Phase 07 independent verification-test owner role
   downstream_contract: Phase 08 Application/Local Runtime owner role
+  downstream_benchmark: Phase 14A ALNS Benchmark Qualification owner role
   review: independent Phase 07 reviewer role
 prerequisites:
   - Phase 00 accepted module/package architecture
@@ -49,13 +52,13 @@ source_sections:
   phase_08_actual: "§3.2, §6.4~7.7, §11.5, §16.1"
 source_fingerprints_sha256:
   README.md: 22eff4f63607db29bd4049344986109c680aa970d0865a3b859598e6b3b96c06
-  docs/master-design.md: 58554334b9f27586c93a685adc0facf0fbd7e79576c18890f0ac13891b2f803b
-  docs/2026-07-26-domain-design.md: 1870662f85a08cc9a1e48a1974b96278eccddfd1519721d71b356c56034ecaab
-  docs/2026-07-26-architecture-design.md: 3d4dbbfc7e4cbdb2f3985378d84fd5f717db770b04131573c00ed354a9f41614
-  docs/architecture-domain-implementation-design.md: ec513ac1b0bacd88149683bf48c36f7e6edcd53a9232498597e3b0d57c585875
+  docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
+  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
   docs/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
-  docs/implementation/master-realization-plan.md: 5921213ae419b9398bde8c91c3d6ada5aa64bf22a9b823e5b3889e1642085c05
-  docs/implementation/README.md: accf7758802c253ae47e3d0fe41e190728c507195d0b41f27f14a25804c8f23f
+  docs/implementation/master-realization-plan.md: 940fe8c2156bf0472deafcd450e0ea49f0036ab6b304d6d051f0148a38cd0f5d
+  docs/implementation/README.md: 6454238185af7b7c420f468adf42609a0ec045d6c70c16cc7601f0342fa74358
 neighbor_validation_policy:
   rule: ADJACENT_PHASE_AND_REVIEW_DIGESTS_NOT_PERSISTED_OR_USED_FOR_ACCEPTANCE
   method: cited-section semantic comparison plus accepted artifact/evidence identity at entry
@@ -116,7 +119,20 @@ Final Domain/Architecture에 남은 `Q-INFRA-01 DEFERRED`, `25/1/2` 표기는 �
 | [Phase 06 actual 상세](phase-06-cow-alns-reproducibility.md) | §7.1, §7.6, §8.4~§8.5, §16.2 | `CommittedCandidate`, `ReplayManifest`, `Phase06EvidenceManifest`, exact termination과 solver dependency 없는 handoff |
 | [Phase 08 actual 상세](phase-08-application-ports-local-runtime.md) | §3.2, §6.4~§7.7, §11.5, §16.1 | `Phase07Output.Publishable/Rejected` exhaustive consumption, `GateIncomplete` lossless mapping/test와 both-gate handoff receipt |
 
-Phase 04 v1.1은 actual `REVIEWED_CHANGES_REQUIRED`, Phase 06 v1.1은 actual `CHANGES_REQUIRED`, Phase 08 v1.1은 actual `REVIEWED_WITH_CORRECTIONS`이며 세 review 모두 `COMPLETE — CHANGES_REQUIRED`다. 구현/evidence는 모두 `NOT_STARTED`/`NOT_PRODUCED`이고 accepted implementation evidence가 없으므로 proposed cross-phase contract source이지 완료 authority가 아니다. 인접 Phase/review의 whole-file 또는 section digest를 metadata, authority나 acceptance 조건으로 저장하지 않는다. Entry에서는 위에 인용한 section의 의미와 accepted artifact/evidence identity만 다시 대조한다.
+Phase 04 v1.1은 actual `REVIEWED_CHANGES_REQUIRED`, Phase 06 v1.2는 actual `CHANGES_REQUIRED`, Phase 08 v1.3은 actual `REVIEWED_WITH_CORRECTIONS`이며 세 review 모두 `COMPLETE — CHANGES_REQUIRED`다. 구현/evidence는 모두 `NOT_STARTED`/`NOT_PRODUCED`이고 accepted implementation evidence가 없으므로 proposed cross-phase contract source이지 완료 authority가 아니다. 인접 Phase/review의 whole-file 또는 section digest를 metadata, authority나 acceptance 조건으로 저장하지 않는다. Entry에서는 위에 인용한 section의 의미와 accepted artifact/evidence identity만 다시 대조한다.
+
+### 1.2 ALNS-first verification boundary
+
+Phase 07은 ALNS-only candidate/result를 MIP solver, backend objective, solver license,
+native runtime 또는 production authority 없이 독립 검증할 수 있어야 한다. Phase 07
+`PASS`는 feasibility/correctness와 publishable result integrity를 뜻하며, quality,
+performance 또는 variance threshold acceptance를 뜻하지 않는다.
+
+Phase 07의 accepted both-gate evidence는 Phase 08 local run과 Phase 14A benchmark
+qualification으로 직접 handoff한다. Phase 13은 Phase 14A가 별도의 immutable
+benchmark bundle을 독립 review해 `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`를 발행한
+뒤에만 이를 소비할 수 있다. Raw MIP incumbent, backend objective 또는 selected
+column은 이 verifier의 authority input이 아니다.
 
 ## 2. 목표, 범위와 비범위
 
@@ -247,7 +263,7 @@ all checks and claims exact              → FEASIBLE
 | Phase 03 accepted | Cache-free route/solution kernel, typed failure, `E-P03-PROPAGATION/EVALUATION/COMPARATOR` | 상세/review는 actual이나 구현·evidence 없음; review verdict `CHANGES_REQUIRED`, solution-level evaluator owner/API gap이 residual | BLOCKED |
 | Phase 04 accepted | Exact `BoundProfile`, dependency closure와 contract fingerprint | 상세/review actual, document verdict `CHANGES_REQUIRED`; implementation/evidence 없음 | BLOCKED |
 | [actual Phase 05](phase-05-pair-insertion-initial-portfolio.md) accepted | Stable pair/route/bank snapshot과 side-effect-free exhaustive insertion evaluator | 상세/review actual, document verdict `CHANGES_REQUIRED`; implementation/evidence 없음 | BLOCKED |
-| [actual Phase 06](phase-06-cow-alns-reproducibility.md) accepted | `CommittedCandidate`, `ReplayManifest`, `Phase06EvidenceManifest`, exact termination, cache-free handoff projection, `E-P06-*` | v1.1 상세/review actual, document verdict `CHANGES_REQUIRED`; implementation/evidence 없음 | BLOCKED |
+| [actual Phase 06](phase-06-cow-alns-reproducibility.md) accepted | `CommittedCandidate`, `ReplayManifest`, `Phase06EvidenceManifest`, exact termination, cache-free handoff projection, `E-P06-*` | v1.2 상세/review actual, document verdict `CHANGES_REQUIRED`; implementation/evidence 없음 | BLOCKED |
 | Independent oracle implementation review | Production evaluator/serializer를 호출하지 않는 source/bytecode와 seeded sensitivity evidence 승인 | v1.1 document design은 review됨; target oracle source/test/evidence는 없음 | REVIEW_REQUIRED_AT_IMPLEMENTATION |
 | Canonical result encoding review | Version/order/inclusion/exclusion과 duplicate-key rule 승인 | External schema 미승인 | CONTRACT_GATE |
 | Scheduler/owner | Exact task ID와 implementer/oracle/reviewer 역할 지정 | Task ID 미제공 | OWNER_GATE |
@@ -1541,7 +1557,7 @@ Phase 07 `ACCEPTED`는 다음을 뜻한다.
 | `GateIncomplete` Phase 08 mapping | RESOLVED_BY_PHASE08_V1_1 | Phase 08 Application + independent reviewer | 더 이상 document-contract blocker가 아님; Phase 08 implementation/evidence gate는 별도 유지 | Phase 08 v1.1의 three-variant receipt, `VERIFICATION_INCOMPLETE`와 no-payload mapping | Variant/field contract가 바뀌거나 future integration test가 실패할 때만 재개 |
 | `Q-BENCH-02` official execution values | OPEN — EXPERIMENT_REQUIRED | Benchmark·Quality | Phase 14 official manifest/baseline/cutover; generic Phase 07 test는 안 막음 | Explicit test-only values and value-free contract | Calibration corpus/protocol, measured review, explicit approval |
 | Current Win fixture decimal `D/U` | BLOCKER FOR OFFICIAL USE | Input·Matrix + Benchmark | 해당 fixture official result; generic Phase 07 integer fixture는 안 막음 | `P07_TINY_PD_3_TEST_ONLY` | Compliant integer matrix 또는 explicit contract/migration approval |
-| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13와 production default | ALNS-only candidate/result contract | Phase 06/07 accepted baseline, C-17 scope와 OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
+| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13와 production default | ALNS-only candidate/result contract | Phase 06/07/08 accepted + Phase 14A `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`, C-17 scope와 OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
 | `Q-VAR-01` | DEFERRED | Product·Domain·Algorithm | Optional variant 질문/구현 | Current pair/terminal/bank contract | Representative fixture, core-impact feasibility와 별도 승인 |
 | Multi-trip/rotation | DEFERRED FEATURE | Product·Domain·Algorithm | Single-trip 밖 verifier/result 의미 | Oneway + single roundtrip | Trip/reset/depot/resource/pair non-crossing contract와 승인 |
 | Phase 08/09+ runtime/storage/provider | OUT OF SCOPE / FUTURE GATE | Application/Platform/Operations | Publication/retrieval/storage/distribution | Pure `Phase07Output` contract | Phase 08 accepted ports/local runtime부터 순서대로 |
@@ -1576,7 +1592,7 @@ Actual Phase 06 §7.1/§8.5/§16.2와 위 목록을 직접 대조했다. Phase 0
 
 ### 15.2 Next — actual but unaccepted Phase 08
 
-[actual: Phase 08 — Application ports와 local runtime](phase-08-application-ports-local-runtime.md)은 v1.1 `REVIEWED_WITH_CORRECTIONS`/`NOT_STARTED`이며 다음 stable contract만 소비한다.
+[actual: Phase 08 — Application ports와 local runtime](phase-08-application-ports-local-runtime.md)은 v1.3 `REVIEWED_WITH_CORRECTIONS`/`NOT_STARTED`이며 다음 stable contract만 소비한다.
 
 ```text
 Phase07HandoffManifest
@@ -1620,8 +1636,9 @@ Phase 07은 `ArtifactStore`, `RunStateRepository`, `ResultPublisher`, local file
 |---|---|---|---|
 | Phase 10 coordinator | Phase 08 port 뒤의 publishable/rejected semantics | Verifier 내부, worker completion을 result PASS로 간주 | All-declared completion 뒤에도 each result both-gate 확인 |
 | Phase 11 AWS reference | Provider-neutral result contract/digest | S3/Step Functions/Lambda가 verifier 의미 재구현 | Local/AWS semantic parity |
-| Phase 13 gated hybrid | Same candidate/result both-gate path | Raw MIP incumbent/ObjVal/selected columns | Materialize/full-evaluate 뒤 Phase 07 exact gate |
-| Phase 14 official | Publishable result + approved official manifest | Test-only fixture/value, different fingerprint quality compare | Compliant integer authority, approved values, all-worker verified |
+| Phase 14A ALNS benchmark | Publishable ALNS result, verifier reports와 objective vector | Phase 07 PASS를 quality/performance acceptance로 오인 | Approved corpus/protocol, complete repeat accounting와 independent acceptance |
+| Phase 13 gated hybrid | Same candidate/result both-gate path | Raw MIP incumbent/ObjVal/selected columns | Phase 14A acceptance 뒤 materialize/full-evaluate 후 Phase 07 exact gate 재사용 |
+| Phase 14B official | Publishable result + approved official manifest | Test-only fixture/value, different fingerprint quality compare | ALNS benchmark receipt, compliant authority, approved values, all-worker verified |
 
 ## 16. Source → requirement → test → evidence traceability
 

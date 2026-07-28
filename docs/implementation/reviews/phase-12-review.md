@@ -13,7 +13,9 @@ live_review_completion: "15/15"
 authoring_snapshot_status: HISTORICAL_NOT_CURRENT
 reviewer_role: independent Phase 12 documentation reviewer
 target_document: docs/implementation/phases/phase-12-provider-substitution.md
-target_document_version_after_safe_fixes: 1.2
+target_document_version_after_safe_fixes: 1.3
+historical_safe_fix_version: 1.2
+current_version_reason: ALNS_FIRST_C17_RESTART_GATE_AND_VERSION_REFERENCE_CORRECTION
 target_whole_file_hash: OMITTED_TO_AVOID_RECIPROCAL_DOCUMENT_HASH
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
 document_verdict: CHANGES_REQUIRED
@@ -45,7 +47,7 @@ code_change_made: false
 
 ## 1. 결론
 
-[Phase 12 v1.2](../phases/phase-12-provider-substitution.md)은 provider-neutral core와
+[Phase 12 v1.3](../phases/phase-12-provider-substitution.md)은 provider-neutral core와
 adapter 경계, 승인된 최소 substitution axis, actual provider conformance,
 digest-preserving migration, security/observability/cost/rollback과 production
 authority 분리를 충분히 상세하게 계획한다. AWS는 canonical 결정에 따른 reference
@@ -114,9 +116,9 @@ cross-check로만 확인했고 현재 contract 또는 provider 선택 근거로 
 
 | 문서 | 읽은 범위 | 관찰 |
 |---|---|---|
-| [Phase 11 v1.2](../phases/phase-11-aws-reference-distribution.md) + [review](phase-11-review.md) | 최신 §6.1~§6.3, §14.1~§14.2, §17, §18.2와 review 전체 | Reciprocal cycle `RESOLVED`; `CHANGES_REQUIRED`, `NOT_STARTED/NOT_PRODUCED`, handoff `NOT_READY`는 유지 |
-| [Phase 13 v1.2](../phases/phase-13-optional-hybrid-route-selection.md) + [review](phase-13-review.md) | §4.1, §6.5, §14.2와 blocker/handoff | `PASS_WITH_RESIDUAL_BLOCKERS`, `GATED_NOT_STARTED_NOT_ACCEPTED`; accepted Phase 12 receipt 없이는 activation 불가 |
-| [Phase 14 v1.2](../phases/phase-14-official-calibration-cutover.md) + [review](phase-14-review.md) | Current metadata/verdict와 entry blocker | `CHANGES_REQUIRED/BLOCKED_NOT_READY`; calibration/cutover authority 없음 |
+| [Phase 11 v1.3](../phases/phase-11-aws-reference-distribution.md) + [review](phase-11-review.md) | 최신 §6.1~§6.3, §14.1~§14.2, §17, §18.2와 review 전체 | v1.2에서 reciprocal cycle `RESOLVED`; current v1.3에서도 유지. `CHANGES_REQUIRED`, `NOT_STARTED/NOT_PRODUCED`, handoff `NOT_READY`는 불변 |
+| [Phase 13 v1.5](../phases/phase-13-optional-hybrid-route-selection.md) + [review](phase-13-review.md) | §1.3, §4.1, §6.5, §14.2~§14.4와 blocker/handoff | `PASS_WITH_RESIDUAL_BLOCKERS`, `GATED_NOT_STARTED_NOT_ACCEPTED`; Phase 14A ALNS benchmark acceptance가 선행하며 Phase 12 receipt는 selected substituted runtime일 때만 조건부 |
+| [Phase 14 v1.4](../phases/phase-14-official-calibration-cutover.md) + [review](phase-14-review.md) | Current metadata/verdict, 14A/14B entry blocker | `CHANGES_REQUIRED`; 14A `NOT_RUN/RECEIPT_NOT_PRODUCED`, 14B `NOT_STARTED/BLOCKED_NOT_READY`; ALNS benchmark/calibration/cutover authority 없음 |
 | [Phase 08 review](phase-08-review.md) | 최신 finding/blocker와 handoff | Non-ambient access, lossless failure, worker commit, publication identity blocker |
 | [Phase 09 review](phase-09-review.md) | 최신 finding/blocker와 handoff | Storage access/failure, worker outcome, distinct publication precondition blocker |
 | [Phase 10 review](phase-10-review.md) | 전체, 특히 F-P10-001/002/004/005/006과 blocker | Exact pending action, same-state cancellation fence, test false-green, durable deadline와 adjacent digest |
@@ -339,8 +341,11 @@ parity 성공을 증명하지 않는다.
 
 ## 6. 적용한 변경 요약
 
-쓰기 범위를 지켜 [Phase 12 target](../phases/phase-12-provider-substitution.md)과 이
-review만 변경했다. Target은 final audit 교정을 포함해 v1.2로 올리고 다음을 반영했다.
+원래 독립 review의 쓰기 범위는 [Phase 12 target](../phases/phase-12-provider-substitution.md)과
+이 review였고, 그 historical safe-fix cycle에서 target을 v1.2로 올려 다음을
+반영했다. 후속 ALNS-first direction revision과 새 세션 corrective review는
+C-17 restart gate와 current version reference를 정렬해 current target을 v1.3으로
+올렸으며 아래 historical finding 수와 disposition은 바꾸지 않는다.
 
 - Review/status/inventory metadata와 canonical-only fingerprint policy
 - Independent oracle, pre-sealed applicability와 neutral provider role/identity
@@ -369,7 +374,7 @@ review만 변경했다. Target은 final audit 교정을 포함해 v1.2로 올리
 | Required provider semantics unsupported | Storage/Coordinator/Platform | AWS/local accepted path 유지 | Candidate/approved mechanism 변경; port weakening 금지 |
 | Performance/cost/security/operations evidence 없음 | Security/SRE/FinOps/Performance | Measurement schema and test-only run | Approved policies + actual provider evidence |
 | Final source Q-INFRA drift | Domain/Architecture source owners | User-locked authority + question register 적용 | Accepted source correction/erratum와 affected-section review |
-| Phase 13 `C-17`/production authority 없음 | Product/Algorithm/Platform/Security/Ops | Phase 12 infra evidence only | Separate C-17 and production adoption/cutover approvals |
+| Phase 13 ALNS benchmark/`C-17`/production authority 없음 | Product/Algorithm/Platform/Security/Ops + Benchmark/Quality | Phase 12 infra evidence only | Phase 06/07/08 accepted + Phase 14A immutable benchmark acceptance receipt, separate C-17 and production adoption/cutover approvals |
 
 Resolved audit ledger:
 
@@ -404,7 +409,8 @@ provider parity evidence로도 해석하지 않는다.
 - **Implementation/deployment/evidence:** `NOT_STARTED / NOT_DEPLOYED / NOT_PRODUCED`
 - **Candidate/adoption/production:** `NOT_SELECTED / NOT_APPROVED / NOT_GRANTED`
 - **Phase 11 handoff:** `NOT_READY`
-- **Phase 13 handoff:** `NOT_READY`; `C-17`, OR-Tools activation/native distribution/hybrid/production authority 0
+- **Phase 13 handoff:** `NOT_READY`; Phase 14A ALNS benchmark acceptance receipt,
+  `C-17`, OR-Tools activation/native distribution/hybrid/production authority 0
 - **Safe next action:** 남은 cross-phase public contract를 승인하고 Phase 11 actual
   evidence/review acceptance를 생산한 뒤 candidate/axis/environment adoption record를
   별도로 만든다. 그 다음 target reactor의 red applicability/config와 anti-cycle
@@ -413,3 +419,24 @@ provider parity evidence로도 해석하지 않는다.
 이 review 또는 교정된 Phase 12 문서만으로 provider resource 생성, production
 traffic/default 변경, AWS/candidate cutover, Phase 13 구현 또는 scheduler 상태 변경을
 승인하지 않는다.
+
+## ALNS-first direction revision addendum
+
+Task `019fa901-8776-7f61-b467-a8c6595b970d`에서 provider substitution은 계속 독립
+optional branch이며 Phase 14A ALNS benchmark나 Phase 13 activation authority를
+부여하지 않음을 검토했다. Phase 13은 Phase 14A acceptance 뒤에도 selected
+substituted runtime일 때만 Phase 12 evidence를 조건부 소비한다. 기존 review verdict,
+implementation, acceptance와 evidence 상태는 변하지 않는다.
+
+## 새 세션 corrective review addendum
+
+후속 새 세션 review는 ALNS-first/C-17 restart 의미가 추가된 target을 기존 v1.2로
+계속 식별하면 변경 전후 계약을 구분할 수 없음을 확인했다. Target과 이 review의
+current version reference를 v1.3으로 정렬하고, current Phase 11/13/14 label을 각
+문서 metadata와 대조했다. `RESOLVED_BY_PHASE11_V1_2_AND_PHASE12_V1_2`와 해당
+finding 본문의 v1.2 표기는 reciprocal evidence-cycle이 실제로 해소된 historical
+version을 가리키므로 유지한다.
+
+이 correction은 새 implementation/evidence/review receipt를 만들지 않으며
+`CHANGES_REQUIRED`, `BLOCKED_NOT_IMPLEMENTED`, `NOT_PRODUCED`와 모든 provider/C-17/
+production gate를 그대로 보존한다.

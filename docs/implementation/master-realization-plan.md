@@ -2,11 +2,14 @@
 
 ```yaml
 document_status: DOCUMENT_SET_COMPLETE
-plan_version: 1.1
+plan_version: 1.2
 baseline_date: 2026-07-28
 scope: Phase 0~14의 구현·검증·전환 계획
 implementation_status: ACCEPTED_0_OF_15
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+implementation_direction_decision: ALNS_FIRST_BENCHMARK_BEFORE_OPTIONAL_MIP
+direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
+direction_overlay_contract_version: ALNS_FIRST_1.0
 execution_success_fixture: data/win_poc_case_floor.json
 execution_success_status: NOT_RUN
 ```
@@ -18,6 +21,13 @@ execution_success_status: NOT_RUN
 이 계획은 코드 구현 완료 보고가 아니다. 현재 존재하지 않는 module, API, test, 배포와 evidence를 완료된 것으로 간주하지 않는다. 아래의 type·interface·directory 이름은 상위 계약의 의미 경계를 구현하기 위한 **proposed internal design**이며, 승인된 public API나 wire schema가 아니다.
 
 이 문서 세트의 입력 권위는 **사용자 선언으로 고정**되었다. 원문 metadata의 `REVIEW`는 출처 provenance로 보존하지만 이 문서 작성의 중단 조건으로 사용하지 않는다. 반대로 원문이 `REVIEW`라는 이유로 구현 phase의 실제 review·승인·evidence gate를 생략할 수도 없다.
+
+현재 Phase/review 계약은 각 문서의 base `document_version` 또는
+`UNVERSIONED_BASE`에 `ALNS_FIRST_1.0` direction overlay와
+`019fa901-8776-7f61-b467-a8c6595b970d` task ID를 결합해 식별한다. 따라서 base
+version이 유지된 문서도 ALNS-first revision 전 bytes/계약과 동일한 버전으로
+해석하지 않는다. 이 합성 identity는 문서 provenance이며 구현/evidence/status를
+승격하지 않는다.
 
 ### 1.1 사용자 고정 최종 성공 기준
 
@@ -46,6 +56,33 @@ data/win_poc_case.json
 최종 판정은 §11.3의 AND gate를 사용한다. 이 실행 성공은 solver 구현의 실제
 end-to-end acceptance다. 다만 AWS production traffic 전환, Phase 13 optional hybrid
 활성화 또는 별도 공식 baseline 승인을 자동으로 의미하지는 않는다.
+
+### 1.2 최신 implementation-direction decision — ALNS-first
+
+2026-07-28 사용자 결정 `ALNS_FIRST_BENCHMARK_BEFORE_OPTIONAL_MIP`을 canonical 원문을
+바꾸지 않는 최신 구현 순서·gate로 적용한다.
+
+1. Phase 05가 ALNS에 필요한 stable state, pair insertion과 initial portfolio를 준비한다.
+2. Phase 06이 optimizer vendor, solver license 또는 production authority 없이
+   ALNS-only 경로를 구현하고 correctness·quality·performance·reproducibility 측정
+   artifact를 만든다.
+3. Phase 07이 ALNS candidate와 final result를 독립 검증한다.
+4. Phase 08 local reference에서 검증된 ALNS-only 경로를 실행한 뒤 Phase 14A가
+   승인된 corpus/protocol에 따라 `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`를 발행한다.
+5. Phase 13 ALNS↔MIP 연계는 이 receipt와 `C-17`의 나머지 scope/backend/운영 승인이
+   모두 있을 때만 열리는 optional branch다.
+6. Phase 14B는 ALNS-only 또는 별도 승인된 hybrid 중 명시적으로 선택된 manifest만
+   cutover한다. Phase 13은 ALNS-only production path의 predecessor가 아니다.
+
+이 순서는 MIP를 ALNS 구현의 선행 gate, correctness oracle 또는 필수 production
+경로로 사용하지 않는다. Mixed-integer route selection은 조합 최적화 문제이므로
+worst-case 난도가 높고 실무 solve time도 instance 규모, 제약·formulation,
+backend/config와 hardware에 민감할 수 있다. 이는 모든 MIP가 항상 느리다는 보편
+명제가 아니며, 따라서 Phase 13의 가치는 승인된 bounded experiment로만 판정한다.
+
+수치 threshold, benchmark corpus의 최종 구성, repeat 수, resource budget와
+solver/backend version은 승인 전 `OPEN — EXPERIMENT_REQUIRED` 또는 `GATED`다.
+문서에 예시값이나 library default를 넣어 이 결정을 닫지 않는다.
 
 ## 2. 입력 권위와 충돌 규칙
 
@@ -226,25 +263,32 @@ flowchart TD
     P09 --> P10["Phase 10 Coordinator"]
     P10 --> P11["Phase 11 AWS reference"]
     P10 --> P12["Phase 12 Provider substitution"]
-    P06 --> P13["Phase 13 Optional hybrid — GATED"]
-    P07 --> P13
-    P11 --> P14["Phase 14 Calibration/cutover — AUTHORITY GATE"]
-    P07 --> P14
-    P13 -. "official hybrid manifest일 때만" .-> P14
-    Q["Q-BENCH-02 승인값 + production authority"] --> P14
+    P08 --> P14A["Phase 14A ALNS benchmark qualification — EVIDENCE GATE"]
+    P07 --> P14A
+    P14A --> B["ALNS_BENCHMARK_ACCEPTANCE_RECEIPT"]
+    B --> P13["Phase 13 Optional hybrid/MIP — C-17 GATED"]
+    P11 --> P14B["Phase 14B Official cutover — AUTHORITY GATE"]
+    P14A --> P14B
+    P13 -. "official hybrid manifest일 때만" .-> P14B
+    Q["Q-BENCH-02 승인값 + production authority"] --> P14B
     F["win_poc_case_floor.json + both verifier PASS"] --> S["사용자 고정 실행 성공"]
     P08 --> S
 ```
 
 ### 6.1 Critical path
 
-일반 AWS ALNS-only production 후보의 critical path는 다음이다.
+ALNS 구현·독립 검증·benchmark qualification critical path는 다음이다.
 
 ```text
-00 → 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 → 11 → 14
+00 → 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 14A
 ```
 
-Phase 12는 승인된 대체 provider가 있을 때 실행하는 portability branch다. Phase 13은 `C-17` 별도 승인 branch다. 둘 다 ALNS-only AWS cutover의 필수 predecessor가 아니다. Official hybrid cutover를 선택하면 Phase 13이 Phase 14 predecessor가 된다.
+AWS ALNS-only production 후보는 Phase 08 뒤 `09 → 10 → 11`을 진행하고,
+`14A + 11 → 14B`에서 합류한다. Phase 12는 승인된 대체 provider가 있을 때 실행하는
+portability branch다. Phase 13은 `14A`의 ALNS benchmark acceptance 뒤에만 열 수
+있는 `C-17` optional branch다. Phase 12와 Phase 13은 ALNS-only AWS cutover의 필수
+predecessor가 아니다. Official hybrid cutover를 명시적으로 선택한 경우에만 accepted
+Phase 13이 Phase 14B predecessor가 된다.
 
 ### 6.2 허용되는 병렬 작업
 
@@ -253,7 +297,8 @@ Phase 12는 승인된 대체 provider가 있을 때 실행하는 portability bra
 | Phase 0 뒤 | Phase 8 port signature/test fake scaffold, Phase 7 corruption fixture 설계, profile descriptor schema 초안 | Phase 7 실제 authority와 Phase 8 local E2E 전에는 완료 주장 금지 |
 | Phase 1 뒤 | Travel oracle/fixture와 domain ID/property test 준비 | Phase 2 complete travel/problem gate |
 | Phase 2 뒤 | Propagation hand oracle, verifier 독립 reference 계산 설계 | Phase 3/7 review |
-| Phase 6 뒤 | COW profiling 계측 준비와 Phase 13 scope/value proposal | Phase 13은 Phase 7 + `C-17` 승인도 필요 |
+| Phase 6 뒤 | COW profiling 계측 준비와 ALNS benchmark protocol/corpus 제안 | Phase 07 both-gate와 Phase 08 local execution 전에는 benchmark acceptance 금지 |
+| Phase 8 뒤 | Phase 14A ALNS benchmark qualification, Phase 09 storage work | Phase 13은 Phase 14A acceptance receipt + `C-17` 승인 전 시작 금지 |
 | Phase 8 뒤 | Filesystem storage contract와 object-common semantics | Phase 9 CAS/contract gate |
 | Phase 9 뒤 | Coordinator deterministic fake와 AWS storage adapter contract | Phase 10 semantics 승인 전 AWS workflow 로직 확정 금지 |
 | Phase 10 뒤 | Phase 11 AWS adapter, 승인된 경우 Phase 12 대체 provider adapter | 각 provider parity/review |
@@ -366,7 +411,7 @@ Phase 12는 승인된 대체 provider가 있을 때 실행하는 portability bra
 - 입력: Immutable solve facts/profile, atomic requests, prepared travel, comparator.
 - 산출물: `SearchSnapshot`, `SearchRequestBank`, COW trial primitive, pair editor/evaluator, 4×2 initial candidates와 lineage.
 - Exit gate: Pair/bank property, insertion brute-force oracle, rollback/no-alias, terminal/vehicle uniqueness, candidate independence 통과.
-- Evidence/handoff: `E-P05-PAIR`, `E-P05-INSERTION`, `E-P05-PORTFOLIO`; Phase 06이 소비.
+- Evidence/handoff: `E-P05-PAIR`, `E-P05-INSERTION`, `E-P05-PORTFOLIO`; Phase 06이 소비하며 MIP/backend는 소비자나 oracle이 아님.
 
 실행·검증 절차:
 
@@ -385,7 +430,7 @@ Phase 12는 승인된 대체 provider가 있을 때 실행하는 portability bra
 - 입력: Validated initial candidates, `BoundProfile`/`SolvePlan`, namespaced seed, screen/worker step config.
 - 산출물: Phase-1 champion, immutable current/stageBest/solveBest, committed worker candidate, termination/trace/reproducibility record.
 - Exit gate: Accept/reject/fault/cancel isolation, cache equality, exact step accounting, same-envelope trace/result fingerprint 통과.
-- Evidence/handoff: `E-P06-COW`, `E-P06-ALNS`, `E-P06-REPLAY`; Phase 07/10과 gated Phase 13이 소비.
+- Evidence/handoff: `E-P06-COW`, `E-P06-ALNS`, `E-P06-REPLAY`; Phase 07/08/10과 Phase 14A가 소비. Phase 13은 Phase 14A acceptance 뒤에만 조건부 소비.
 
 실행·검증 절차:
 
@@ -396,6 +441,10 @@ Phase 12는 승인된 대체 provider가 있을 때 실행하는 portability bra
 5. Worker single-run이 exact requested step을 수행하고 watchdog/cancel/resource/platform failure를 정상 종료와 분리한다.
 6. Global random, unordered reduction, completion-first winner와 clock tie-break를 제거하고 fixed-envelope repeat를 검증한다.
 7. Apply/undo는 구현하지 않는다. COW 병목 evidence와 별도 변경 승인 시에만 후속 제안한다.
+8. ALNS-only default build/run은 OR-Tools, MIP solver, solver license/server/token,
+   native backend와 production authority 없이 Phase 07·08·14A까지 실행 가능해야 한다.
+9. Benchmark용 run은 dataset/fixture, seed/repeat, hardware/runtime, timeout/resource
+   envelope를 명시하지만 승인 전 값을 production default로 만들지 않는다.
 
 ### Phase 07 — 독립 검증과 최종 결과
 
@@ -405,7 +454,7 @@ Phase 12는 승인된 대체 provider가 있을 때 실행하는 portability bra
 - 입력: Problem/travel/profile declaration, candidate route/bank, finalization inputs와 proposed payload.
 - 산출물: Candidate `PASS`/`FAIL`, `VerifiedSolution`, final audit/outcomes/summary, result `PASS`/`FAIL`, `PublishableResult`.
 - Exit gate: Pair/travel/cache/metric/objective/outcome/audit/summary/payload corruption 거부와 both-gate publication block 통과.
-- Evidence/handoff: `E-P07-CANDIDATE-VERIFY`, `E-P07-AUDIT`, `E-P07-RESULT-VERIFY`; Phase 08/10/11/14와 Phase 13이 소비.
+- Evidence/handoff: `E-P07-CANDIDATE-VERIFY`, `E-P07-AUDIT`, `E-P07-RESULT-VERIFY`; Phase 08/10/11/14A가 소비. Phase 13은 별도 `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT` 뒤에만 소비.
 
 실행·검증 절차:
 
@@ -416,6 +465,8 @@ Phase 12는 승인된 대체 provider가 있을 때 실행하는 portability bra
 5. Feasible insertion 발견을 자동 적용·재탐색하지 않고 confidence를 evidence 범위로 제한한다.
 6. Result verifier가 exactly-one outcome, ownership, audit completeness, summary와 payload digest를 독립 검사한다.
 7. 어느 gate든 fail/incomplete이면 정상 result와 benchmark vector를 차단한다.
+8. Phase 07 `PASS`는 benchmark quality/performance acceptance가 아니다. Phase 14A가
+   immutable benchmark bundle과 독립 acceptance receipt를 별도로 발행해야 한다.
 
 ### Phase 08 — Application interface와 local 실행
 
@@ -516,11 +567,16 @@ Phase 12는 승인된 대체 provider가 있을 때 실행하는 portability bra
 - 상세/review: [상세 문서](phases/phase-13-optional-hybrid-route-selection.md) / [review 문서](reviews/phase-13-review.md)
 - 목표: Immutable evaluated route pool, exact-projectable selection과 strictly-better adoption을 optional branch로 검증한다.
 - Backend 결정: Boolean route/unassigned 변수와 integer/fixed-point 목적·제약이므로 `MPSolver`가 아니라 `com.google.ortools.sat` direct CP-SAT를 사용한다. Adapter는 selected route IDs만 반환한다.
-- Entry gate: Phase 06/07 accepted, `C-17` scope 승인, verified ALNS baseline, OR-Tools exact version/checksum/config·Apache-2.0/applicable notice/SBOM·native/platform·Security·Operations·Cost·compute admission·fallback/rollback 승인. 승인 없으면 상태는 `GATED`다.
+- Entry gate: Phase 06/07/08 accepted, Phase 14A가 발행한 유효한
+  `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`, `C-17` scope 승인, OR-Tools exact
+  version/checksum/config·Apache-2.0/applicable notice/SBOM·native/platform·Security·
+  Operations·Cost·compute admission·fallback/rollback 승인. 하나라도 없으면 상태는
+  `GATED`다.
 - 입력: Cache-free evaluated ALNS routes, bound projection capability, explicit backend/budget/reproducibility config.
 - 산출물: Route pool delta/snapshot, projected columns/model/warm start, provider-neutral outcome, fresh materialization, hybrid record/fallback.
 - Exit gate: Deterministic pool, tiny oracle, status×incumbent, no-alias, full evaluation, incumbent preservation, adopted-only feedback와 shadow 통과.
-- Evidence/handoff: `E-P13-POOL`, `E-P13-SELECTION`, `E-P13-HYBRID`; official hybrid를 승인한 경우에만 Phase 14가 소비.
+- Evidence/handoff: `E-P13-GATE`, `E-P13-POOL`, `E-P13-SELECTION`,
+  `E-P13-HYBRID`; official hybrid를 승인한 경우에만 Phase 14B가 소비.
 
 실행·검증 절차:
 
@@ -531,16 +587,38 @@ Phase 12는 승인된 대체 provider가 있을 때 실행하는 portability bra
 5. Backend outcome에서 incumbent 확인 후 ID만 읽고 새 route/bank로 materialize해 full evaluate한다.
 6. ALNS incumbent보다 strictly better인 candidate만 채택한다. Optional failure는 unchanged incumbent, required failure는 `INCOMPLETE`다.
 7. OR-Tools-free ALNS-only default build, direct CP-SAT status×incumbent, native load/temp cleanup, OSS notice/SBOM와 reproducibility class를 검증한다.
+8. 승인된 experiment가 선택할 수 있는 연계 형태는 solver-neutral route-selection
+   interface, bounded route-pool/subproblem, incumbent warm start, repair 또는
+   intensification 등이다. 어느 하나도 숨은 기본값이 아니며 scope approval이 정확히
+   하나의 proposed mode와 fallback을 명시해야 한다.
+9. Budget 초과, timeout, no incumbent, model/native failure 또는 candidate
+   invalid/equal/worse에서는 ALNS incumbent fingerprint를 보존하고 typed fallback을
+   기록한다.
 
 ### Phase 14 — Official calibration/cutover
 
 - 상세/review: [상세 문서](phases/phase-14-official-calibration-cutover.md) / [review 문서](reviews/phase-14-review.md)
-- 목표: 승인된 실험값과 production authority 아래 official manifest, benchmark, versioned cutover와 rollback을 실행한다.
-- Entry gate: Phase 11 accepted, Phase 07 both-gate path, compliant integer `D/U` fixture, `Q-BENCH-02` calibration 승인, workload/security/access/retention/retry/recovery/performance/cost와 production authority 승인. Official hybrid이면 Phase 13도 accepted.
+- 목표: `14A`에서 ALNS-only benchmark qualification을 수행하고, `14B`에서 승인된
+  manifest와 production authority 아래 versioned cutover/rollback을 실행한다.
+- Phase 14A entry gate: Phase 06/07/08 accepted, compliant benchmark
+  dataset/fixture와 correctness oracle, 사전 등록된 protocol/acceptance criteria 승인.
+  AWS/Phase 11, Phase 13, optimizer backend 또는 production authority는 요구하지 않는다.
+- Phase 14B entry gate: Phase 11 accepted, 유효한 Phase 14A
+  `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`, `Q-BENCH-02` official value approval,
+  workload/security/access/retention/retry/recovery/performance/cost와 production
+  authority 승인. Official hybrid이면 accepted Phase 13도 추가로 요구한다.
 - 입력: Approved manifest values, immutable fixture/profile/build/runtime/provider identities, legacy compatibility matrix, shadow results.
-- 산출물: Official manifest/card, complete verified champion/baseline, production cutover record, migration digest와 rollback record.
-- Exit gate: All-declared-worker normal completion/verification, exact comparator, identical-manifest rerun, local/AWS parity, shadow, operational rehearsal와 explicit production approval.
-- Evidence/handoff: `E-P14-CALIBRATION`, `E-P14-OFFICIAL-RUN`, `E-P14-CUTOVER`, `E-P14-ROLLBACK`; production operations가 소비.
+- 산출물: Phase 14A immutable ALNS benchmark bundle/acceptance receipt, official
+  manifest/card, complete verified champion/baseline, production cutover record,
+  migration digest와 rollback record.
+- Phase 14A exit gate: 아래 benchmark evidence 계약, 독립 review와 acceptance receipt.
+- Phase 14B exit gate: All-declared-worker normal completion/verification, exact
+  comparator, identical-manifest rerun, local/AWS parity, shadow, operational rehearsal와
+  explicit production approval.
+- Evidence/handoff: `E-P14-ALNS-BENCHMARK`,
+  `E-P14-ALNS-BENCHMARK-ACCEPTANCE`, `E-P14-CALIBRATION`,
+  `E-P14-OFFICIAL-RUN`, `E-P14-CUTOVER`, `E-P14-ROLLBACK`; Phase 13은 앞의
+  acceptance receipt만 소비하고 production operations는 Phase 14B evidence를 소비.
 
 실행·검증 절차:
 
@@ -551,6 +629,24 @@ Phase 12는 승인된 대체 provider가 있을 때 실행하는 portability bra
 5. Legacy/current와 target을 `LEGACY_ONLY`, `TARGET_ONLY`, `EQUIVALENT`, `INTENTIONAL_BREAK_REQUIRES_APPROVAL`로 비교한다.
 6. Shadow, versioned endpoint/adapter, artifact/state migration, cancellation/retry/security와 rollback을 rehearsal한다.
 7. 명시적 production authority 승인 후에만 pointer/traffic을 전환하고, 승인 전에는 test/staging 결과를 official/production으로 표시하지 않는다.
+
+Phase 14A benchmark bundle은 최소 다음을 모두 포함해야 한다.
+
+| 항목 | 필수 내용 |
+|---|---|
+| Dataset/fixture | Corpus ID/version, 모든 file/content digest, 생성·정규화 provenance와 split/applicability |
+| Seed/repeat | Seed derivation/version, actual seed 목록, repeat 정책과 완료/누락 run accounting |
+| Hardware/runtime | CPU/architecture, memory, OS/JVM/build/toolchain, thread/process와 runtime fingerprint |
+| Correctness oracle | Hand/exhaustive/reference oracle identity, oracle independence/sensitivity와 expected result provenance |
+| Feasibility | Candidate/result verifier report, route/bank·constraint audit와 both-gate verdict |
+| Objective/quality | Bound comparator vector, approved baseline/challenger applicability와 compare-not-allowed 판정 |
+| Resource budget | Timeout/watchdog, completed-step/work, CPU/memory/storage budget와 timeout/failure 분리 |
+| Variance/replay | Per-run result, distribution/variance, identical-envelope replay와 reproducibility class |
+| Evidence authority | Immutable manifest/result/report digests, independent review report와 post-review acceptance receipt |
+
+Threshold, repeat count, corpus size, timeout/resource budget와 허용 variance는 현재
+`OPEN — EXPERIMENT_REQUIRED`다. Benchmark/Quality owner가 protocol과 restart condition을
+승인하기 전에는 Phase 14A를 `ACCEPTED`로 만들거나 Phase 13을 열 수 없다.
 
 ### Plan-final execution — `win_poc_case_floor.json`
 
@@ -733,6 +829,8 @@ Phase 하나는 다음을 모두 만족할 때만 `ACCEPTED`다.
 11. Phase 14 calibration, official manifest, shadow, rollback과 production authority 승인.
 
 Phase 13 hybrid는 별도 applicable 결정과 `C-17` gate를 통과한 경우에만 System DoD에 추가한다.
+그 경우에도 Phase 14A의 ALNS benchmark acceptance가 먼저 존재해야 하며, Phase 13
+결과는 ALNS-only acceptance receipt를 소급 변경하지 않는다.
 
 ### 11.3 사용자 고정 실행 성공 DoD
 
@@ -792,6 +890,7 @@ Phase 13 hybrid는 별도 applicable 결정과 `C-17` gate를 통과한 경우�
 | Observability | Elapsed/completion order가 품질 input이 됨 | Requested/completed work 분리, correlation IDs, elapsed는 metadata만 |
 | Reproducibility | Global random, unordered merge, mutable latest | Namespaced seed, stable order, exact version/fingerprint, normal termination |
 | Optional MIP | Unsafe dominance, raw incumbent, CP-SAT native/packaging failure | Gated pool/oracle/full evaluation, unchanged ALNS fallback, direct status×incumbent와 cleanup |
+| ALNS benchmark | Corpus/seed/hardware 차이, timeout 혼합, 선택적 repeat 또는 quality cherry-pick | 사전 등록 manifest, complete run accounting, both verifier, variance/replay, immutable independent acceptance |
 
 필수 correlation은 적용 가능한 범위에서 tenant/solve/manifest/round/worker/run/attempt/problem/travel/profile/build/termination/verifier/artifact digest를 포함한다. Raw address, full input과 secret value는 log/trace에서 제외한다.
 
@@ -802,7 +901,8 @@ Phase 13 hybrid는 별도 applicable 결정과 `C-17` gate를 통과한 경우�
 | `Q-BENCH-02` official 수치 | `OPEN — EXPERIMENT_REQUIRED` | Benchmark·Quality | Phase 14 official manifest/baseline/cutover | Calibration corpus와 protocol 실행, measured result review, explicit approval |
 | Raw `win_poc_case.json` decimal `D/U` | `RESOLVED_FOR_PLAN_EXECUTION` | Input·Matrix + Benchmark | 원본 bytes를 직접 canonical 실행하는 경로만 차단 | 사용자 승인 script와 `win_poc_case_floor.json` digest/검증 완료; 원본은 provenance/negative fixture로 유지 |
 | `win_poc_case_floor.json` 실제 solver run | `NOT_RUN` | Implementation + Verification | 이 계획의 사용자 고정 최종 성공 | Phase 01~08 local path 구현, both-verifier PASS, deterministic replay와 §11.3 결과 제시 |
-| `C-17` route pool/MIP | `GATED TARGET`; backend policy resolved | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost owners | Phase 13 착수와 production default | Phase 06/07 baseline, separate scope, OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/compute-admission/fallback/rollback 승인, RM-9A~C/Phase 13 evidence |
+| ALNS benchmark acceptance | `NOT_PRODUCED / OPEN — EXPERIMENT_REQUIRED` | Benchmark·Quality + Independent Review | Phase 13 착수와 ALNS quality/performance acceptance 주장 | Phase 06/07/08 accepted, approved corpus/protocol/criteria, complete immutable benchmark bundle, independent review와 `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT` |
+| `C-17` route pool/MIP | `GATED TARGET`; backend policy resolved | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost owners | Phase 13 착수와 production default | 유효한 ALNS benchmark acceptance receipt, separate scope, OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/compute-admission/fallback/rollback 승인, RM-9A~C/Phase 13 evidence |
 | `Q-VAR-01` optional variants | `DEFERRED` | Product·Domain·Algorithm | MDVRP/OVRP/SDVRP 질문·구현 | Variant/시점 선택, representative fixture, core-impact feasibility와 별도 승인 |
 | Multi-trip/rotation | Deferred feature | Product·Domain·Algorithm | Single-trip 밖 route 의미 | Trip/reset/depot/resource 계약, pair non-crossing, example/evidence와 승인 |
 | Phase 12 provider adoption | Approval-gated per provider | Platform·Operations·Security | 특정 GCS/Azure/ECS/Cloud Run/Kubernetes adapter/cutover | Workload, parity, security, retention, retry/recovery, cost와 별도 adoption 승인 |
@@ -831,11 +931,12 @@ Phase 13 hybrid는 별도 applicable 결정과 `C-17` gate를 통과한 경우�
 | `REQ-VERIFY` 두 독립 verifier와 publication block | `C-21`, [Master §14.1](../master-design.md#141-publication-gate) | 07 | `E-P07-CANDIDATE-VERIFY`, `E-P07-RESULT-VERIFY` |
 | `REQ-LOCAL-PORT` provider-neutral local reference | [Integrated §12](../architecture-domain-implementation-design.md#12-phase-8--application-ports와-local-reference-runtime) | 08 | `E-P08-LOCAL-E2E` |
 | `REQ-FINAL-EXEC` `win_poc_case_floor.json` actual run, both-verifier PASS, replay와 결과 제시 | 사용자 고정 기준, 이 계획 §1.1/§11.3 | 01~08 | `E-WIN-POC-EXECUTION`, `E-WIN-POC-REPLAY`, `E-WIN-POC-RESULT` |
+| `REQ-ALNS-BENCHMARK` MIP-independent correctness/quality/performance/reproducibility acceptance | 사용자 결정 `ALNS_FIRST_BENCHMARK_BEFORE_OPTIONAL_MIP`, 이 계획 §1.2/Phase 14A | 05~08,14A | `E-P14-ALNS-BENCHMARK`, `E-P14-ALNS-BENCHMARK-ACCEPTANCE` |
 | `REQ-NODB` immutable object + exact key + CAS, listing 금지 | [Integrated §13](../architecture-domain-implementation-design.md#13-phase-9--database-없는-object-storage-architecture) | 09 | `E-P09-STORAGE-CONTRACT`, `E-P09-CAS` |
 | `REQ-COORD` declared worker completeness/retry identity | `C-22`, [Integrated §14](../architecture-domain-implementation-design.md#14-phase-10--provider-neutral-logical-coordinator) | 10 | `E-P10-COMPLETENESS`, `E-P10-RETRY` |
 | `REQ-AWS` selected S3/Step Functions/Lambda with semantic parity | `C-20`, 질문 `Q-INFRA-01`, [Integrated §15](../architecture-domain-implementation-design.md#15-phase-11--selected-aws-targetreference-distribution) | 11 | `E-P11-AWS-CONTRACT`, `E-P11-PARITY` |
 | `REQ-SUBSTITUTION` independent storage/workflow/compute replacement | [Integrated §16](../architecture-domain-implementation-design.md#16-phase-12--ecs-gcp와-kubernetes-future-substitution) | 12 | `E-P12-PROVIDER-CONTRACT`, `E-P12-PARITY` |
-| `REQ-HYBRID` immutable pool/exact selection/full-eval fallback | `C-17`, `P-15~P-19`, [Master §11.7~11.10](../master-design.md#117-immutable-route-pool) | 13 | `E-P13-POOL`, `E-P13-SELECTION`, `E-P13-HYBRID` |
+| `REQ-HYBRID` accepted ALNS benchmark 뒤 immutable pool/exact selection/full-eval fallback | `C-17`, `P-15~P-19`, 사용자 ALNS-first 결정, [Master §11.7~11.10](../master-design.md#117-immutable-route-pool) | 13 | `E-P14-ALNS-BENCHMARK-ACCEPTANCE`, `E-P13-GATE`, `E-P13-POOL`, `E-P13-SELECTION`, `E-P13-HYBRID` |
 | `REQ-OFFICIAL` approved values, comparator, all-worker official run | `C-18`, `Q-BENCH-01~03`, [Master §14.2~14.4](../master-design.md#142-primary-fixture와-manifest) | 14 | `E-P14-CALIBRATION`, `E-P14-OFFICIAL-RUN` |
 | `REQ-CUTOVER` versioned shadow/cutover/rollback/operations | [Master §16.2](../master-design.md#162-migration), [Integrated §18](../architecture-domain-implementation-design.md#18-phase-14--calibration-migration과-cutover) | 11,14 | `E-P11-PARITY`, `E-P14-CUTOVER`, `E-P14-ROLLBACK` |
 

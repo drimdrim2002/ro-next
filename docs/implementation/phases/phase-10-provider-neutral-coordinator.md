@@ -13,6 +13,8 @@ review_document: ../reviews/phase-10-review.md
 entry_gate_status: BLOCKED_BY_UNACCEPTED_PREDECESSORS
 handoff_status: NOT_READY
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
+direction_revision_status: ALNS_FIRST_GATE_OVERLAY_APPLIED_DOCUMENTATION_ONLY
 scheduler_task_id: TBD_NOT_SUPPLIED
 owners:
   implementation: RPDPTW Application/Coordinator owner role
@@ -54,14 +56,14 @@ source_sections:
 source_fingerprints_sha256:
   README.md: 22eff4f63607db29bd4049344986109c680aa970d0865a3b859598e6b3b96c06
   docs/README.md: 5ece2d41fe5a3c3f5f3d938c0440b4d91b0dcc0a9a055e5e76a739b7d29a8569
-  docs/master-design.md: 58554334b9f27586c93a685adc0facf0fbd7e79576c18890f0ac13891b2f803b
-  docs/2026-07-26-domain-design.md: 1870662f85a08cc9a1e48a1974b96278eccddfd1519721d71b356c56034ecaab
-  docs/2026-07-26-architecture-design.md: 3d4dbbfc7e4cbdb2f3985378d84fd5f717db770b04131573c00ed354a9f41614
-  docs/architecture-domain-implementation-design.md: ec513ac1b0bacd88149683bf48c36f7e6edcd53a9232498597e3b0d57c585875
+  docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
+  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
   docs/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
-  docs/implementation/master-realization-plan.md: 5921213ae419b9398bde8c91c3d6ada5aa64bf22a9b823e5b3889e1642085c05
-  docs/implementation/README.md: accf7758802c253ae47e3d0fe41e190728c507195d0b41f27f14a25804c8f23f
-  docs/implementation/execution-progress-and-results.md: 75eac895fd3a3c930e5135a4ef57badb0c540bfa692d928188af9eeb2f73b803
+  docs/implementation/master-realization-plan.md: 940fe8c2156bf0472deafcd450e0ea49f0036ab6b304d6d051f0148a38cd0f5d
+  docs/implementation/README.md: 6454238185af7b7c420f468adf42609a0ec045d6c70c16cc7601f0342fa74358
+  docs/implementation/execution-progress-and-results.md: 37f1a8a0ffad1e9614bd54d2b2444739fb83d0951bff73f2a2465ab54a3e8895
 adjacent_phase_documents:
   phase_08_09_11_batch: CONCURRENT_SCHEDULER_AUTHORIZED_REVIEW_BATCH_OBSERVED_NOT_ACCEPTED
   phase_10_review: ACTUAL_COMPLETE_CHANGES_REQUIRED
@@ -1541,7 +1543,7 @@ Independent reviewer가 다음 AND 조건을 모두 확인해야 Phase 10 `ACCEP
 | Phase 11 expected handoff drift | DOWNSTREAM RE-READ | Coordinator/AWS owners | Phase 11 entry와 handoff readiness | 이 문서 §14.2와 linked Phase 11 document | Phase 11 entry에서 문서 재독해; Phase 10 downstream digest/monitoring 0 |
 | Scheduler task/owners | OWNER_GATE | Total scheduler | Implementation status 전이 | Reviewed Phase 10 v1.3 document | Exact task/assignee/reviewer 등록 |
 | `Q-BENCH-02` official values | `OPEN — EXPERIMENT_REQUIRED` | Benchmark/Quality | Official manifest/baseline/Phase 14 | Explicit TEST_ONLY model tests | Calibration corpus/protocol/result review + approval |
-| `C-17` route pool/MIP | `GATED TARGET` | Product/Algorithm/Architecture | Hybrid extension | ALNS-only coordinator | Phase 06/07 baseline + Phase 13 separate approval/evidence |
+| `C-17` route pool/MIP | `GATED TARGET` | Product/Algorithm/Architecture | Hybrid extension | ALNS-only coordinator | Phase 06/07/08 accepted + Phase 14A `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`, C-17 및 Phase 13 separate approval/evidence |
 | `Q-VAR-01` | `DEFERRED` | Product/Domain/Algorithm | Optional variants | Current pair/terminal/bank | Resume evidence + separate approval |
 | Phase 11 AWS integration | DOWNSTREAM GATE | Platform/Operations/Security | AWS adapter/deployment | Provider-neutral action/port only | Phase 10 accepted + ADR/environment/security approval |
 | Phase 12 provider adoption | APPROVAL-GATED | Platform/Operations/Security | Specific future provider | Phase 10 contract suite | Provider selection/parity/security/cost approval |

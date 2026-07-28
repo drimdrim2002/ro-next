@@ -8,7 +8,7 @@ phase_name: pair-insertion-initial-portfolio
 review_date: 2026-07-28
 reviewer_role: independent Phase 05 reviewer
 target_document: docs/implementation/phases/phase-05-pair-insertion-initial-portfolio.md
-target_document_version_after_safe_fixes: 1.2
+target_document_version_after_safe_fixes: 1.3
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
 source_drift_policy: SOURCE_COMMIT_PLUS_EXACT_CITED_SECTION_STATUS_AND_REQUIREMENT_IMPACT_REVIEW
 whole_file_reciprocal_hashes: NOT_USED
@@ -18,6 +18,8 @@ implementation_status_observed: NOT_STARTED
 evidence_status_observed: NOT_PRODUCED
 phase_acceptance_status_observed: NOT_ACCEPTED
 scheduler_task_id_observed: TBD_NOT_SUPPLIED
+direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
+direction_revision_verdict: PASS_DOCUMENTATION_ONLY_STATUS_UNCHANGED
 finding_counts:
   critical: 0
   high: 3
@@ -262,3 +264,14 @@ docs/implementation/reviews/phase-05-review.md
 | Adjacent Phase/Java/POM modification | `PASS`; 이 reviewer의 edit operation은 target Phase 05와 새 review에만 적용 |
 
 Root build는 target Phase 05 module/test가 없는 placeholder build를 Phase evidence로 오인하지 않기 위해 실행하지 않았다.
+
+## 8. ALNS-first direction revision review
+
+후속 task `019fa901-8776-7f61-b467-a8c6595b970d`에서 Phase 05 v1.3의
+ALNS-first 경계를 검토했다. Pair insertion의 `exact`가 MIP 호출을 뜻하지 않고,
+Phase 05 exit/handoff가 optimizer vendor/license/native/production authority 없이
+Phase 06으로 이어지며 Phase 13 요구를 선반영하지 않는 계약은 `PASS`다.
+
+기존 `CHANGES_REQUIRED`, implementation `NOT_STARTED`, evidence `NOT_PRODUCED`,
+acceptance `NOT_ACCEPTED`는 바꾸지 않는다. Full-solution evaluator/comparator-tie와
+portfolio policy blocker도 그대로다.

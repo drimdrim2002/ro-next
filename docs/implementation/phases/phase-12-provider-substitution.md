@@ -2,7 +2,7 @@
 
 ```yaml
 document_status: INDEPENDENT_REVIEWED_WITH_CORRECTIONS
-document_version: 1.2
+document_version: 1.3
 document_workflow_status: INDEPENDENT_REVIEWED_WITH_CORRECTIONS
 final_audit_cycle_status: RESOLVED_BY_PHASE11_V1_2_AND_PHASE12_V1_2
 manifest_reference_dag: STANDALONE_EVIDENCE_TO_FORWARD_MANIFEST_TO_REVIEW_TO_RECEIPT
@@ -21,6 +21,8 @@ review_document: ../reviews/phase-12-review.md
 entry_gate_status: GATED_BY_UNACCEPTED_PREDECESSORS_AND_PROVIDER_ADOPTION
 handoff_status: NOT_READY
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
+direction_revision_status: ALNS_FIRST_GATE_OVERLAY_APPLIED_DOCUMENTATION_ONLY
 scheduler_task_id: TBD_NOT_SUPPLIED
 owners:
   implementation: approved candidate-provider adapter owner role
@@ -62,14 +64,14 @@ source_sections:
   docs_readme: "all four named sections; canonical document map and historical boundaries"
   implementation_readme: "§1, §3~4, §6~7"
   master_realization_plan: "§2~4, §6, Phase 12, §8~15"
-  phase_11_actual_predecessor: "v1.2 §6.1~6.3, §14.1~14.2, §17 and §18.2; stable citation, reciprocal cycle resolved"
-  phase_13_actual_downstream: "v1.2 §4.1, §6.5 and §14.2; review COMPLETE/PASS_WITH_RESIDUAL_BLOCKERS, gated not started"
+  phase_11_actual_predecessor: "v1.3 §6.1~6.3, §14.1~14.2, §17 and §18.2; stable citation, reciprocal cycle resolution introduced in v1.2"
+  phase_13_actual_downstream: "v1.5 §4.1, §6.5 and §14.2; review COMPLETE/PASS_WITH_RESIDUAL_BLOCKERS, gated not started"
   root_readme_and_inventory: "README, pom.xml, Dockerfile, tracked Java/GCP source and tests"
 canonical_source_fingerprints_sha256:
-  docs/master-design.md: 58554334b9f27586c93a685adc0facf0fbd7e79576c18890f0ac13891b2f803b
-  docs/2026-07-26-domain-design.md: 1870662f85a08cc9a1e48a1974b96278eccddfd1519721d71b356c56034ecaab
-  docs/2026-07-26-architecture-design.md: 3d4dbbfc7e4cbdb2f3985378d84fd5f717db770b04131573c00ed354a9f41614
-  docs/architecture-domain-implementation-design.md: ec513ac1b0bacd88149683bf48c36f7e6edcd53a9232498597e3b0d57c585875
+  docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
+  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
 inventory_fingerprints_sha256:
   README.md: 22eff4f63607db29bd4049344986109c680aa970d0865a3b859598e6b3b96c06
   pom.xml: f61cab65190c44c5aba08b8c413397d5fe8ba8835f57de1d79deb6b705454cd6
@@ -86,10 +88,10 @@ historical_cross_check:
   status: SUPERSEDED_NOT_AUTHORITY
 docs_codex_status: HISTORICAL_NOT_AUTHORITY_NOT_MODIFIED
 neighbor_phase_documents:
-  phase_11: ACTUAL_V1_2_REVIEW_COMPLETE_CHANGES_REQUIRED_NOT_STARTED_HANDOFF_NOT_READY
+  phase_11: ACTUAL_V1_3_REVIEW_COMPLETE_CHANGES_REQUIRED_NOT_STARTED_HANDOFF_NOT_READY
   phase_12_review: ACTUAL_COMPLETE_CHANGES_REQUIRED
-  phase_13: ACTUAL_V1_2_REVIEW_COMPLETE_PASS_WITH_RESIDUAL_BLOCKERS_GATED_NOT_STARTED
-  phase_14: ACTUAL_V1_2_REVIEW_COMPLETE_CHANGES_REQUIRED_BLOCKED_NOT_READY
+  phase_13: ACTUAL_V1_5_REVIEW_COMPLETE_PASS_WITH_RESIDUAL_BLOCKERS_GATED_NOT_STARTED
+  phase_14: ACTUAL_V1_4_REVIEW_COMPLETE_CHANGES_REQUIRED_14A_NOT_RUN_14B_NOT_STARTED
 live_document_inventory:
   phase_documents_present: "15/15"
   phase_reviews_present: "15/15"
@@ -122,9 +124,9 @@ cutover authority가 생겼다는 뜻이 아니다.
 | Production default | `NOT_AUTHORIZED` | Phase 12가 provider traffic/default를 바꾸지 않는다. |
 | Phase review | `COMPLETE — CHANGES_REQUIRED` | [독립 리뷰](../reviews/phase-12-review.md)는 완료됐으나 cross-phase blocker와 implementation/evidence gate가 남는다. |
 | Documentation inventory | `PHASE 15/15; REVIEW 15/15 COMPLETE` | 작성 중 관찰한 일부 부재/`READY_FOR_REVIEW` 표기는 historical snapshot이며 현재 inventory가 아니다. |
-| Phase 11 | `v1.2 / COMPLETE — CHANGES_REQUIRED / NOT_STARTED / NOT_READY` | Reciprocal conformance-evidence cycle은 해소됐지만 실제 evidence와 accepted handoff는 없다. |
-| Phase 13 | `v1.2 / COMPLETE — PASS_WITH_RESIDUAL_BLOCKERS / GATED_NOT_STARTED` | `C-17` hybrid를 시작하거나 활성화하지 않는다. |
-| Phase 14 | `v1.2 / COMPLETE — CHANGES_REQUIRED / BLOCKED_NOT_READY` | Calibration/cutover authority와 evidence가 없다. |
+| Phase 11 | `v1.3 / COMPLETE — CHANGES_REQUIRED / NOT_STARTED / NOT_READY` | v1.2에서 reciprocal conformance-evidence cycle은 해소됐고 v1.3 current contract에도 보존되지만 실제 evidence와 accepted handoff는 없다. |
+| Phase 13 | `v1.5 / COMPLETE — PASS_WITH_RESIDUAL_BLOCKERS / GATED_NOT_STARTED` | Phase 14A ALNS benchmark acceptance와 `C-17` 전에는 hybrid를 시작하거나 활성화하지 않는다. |
+| Phase 14 | `v1.4 / COMPLETE — CHANGES_REQUIRED / 14A NOT_RUN / 14B NOT_STARTED` | 14A benchmark evidence가 없고 14B calibration/cutover authority도 없다. |
 
 권위 적용 순서는 다음과 같다.
 
@@ -134,11 +136,11 @@ cutover authority가 생겼다는 뜻이 아니다.
 4. [Final Architecture Design](../../2026-07-26-architecture-design.md)의 module/DAG/port 배치
 5. [Integrated implementation design](../../architecture-domain-implementation-design.md)의 Phase 12 substitution 계약
 6. [Master Realization Plan](../master-realization-plan.md)과 [구현 문서 지도](../README.md)
-7. [Actual Phase 11](phase-11-aws-reference-distribution.md)의 v1.2 §6.1~§6.3,
+7. [Actual Phase 11](phase-11-aws-reference-distribution.md)의 v1.3 §6.1~§6.3,
    §14.1~§14.2, §17과 §18.2 predecessor contract/blocker
 
 [Actual Phase 13](phase-13-optional-hybrid-route-selection.md)은 downstream
-consumer이며 이 문서의 authority 순서를 바꾸지 않는다. 현재 v1.2와
+consumer이며 이 문서의 authority 순서를 바꾸지 않는다. 현재 v1.5와
 [완료된 review](../reviews/phase-13-review.md)의 §4.1 activation AND gate,
 §6.5 skip/activated boundary와 §14.2 Phase 12 evidence receipt를 직접 대조했다.
 “작성 중 파일이 나타남”과 당시 `READY_FOR_REVIEW` 관찰은 historical authoring
@@ -352,11 +354,11 @@ Phase12EntryReceipt
 | GCP workflow | 병렬 HTTP batch 후 finalize 호출 | Durable provider-neutral coordinator semantics를 구현하지 않는다. |
 | GCP IAM guide | Broad example roles, public API option, fixed timeout 예시 | Security/cutover 승인 evidence가 아니다. |
 | Test | `AlnsBatchEngineTest` 한 개 | 합성 candidate만 확인하며 provider parity evidence가 아니다. |
-| AWS | Phase 11 v1.2 review는 `CHANGES_REQUIRED`; reciprocal evidence cycle은 해소됐지만 implementation/evidence는 `NOT_STARTED/NOT_PRODUCED` | Accepted reference evidence와 나머지 blocker 해소 전 Phase 12 entry는 닫혀 있다. |
+| AWS | Phase 11 v1.3 review는 `CHANGES_REQUIRED`; v1.2에서 reciprocal evidence cycle은 해소됐지만 implementation/evidence는 `NOT_STARTED/NOT_PRODUCED` | Accepted reference evidence와 나머지 blocker 해소 전 Phase 12 entry는 닫혀 있다. |
 | Phase 08~10 reviews | Access/failure carrier, worker commit, publication precondition, cancellation fence와 durable deadline blocker가 남음 | Phase 12가 임의 adapter signature/default로 봉합하지 않는다. |
 | Documentation set | Phase 문서 15/15, review 15/15 존재하고 review 15/15 완료 | 작성 당시 부재/`READY_FOR_REVIEW` snapshot은 historical이며 live inventory가 아니다. |
-| Phase 13 | v1.2 review `PASS_WITH_RESIDUAL_BLOCKERS`; `GATED_NOT_STARTED`, evidence 미생산 | §4.1/§14.2의 모든 Phase 12 evidence gate를 존중하고 hybrid artifact/backend를 만들지 않는다. |
-| Phase 14 | v1.2 review `CHANGES_REQUIRED`; `BLOCKED_NOT_READY` | Official calibration/cutover evidence 또는 권한을 Phase 12가 만들지 않는다. |
+| Phase 13 | v1.5 review `PASS_WITH_RESIDUAL_BLOCKERS`; `GATED_NOT_STARTED`, evidence 미생산 | §4.1/§14.2의 모든 Phase 12 evidence gate를 존중하고 hybrid artifact/backend를 만들지 않는다. |
+| Phase 14 | v1.4 review `CHANGES_REQUIRED`; `14A NOT_RUN`, `14B NOT_STARTED/BLOCKED_NOT_READY` | ALNS benchmark evidence, official calibration/cutover evidence 또는 권한을 Phase 12가 만들지 않는다. |
 
 Legacy GCP inventory는 candidate 선정 evidence가 아니라 characterization fixture다.
 그 path가 현재 실행 가능하더라도 target contracts를 만족한다는 뜻이 아니다.
@@ -1833,7 +1835,7 @@ happy path 한 번은 DoD가 아니다.
 | Security control evidence 없음 | Security/Data governance | No deploy/activation | Negative matrix/encryption/tenant evidence |
 | Performance policy/수치 open | Performance/FinOps/Ops | Measurement schema, experiment-only run | Workload-based approved envelope |
 | `Q-BENCH-02` open | Benchmark/Quality | Explicit test-only values | Calibration and approval |
-| `C-17` Phase 13 gated | Product/Algorithm/Architecture | Substitution evidence only | Separate C-17 scope + OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
+| `C-17` Phase 13 gated | Product/Algorithm/Architecture | Substitution evidence only | Phase 06/07/08 accepted + Phase 14A `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`, separate C-17 scope + OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
 | `Q-VAR-01` deferred | Product/Domain/Algorithm | Current pair/terminal/bank | Register restart evidence and approval |
 | Production authority 없음 | Product/Platform/Security/Ops | Non-prod evidence/recommendation | Separate production cutover authority |
 
@@ -1848,7 +1850,7 @@ Blocker가 있어도 문서 review는 멈추지 않는다. Implementation은 las
 
 ### 18.2 Phase 11에서 받는 handoff
 
-[Actual Phase 11](phase-11-aws-reference-distribution.md) v1.2의 §6.1~§6.3,
+[Actual Phase 11](phase-11-aws-reference-distribution.md) v1.3의 §6.1~§6.3,
 §14.1~§14.2, §17과 §18.2를 stable section으로 대조했다. Adjacent section digest는
 기록하거나 acceptance에 사용하지 않는다. 구현 entry에서는 아래 contract와 residual
 blocker 해소 evidence가 accepted인지 다시 확인한다.
@@ -1892,7 +1894,7 @@ Phase 12는 Phase 11에 자신의 whole-file/section fingerprint를 요구하지
 
 ### 18.3 Phase 13으로 넘기는 bounded evidence
 
-[Actual Phase 13](phase-13-optional-hybrid-route-selection.md) v1.2와
+[Actual Phase 13](phase-13-optional-hybrid-route-selection.md) v1.5와
 [완료된 review](../reviews/phase-13-review.md)는 현재
 `PASS_WITH_RESIDUAL_BLOCKERS/GATED_NOT_STARTED_NOT_ACCEPTED`다. Baseline inspection
 뒤 shared checkout에 나타났고 `READY_FOR_REVIEW`였다는 기록은 historical authoring
@@ -1926,7 +1928,8 @@ Phase12ToPhase13SubstitutionEvidence
 이 evidence는 optional hybrid의 worker runtime, artifact movement, memory/concurrency와
 operational viability 판단에 사용할 수 있다. Route pool schema, MIP projection,
 OR-Tools version/config/native distribution 선택, strictly-better adoption 또는 production activation을
-승인하지 않는다. Phase 13 owner는 별도 `C-17` entry gate를 충족해야 한다.
+승인하지 않는다. Phase 13 owner는 Phase 14A ALNS benchmark acceptance receipt를
+먼저 확보하고 별도 `C-17` entry gate를 충족해야 한다.
 
 ### 18.4 Future adoption/cutover boundary
 

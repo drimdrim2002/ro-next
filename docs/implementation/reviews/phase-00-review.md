@@ -289,3 +289,11 @@ target 검사와 `git diff --no-index --check /dev/null <file>`도 보조 실행
 이 reviewer가 작성·수정한 file은 Phase 00과 이 review 두 개뿐이다. `docs/implementation/` 전체가
 review 전부터 untracked이고 다른 Phase review 파일도 공유 checkout에서 동시에 나타났으므로,
 그 외 untracked 파일의 존재를 이 review의 변경으로 간주하지 않는다.
+
+## ALNS-first direction revision addendum
+
+Task `019fa901-8776-7f61-b467-a8c6595b970d`에서 Phase 00의 C-17 restart gate가
+Phase 06/07/08 accepted evidence와 Phase 14A
+`ALNS_BENCHMARK_ACCEPTANCE_RECEIPT` 뒤에만 열리도록 재검토했다. ALNS-only build
+DAG에는 MIP/backend dependency가 없으며 기존 review verdict, implementation,
+acceptance와 evidence 상태는 변하지 않는다.

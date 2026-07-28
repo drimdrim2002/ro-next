@@ -174,7 +174,7 @@ Phase 01 문서에만 다음을 반영했다.
 | Canonical comparator/encoding | Domain·Architecture | Stable cross-version fingerprint promise | Versioned proposed internal comparator | ADR, replay/migration, collision/framing test 승인 |
 | Current decimal Win `D/U` | Input·Matrix + Benchmark | 해당 fixture의 canonical/official use | Negative rejection fixture | Compliant integer matrix 또는 explicit contract migration |
 | `Q-BENCH-02` | Benchmark·Quality | Phase 14 official manifest | Phase 01 unaffected | Calibration/measured review/explicit approval |
-| `C-17` | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13 | ALNS-only critical path | Phase 06/07 baseline + C-17 scope + OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
+| `C-17` | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13 | ALNS-only critical path | Phase 06/07/08 accepted + Phase 14A `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`, C-17 scope + OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
 | `Q-VAR-01` | Product·Domain·Algorithm | Optional variants | Current pair/single-trip facts | Variant/fixture/core-impact evidence + separate approval |
 | Multi-trip/rotation | Product·Domain·Algorithm | Non-single-trip input | Reject unsupported rotation | Trip/reset/depot/resource contract + approval |
 
@@ -204,3 +204,10 @@ docs/implementation/reviews/phase-01-review.md
 | Scope | `git status --short --untracked-files=all` + 작업 기록 | 이 작업의 edit는 Phase 01 상세와 이 review뿐이며 Java/POM/다른 Phase/review 수정 없음 |
 
 문서 검증 성공은 Phase 01 구현/evidence 성공을 뜻하지 않는다. Workspace의 `docs/implementation/*`는 기존부터 untracked 상태이므로 일반 `git diff --check`가 이를 검사하지 않는 한계를 no-index check로 보완했다.
+
+## ALNS-first direction revision addendum
+
+Task `019fa901-8776-7f61-b467-a8c6595b970d`에서 C-17 restart 조건에 Phase 06/07/08
+accepted evidence와 Phase 14A `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`를 추가한 변경을
+검토했다. Phase 01은 ALNS-only 입력 경로를 유지하고 기존 review verdict,
+implementation, acceptance와 evidence 상태는 변하지 않는다.

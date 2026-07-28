@@ -100,7 +100,7 @@ authority를 임의로 닫지 않았다.
 |---|---|---|
 | [Phase 09](../phases/phase-09-object-storage-no-database.md) + [review](phase-09-review.md) | 최신 v1.3 contract/blocker section | Review `COMPLETE`/`CHANGES_REQUIRED`; exact read/immutable/CAS/no-DB와 distinct publication precondition blocker |
 | [Phase 10](../phases/phase-10-provider-neutral-coordinator.md) + [review](phase-10-review.md) | 최신 v1.3 §6.3~§7.4, §8.6, §13~§14와 blocker section | Review `COMPLETE`/`CHANGES_REQUIRED`; Maven false-green은 해소, pending-action/publication/cancel/deadline blocker는 유지 |
-| [Phase 12](../phases/phase-12-provider-substitution.md) + [review](phase-12-review.md) | 최신 v1.2 §1~§4, §15.1, §18.2와 blocker section | `INDEPENDENT_REVIEWED_WITH_CORRECTIONS`/`COMPLETE_CHANGES_REQUIRED`/`NOT_STARTED`/`NOT_READY`; Phase 11 accepted evidence/receipt 없이는 entry 차단 |
+| [Phase 12](../phases/phase-12-provider-substitution.md) + [review](phase-12-review.md) | 최신 v1.3 §1~§4, §15.1, §18.2와 blocker section | `INDEPENDENT_REVIEWED_WITH_CORRECTIONS`/`COMPLETE_CHANGES_REQUIRED`/`NOT_STARTED`/`NOT_READY`; Phase 11 accepted evidence/receipt 없이는 entry 차단 |
 | [Prior review format](phase-07-review.md) | 전체 | Severity/finding/evidence 형식과 fail-closed Maven·canonical fingerprint policy를 대조 |
 
 Neighbor는 모두 read-only로 유지했다. Whole-file neighbor digest나 reciprocal
@@ -253,7 +253,7 @@ Phase 00/build owner가 다룰 inventory이며, AWS distribution의 reproducible
   section digest를 compatibility acceptance 입력처럼 유지했다. 이후 작성 중
   snapshot에는 Phase 08/12의 `READY_FOR_REVIEW`와 Phase 09/10 v1.1 상태가 남았다.
   현재는 Phase 문서 `15/15 PRESENT`, review `15/15 COMPLETE`이고
-  [Actual Phase 12](../phases/phase-12-provider-substitution.md)는 v1.2
+  [Actual Phase 12](../phases/phase-12-provider-substitution.md)는 v1.3
   `INDEPENDENT_REVIEWED_WITH_CORRECTIONS`/`COMPLETE_CHANGES_REQUIRED`/
   `NOT_STARTED`/`NOT_READY`다. 이전 최종 감사 전 target은 완료된 Phase 11 review와
   달리 문서 상태를 `READY_FOR_REVIEW`로 유지했고, pre-review
@@ -362,7 +362,7 @@ Phase 00/build owner가 다룰 inventory이며, AWS distribution의 reproducible
 | Final Domain/Architecture Q-INFRA source drift | Document governance + Domain/Architecture owners | Canonical Master/register conflict rule | Stale status/count sync + cross-document review |
 | `Q-BENCH-02`/quota/cost/retention 값 open | Benchmark/Quality/Platform/FinOps/Security | Explicit test-only/non-prod config | Workload evidence와 owner approval; official hidden value 금지 |
 | Production authority 없음 | Product/Platform/Security/Ops + Phase 14 | Accepted local 또는 미래 non-prod reference | Phase 14 gates + exact production deploy/cutover approval |
-| `Q-VAR-01` deferred / `C-17` gated | Product/Domain/Algorithm/Architecture | Current baseline only | Register restart evidence와 별도 C-17 scope + OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback 승인 |
+| `Q-VAR-01` deferred / `C-17` gated | Product/Domain/Algorithm/Architecture | Current baseline only | Phase 06/07/08 accepted + Phase 14A `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`, register restart evidence와 별도 C-17 scope + OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback 승인 |
 
 ## 7. 변경 요약
 
@@ -400,3 +400,10 @@ production 상태는 각각 `NOT_STARTED`/`NOT_DEPLOYED`/`NOT_PRODUCED`/`NOT_REA
 
 검증 명령의 console output이나 현재 root test 1건을 `E-P11-*`, AWS deploy,
 parity, security 또는 production evidence로 사용하지 않았다.
+
+## ALNS-first direction revision addendum
+
+Task `019fa901-8776-7f61-b467-a8c6595b970d`에서 Phase 11 AWS reference branch는
+Phase 14A ALNS benchmark와 독립 병행 가능하고 14B에서만 합류함을 검토했다.
+Phase 13은 ALNS-only cutover의 predecessor가 아니며 기존 review verdict,
+implementation, acceptance와 evidence 상태는 변하지 않는다.

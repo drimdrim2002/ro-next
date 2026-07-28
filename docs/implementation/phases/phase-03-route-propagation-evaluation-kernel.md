@@ -16,6 +16,8 @@ phase_acceptance_status: NOT_ACCEPTED
 evidence_status: NOT_PRODUCED
 entry_gate_status: BLOCKED_BY_UNACCEPTED_PREDECESSORS
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
+direction_revision_status: ALNS_FIRST_GATE_OVERLAY_APPLIED_DOCUMENTATION_ONLY
 scheduler_task_id: TBD_NOT_SUPPLIED
 owners:
   implementation: RPDPTW Core/Evaluation owner role
@@ -32,13 +34,13 @@ planned_evidence:
   - E-P03-EVALUATION
   - E-P03-COMPARATOR
 source_fingerprints_sha256:
-  docs/master-design.md: 58554334b9f27586c93a685adc0facf0fbd7e79576c18890f0ac13891b2f803b
-  docs/2026-07-26-domain-design.md: 1870662f85a08cc9a1e48a1974b96278eccddfd1519721d71b356c56034ecaab
-  docs/2026-07-26-architecture-design.md: 3d4dbbfc7e4cbdb2f3985378d84fd5f717db770b04131573c00ed354a9f41614
-  docs/architecture-domain-implementation-design.md: ec513ac1b0bacd88149683bf48c36f7e6edcd53a9232498597e3b0d57c585875
+  docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
+  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
   docs/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
-  docs/implementation/master-realization-plan.md: 5921213ae419b9398bde8c91c3d6ada5aa64bf22a9b823e5b3889e1642085c05
-  docs/implementation/README.md: accf7758802c253ae47e3d0fe41e190728c507195d0b41f27f14a25804c8f23f
+  docs/implementation/master-realization-plan.md: 940fe8c2156bf0472deafcd450e0ea49f0036ab6b304d6d051f0148a38cd0f5d
+  docs/implementation/README.md: 6454238185af7b7c420f468adf42609a0ec045d6c70c16cc7601f0342fa74358
 historical_cross_check:
   file: docs/2026-07-26-master-design.md
   status: SUPERSEDED_NOT_AUTHORITY
@@ -1064,7 +1066,7 @@ Source 파일이나 test가 존재하는 것만으로 완료되지 않는다. Ph
 | Typed facet SPI | OPEN/PROPOSED | Domain + Capability + Verification | Facet extension만; base propagation/evaluation은 계속 가능 | Facet provider empty list, no customer hook | `ADR-004` 또는 동등 review, Phase 04/07 recomputation evidence |
 | `Q-BENCH-02` official steps/workers/rounds/watchdog | OPEN — EXPERIMENT_REQUIRED | Benchmark·Quality | Phase 14 official manifest/baseline/cutover; Phase 03 generic kernel은 안 막음 | 값 없는 exact contract, test-only 명시값만 | Calibration corpus/protocol, measured review, explicit approval |
 | Current Win fixture decimal `D/U` | BLOCKER FOR OFFICIAL USE | Input·Matrix + Benchmark | 그 fixture의 official baseline; generic integer Phase 03 fixture는 안 막음 | §9.2 test-only integer fixture | Compliant integer matrix 또는 explicit contract/migration approval |
-| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13/production default | Phase 03은 vendor-neutral core만 | Phase 06/07 baseline, C-17 scope와 OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback 승인 |
+| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13/production default | Phase 03은 vendor-neutral core만 | Phase 06/07/08 accepted + Phase 14A `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`, C-17 scope와 OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback 승인 |
 | `Q-VAR-01` | DEFERRED | Product·Domain·Algorithm | Optional variant 질문/구현 | Current fixed-terminal single-trip contract | Representative fixture, core-impact feasibility와 별도 승인 |
 | Multi-trip/rotation | DEFERRED FEATURE | Product·Domain·Algorithm | Trip/reset/depot 재출발 의미 | Oneway + single roundtrip | Trip/resource/reset/window/pair non-crossing 계약과 승인 |
 | Proposed public API/schema/numeric default | OPEN | Product/API/Data | External compatibility 약속 | Internal package-private contract | Versioned contract, compatibility/security review와 approval |

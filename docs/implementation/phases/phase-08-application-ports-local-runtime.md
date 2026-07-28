@@ -2,7 +2,7 @@
 
 ```yaml
 document_status: REVIEWED_WITH_CORRECTIONS
-document_version: 1.2
+document_version: 1.3
 phase: "08"
 phase_name: application-ports-local-runtime
 baseline_date: 2026-07-28
@@ -14,6 +14,8 @@ review_document: ../reviews/phase-08-review.md
 entry_gate_status: BLOCKED_BY_UNACCEPTED_PREDECESSORS
 handoff_status: NOT_READY
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+implementation_direction_decision: ALNS_FIRST_BENCHMARK_BEFORE_OPTIONAL_MIP
+direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 scheduler_task_id: TBD_NOT_SUPPLIED
 owners:
   implementation: RPDPTW Application/Local Runtime owner role
@@ -24,6 +26,7 @@ owners:
   security_observability: Application Security/Operations owner role
   downstream_storage_contract: Phase 09 Object Storage owner role
   downstream_coordination_contract: Phase 10 Coordinator owner role
+  downstream_benchmark_qualification: Phase 14A ALNS Benchmark Qualification owner role
   review: independent Phase 08 reviewer role
 prerequisites:
   - Phase 00 accepted reactor/module/package architecture
@@ -48,12 +51,12 @@ source_sections:
   phase_07_actual: "§7.6~7.7, §8.2~8.5, §13.2~15.2"
   phase_09_actual: "§4~5.3, §7.1~8.8, §15.1"
 source_fingerprints_sha256:
-  docs/master-design.md: 58554334b9f27586c93a685adc0facf0fbd7e79576c18890f0ac13891b2f803b
-  docs/2026-07-26-domain-design.md: 1870662f85a08cc9a1e48a1974b96278eccddfd1519721d71b356c56034ecaab
-  docs/2026-07-26-architecture-design.md: 3d4dbbfc7e4cbdb2f3985378d84fd5f717db770b04131573c00ed354a9f41614
-  docs/architecture-domain-implementation-design.md: ec513ac1b0bacd88149683bf48c36f7e6edcd53a9232498597e3b0d57c585875
+  docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
+  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
   docs/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
-  docs/implementation/master-realization-plan.md: 5921213ae419b9398bde8c91c3d6ada5aa64bf22a9b823e5b3889e1642085c05
+  docs/implementation/master-realization-plan.md: 940fe8c2156bf0472deafcd450e0ea49f0036ab6b304d6d051f0148a38cd0f5d
 historical_cross_check:
   file: docs/2026-07-26-master-design.md
   status: SUPERSEDED_NOT_AUTHORITY
@@ -125,6 +128,21 @@ reciprocal fingerprint 또는 “named-section hash 일치”만으로 entry를 
 관찰했다. 최신 Phase 09는 adjacent document/section digest acceptance를 제거하고 stable
 named section과 accepted artifact/evidence identity로 trace하므로 해당 문서 blocker는
 해소됐다. 그 상태나 hash를 반복 추적하지 않고 아래에는 잔존한 semantic blocker만 보존한다.
+
+### 1.2 ALNS-first local benchmark seam
+
+Phase 08 local reference는 Phase 06 ALNS와 Phase 07 both-gate 결과를 optimizer vendor,
+MIP solver/license/native runtime, cloud provider 또는 production authority 없이
+end-to-end 실행하는 기준 경로다. 이 경로는 Phase 14A benchmark qualification에
+immutable run artifacts를 제공하지만 스스로 benchmark acceptance를 발행하지 않는다.
+
+Phase 14A handoff에는 dataset/fixture digest, normalized problem/travel/profile,
+algorithm/build/runtime/hardware fingerprints, actual seed와 repeat/run identity,
+requested/completed work, timeout/resource observations, objective vector, candidate/result
+verifier reports, canonical result/trace digest가 포함돼야 한다. 이 중 승인되지 않은
+corpus, repeat 수, threshold, timeout/resource budget와 variance 기준은
+`OPEN — EXPERIMENT_REQUIRED`다. Local E2E pass나 `win_poc_case_floor.json` 1회 성공을
+Phase 13 open receipt로 바꾸지 않는다.
 
 ## 2. 목표, 범위, 비범위와 불변조건
 
@@ -2290,7 +2308,7 @@ Phase 08은 다음이 모두 참일 때만 `ACCEPTED` 후보다.
 | `Q-BENCH-02` official values | `OPEN — EXPERIMENT_REQUIRED` | Benchmark/Quality | Official manifest/baseline/cutover | Explicit `TEST_ONLY`/experiment config | Calibration corpus/protocol, measured review, approval |
 | Current Win fixture decimal `D/U` | `BLOCKER FOR OFFICIAL USE` | Input/Matrix + Benchmark | That fixture's official run | `P08_LOCAL_PD_3_TEST_ONLY` integer fixture | Compliant integer matrix or approved migration |
 | AWS target implementation/cutover | `FUTURE GATE` | Phase 09~11/14 owners | S3/Step Functions/Lambda and production | Provider-neutral ports + local reference | Storage/coordinator/AWS parity, security, shadow, rollback evidence |
-| `C-17` route pool/MIP | `GATED TARGET` | Product/Algorithm/Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13 and default activation | ALNS-only local path | Phase 06/07 accepted baseline and C-17 OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
+| `C-17` route pool/MIP | `GATED TARGET` | Product/Algorithm/Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13 and default activation | ALNS-only local path | Phase 06/07/08 accepted + Phase 14A `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`, C-17 scope와 OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
 | `Q-VAR-01` | `DEFERRED` | Product/Domain/Algorithm | Optional variant question/implementation | Current pair/terminal/bank contract | Representative fixture, feasibility and separate approval |
 | Multi-trip/rotation/dynamic routing | `DEFERRED FEATURE` | Product/Domain/Algorithm | Extended runtime semantics | Oneway/single roundtrip immutable solve | Approved domain/runtime/replanning contract |
 
@@ -2448,6 +2466,14 @@ not authorized:
 ```
 
 Production cutover/rollback은 Phase 14 gate이며 이 local rehearsal이 대신하지 않는다.
+
+### 16.5 Phase 14A ALNS benchmark qualification handoff
+
+Phase 08 acceptance 뒤 Phase 14A는 local reference의 immutable execution manifest와
+both-verifier result만 소비한다. Phase 08은 benchmark corpus/threshold를 정하거나
+selected run만 전달하지 않는다. Declared run 전부의 success/failure/timeout/resource
+상태와 artifact digest를 손실 없이 넘기며, Phase 14A의 independent review/acceptance
+receipt가 없으면 Phase 13은 계속 `GATED`다.
 
 ## 17. Source → requirement → test → evidence traceability
 

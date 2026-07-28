@@ -8,6 +8,9 @@ phase_count: 15
 phase_documents: 15
 phase_reviews: 15
 implementation_accepted_phases: 0
+implementation_direction_decision: ALNS_FIRST_BENCHMARK_BEFORE_OPTIONAL_MIP
+direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
+direction_overlay_contract_version: ALNS_FIRST_1.0
 execution_success_fixture: data/win_poc_case_floor.json
 execution_success_status: NOT_RUN
 ```
@@ -70,8 +73,38 @@ candidate verifier와 result-integrity verifier가 모두 `PASS`한 결과를 �
 - AWS 선택은 실제 구현·배포·production cutover 승인이 아니다.
 - `win_poc_case_floor.json`은 사용자 승인 `D/U FLOOR` migration을 거친 이 구현 작업의 최종 실행 fixture다.
 - `Q-BENCH-02` 공식 수치와 production authority는 별도 Phase 14 production gate로 남는다.
-- Route pool/MIP는 `C-17 GATED TARGET`이며 Phase 13 별도 승인 전 시작·기본 활성화하지 않는다. Gate가 열릴 경우 canonical exact backend는 Google OR-Tools direct Java CP-SAT이고, 이 정책은 현재 구현·dependency/native/SBOM/production 승인이 아니다.
+- 최신 구현 방향은 **ALNS-first**다. Phase 05 준비 → Phase 06 ALNS 구현 →
+  Phase 07 독립 검증 → Phase 08 local 실행 → Phase 14A ALNS benchmark acceptance
+  순서를 먼저 완료한다.
+- Route pool/MIP는 `C-17 GATED TARGET`이며 유효한
+  `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`와 나머지 별도 승인이 모두 있기 전에는
+  Phase 13을 시작·기본 활성화하지 않는다. Gate가 열릴 경우 canonical exact
+  backend는 Google OR-Tools direct Java CP-SAT이고, 이 정책은 현재 구현·dependency/
+  native/SBOM/production 승인이 아니다.
+- MIP는 조합 최적화의 worst-case와 실무 scale/constraint/formulation 민감성 때문에
+  ALNS 선행 gate로 두지 않는다. 모든 MIP가 항상 느리다는 보편 명제로 해석하지 않으며,
+  bounded experiment와 timeout/fallback evidence로만 가치를 판단한다.
 - `Q-VAR-01`은 `DEFERRED`이며 restart evidence 전 질문·활성화하지 않는다.
+
+### 3.1 Implementation-direction overlay version
+
+현재 구현 계약의 합성 identity는 다음과 같다.
+
+```text
+phase/review의 base document_version 또는 UNVERSIONED_BASE
++ direction_overlay_contract_version = ALNS_FIRST_1.0
++ direction_revision_task_id = 019fa901-8776-7f61-b467-a8c6595b970d
+```
+
+위 task ID를 가진 Phase/review는 base version만으로 ALNS-first revision 전 계약을
+가리키지 않는다. Base `document_version`이 없는 Phase 00~02도
+`UNVERSIONED_BASE + ALNS_FIRST_1.0`으로 식별한다. Phase 12는 C-17 restart gate가
+직접 변경됐으므로 base version도 v1.3으로 올렸다. 다른 Phase가 base version을
+유지해도 이 명시적 overlay identity로 변경 전후를 구별한다.
+
+Overlay version과 base version은 문서 계약의 provenance일 뿐 implementation,
+evidence, acceptance 또는 production authority가 아니다. 새 direction overlay가
+생기면 version과 task ID를 함께 바꾸고 영향 문서/review를 재감사한다.
 
 ## 4. Canonical Phase와 review index
 
@@ -100,7 +133,12 @@ candidate verifier와 result-integrity verifier가 모두 `PASS`한 결과를 �
 | 11 | AWS reference distribution | [actual: phase-11-aws-reference-distribution.md](phases/phase-11-aws-reference-distribution.md) | [reviewed: phase-11-review.md](reviews/phase-11-review.md) |
 | 12 | Provider substitution | [actual/gated: phase-12-provider-substitution.md](phases/phase-12-provider-substitution.md) | [reviewed/gated: phase-12-review.md](reviews/phase-12-review.md) |
 | 13 | Optional hybrid — `C-17 gated` | [actual/gated: phase-13-optional-hybrid-route-selection.md](phases/phase-13-optional-hybrid-route-selection.md) | [reviewed/gated: phase-13-review.md](reviews/phase-13-review.md) |
-| 14 | Official calibration/cutover — authority gated | [actual/gated: phase-14-official-calibration-cutover.md](phases/phase-14-official-calibration-cutover.md) | [reviewed/gated: phase-14-review.md](reviews/phase-14-review.md) |
+| 14 | 14A ALNS benchmark qualification / 14B official calibration·cutover | [actual/gated: phase-14-official-calibration-cutover.md](phases/phase-14-official-calibration-cutover.md) | [reviewed/gated: phase-14-review.md](reviews/phase-14-review.md) |
+
+Phase 14는 하나의 상세/review 파일을 사용하지만
+[Execution Progress and Results §2.2](execution-progress-and-results.md#22-구현-phase-상태)와
+registry에서는 14A benchmark 상태/receipt와 14B production/cutover 상태를 별도로
+기록한다. 14B production authority가 없다는 이유로 14A를 차단하지 않는다.
 
 ## 5. Filename 규칙
 
@@ -128,22 +166,58 @@ docs/implementation/reviews/phase-14-review.md
 4. 같은 Phase의 `-v2`, `-final`, 날짜 복제 파일을 만들지 않는다. Version/status는 문서 metadata와 git history로 관리한다.
 5. 상세/review 파일은 모두 actual이며 filename은 바꾸지 않는다.
 6. 새 file을 만들기 전 [Execution Progress and Results](execution-progress-and-results.md)의 scheduler task ID와 entry gate를 확인한다.
+7. `current`, `latest`, `actual`로 인용하는 Phase version은 대상 문서 metadata와
+   일치시킨다. 과거 version을 해소 증거나 authoring snapshot으로 인용할 때는
+   `historical`, `introduced in` 또는 동등한 문맥을 명시한다.
 
 ## 6. Phase 작업 순서
 
-일반 AWS ALNS-only critical path:
+ALNS 구현·검증·benchmark qualification critical path:
 
 ```text
-00 → 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 → 11 → 14
+00 → 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 14A
+```
+
+AWS ALNS-only production 후보:
+
+```text
+08 → 09 → 10 → 11
+14A + 11 → 14B
 ```
 
 조건부 branch:
 
 ```text
 10 → 12  # 승인된 provider substitution
-06 + 07 + C-17 approval → 13  # optional hybrid
-13 → 14  # official hybrid manifest를 선택한 경우에만
+14A ALNS benchmark acceptance + C-17 approvals → 13  # optional hybrid/MIP
+13 → 14B  # official hybrid manifest를 명시적으로 선택한 경우에만
 ```
+
+### 6.1 ALNS benchmark acceptance gate
+
+Phase 14A의 immutable evidence에는 dataset/fixture fingerprint, seed/repeat policy,
+hardware/runtime fingerprint, correctness oracle, candidate/result verifier 결과,
+objective/quality 비교, timeout/resource budget, variance/reproducibility, independent
+review와 post-review acceptance receipt가 모두 있어야 한다. Corpus, threshold,
+repeat 수, budget, 허용 variance와 provider/backend version은 승인 전
+`OPEN — EXPERIMENT_REQUIRED` 또는 `GATED`다.
+
+`win_poc_case_floor.json` 실행 성공은 중요한 end-to-end correctness/replay evidence지만,
+승인된 corpus/protocol/quality·performance 기준이 없는 상태에서 그 자체만으로
+`ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`를 만들지는 않는다.
+
+이 direction revision의 영향 범위는 이 core 3개 문서, Phase 00~14 상세 15개와
+해당 review 15개다. 각 문서는 직접 handoff 또는 C-17 restart 조건을 같은
+14A acceptance gate로 정렬한다. Canonical source와 `docs/codex/`, 코드,
+POM/test/deployment 파일은 read-only다.
+
+Revision validation은 필수 33개/Phase 15/review 15, canonical title과 prev-next,
+local link 1,071개·fragment 309개, current structured fingerprint 92개,
+source→requirement→test/evidence, DAG shortcut, hidden numeric/provider default,
+legacy 11-phase와 whitespace를 재검사해 오류 0으로 통과했다. 남은 blocker는
+Phase 00~08 actual acceptance, ALNS benchmark corpus/protocol/criteria와 immutable
+independent acceptance receipt, `C-17` 및 backend/license/native/security/operations/
+cost approvals, Phase 09~11 runtime evidence, official values와 production authority다.
 
 각 Phase 작업자는 다음 순서로 읽는다.
 

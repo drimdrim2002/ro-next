@@ -14,6 +14,8 @@ baseline_date: 2026-07-28
 baseline_commit: 3424277c9c74f8151a83be056a07dd4659331beb
 scheduler_task_id: TBD
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
+direction_revision_status: ALNS_FIRST_GATE_OVERLAY_APPLIED_DOCUMENTATION_ONLY
 prerequisites:
   - Phase 00 ACCEPTED build/module/architecture skeleton
   - Phase 01 ACCEPTED canonical input and normalization artifacts
@@ -1156,7 +1158,7 @@ Phase 02는 다음을 모두 만족하고 총괄 스케줄러가 registry를 전
 | Approved integer fixture/official snapshot | External authority gate; generic Phase 02 blocker 아님 | Input·Matrix + Benchmark/provider owner | 해당 artifact의 official/integration/benchmark 사용만 | Generic unit/property/integration의 test-only hand oracle | Versioned integer artifact, digest, expected coverage, explicit scope approval |
 | Current Win decimal `D/U` | Non-compliant fixture blocker | Input·Matrix + Benchmark | 해당 fixture의 canonical/official use | Read-only raw fixture | Compliant integer matrix 또는 explicit contract migration approval |
 | `Q-BENCH-02` official execution 수치 | `OPEN — EXPERIMENT_REQUIRED` | Benchmark·Quality | Phase 14, not Phase 02 semantics | Phase 02 immutable artifacts | Calibration protocol/results/explicit approval |
-| `C-17` route pool/MIP | `GATED TARGET` | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13 only | ALNS-only critical path | Phase 06/07 baseline + C-17 scope + OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
+| `C-17` route pool/MIP | `GATED TARGET` | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13 only | ALNS-only critical path | Phase 06/07/08 accepted + Phase 14A `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`, C-17 scope + OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
 | `Q-VAR-01` | `DEFERRED` | Product·Domain·Algorithm | Optional variants | Current atomic pair/travel contract | Variant/fixture/core-impact feasibility + separate approval |
 | Multi-trip/rotation | Deferred feature | Product·Domain·Algorithm | Trip-specific problem meaning | Oneway/single roundtrip | Trip/reset/depot/resource contract + approval |
 | Proposed public API/schema/fingerprint algorithm | `OPEN` | Product/API/Data + Architecture | External compatibility promise | Internal proposed types | Versioned contract, migration/security review and approval |

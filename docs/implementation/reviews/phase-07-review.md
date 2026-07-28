@@ -7,7 +7,7 @@ phase: "07"
 review_date: 2026-07-28
 reviewer_role: independent Phase 07 reviewer
 target_document: docs/implementation/phases/phase-07-independent-verification-final-result.md
-target_document_version_after_safe_fixes: 1.1
+target_document_version_after_safe_fixes: 1.2
 target_whole_file_hash: OMITTED_TO_AVOID_RECIPROCAL_DOCUMENT_HASH
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
 document_verdict: CHANGES_REQUIRED
@@ -16,6 +16,8 @@ implementation_status_observed: NOT_STARTED
 evidence_status_observed: NOT_PRODUCED
 scheduler_status_change: NOT_AUTHORIZED
 scheduler_task_id_observed: TBD_NOT_SUPPLIED
+direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
+direction_revision_verdict: PASS_DOCUMENTATION_ONLY_STATUS_UNCHANGED
 finding_counts:
   critical: 0
   high: 6
@@ -74,8 +76,8 @@ public wire schema와 production hash algorithm을 임의로 확정하지 않았
 Read-only로 [Phase 04](../phases/phase-04-capabilities-customer-profiles.md) §7.1/§7.4~§7.5/§14.2,
 [Phase 06](../phases/phase-06-cow-alns-reproducibility.md) §7.1/§7.6/§8.4~§8.5/§16.2와
 [Phase 08](../phases/phase-08-application-ports-local-runtime.md) §3.2/§7.6/§16.1을 대조했다.
-Phase 04 v1.1은 actual `REVIEWED_CHANGES_REQUIRED`, Phase 06 v1.1은 actual
-`CHANGES_REQUIRED`, Phase 08 v1.1은 actual `REVIEWED_WITH_CORRECTIONS`이며 세 review 모두
+Phase 04 v1.1은 actual `REVIEWED_CHANGES_REQUIRED`, Phase 06 v1.2는 actual
+`CHANGES_REQUIRED`, Phase 08 v1.3은 actual `REVIEWED_WITH_CORRECTIONS`이며 세 review 모두
 `COMPLETE — CHANGES_REQUIRED`다. 구현/evidence는 모두 `NOT_STARTED`/`NOT_PRODUCED`이고
 accepted evidence가 없다. Neighbor는 수정하지 않았고 reciprocal whole-file hash도 추가하지 않았다.
 Shared checkout에서 인접 review 동시 갱신을 `concurrent review observed`로 한 번 기록하고,
@@ -210,7 +212,8 @@ Shared checkout에서 인접 review 동시 갱신을 `concurrent review observed
 - **Severity/status:** `HIGH — RESOLVED_BY_PHASE08_V1_1`
 - **Exact evidence:** 수정 전 Phase 08은 rejection을
   `stage + VerificationDisposition + VerificationFailure`로만 받아 `GateIncomplete`를
-  손실 없이 매핑하지 못했다. 현재 Phase 08 v1.1 §3.2/§6.4~§7.7/§11.5/§16.1은 세 variant를
+  손실 없이 매핑하지 못했다. 현재 Phase 08 v1.3은 v1.1에서 도입한
+  §3.2/§6.4~§7.7/§11.5/§16.1의 세 variant를
   exhaustive하게 분리하고 incomplete를 `VERIFICATION_INCOMPLETE`와
   `Interrupted(VerificationGateIncomplete)`로 매핑한다. Phase 08 review F-P08-001도
   `HIGH — APPLIED`로 이를 확인한다.
@@ -299,3 +302,13 @@ canonical encoding/public schema/hash policy review, scheduler task/roles와 `E-
 `docs/implementation/` 전체가 Git 기준 untracked이므로 standard tracked diff만으로 author별 변경을
 분리할 수 없다. Final validation은 두 허용 파일의 현재 구조와 write scope를 사용했다. Neighbor는
 read-only로 유지했고 digest 갱신 루프를 acceptance 절차로 만들지 않았다.
+
+## 8. ALNS-first direction revision review
+
+Phase 07 v1.2의 독립 verifier가 ALNS-only candidate/result를 MIP/backend authority
+없이 검증하고, `PASS`를 correctness/result-integrity로만 제한하며 quality/performance
+acceptance를 Phase 14A에 남긴 계약을 `PASS`로 검토했다. Phase 13은 별도
+`ALNS_BENCHMARK_ACCEPTANCE_RECEIPT` 뒤에만 동일 both-gate 경로를 재사용한다.
+
+이 review는 benchmark evidence를 만들지 않았다. 기존 `CHANGES_REQUIRED`,
+implementation/evidence `NOT_STARTED/NOT_PRODUCED`와 cross-phase blocker는 유지된다.

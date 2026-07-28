@@ -8,7 +8,7 @@ phase: "08"
 review_date: 2026-07-28
 reviewer_role: independent Phase 08 document reviewer
 target_document: docs/implementation/phases/phase-08-application-ports-local-runtime.md
-target_document_version_after_safe_fixes: 1.2
+target_document_version_after_safe_fixes: 1.3
 target_whole_file_hash: OMITTED_TO_AVOID_RECIPROCAL_DOCUMENT_HASH
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
 document_verdict: CHANGES_REQUIRED
@@ -17,6 +17,8 @@ implementation_status_observed: NOT_STARTED
 evidence_status_observed: NOT_PRODUCED
 entry_gate_status_observed: BLOCKED_BY_UNACCEPTED_PREDECESSORS
 handoff_status_observed: NOT_READY
+direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
+direction_revision_verdict: PASS_DOCUMENTATION_ONLY_STATUS_UNCHANGED
 scheduler_status_change: NOT_AUTHORIZED
 scheduler_task_id_observed: TBD_NOT_SUPPLIED
 source_commit_observed: 3424277c9c74f8151a83be056a07dd4659331beb
@@ -262,7 +264,7 @@ current placeholder를 conformant하다고 평가한다는 뜻이 아니다.
 - **Finding:** 수정 전 target은 Phase 07/09 section projection hash를 entry/handoff
   acceptance에 사용했다. 이는 인접 편집 순서가 acceptance를 바꾸는 reciprocal cycle이다.
 - **Exact evidence/source:** 사용자 acceptance 제한과 Master Plan의 source/contract/evidence
-  trace 원칙. 최신 Phase 09 v1.2도 digest acceptance를 제거했다.
+  trace 원칙. 최신 Phase 09 v1.3도 digest acceptance를 제거했다.
 - **Correction:** Canonical source fingerprint는 provenance로 유지하고, 인접 계약은 stable
   section/contract citation + semantic-impact review + accepted artifact/evidence identity로
   trace한다.
@@ -397,7 +399,8 @@ GCP deployment, legacy result rewrite와 evidence cleanup은 이 review가 승�
 | `test ! -e mvnw`와 planned module path checks | Wrapper와 all planned Phase 08 child modules absent | Future commands는 현재 evidence가 아님 |
 | `mvn -B -ntp -Dstyle.color=never test` | Exit 0; tests `1`, failures `0`, errors `0`, skipped `0`; `BUILD SUCCESS`; 0.828 s | Root placeholder regression only; `E-P08-*` 아님 |
 
-Canonical fingerprints observed:
+Historical Phase 08 review-time fingerprints observed (현재 implementation-direction
+revision의 master plan hash가 아님):
 
 ```text
 58554334b9f27586c93a685adc0facf0fbd7e79576c18890f0ac13891b2f803b  docs/master-design.md
@@ -444,3 +447,14 @@ Restart 시 reviewer는 canonical source fingerprint와 stable cited contract의
 failure/error/skipped를 fail-closed 대조해야 한다. Planned tree, pseudo-signature, root
 placeholder build success, object existence와 reciprocal digest는 implementation,
 publication 또는 Phase acceptance evidence가 아니다.
+
+## 9. ALNS-first direction revision review
+
+Phase 08 v1.3의 local reference가 optimizer/MIP/license/native/cloud/production
+authority 없이 Phase 06→07 경로를 실행하고, declared run 전부의 fixture, seed,
+hardware/runtime, work/resource, objective, verifier와 trace digest를 Phase 14A에
+넘기는 계약을 `PASS`로 검토했다.
+
+Local E2E 또는 `win_poc_case_floor.json` 단일 run은 그 자체로 benchmark acceptance나
+Phase 13 open receipt가 아니다. 기존 `CHANGES_REQUIRED`, implementation
+`NOT_STARTED`, evidence `NOT_PRODUCED`, handoff `NOT_READY`는 유지된다.

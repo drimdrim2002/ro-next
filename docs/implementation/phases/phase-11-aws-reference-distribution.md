@@ -17,6 +17,8 @@ review_document: ../reviews/phase-11-review.md
 entry_gate_status: BLOCKED_BY_UNACCEPTED_PREDECESSORS_AND_AWS_INTEGRATION_GATE
 handoff_status: NOT_READY
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
+direction_revision_status: ALNS_FIRST_GATE_OVERLAY_APPLIED_DOCUMENTATION_ONLY
 scheduler_task_id: TBD_NOT_SUPPLIED
 owners:
   implementation: AWS adapter/distribution owner role
@@ -59,10 +61,10 @@ source_sections:
   phase_12_actual: "§1~4, §15.1 and §18.2; downstream conformance consumer only"
   root_readme_and_inventory: "README technology/deployment/placeholder; tracked GCP/Docker/Java files; ignored generated serverless inventory"
 canonical_source_fingerprints_sha256:
-  docs/master-design.md: 58554334b9f27586c93a685adc0facf0fbd7e79576c18890f0ac13891b2f803b
-  docs/2026-07-26-domain-design.md: 1870662f85a08cc9a1e48a1974b96278eccddfd1519721d71b356c56034ecaab
-  docs/2026-07-26-architecture-design.md: 3d4dbbfc7e4cbdb2f3985378d84fd5f717db770b04131573c00ed354a9f41614
-  docs/architecture-domain-implementation-design.md: ec513ac1b0bacd88149683bf48c36f7e6edcd53a9232498597e3b0d57c585875
+  docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
+  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
 inventory_fingerprints_sha256:
   README.md: 22eff4f63607db29bd4049344986109c680aa970d0865a3b859598e6b3b96c06
   pom.xml: f61cab65190c44c5aba08b8c413397d5fe8ba8835f57de1d79deb6b705454cd6
@@ -150,10 +152,10 @@ owner의 잔여 정합화 항목이며 Phase 11이 그 두 파일을 수정하�
 | [질문 등록부](../../master-design-open-questions.md) | `Q-BENCH-02`, `Q-INFRA-01`, `Q-VAR-01`, §3~4 | AWS target resolved, 공식 실행 수치 open, optional variant deferred, cutover 별도 gate |
 | [Master Realization Plan](../master-realization-plan.md) | §2~4, Phase 08~12/14, §8~15 | Current inventory, Phase 11 entry/exit/evidence/DoD, production blocker와 handoff |
 | [구현 문서 지도](../README.md) | §1~7 | Canonical filename, planned/actual, scheduler/review 권한 |
-| [Actual Phase 08](phase-08-application-ports-local-runtime.md) | v1.2 §7.3~§7.5, §9.1~§9.3, §16.2~§16.4 | `REVIEWED_WITH_CORRECTIONS`/`CHANGES_REQUIRED`/`NOT_STARTED`/`NOT_READY`; application port, idempotency/deadline와 local rollback handoff |
+| [Actual Phase 08](phase-08-application-ports-local-runtime.md) | v1.3 §7.3~§7.5, §9.1~§9.3, §16.2~§16.4 | `REVIEWED_WITH_CORRECTIONS`/`CHANGES_REQUIRED`/`NOT_STARTED`/`NOT_READY`; application port, idempotency/deadline와 local rollback handoff |
 | [Actual Phase 09](phase-09-object-storage-no-database.md) | v1.3 §7.2, §7.5~§7.8, §8.1~§8.7, §9.1~§9.6, §15.2~§15.3 | `INDEPENDENT_REVIEWED_WITH_CORRECTIONS`/`CHANGES_REQUIRED`/`NOT_STARTED`/`NOT_READY`; exact storage/CAS contract와 Phase 11 backend handoff |
 | [Actual Phase 10](phase-10-provider-neutral-coordinator.md) | v1.3 §6.3~§7.4, §8.6, §13, §14.2 | `INDEPENDENT_REVIEWED_WITH_CORRECTIONS`/`CHANGES_REQUIRED`/`NOT_STARTED`/`NOT_READY`; pending action/publication/cancel/deadline blocker와 Phase 11 handoff |
-| [Actual Phase 12](phase-12-provider-substitution.md) | v1.2 §1~§4, §15.1, §18.2 | `INDEPENDENT_REVIEWED_WITH_CORRECTIONS`/`CHANGES_REQUIRED`/`NOT_STARTED`/`NOT_READY`; Phase 11 evidence/receipt의 downstream consumer이고 adoption/cutover는 별도 gate |
+| [Actual Phase 12](phase-12-provider-substitution.md) | v1.3 §1~§4, §15.1, §18.2 | `INDEPENDENT_REVIEWED_WITH_CORRECTIONS`/`CHANGES_REQUIRED`/`NOT_STARTED`/`NOT_READY`; Phase 11 evidence/receipt의 downstream consumer이고 adoption/cutover는 별도 gate |
 | [Root README](../../../README.md) | 기술 기준·배포·placeholder | 실제 Java/GCP/Docker current state와 목표 AWS를 분리 |
 
 현재 live inventory는 Phase 상세 문서 `15/15 PRESENT`, 독립 review
@@ -305,7 +307,7 @@ eligibility의 hidden input이 아니다.
 | Phase 00 architecture | Accepted review, AWS SDK leakage 0, target Maven reactor | Root 단일 POM과 GCP SDK 혼합 classpath | BLOCKED |
 | Phase 06 worker | `E-P06-*`, exact WorkerRun/termination/replay | 상세만 존재; accepted evidence 없음 | BLOCKED |
 | Phase 07 publication | `E-P07-*`, immutable `PublishableResult`, two-gate rejection | 상세만 존재; accepted evidence 없음 | BLOCKED |
-| Phase 08 ports/local | Accepted `ArtifactStore`, workflow/dispatcher, cancel/telemetry와 local E2E oracle | Actual v1.2 review는 `COMPLETE`/`CHANGES_REQUIRED`; implementation/evidence/handoff 없음 | BLOCKED |
+| Phase 08 ports/local | Accepted `ArtifactStore`, workflow/dispatcher, cancel/telemetry와 local E2E oracle | Actual v1.3 review는 `COMPLETE`/`CHANGES_REQUIRED`; implementation/evidence/handoff 없음 | BLOCKED |
 | Phase 09 storage | Accepted exact-key/digest/CAS/tenant suite와 encoding/key-layout ADR | Actual v1.3 review는 `COMPLETE_CHANGES_REQUIRED`; implementation/evidence/handoff 없음 | BLOCKED |
 | Phase 10 coordinator | Accepted state/action/completeness/retry/cancel contract와 fake oracle | Actual v1.3 review는 `COMPLETE_CHANGES_REQUIRED`; implementation/evidence/handoff 없음. Publication precondition, same-run-state cancel fence와 durable deadline은 cross-phase blocker | BLOCKED |
 | AWS ADR | Resource boundary, IAM, KMS, network, key layout, retry/DLQ, quota, retention, cost | 승인 기록 없음 | REVIEW_REQUIRED |
@@ -1695,7 +1697,7 @@ path 한 번은 DoD가 아니다.
 | `Q-BENCH-02` official 수치 없음 | Benchmark/Quality | Explicit test-only manifests | Calibration result와 사용자 승인 |
 | Quota/cost/retention 수치 미확정 | Platform/FinOps/Security/Ops | Non-production candidate config | Workload measurement와 owner-approved thresholds |
 | Phase 12 provider 미선택 | Product/Platform | Immutable Phase 11 AWS evidence/receipt만 준비; Phase 12 manifest 미소유 | Provider별 adoption scope 별도 승인 |
-| `C-17` optional hybrid gated | Product/Algorithm/Architecture | ALNS-only AWS reference와 infra evidence only | Phase 13 C-17 scope + OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
+| `C-17` optional hybrid gated | Product/Algorithm/Architecture | ALNS-only AWS reference와 infra evidence only | Phase 06/07/08 accepted + Phase 14A `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`, Phase 13 C-17 scope + OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
 | Production authority 없음 | Product/Platform/Security/Ops + Phase 14 owner | Accepted non-prod reference 또는 local runtime | Phase 14 gates + explicit production deploy/cutover approval |
 | `Q-VAR-01` deferred | Product/Domain/Algorithm | Current pair/terminal/bank contract | Register의 restart evidence와 별도 승인 |
 
@@ -1746,7 +1748,7 @@ AWS adapter는 이 목록을 확장할 수는 있어도 provider-specific field�
 
 ### 18.2 Phase 12 handoff
 
-[Actual Phase 12](phase-12-provider-substitution.md) v1.2 §1~§4, §15.1과 §18.2를
+[Actual Phase 12](phase-12-provider-substitution.md) v1.3 §1~§4, §15.1과 §18.2를
 대조했다. 그 문서는 `INDEPENDENT_REVIEWED_WITH_CORRECTIONS`/
 `COMPLETE_CHANGES_REQUIRED`/`NOT_STARTED`/`NOT_READY`이며 아래
 accepted evidence와 receipt가 없으면 entry를 열지 않는다. Phase 11은 §14.1의

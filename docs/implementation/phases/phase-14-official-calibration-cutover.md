@@ -2,12 +2,15 @@
 
 ```yaml
 document_status: REVIEWED_WITH_CORRECTIONS
-document_version: 1.3
+document_version: 1.4
 phase: "14"
 phase_name: official-calibration-cutover
 baseline_date: "2026-07-28"
 implementation_status: GATED
 entry_gate_status: CLOSED
+phase_14a_alns_benchmark_status: NOT_RUN
+phase_14a_acceptance_receipt_status: NOT_PRODUCED
+phase_14b_cutover_status: NOT_STARTED
 calibration_status: NOT_RUN
 official_manifest_status: NOT_CREATED
 official_run_status: NOT_RUN
@@ -19,6 +22,8 @@ review_status: COMPLETE_CHANGES_REQUIRED
 review_document: ../reviews/phase-14-review.md
 handoff_status: NOT_READY
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+implementation_direction_decision: ALNS_FIRST_BENCHMARK_BEFORE_OPTIONAL_MIP
+direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 scheduler_task_id: TBD_NOT_SUPPLIED
 owners:
   phase: Phase 14 Calibration/Cutover owner role
@@ -36,14 +41,18 @@ owners:
   signing_trust: Security/Release evidence-trust owner role
   rollback: Production SRE/Incident owner role
   review: Independent Phase 14 reviewer role
-prerequisites:
-  - Phase 00~11 applicable accepted evidence and review receipts
+phase_14a_prerequisites:
+  - Phase 00~08 applicable accepted evidence and review receipts
   - Phase 07 accepted candidate/result both-gate publication path
-  - Phase 11 accepted AWS reference parity/security/operations/rollback evidence
-  - Phase 12 signed applicability decision; accepted evidence when a substituted provider is selected or actual Phase 13 Activated requires it
-  - Phase 13 signed applicability decision; accepted evidence only for an official hybrid manifest
   - approved compliant integer travel fixture or official integer snapshot
   - approved Great Circle policy/function/version and reference vectors
+  - approved ALNS benchmark corpus, protocol, correctness oracle and acceptance criteria
+phase_14b_prerequisites:
+  - Phase 00~11 applicable accepted evidence and review receipts
+  - Phase 11 accepted AWS reference parity/security/operations/rollback evidence
+  - Phase 14A accepted ALNS benchmark receipt
+  - Phase 12 signed applicability decision; accepted evidence when a substituted provider is selected or actual Phase 13 Activated requires it
+  - Phase 13 signed applicability decision; accepted evidence only for an official hybrid manifest
   - approved official ALNS parameter set
   - Q-BENCH-02 calibration result and explicit official execution-value approval
   - approved evidence-signing and trust-root policy
@@ -51,6 +60,8 @@ prerequisites:
   - approved calibration acceptance policy and result
   - explicit scoped production authority for each traffic-changing action
 planned_evidence:
+  - E-P14-ALNS-BENCHMARK
+  - E-P14-ALNS-BENCHMARK-ACCEPTANCE
   - E-P14-CALIBRATION
   - E-P14-OFFICIAL-RUN
   - E-P14-CUTOVER
@@ -68,19 +79,19 @@ source_sections:
   phase_07_actual: "§15.3 downstream consumer only"
   phase_11_actual: "§18.3 Phase 14 handoff only"
   phase_12_actual: "§18.4 future adoption/cutover boundary only"
-  phase_13_actual: "v1.2 §6.5 and §14.3~14.4 Phase 14 signed skip/activated applicability handoff only"
+  phase_13_actual: "v1.5 §1.3, §4, §6.5 and §14.3~14.4 ALNS-first gate plus Phase 14B signed skip/activated applicability handoff"
   root_readme_and_inventory: "README, current POM/Java/GCP/Docker/data inventory"
 source_fingerprints_sha256:
   README.md: 22eff4f63607db29bd4049344986109c680aa970d0865a3b859598e6b3b96c06
   docs/README.md: 5ece2d41fe5a3c3f5f3d938c0440b4d91b0dcc0a9a055e5e76a739b7d29a8569
-  docs/master-design.md: 58554334b9f27586c93a685adc0facf0fbd7e79576c18890f0ac13891b2f803b
+  docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
   docs/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
-  docs/2026-07-26-domain-design.md: 1870662f85a08cc9a1e48a1974b96278eccddfd1519721d71b356c56034ecaab
-  docs/2026-07-26-architecture-design.md: 3d4dbbfc7e4cbdb2f3985378d84fd5f717db770b04131573c00ed354a9f41614
-  docs/architecture-domain-implementation-design.md: ec513ac1b0bacd88149683bf48c36f7e6edcd53a9232498597e3b0d57c585875
-  docs/implementation/README.md: accf7758802c253ae47e3d0fe41e190728c507195d0b41f27f14a25804c8f23f
-  docs/implementation/master-realization-plan.md: 5921213ae419b9398bde8c91c3d6ada5aa64bf22a9b823e5b3889e1642085c05
-  docs/implementation/execution-progress-and-results.md: 75eac895fd3a3c930e5135a4ef57badb0c540bfa692d928188af9eeb2f73b803
+  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
+  docs/implementation/README.md: 6454238185af7b7c420f468adf42609a0ec045d6c70c16cc7601f0342fa74358
+  docs/implementation/master-realization-plan.md: 940fe8c2156bf0472deafcd450e0ea49f0036ab6b304d6d051f0148a38cd0f5d
+  docs/implementation/execution-progress-and-results.md: 37f1a8a0ffad1e9614bd54d2b2444739fb83d0951bff73f2a2465ab54a3e8895
 inventory_fingerprints_sha256:
   data/win_poc_case.json: ea003bac326ebdbbb5f49595388767ed223c03539fd6579b96f3acbedce6b7d7
   pom.xml: f61cab65190c44c5aba08b8c413397d5fe8ba8835f57de1d79deb6b705454cd6
@@ -112,8 +123,8 @@ live_review_inventory:
   phase_10: COMPLETE_CHANGES_REQUIRED
   phase_11: COMPLETE_CHANGES_REQUIRED
   phase_12: COMPLETE_CHANGES_REQUIRED
-  phase_13: COMPLETE_V1_2_PASS_WITH_RESIDUAL_BLOCKERS
-  phase_14: COMPLETE_CHANGES_REQUIRED_BLOCKED_NOT_READY
+  phase_13: COMPLETE_V1_5_PASS_WITH_RESIDUAL_BLOCKERS
+  phase_14: COMPLETE_CHANGES_REQUIRED_14A_NOT_RUN_14B_NOT_STARTED_BLOCKED_NOT_READY
   semantics: DOCUMENT_REVIEW_ONLY_NOT_IMPLEMENTATION_OR_EVIDENCE_ACCEPTANCE
 historical_authoring_snapshot:
   status: HISTORICAL_PROVENANCE_ONLY_NOT_LIVE_STATUS
@@ -139,6 +150,27 @@ Phase 14의 AWS deployment, `Q-BENCH-02`, signing trust, production authority,
 cutover를 승인하거나 과거 review 결과를 소급 변경하지 않는다. 현재 구현 성공은
 Master Plan §11.3으로 판정하고 production System DoD는 별도 gate로 유지한다.
 
+### 0.1 ALNS-first 14A/14B gate 분리
+
+Phase 14는 같은 문서 안에서 서로 다른 권위를 가진 두 substage로 실행한다.
+
+| Substage | 목적 | 필수 predecessor | 명시적 비선행조건 |
+|---|---|---|---|
+| `14A ALNS benchmark qualification` | ALNS-only correctness·quality·performance·reproducibility evidence와 independent acceptance receipt | Phase 06/07/08 accepted, approved corpus/protocol/oracle/criteria | Phase 09~13, MIP/backend/license/native, AWS deployment, production authority |
+| `14B official cutover` | Approved official manifest, provider shadow/cutover/rollback | Phase 11, accepted 14A, production gates; hybrid manifest이면 accepted Phase 13 추가 | Phase 13은 ALNS-only manifest에 불필요 |
+
+`14A → ALNS_BENCHMARK_ACCEPTANCE_RECEIPT → Phase 13 optional`은
+`Phase 13 → 14B official hybrid`와 다른 edge다. Phase 13 산출물이 Phase 14A
+acceptance를 만들거나 소급 변경할 수 없으므로 dependency cycle이 없다.
+
+Phase 14A acceptance는 dataset/fixture fingerprint, seed/repeat policy,
+hardware/runtime fingerprint, independent correctness oracle와 sensitivity,
+candidate/result verifier 결과, objective/quality comparison, timeout/resource budget,
+variance/reproducibility, immutable evidence manifest, independent review report와
+post-review acceptance receipt를 모두 요구한다. Corpus, threshold, repeat 수,
+budget, 허용 variance와 provider/backend 수치는 승인 전
+`OPEN — EXPERIMENT_REQUIRED` 또는 `GATED`다.
+
 ## 1. 문서 지위, 권위와 source 해석
 
 이 문서는 Phase 14를 실행하기 위한 상세 계약이다. 문서는 검토할 수 있는 상태지만
@@ -152,7 +184,9 @@ AWS 배포, production authority 또는 traffic cutover가 이루어졌다는 �
 | Source authority | `USER_LOCKED_FOR_THIS_DOCUMENT_SET` | 사용자 선언과 정본 순서를 적용한다. |
 | 문서 | `REVIEWED_WITH_CORRECTIONS` | 독립 리뷰의 안전·명백한 교정을 반영했다. Phase acceptance가 아니다. |
 | 구현 Phase | `GATED` | 필수 predecessor와 authority receipt가 없다. |
-| Calibration | `NOT_RUN` | 측정값, 통계 결과 또는 승인값을 주장하지 않는다. |
+| Phase 14A ALNS benchmark | `NOT_RUN / RECEIPT_NOT_PRODUCED` | 측정값, 통계 결과 또는 ALNS quality/performance acceptance를 주장하지 않는다. |
+| Phase 14B official/cutover | `NOT_STARTED` | 14A acceptance, provider와 production gate가 닫혀 있다. |
+| Calibration | `NOT_RUN` | 탐색적/공식 측정값 또는 승인값을 주장하지 않는다. |
 | Official manifest/run | `NOT_CREATED` / `NOT_RUN` | test manifest나 legacy 기본값을 공식값으로 승격하지 않는다. |
 | Provider deployment | `NOT_DEPLOYED` | GCP 자료와 ignored/generated artifact는 AWS 배포 증거가 아니다. |
 | Production authority | `NOT_GRANTED` | `Q-INFRA-01 RESOLVED`는 production 승인과 다르다. |
@@ -189,7 +223,7 @@ accepted review와 immutable evidence receipt가 있어야만 소비한다.
 | [Actual Phase 07](phase-07-independent-verification-final-result.md) | §15.3 only | Publishable result + official manifest, test-only/different fingerprint 비교 금지 |
 | [Actual Phase 11](phase-11-aws-reference-distribution.md) | §18.3 only | Phase 11 evidence/deployment/rollback은 entry input이지 production authority가 아님 |
 | [Actual Phase 12](phase-12-provider-substitution.md) | §18.4 only | Provider evidence는 separate adoption/cutover input일 뿐 production default/authority가 아님 |
-| [Actual Phase 13 v1.2](phase-13-optional-hybrid-route-selection.md) | §6.5, §14.3~§14.4 only | Scheduler-owned gate-closed skip와 accepted/approved hybrid handoff 두 branch; signed applicability envelope + action-time verification schema, Phase 14→13 reverse entry edge 금지 |
+| [Actual Phase 13 v1.5](phase-13-optional-hybrid-route-selection.md) | §1.3, §4, §6.5, §14.3~§14.4 only | Phase 14A acceptance predecessor, scheduler-owned gate-closed skip와 accepted/approved hybrid handoff 두 branch; Phase 14B→13 reverse entry edge 금지 |
 | [Root README](../../../README.md)와 inventory | 기술·배포·placeholder | 현재 Java/GCP placeholder와 future target/evidence 분리 |
 
 인접 Phase는 위 stable section을 직접 읽어 의미와 accepted artifact/evidence identity를
@@ -299,14 +333,15 @@ acceptance 또는 scheduler status에 사용하지 않는다.
 11. Candidate verifier와 result verifier 둘 다 `PASS`가 아니면 publication/benchmark하지 않는다.
 12. Seed를 실행 뒤 선별하거나 실패 seed를 제외하지 않는다.
 13. Elapsed/completion order는 quality, seed 또는 fingerprint의 hidden input이 아니다.
-14. Phase 13 gate가 닫히면 `ALNS_ONLY`가 정상 branch이며 hybrid code를 호출하지 않는다.
-15. Official hybrid이면 Phase 13 accepted evidence와 explicit activation approval을 모두 요구한다.
-16. Provider deployment evidence는 production authority가 아니며 그 역도 성립하지 않는다.
-17. 모든 traffic/pointer transition은 exact expected version과 approval scope를 CAS로 확인한다.
-18. Artifact는 create-once immutable이고 cutover/rollback은 pointer/alias/traffic만 바꾼다.
-19. Stop condition의 evidence가 없거나 telemetry/audit가 불완전하면 fail closed/hold한다.
-20. Rollback target과 권한이 검증되기 전 canary/activation을 시작하지 않는다.
-21. Irreversible delete/revoke/destructive transform은 이 Phase의 activation authority에 포함되지 않는다.
+14. Phase 14A는 Phase 13, MIP/backend/license/native와 production authority 없이 실행한다.
+15. Phase 13 gate가 닫히면 `ALNS_ONLY`가 정상 14B branch이며 hybrid code를 호출하지 않는다.
+16. Official hybrid이면 Phase 14A acceptance 뒤 Phase 13 accepted evidence와 explicit activation approval을 모두 요구한다.
+17. Provider deployment evidence는 production authority가 아니며 그 역도 성립하지 않는다.
+18. 모든 traffic/pointer transition은 exact expected version과 approval scope를 CAS로 확인한다.
+19. Artifact는 create-once immutable이고 cutover/rollback은 pointer/alias/traffic만 바꾼다.
+20. Stop condition의 evidence가 없거나 telemetry/audit가 불완전하면 fail closed/hold한다.
+21. Rollback target과 권한이 검증되기 전 canary/activation을 시작하지 않는다.
+22. Irreversible delete/revoke/destructive transform은 이 Phase의 activation authority에 포함되지 않는다.
 
 ## 3. Entry gate와 exact evidence verification
 
@@ -318,19 +353,24 @@ Phase 14는 하나의 큰 승인으로 모든 단계를 여는 phase가 아니�
 
 | Gate | 현재 | 별도 authority | 필요한 signed/immutable evidence | 닫는 범위 |
 |---|---|---|---|---|
-| `G14-PREDECESSOR` | `CLOSED` | Scheduler + independent reviewers | Phase 00~11 accepted review/evidence index, build/source identities, rollback points | Target implementation, official run, cutover |
-| `G14-P13-APPLICABILITY` | `CLOSED` | Scheduler + Product + Algorithm + Architecture | Actual Phase 13 v1.2의 `Phase13ApplicabilityReceipt.Skip` 또는 `Phase13ApplicabilityReceipt.Activated`, exact receipt/subject/scope digest, signed applicability envelope, action-time trust/validity/revocation/freshness verification receipt | Manifest algorithm branch |
-| `G14-INTEGER-FIXTURE` | `CLOSED` | Input/Matrix + Benchmark | Integer fixture/snapshot bytes digest, schema/version, all-cell validation, provided/generated provenance, canonical generated-`U`/speed-source validation, source/migration approval, expected coverage | Official calibration/result |
+| `G14A-PREDECESSOR` | `CLOSED` | Scheduler + independent reviewers | Phase 00~08 accepted review/evidence index, build/source identities와 rollback points | ALNS benchmark execution/acceptance |
+| `G14A-BENCHMARK-PROTOCOL` | `OPEN — EXPERIMENT_REQUIRED` | Benchmark/Quality + independent reviewer | Approved corpus/fixture digests, seed/repeat, hardware/runtime, oracle, feasibility/quality/resource/variance/replay criteria와 complete-run policy | `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`, Phase 13 entry |
+| `G14B-PREDECESSOR` | `CLOSED` | Scheduler + independent reviewers | Phase 00~11 accepted evidence와 Phase 14A acceptance receipt | Official manifest/run/cutover |
+| `G14-P13-APPLICABILITY` | `CLOSED` | Scheduler + Product + Algorithm + Architecture | 14B가 소비하는 actual Phase 13의 `Phase13ApplicabilityReceipt.Skip` 또는 `Phase13ApplicabilityReceipt.Activated`, exact receipt/subject/scope digest, signed applicability envelope, action-time trust/validity/revocation/freshness verification receipt | 14B manifest algorithm branch; 14A에는 적용하지 않음 |
+| `G14-INTEGER-FIXTURE` | `CLOSED` | Input/Matrix + Benchmark | Integer fixture/snapshot bytes digest, schema/version, all-cell validation, provided/generated provenance, canonical generated-`U`/speed-source validation, source/migration approval, expected coverage | 14A benchmark와 official result |
 | `G14-GREAT-CIRCLE` | `CLOSED` | Input/Matrix + Domain/Architecture | Function/policy ID/version, earth model/constants, coordinate rules, precision, reference vectors, signature | Missing-`D` implementation/production readiness |
 | `G14-ALNS-PARAMETERS` | `CLOSED` | Algorithm + Quality | Operator/repair/acceptance/adaptive/state-strategy config, units/ranges/version, measured rationale, signature | Official algorithm config |
-| `G14-QBENCH-02` | `OPEN — EXPERIMENT_REQUIRED` | Benchmark/Quality | Approved `screenMaxSteps`, worker count, `phase2MaxSteps`, `maxRounds`, watchdog/resource policy, seed derivation; calibration result refs | Official execution manifest/baseline |
+| `G14-QBENCH-02` | `OPEN — EXPERIMENT_REQUIRED` | Benchmark/Quality | Approved `screenMaxSteps`, worker count, `phase2MaxSteps`, `maxRounds`, watchdog/resource policy, seed derivation; calibration result refs | 14B official execution manifest/baseline; 14A는 승인된 experiment-only envelope 사용 가능 |
 | `G14-SIGNING-TRUST` | `CLOSED` | Security + Release | Signature profile/trust roots/revocation/time/freshness policy, canonical encoding, verifier build digest, negative-test evidence | 모든 signed gate consumption |
 | `G14-PROVIDER-DEPLOYMENT` | `CLOSED` | Platform + Security + Ops + FinOps | Actual environment deployment manifest, IaC/change-set digest, artifact/image revision, IAM/KMS/network/alarms/quota/retention/cost/rollback evidence | Shadow/canary/cutover |
-| `G14-CALIBRATION-ACCEPTANCE` | `CLOSED` | Benchmark/Quality + independent verifier | Frozen plan/result, declared analysis method, all run refs, limitations, approved thresholds and decision | Official values/manifest seal |
+| `G14-CALIBRATION-ACCEPTANCE` | `CLOSED` | Benchmark/Quality + independent verifier | Frozen ALNS-only plan/result, declared analysis method, all run refs, limitations, approved thresholds와 decision | Phase 14A acceptance receipt와 official values/manifest seal |
 | `G14-PRODUCTION-AUTHORITY` | `NOT_GRANTED` | Product + Release + Security + Ops | Environment/action/manifest/deployment/pointer scope, traffic bound, validity window, approvers, rollback authority, signatures | Canary/activation only |
 
-Phase 13 applicability의 schema/signature field 부재는
-`RESOLVED_BY_PHASE13_V1_2`다. Phase 13 v1.2 §6.5/§14.3~§14.4가 `Skip`과
+Phase 13 applicability는 Phase 14B에서만 소비한다. Phase 14A는 Phase 13
+`Skip`/`Activated`, signing trust, backend 또는 hybrid artifact를 entry로 요구하거나
+생성하지 않는다. Phase 13 applicability의 schema/signature field 부재는
+`RESOLVED_BY_PHASE13_V1_2`다. Phase 13 v1.2에서 추가되어 v1.5
+§6.5/§14.3~§14.4에 보존된 계약이 `Skip`과
 `Activated` 모두에 signed envelope와 action-time verification reference를 제공한다.
 이 상태는 **contract field gap만** 해소한다. Signature algorithm, trust root/store,
 revocation/time/freshness policy 값은 계속 `OPEN/GATED_NOT_APPROVED`이고 actual signed
@@ -377,6 +417,10 @@ pin하지 않으며, production action 직전 current policy에 따라 다시 �
 아래 key는 future accepted evidence의 exact 최소 index이며 현재 evidence가 아니다.
 모든 receipt는 evidence digest, accepted review ref, source/build fingerprint, known
 limitation과 rollback point를 함께 검증한다.
+
+Phase 14A는 아래 표의 Phase 00~08만 요구한다. Phase 09~12는 Phase 14B의
+provider/official/cutover predecessor이며, 그 부재로 Phase 14A ALNS benchmark를
+막거나 Phase 13을 앞당기지 않는다.
 
 | Phase | 필수 accepted evidence | Phase 14가 확인하는 핵심 |
 |---:|---|---|
@@ -541,6 +585,7 @@ core / solver / verification
 | `OfficialExecutionValueAuthority` | Benchmark/Quality | `Q-BENCH-02` values + calibration result digest | Experiment-only → signed approved |
 | `CalibrationPlan` | Benchmark/Quality | Corpus/build/config/seed/environment/analysis digest | Draft → preregistered/frozen → executable |
 | `CalibrationResult` | Calibration runner + independent verifier | Plan + declared run set + raw/result/analysis digests | Running → complete/incomplete → independently reviewed |
+| `AlnsBenchmarkAcceptanceReceipt` | Benchmark/Quality acceptance authority + independent reviewer | ALNS-only plan/result/review digests와 approved criteria verdict | Created only after complete 14A evidence/review; immutable Phase 13 prerequisite |
 | `OfficialExecutionManifest` | Official manifest authority | All semantic/algorithm/execution/build/provider authority digests | Draft → sealed immutable template → controlled run/replay receipts |
 | `OfficialBenchmarkCard` | Benchmark + verifier | Manifest/result/comparator/champion/replay digest | Candidate → verified → approved baseline/challenger |
 | `ProviderDeploymentEvidence` | Platform/Release/Security/Ops | Environment/revision/IaC/resource/security/rollback digest | Candidate deployment → verified immutable receipt |
@@ -603,6 +648,7 @@ Phase13ApplicabilityReceipt
   or
   Activated
     Phase13ActivatedHandoff
+    ALNS_BENCHMARK_ACCEPTANCE_RECEIPT ref/digest
     signedApplicabilityEnvelope: SignedApplicabilityEnvelopeRef
     actionTimeVerification: ApplicabilityActionTimeVerificationRef
       trust/validity/revocation/freshness verification receipt
@@ -623,7 +669,9 @@ Phase13ApplicabilityReceipt
 signed envelope와 current action-time `PASS` receipt 없이는 어느 branch도 소비하지
 않는다. `G14-SIGNING-TRUST`는 Phase 14의 downstream consumption gate이며 Phase 13
 implementation entry나 Phase 13 evidence prerequisite로 역전하지 않는다.
-`Phase 13 → Phase 14 → Phase 13` dependency cycle은 금지한다.
+허용되는 방향은 `Phase 14A acceptance → Phase 13 optional → Phase 14B hybrid
+cutover`다. Phase 14B가 Phase 13 entry evidence를 생산하거나 Phase 13 acceptance가
+Phase 14A receipt를 소급 변경하는 reverse edge는 금지한다.
 
 Phase 14는 Phase 13을 강제 실행하지 않는다. Hybrid가 더 좋아 보인다는 calibration
 결과만으로 `C-17`을 닫거나 production default를 바꾸지 않는다.
@@ -637,6 +685,9 @@ explicit experiment values
 → complete raw measurements
 → independent recomputation/analysis
 → CalibrationResult
+→ independent ALNS benchmark review
+→ ALNS_BENCHMARK_ACCEPTANCE_RECEIPT                    # Phase 14A end
+→ [optional Phase 13 gated experiment and acceptance]
 → signed ALNS parameter approval
 → signed Q-BENCH-02 execution-value approval
 → sealed OfficialExecutionManifest
@@ -648,6 +699,11 @@ explicit experiment values
 → proposed canary/hold/activation
 → ProductionActivationRecord
 ```
+
+Phase 14A는 `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`에서 끝날 수 있으며 Phase 13,
+official manifest 또는 provider cutover를 자동 시작하지 않는다. Phase 14B는 이
+receipt를 입력으로 받아 ALNS-only 또는 별도 accepted hybrid branch를 명시적으로
+선택한다.
 
 각 화살표는 새 immutable artifact를 만들고 이전 artifact를 덮어쓰지 않는다.
 `CalibrationResult`가 승인값을 스스로 만들지 않으며, 승인 record가 raw measurement를
@@ -782,6 +838,47 @@ Independent reviewer는 plan preregistration timestamp가 첫 run보다 이른�
 digest가 고정됐는지, 모든 declared run이 포함됐는지와 producer/independent result가
 같은지 확인한다.
 
+### 6.4A Phase 14A ALNS benchmark acceptance receipt
+
+Phase 14A evidence graph는 다음 최소 closure를 가져야 한다.
+
+```text
+AlnsBenchmarkAcceptanceReceipt
+  receiptSchemaVersion
+  alnsOnly = true
+  corpusManifestRef/digest
+    dataset/fixture IDs, versions, bytes digests, provenance, split/applicability
+  runMatrixRef/digest
+    seed derivation/version, actual seeds, repeat policy, declared/completed/missing runs
+  hardwareRuntimeManifestRef/digest
+    CPU/architecture/memory/OS/JVM/build/toolchain/thread/process identities
+  correctnessOracleRef/digest
+    independence, hand/exhaustive/reference authority, sensitivity/defect-detection report
+  candidateAndResultVerifierRefs/digests
+  objectiveQualityAnalysisRef/digest
+    comparator vector, approved baseline applicability, compare-not-allowed cases
+  timeoutResourceAnalysisRef/digest
+    completed-step/work, timeout/watchdog, CPU/memory/storage and failure separation
+  varianceReproducibilityAnalysisRef/digest
+    per-run distribution, variance, replay, reproducibility class and limitations
+  preReviewEvidenceManifestDigest
+  independentReviewReportDigest
+  postReviewAcceptanceAuthority/timestamp
+  approvedCriteriaVersion
+  verdict
+  restartConditions
+  receiptContentDigest
+```
+
+`verdict = ACCEPTED`는 declared run closure, both-verifier hard gate, approved quality/
+performance/reproducibility criteria와 두 선행 digest가 모두 유효할 때만 가능하다.
+Missing/failed/timeout run을 제외하거나 서로 다른 manifest의 최선 결과를 합치지 않는다.
+Corpus, threshold, seed/repeat 수, resource budget와 허용 variance가 미승인이면
+`BLOCKED_OPEN_VALUE`이며 receipt를 발행하지 않는다.
+
+이 receipt는 Phase 13의 필요조건일 뿐 `C-17`, OR-Tools/backend/license/native,
+security/operations/cost 또는 production authority를 부여하지 않는다.
+
 ### 6.5 Reproducibility and replay
 
 Strong replay envelope:
@@ -802,7 +899,9 @@ problem + integer travel + Great Circle policy
 payload fingerprint가 같아야 한다. Timeboxed or multi-thread hybrid는 source가 허용한
 `TIMEBOXED_HYBRID` class로 별도 distribution evidence를 만들며 strong equality를
 거짓 주장하지 않는다. ALNS-only와 hybrid envelope는 같은 comparison card에서
-quality regression으로 직접 비교하지 않는다.
+fingerprint 차이를 숨긴 채 직접 비교하지 않는다. Phase 13 value A/B는 accepted
+ALNS-only receipt를 baseline으로 고정하고, 동일 corpus/case/seed applicability와
+명시된 algorithm/backend 차이를 preregister한 별도 shadow card에서만 비교한다.
 
 ### 6.6 Security, cost and observability evidence
 
@@ -1149,7 +1248,7 @@ public sealed interface Phase13ApplicabilityReceipt
 ```
 
 위 `SignedApplicabilityEnvelopeRef`와 `ApplicabilityActionTimeVerificationRef`는
-Phase 13 v1.2 scheduler/control-plane contract를 Phase 14가 소비하는 reference다.
+Phase 13 v1.5 scheduler/control-plane contract를 Phase 14B가 소비하는 reference다.
 Phase 14가 이 type을 Phase 13 implementation module에 제공하거나 Phase 13 entry가
 `G14-SIGNING-TRUST`에 의존하게 만들지 않는다.
 
@@ -1412,9 +1511,9 @@ reactor/CLI가 확정된 뒤 exact path로 review한다.
 
 | 항목 | 계약 |
 |---|---|
-| Prerequisite/authority | 문서 review 가능; target 구현은 `G14-PREDECESSOR`와 scheduler task 필요 |
-| Targets | Phase 00~12 receipt, cited source/contract impact, owner matrix, last safe baseline |
-| Tasks | Evidence graph 수집, signature/digest/review 검증, Phase 12 applicability, legacy evidence exclusion, semantic-impact report |
+| Prerequisite/authority | 문서 review 가능; Phase 14A 실행은 `G14A-PREDECESSOR`와 scheduler task 필요 |
+| Targets | Phase 00~08 receipt, cited source/contract impact, owner matrix, last safe ALNS-only baseline |
+| Tasks | ALNS predecessor evidence graph 수집, digest/review 검증, legacy evidence exclusion, semantic-impact report. Phase 09~13/production gate는 14A entry에서 제외 |
 | Verification | §12 fail-closed protocol의 `Phase14PredecessorReceiptTest`; stable cited section semantic review; accepted evidence graph closure checker. 인접 digest는 acceptance가 아님 |
 | Expected | Missing/stale/mixed evidence 0, legacy 11-phase reuse 0, gate별 상태/owner/restart 고정 |
 | Failure/rollback | 구현 시작 금지; 현재 accepted predecessor와 문서/fixture 설계가 last safe |
@@ -1424,19 +1523,19 @@ reactor/CLI가 확정된 뒤 exact path로 review한다.
 
 | 항목 | 계약 |
 |---|---|
-| Prerequisite/authority | WP14-0; Security/Release signing policy review |
+| Prerequisite/authority | WP14-0 뒤 Phase 14B를 준비할 때만; Security/Release signing policy review. Phase 14A의 선행조건이 아님 |
 | Targets | `SignedEvidenceEnvelope`, canonical encoding, trust/revocation verifier, test-only negative signer |
 | Tasks | Signature profile/trust-root proposal, role/scope/expiry/revocation, digest-before-deserialize, replay/forgery tests |
 | Verification | §12 fail-closed protocol의 `SignedEvidenceVerifierContractTest`; untrusted/expired/revoked/test signer/corrupt payload cases |
 | Expected | `G14-SIGNING-TRUST` approved; official path accepts only trusted scoped immutable envelope |
 | Failure/rollback | Signature를 bypass하지 않고 unsigned schema/test 설계까지만 유지 |
-| Handoff | Approved evidence trust policy와 verifier build digest |
+| Handoff | Phase 14B가 소비할 approved evidence trust policy와 verifier build digest |
 
 ### WP14-2 — Travel and calibration preregistration
 
 | 항목 | 계약 |
 |---|---|
-| Prerequisite/authority | WP14-1; Input/Matrix, Great Circle, Benchmark/Quality owners |
+| Prerequisite/authority | WP14-0; Input/Matrix, Great Circle, Benchmark/Quality owners. WP14-1/Phase 13/provider authority 불필요 |
 | Targets | Integer fixture authority, Great Circle authority, corpus, candidate configs, seed/run matrix, acceptance policy |
 | Tasks | Decimal rejection, complete cell audit, function/reference-vector verification, corpus/config/environment freeze, plan preregistration |
 | Verification | §12 fail-closed protocol의 `IntegerTravelFixtureAuthorityTest`, `GreatCirclePolicyAuthorityTest`, `CalibrationPlanFreezeTest` |
@@ -1456,17 +1555,17 @@ reactor/CLI가 확정된 뒤 exact path로 review한다.
 | Failure/rollback | Candidate set을 `INCOMPLETE`/`INVALID_EVIDENCE`로 seal; 일부 성공값 승인 금지 |
 | Handoff | `CalibrationResult`, raw evidence index, limitation와 approval packet |
 
-### WP14-4 — Separate parameter/value approvals and official manifest seal
+### WP14-4 — ALNS benchmark acceptance, separate approvals and official manifest seal
 
 | 항목 | 계약 |
 |---|---|
-| Prerequisite/authority | WP14-3 complete result; Algorithm/Quality/Benchmark independent approvals |
-| Targets | `OfficialAlnsParameterAuthority`, `OfficialExecutionValueAuthority`, actual Phase 13 v1.2-compatible `Phase13ApplicabilityReceipt`, official manifest |
-| Tasks | Acceptance predicate 적용, coherent candidate 선택, separate signatures, Phase 13 branch/envelope/action-time verification, manifest canonical seal |
-| Verification | §12 fail-closed protocol의 `OfficialManifestFactoryTest`, `OfficialParameterSeparationTest`, `Phase13ApplicabilityTest`, `Phase13ApplicabilityDependencyTest` |
-| Expected | `G14-ALNS-PARAMETERS`, `G14-QBENCH-02`, `G14-CALIBRATION-ACCEPTANCE` 각각 approved; one immutable manifest |
+| Prerequisite/authority | WP14-3 complete ALNS-only result; Algorithm/Quality/Benchmark independent approvals |
+| Targets | 먼저 `AlnsBenchmarkAcceptanceReceipt`; 그 뒤 14B에서만 `OfficialAlnsParameterAuthority`, `OfficialExecutionValueAuthority`, actual Phase 13 v1.5-compatible applicability와 official manifest |
+| Tasks | Complete evidence에 acceptance predicate 적용, pre-review manifest → independent review → post-review receipt를 봉인한다. 14A receipt 발행 뒤 별도 14B gate에서 coherent candidate/separate signatures, Phase 13 branch/envelope/action-time verification과 manifest seal을 수행한다 |
+| Verification | `AlnsBenchmarkAcceptanceReceiptTest`, complete-run/oracle/verifier/quality/resource/variance closure tests; 14B에서 §12의 `OfficialManifestFactoryTest`, `OfficialParameterSeparationTest`, `Phase13ApplicabilityTest`, `Phase13ApplicabilityDependencyTest` |
+| Expected | 먼저 `G14A-BENCHMARK-PROTOCOL`/`G14-CALIBRATION-ACCEPTANCE` approved와 immutable ALNS acceptance receipt. 14B gate 충족 뒤에만 `G14-ALNS-PARAMETERS`, `G14-QBENCH-02`와 one immutable official manifest |
 | Failure/rollback | `EXPERIMENT_ONLY` result 유지; 값을 복사하거나 official default 생성 금지 |
-| Handoff | Sealed `OfficialExecutionManifest`와 authority graph |
+| Handoff | Phase 13에는 ALNS benchmark acceptance receipt만 전달; Phase 14B에는 sealed official manifest와 authority graph 전달 |
 
 ### WP14-5 — Official run, exact benchmark and replay
 
@@ -1598,7 +1697,7 @@ Fixture/builder/oracle가 official authority artifact나 production signature를
 | Unit `Phase13ApplicabilityTest` | `doesNotRequireOrExecutePhase13WhenGateIsClosed()` | ALNS-only record | Hybrid ref/call 0 |
 | Unit `Phase13ApplicabilityTest` | `requiresAcceptedPhase13EvidenceForHybridManifest()` | Hybrid draft | Missing evidence fail |
 | Unit `Phase13ApplicabilityTest` | `requiresSignedEnvelopeAndFreshActionVerificationForSkipAndActivated()` | Unsigned/expired/revoked/stale/wrong-action variants | Actual current `PASS` receipt 외 모두 fail |
-| Architecture `Phase13ApplicabilityDependencyTest` | `doesNotCreatePhase14ToPhase13EntryDependency()` | Module/receipt dependency graph | Phase 14 consumption edge만 존재; reverse entry edge 0 |
+| Architecture `Phase13ApplicabilityDependencyTest` | `allows14ATo13To14BButRejects14BTo13EntryAnd13To14AReceiptMutation()` | Module/receipt dependency graph | 허용 DAG만 존재; reverse/mutation edge 0 |
 | Unit `OfficialManifestFactoryTest` | `accountsForEveryConstructionCombinationAndRejectsSilentUnavailableFallback()` | 4×2 availability table | Available all executed; unavailable authority missing이면 fail |
 | Unit `OfficialBenchmarkComparatorTest` | `comparesFourComponentsLexicographically()` | Hand cases | Exact expected winner/tie |
 | Unit `OfficialBenchmarkComparatorTest` | `doesNotUseStructuralTieBreakAsQualityDimension()` | Equal vector | Quality tie |
@@ -1754,6 +1853,22 @@ Pass criteria:
 ### 13.1 Evidence bundle
 
 ```text
+E-P14-ALNS-BENCHMARK/
+  corpus-and-fixture-manifest
+  seed-repeat-and-complete-run-index
+  hardware-runtime-build-toolchain-manifest
+  correctness-oracle-independence-and-sensitivity
+  candidate-and-result-verifier-reports
+  objective-quality-comparison
+  timeout-resource-and-failure-accounting
+  variance-reproducibility-and-replay
+
+E-P14-ALNS-BENCHMARK-ACCEPTANCE/
+  pre-review-evidence-manifest
+  independent-review-report
+  post-review-acceptance-receipt
+  approved-criteria-and-restart-conditions
+
 E-P14-CALIBRATION/
   source-and-predecessor-receipt
   signing-trust-policy-and-verifier
@@ -1810,14 +1925,35 @@ digests, signature verification, reviewer/verdict/timestamp, known limitation, r
 가진다. Restricted provider locator는 opaque ref로 두고 raw credential/account data를
 복사하지 않는다.
 
-### 13.2 Phase 14 Definition of Done
+### 13.2 Phase 14A Definition of Done
 
-Phase 14는 다음 AND 조건을 모두 만족할 때만 `ACCEPTED`다.
+Phase 14A는 다음 AND 조건을 모두 만족할 때만
+`ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`를 발행한다.
+
+1. Phase 00~08 accepted evidence와 exact ALNS-only build/run identity가 확인된다.
+2. Corpus/fixture bytes와 provenance, seed/repeat/run matrix, hardware/runtime가
+   실행 전에 고정된다.
+3. Correctness oracle가 producer/search/verifier와 독립이고 sensitivity evidence가 있다.
+4. 모든 declared run이 success/failure/timeout/resource 상태를 포함해 accounting된다.
+5. Candidate/result verifier hard gate, objective/quality comparison,
+   timeout/resource budget와 variance/replay analysis가 승인된 criteria를 통과한다.
+6. Immutable pre-review manifest → independent review report → post-review acceptance
+   receipt의 단방향 DAG가 완전하다.
+7. Threshold, repeat, corpus, budget 또는 variance open value가 남아 있지 않다.
+8. Phase 13/MIP/backend/production evidence를 correctness나 acceptance 선행조건으로
+   사용하지 않는다.
+
+Phase 14A acceptance는 Phase 14B, Phase 13 또는 production을 자동 시작하지 않는다.
+현재 evidence는 `NOT_PRODUCED`이고 status는 `NOT_RUN`이다.
+
+### 13.3 Phase 14B Definition of Done
+
+Phase 14B production/cutover는 다음 AND 조건을 모두 만족할 때만 `ACCEPTED`다.
 
 1. Canonical detailed/review 문서가 approved되고 cited source/contract semantic impact가
    review됐으며 인접 digest를 acceptance로 쓰지 않는다.
-2. Applicable Phase 00~12 accepted evidence graph가 complete하다.
-3. Phase 13 applicability가 signed되고 current action-time trust/validity/revocation/
+2. Applicable Phase 00~12 accepted evidence graph와 Phase 14A acceptance receipt가 complete하다.
+3. Phase 13 applicability가 14B action에 대해 signed되고 current action-time trust/validity/revocation/
    freshness verification을 통과하며 forced execution이나 reverse entry dependency가 없다.
 4. Integer fixture와 Great Circle policy가 separate signed authority를 가진다.
 5. ALNS parameters와 `Q-BENCH-02` values가 separate measured approval을 가진다.
@@ -1845,14 +1981,16 @@ Scheduler는 evidence에 따라 `ROLLED_BACK`, `FAILED`, `GATED` 또는 `ACCEPTE
 
 | Blocker/gate | Owner | Last safe state | Restart condition |
 |---|---|---|---|
-| Phase 00~11 implementation/evidence unaccepted; document review는 live 15/15 완료 | Phase owners + scheduler/reviewers | Current document verdict와 offline test 설계; official action 0 | Residual contract 해소와 모든 applicable implementation/evidence/review receipt accepted |
+| Phase 00~08 implementation/evidence unaccepted | Phase owners + scheduler/reviewers | Current document verdict와 offline test 설계; Phase 14A run 0 | Residual contract 해소와 Phase 00~08 implementation/evidence/review receipt accepted |
+| ALNS benchmark corpus/protocol/criteria/receipt 없음 | Benchmark/Quality + independent reviewer | Explicit exploratory/test-only plan; no acceptance claim | Approved dataset/fixture, seed/repeat, hardware/runtime, oracle, both-verifier, quality/resource/variance/replay criteria와 immutable review/acceptance receipt |
+| Phase 09~11 implementation/evidence unaccepted | Phase owners + scheduler/reviewers | Phase 14A acceptance 가능; 14B official action 0 | Applicable provider/coordinator/AWS implementation/evidence/review receipt accepted |
 | Phase 12 applicability unknown | Product/Platform | AWS reference assumption도 production에는 사용 안 함 | Signed provider/applicability decision; substituted provider면 accepted Phase 12 |
-| Phase 13 applicability actual authority/receipt 없음; schema/signature field 부재는 `RESOLVED_BY_PHASE13_V1_2` | Scheduler + Product/Algorithm/Architecture + Security/Release | Phase 13 v1.2 proposed envelope/action-time verification schema; `ALNS_ONLY_GATE_CLOSED`, pool/model/outcome/hybrid refs와 Phase 13 실행 0 | Closed면 approved-policy actual signed `Skip` + current action-time `PASS`; hybrid면 동등한 signed `Activated` + accepted Phase 13 handoff. Phase 14→13 entry 역의존 금지 |
+| Phase 13 applicability actual authority/receipt 없음; schema/signature field 부재는 `RESOLVED_BY_PHASE13_V1_2` | Scheduler + Product/Algorithm/Architecture + Security/Release | Phase 14A에는 영향 없음; 14B는 `ALNS_ONLY_GATE_CLOSED`, pool/model/outcome/hybrid refs와 Phase 13 실행 0 | 14B closed branch는 approved-policy actual signed `Skip` + current action-time `PASS`; hybrid는 14A acceptance 뒤 동등한 signed `Activated` + accepted Phase 13 handoff |
 | Official integer fixture authority 불완전 | Input/Matrix + Benchmark | Plan-final local execution에는 approved FLOOR fixture 사용 가능; production official action은 hold | FLOOR artifact의 official scope 승인과 나머지 G14 authority evidence |
 | Great Circle 상세 미승인 | Input/Matrix + Domain/Architecture | Missing-`D` official/production path blocked | Function/version/earth model/constants/precision/vectors approval |
 | Official ALNS parameters 없음 | Algorithm + Quality | Explicit experiment config only | Complete measured parameter envelope approval |
 | `Q-BENCH-02` 공식 수치 없음 | Benchmark/Quality | Logical coordinator/test-only manifest | Frozen calibration, measured result, separate explicit approval |
-| Evidence signing/trust 미승인 | Security/Release | Phase 13 v1.2/Phase 14 proposed schema와 negative tests only; algorithm/trust-root/policy 값과 actual receipt 0 | Signature algorithm/profile, trust roots/store, revocation/time/freshness/canonicalization/verifier policy 승인 + actual evidence |
+| Evidence signing/trust 미승인 | Security/Release | Phase 13 v1.5/Phase 14B proposed schema와 negative tests only; Phase 14A acceptance DAG에는 production signing을 요구하지 않음 | Signature algorithm/profile, trust roots/store, revocation/time/freshness/canonicalization/verifier policy 승인 + actual 14B evidence |
 | Calibration threshold/corpus/sample 미승인 | Benchmark/Quality | Exploratory experiment, no official selection | Preregistered plan/acceptance policy and independent review |
 | Actual provider deployment evidence 없음 | Platform/Security/Ops/FinOps | Accepted local or non-prod reference | Actual deployment/IaC/parity/security/ops/cost/rollback evidence |
 | Production authority 없음 | Product/Release/Security/Ops | Shadow hold, production pointer unchanged | Exact canary/activation scope, validity, rollback authority signatures |
@@ -1933,6 +2071,7 @@ ImplementationEvidenceIndex
   phase13ApplicabilityRef
   integerTravelAuthorityRef
   greatCirclePolicyAuthorityRef
+  alnsBenchmarkPlanResultReviewAcceptanceRefs
   calibrationPlanResultAcceptanceRefs
   alnsParameterAuthorityRef
   qBench02ExecutionValueAuthorityRef
@@ -2006,13 +2145,14 @@ Production Operations가 받는 것:
 
 | Requirement | Source | Work/test | Planned evidence |
 |---|---|---|---|
+| ALNS-first benchmark acceptance | 사용자 `ALNS_FIRST_BENCHMARK_BEFORE_OPTIONAL_MIP`, Plan §1.2/Phase 14A | WP14-2~4, complete-run/oracle/verifier/quality/resource/variance/review tests | `E-P14-ALNS-BENCHMARK`, `E-P14-ALNS-BENCHMARK-ACCEPTANCE` |
 | Official integer travel | `Q-MTX-01~03`, Master §8, Phase 02 §13.3 | WP14-2, integer/provenance/generated-`U` authority tests | `E-P14-CALIBRATION.travel` |
 | Approved Great Circle | Master §8, Domain §6, Phase 02 blocker | WP14-2, reference-vector oracle | `E-P14-CALIBRATION.great-circle` |
 | `Q-BENCH-02` official values | Register `Q-BENCH-02`, Master §14.4/§15.8 | WP14-3~4, separate approval tests | `E-P14-CALIBRATION.execution-values` |
 | Official ALNS parameters | Master §13~14, Phase 06 explicit config | WP14-2~4, separation/acceptance tests | `E-P14-CALIBRATION.alns-parameters` |
 | Frozen experiment/reproducibility | Master §13, Domain §17.9 | WP14-2~5, freeze/analysis/replay | `E-P14-CALIBRATION`, `E-P14-OFFICIAL-RUN` |
 | All-worker/both-gate official result | Master §14, Phase 07 §15.3, Phase 10 | WP14-5, completeness/corruption | `E-P14-OFFICIAL-RUN` |
-| Phase 13 optional branch | `C-17`, Integrated §17, actual Phase 13 v1.2 §6.5/§14.3~14.4 | WP14-4, signed applicability/action-time/dependency-cycle tests | Signed applicability envelope + action-time verification receipt + optional P13 refs; field gap `RESOLVED_BY_PHASE13_V1_2`, actual receipts `NOT_PRODUCED` |
+| Phase 13 optional branch | `C-17`, 사용자 ALNS-first 결정, actual Phase 13 v1.5 §1.3/§4/§6.5/§14.3~14.4 | 14A acceptance 뒤 WP14-4 signed applicability/action-time/dependency-cycle tests | `E-P14-ALNS-BENCHMARK-ACCEPTANCE` + signed applicability envelope + action-time verification receipt + optional P13 refs; actual receipts `NOT_PRODUCED` |
 | Provider/deployment evidence | `Q-INFRA-01`, Integrated §15~16, Phase 11 §18.3, actual Phase 12 §18.4 | WP14-6, actual provider/parity | `E-P14-CUTOVER.provider` |
 | Production authority separation | Master §16.3, Plan Phase 14 | WP14-7~8, authority scope tests | `E-P14-CUTOVER.authority` |
 | Shadow/versioned cutover | Master §15.10/§16.2, Integrated §18 | WP14-6~8, shadow/canary/activation | `E-P14-CUTOVER` |
@@ -2029,8 +2169,10 @@ Production Operations가 받는 것:
 - [ ] Phase 12/13 actual detail의 `NOT_STARTED`/`GATED_NOT_STARTED`와 applicability
       branch를 정확히 분리했다.
 - [ ] Phase 13 gate-closed ALNS-only branch에서 forced hybrid 실행이 없다.
-- [ ] Phase 13 v1.2 signed applicability field gap 해소와 actual trust/receipt 부재를
-      분리하고 Phase 14→13 reverse entry dependency를 만들지 않는다.
+- [ ] Phase 14A ALNS benchmark가 Phase 13/MIP/backend/production authority 없이
+      완결되고 immutable independent acceptance receipt를 발행한다.
+- [ ] Phase 13 v1.5의 14A acceptance prerequisite와 actual trust/receipt 부재를
+      분리하고 `14A → 13 → 14B` 외 reverse/mutation dependency를 만들지 않는다.
 - [ ] Integer fixture, Great Circle, official ALNS parameter, `Q-BENCH-02`, provider/deployment,
       production authority가 각각 독립 gate와 signed evidence를 가진다.
 - [ ] Generated `U`의 canonical `CEILING` formula, missing-only `45 km/h`, invalid-present

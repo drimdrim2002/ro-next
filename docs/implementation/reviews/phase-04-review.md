@@ -234,3 +234,10 @@ docs/implementation/reviews/phase-04-review.md
 | Allowed edit scope | `PASS`; reviewer write action은 target Phase 04와 이 review 두 파일뿐. Canonical/인접 Phase/Java/POM/status 문서는 read-only |
 
 Actual Java/Maven inventory에는 read-only toolchain/POM/source listing만 사용했다. Target wrapper/module/test가 없으므로 root placeholder build나 future Phase command를 실행해 Phase 04 evidence `PASS`로 기록하지 않았다.
+
+## ALNS-first direction revision addendum
+
+Task `019fa901-8776-7f61-b467-a8c6595b970d`에서 capability/profile contract가
+MIP/backend를 요구하지 않고 C-17 branch만 Phase 06/07/08 acceptance와 Phase 14A
+benchmark acceptance 뒤로 재-gate되는지 검토했다. 기존 review verdict,
+implementation, acceptance와 evidence 상태는 변하지 않는다.

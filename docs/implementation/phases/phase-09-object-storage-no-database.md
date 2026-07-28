@@ -15,6 +15,8 @@ review_document: ../reviews/phase-09-review.md
 entry_gate_status: BLOCKED_BY_UNACCEPTED_PHASE_08
 handoff_status: NOT_READY
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
+direction_revision_status: ALNS_FIRST_GATE_OVERLAY_APPLIED_DOCUMENTATION_ONLY
 scheduler_task_id: TBD_NOT_SUPPLIED
 owners:
   implementation: RPDPTW Object Storage owner role
@@ -45,14 +47,14 @@ source_sections:
   phase_10_actual: "§6.1~7.4 and §14.1"
 source_fingerprints_sha256:
   README.md: 22eff4f63607db29bd4049344986109c680aa970d0865a3b859598e6b3b96c06
-  docs/master-design.md: 58554334b9f27586c93a685adc0facf0fbd7e79576c18890f0ac13891b2f803b
-  docs/2026-07-26-domain-design.md: 1870662f85a08cc9a1e48a1974b96278eccddfd1519721d71b356c56034ecaab
-  docs/2026-07-26-architecture-design.md: 3d4dbbfc7e4cbdb2f3985378d84fd5f717db770b04131573c00ed354a9f41614
-  docs/architecture-domain-implementation-design.md: ec513ac1b0bacd88149683bf48c36f7e6edcd53a9232498597e3b0d57c585875
+  docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
+  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
   docs/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
-  docs/implementation/master-realization-plan.md: 5921213ae419b9398bde8c91c3d6ada5aa64bf22a9b823e5b3889e1642085c05
-  docs/implementation/README.md: accf7758802c253ae47e3d0fe41e190728c507195d0b41f27f14a25804c8f23f
-  docs/implementation/execution-progress-and-results.md: 75eac895fd3a3c930e5135a4ef57badb0c540bfa692d928188af9eeb2f73b803
+  docs/implementation/master-realization-plan.md: 940fe8c2156bf0472deafcd450e0ea49f0036ab6b304d6d051f0148a38cd0f5d
+  docs/implementation/README.md: 6454238185af7b7c420f468adf42609a0ec045d6c70c16cc7601f0342fa74358
+  docs/implementation/execution-progress-and-results.md: 37f1a8a0ffad1e9614bd54d2b2444739fb83d0951bff73f2a2465ab54a3e8895
 historical_cross_check:
   file: docs/2026-07-26-master-design.md
   status: SUPERSEDED_NOT_AUTHORITY
@@ -327,9 +329,9 @@ Phase 08이 실제화되면서 type 이름이 바뀌면 Phase 09는 의미를 �
 
 | Neighbor | 파일 상태 | 계약 상태 | Phase 09 조치 |
 |---|---|---|---|
-| [Actual Phase 07](phase-07-independent-verification-final-result.md) + [review](../reviews/phase-07-review.md) | Target v1.1 reviewed; review `COMPLETE` | `CHANGES_REQUIRED` / `BLOCKED_NOT_IMPLEMENTED`; implementation `NOT_STARTED`, evidence `NOT_PRODUCED`, handoff `NOT_READY` | Both-gate semantic source로만 대조, accepted input으로 주장하지 않음 |
-| [Actual Phase 08](phase-08-application-ports-local-runtime.md) + [review](../reviews/phase-08-review.md) | Target v1.1 reviewed; review `COMPLETE` | `CHANGES_REQUIRED` / `BLOCKED_NOT_IMPLEMENTED`; implementation `NOT_STARTED`, evidence `NOT_PRODUCED`, handoff `NOT_READY` | §6.3~§7.6, §8.3, §9.1~§9.3을 직접 소비하되 acceptance blocker 보존 |
-| [Actual Phase 10](phase-10-provider-neutral-coordinator.md) + [review](../reviews/phase-10-review.md) | Target v1.2 reviewed; review `COMPLETE` | `CHANGES_REQUIRED` / acceptance `NOT_RECOMMENDED`; implementation `NOT_STARTED`, evidence `NOT_PRODUCED`, handoff `NOT_READY` | §6.1~§7.4, §14.1의 exact storage consumer를 대조하고 coordinator 의미는 당기지 않음 |
+| [Actual Phase 07](phase-07-independent-verification-final-result.md) + [review](../reviews/phase-07-review.md) | Target v1.2 reviewed; review `COMPLETE` | `CHANGES_REQUIRED` / `BLOCKED_NOT_IMPLEMENTED`; implementation `NOT_STARTED`, evidence `NOT_PRODUCED`, handoff `NOT_READY` | Both-gate semantic source로만 대조, accepted input으로 주장하지 않음 |
+| [Actual Phase 08](phase-08-application-ports-local-runtime.md) + [review](../reviews/phase-08-review.md) | Target v1.3 reviewed; review `COMPLETE` | `CHANGES_REQUIRED` / `BLOCKED_NOT_IMPLEMENTED`; implementation `NOT_STARTED`, evidence `NOT_PRODUCED`, handoff `NOT_READY` | §6.3~§7.6, §8.3, §9.1~§9.3을 직접 소비하되 acceptance blocker 보존 |
+| [Actual Phase 10](phase-10-provider-neutral-coordinator.md) + [review](../reviews/phase-10-review.md) | Target v1.3 reviewed; review `COMPLETE` | `CHANGES_REQUIRED` / acceptance `NOT_RECOMMENDED`; implementation `NOT_STARTED`, evidence `NOT_PRODUCED`, handoff `NOT_READY` | §6.1~§7.4, §14.1의 exact storage consumer를 대조하고 coordinator 의미는 당기지 않음 |
 
 ## 6. Proposed 변경 module/package/file tree
 
@@ -1813,7 +1815,7 @@ Phase 09 `ACCEPTED`는 다음을 뜻한다.
 | Local filesystem atomic capability | ENVIRONMENT-GATED | Local Runtime/Platform | Local adapter Phase 09 acceptance | In-memory reference contract | Approved target FS probe + recovery/atomicity evidence |
 | `Q-BENCH-02` official 실행 수치 | OPEN — EXPERIMENT_REQUIRED | Benchmark·Quality | Phase 14 official manifest/baseline/cutover; generic storage test 안 막음 | Explicit `TEST_ONLY` fixture values | Calibration corpus/protocol, measured review, approval |
 | Current Win decimal `D/U` | BLOCKER FOR OFFICIAL USE | Input·Matrix + Benchmark | 해당 fixture official use; storage contract 안 막음 | Storage fixtures with opaque bytes | Compliant integer matrix 또는 contract/migration approval |
-| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13/production default | Generic immutable artifact kind only | Phase 06/07 baseline, C-17 scope, OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
+| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13/production default | Generic immutable artifact kind only | Phase 06/07/08 accepted + Phase 14A `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`, C-17 scope, OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
 | `Q-VAR-01` | DEFERRED | Product·Domain·Algorithm | Optional variant 질문/구현 | Generic artifact identity | Restart evidence와 별도 승인 |
 | Multi-trip/rotation | DEFERRED FEATURE | Product·Domain·Algorithm | Domain/solver meaning; storage contract 안 막음 | Opaque artifact bytes | Trip/reset/depot/resource contract와 승인 |
 | AWS S3 implementation | BOUNDARY DECISION REQUIRED | Architecture/Platform/Security/Operations + scheduler | Phase 09/11 provider adapter 위치와 evidence | Provider-neutral ports + local/memory conformance | 위 Phase 09/11 S3 경계 blocker 해제 뒤 승인된 Phase의 contract/parity/security evidence |

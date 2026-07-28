@@ -7,7 +7,7 @@ phase: "06"
 review_date: 2026-07-28
 reviewer_role: independent Phase 06 reviewer
 target_document: docs/implementation/phases/phase-06-cow-alns-reproducibility.md
-target_document_version_after_safe_fixes: 1.1
+target_document_version_after_safe_fixes: 1.2
 target_whole_file_hash: OMITTED_TO_AVOID_RECIPROCAL_DOCUMENT_HASH
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
 document_verdict: CHANGES_REQUIRED
@@ -15,6 +15,8 @@ implementation_entry_verdict: BLOCKED
 implementation_status_observed: NOT_STARTED
 evidence_status_observed: NOT_PRODUCED
 scheduler_task_id_observed: TBD_NOT_SUPPLIED
+direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
+direction_revision_verdict: PASS_DOCUMENTATION_ONLY_STATUS_UNCHANGED
 finding_counts:
   critical: 0
   high: 5
@@ -228,3 +230,15 @@ Actual checkout 관찰은 다음과 같다.
 | Allowed edit scope | `PASS` | Reviewer write target은 Phase 06 상세와 이 review 두 파일뿐. Phase 05/07/canonical/Java/POM/status 문서는 read-only |
 
 Actual target `./mvnw`, `rpdptw/solver`, Phase 06 source/test와 evidence bundle이 아직 없으므로 Maven build/test를 실행하거나 future method/oracle을 `PASS` evidence로 기록하지 않았다. Read-only `java -version`, `mvn -version`, POM/source listing과 hash/link/Markdown 검사를 실제 checkout inventory로 사용했다.
+
+## 8. ALNS-first direction revision review
+
+Phase 06 v1.2가 ALNS-only required path를 MIP solver, license/service/token, native
+backend, Phase 13과 production authority에서 분리하고 Phase 14A에 fingerprint, seed,
+work/termination, objective, runtime/resource와 replay 측정 artifact를 넘기도록 한
+계약을 `PASS`로 검토했다.
+
+Corpus, repeat, threshold, timeout/resource budget와 variance는
+`OPEN — EXPERIMENT_REQUIRED`로 남아 있으며 MIP를 correctness oracle이나 quality
+baseline으로 쓰지 않는다. 기존 `CHANGES_REQUIRED/BLOCKED`, `NOT_STARTED`,
+`NOT_PRODUCED`와 residual blocker는 유지된다.

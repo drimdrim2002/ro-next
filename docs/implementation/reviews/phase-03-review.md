@@ -231,3 +231,10 @@ Actual checkout 관찰은 다음과 같다.
 `docs/implementation/`은 review 시작 전부터 Git 기준 untracked였고 final validation 중 다른 Phase 00~02 review 파일이 공유 workspace에 추가됐다. 그래서 `git status`만으로 author별 diff를 분리할 수 없으며, concurrent 파일은 read-only로 상태만 다시 확인했다.
 
 Actual Java/Maven inventory에는 read-only `java -version`, `mvn -version`, POM/source listing을 사용했다. Target `./mvnw`, `rpdptw/core`, `build/test-fixtures`, Phase 03 source/test가 아직 없으므로 Maven build/test를 실행하거나 구현/evidence `PASS`로 기록하지 않았다.
+
+## ALNS-first direction revision addendum
+
+Task `019fa901-8776-7f61-b467-a8c6595b970d`에서 vendor-neutral evaluation kernel이
+ALNS-only 경로에 남고 C-17 branch는 Phase 06/07/08 acceptance와 Phase 14A
+benchmark acceptance 뒤에만 열리는지 검토했다. 기존 review verdict,
+implementation, acceptance와 evidence 상태는 변하지 않는다.

@@ -2,7 +2,7 @@
 
 ```yaml
 document_status: CHANGES_REQUIRED
-document_version: 1.1
+document_version: 1.2
 phase: "06"
 phase_name: cow-alns-reproducibility
 baseline_date: 2026-07-28
@@ -10,6 +10,8 @@ implementation_status: NOT_STARTED
 evidence_status: NOT_PRODUCED
 entry_gate_status: BLOCKED_BY_UNACCEPTED_PREDECESSORS
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+implementation_direction_decision: ALNS_FIRST_BENCHMARK_BEFORE_OPTIONAL_MIP
+direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 scheduler_task_id: TBD_NOT_SUPPLIED
 owners:
   implementation: RPDPTW Solver/Search owner role
@@ -29,15 +31,15 @@ planned_evidence:
   - E-P06-ALNS
   - E-P06-REPLAY
 source_fingerprints_sha256:
-  docs/master-design.md: 58554334b9f27586c93a685adc0facf0fbd7e79576c18890f0ac13891b2f803b
-  docs/2026-07-26-domain-design.md: 1870662f85a08cc9a1e48a1974b96278eccddfd1519721d71b356c56034ecaab
-  docs/2026-07-26-architecture-design.md: 3d4dbbfc7e4cbdb2f3985378d84fd5f717db770b04131573c00ed354a9f41614
-  docs/architecture-domain-implementation-design.md: ec513ac1b0bacd88149683bf48c36f7e6edcd53a9232498597e3b0d57c585875
+  docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
+  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
   docs/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
-  docs/implementation/master-realization-plan.md: 5921213ae419b9398bde8c91c3d6ada5aa64bf22a9b823e5b3889e1642085c05
-  docs/implementation/README.md: accf7758802c253ae47e3d0fe41e190728c507195d0b41f27f14a25804c8f23f
+  docs/implementation/master-realization-plan.md: 940fe8c2156bf0472deafcd450e0ea49f0036ab6b304d6d051f0148a38cd0f5d
+  docs/implementation/README.md: 6454238185af7b7c420f468adf42609a0ec045d6c70c16cc7601f0342fa74358
   docs/README.md: 5ece2d41fe5a3c3f5f3d938c0440b4d91b0dcc0a9a055e5e76a739b7d29a8569
-  docs/implementation/phases/phase-03-route-propagation-evaluation-kernel.md: 97eadadd7bed19a697c56bd7351095031fbf51fa75b40f8fe06f6dce87906ae6
+  docs/implementation/phases/phase-03-route-propagation-evaluation-kernel.md: 46945bd0b4c2d65d43ea078d5562e048133986983d11c5b62ecfb8a9f3bd7b54
 adjacent_phase_sources_read_only:
   phase_05:
     file: docs/implementation/phases/phase-05-pair-insertion-initial-portfolio.md
@@ -87,6 +89,27 @@ historical_cross_check:
 | [Phase 07 actual 상세](phase-07-independent-verification-final-result.md) | §4, §7.1~§7.3, §15.1 | Candidate/replay authority equality, non-authoritative declared claims, accepted `E-P06-*` receipt와 solver dependency 금지 |
 
 Phase 05와 Phase 07 상세는 이 문서 작성 중 actual 파일로 전환되어 양쪽 handoff를 직접 대조했다. 이 독립 리뷰의 final validation 중에도 두 인접 문서는 각 owner에 의해 v1.1/review workflow로 갱신되었으므로 다시 read-only 대조했다. 둘 다 implementation `NOT_STARTED`, phase `NOT_ACCEPTED`이고 accepted evidence는 없으므로 implementation entry는 계속 차단된다. Proposed signature와 named-section receipt는 Phase 05/06/07 cross-phase review에서 함께 정합화하되 whole-file reciprocal hash를 만들지 않는다.
+
+### 1.2 ALNS-first 독립 실행·benchmark handoff
+
+Phase 06의 required build/run은 OR-Tools를 포함한 MIP solver, optimizer license,
+solver service/token, native packaging, Phase 13 scope 또는 production authority 없이
+완결돼야 한다. MIP 결과를 ALNS correctness oracle, acceptance 입력, termination
+조건 또는 quality baseline으로 사용할 수 없다.
+
+Phase 06은 Phase 07/08/14A가 소비할 다음 측정 가능 artifact를 남긴다.
+
+- Immutable problem/travel/profile/build/algorithm/config fingerprint
+- Seed derivation/version과 actual seed
+- Requested/completed ALNS work, normal/exceptional termination과 trace digest
+- Candidate/result fingerprint와 objective vector
+- CPU time, elapsed time, peak/allocated memory 등 측정 schema와 runtime identity
+- Replay outcome과 mismatch report
+
+구체 corpus, seed 목록, repeat 수, timeout/resource budget, quality/performance threshold와
+허용 variance는 Phase 14A 승인 전 `OPEN — EXPERIMENT_REQUIRED`다. Phase 06 test-only
+값은 explicit하게 주입하되 official default나 Phase 13 activation evidence로 승격하지
+않는다.
 
 ## 2. 목표, 범위와 비범위
 
@@ -1562,7 +1585,7 @@ Phase 06 `ACCEPTED`는 다음을 뜻한다.
 | `Q-BENCH-02` official screen/worker/round/watchdog | OPEN — EXPERIMENT_REQUIRED | Benchmark·Quality | Phase 14 official manifest/baseline/cutover | Explicit test-only/experiment config only | Calibration corpus/protocol, measured review, explicit approval |
 | Additional attempt/resource numeric limits | OPEN/PROPOSED | Algorithm + Quality + Operations | 해당 safety policy의 official use | Fail-closed + external typed resource signal | Explicit config, measurement와 approval |
 | Current Win decimal `D/U` | BLOCKER FOR OFFICIAL USE | Input·Matrix + Benchmark | 해당 fixture official run | Test-only compliant integer fixture | Compliant integer matrix 또는 contract/migration approval |
-| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13와 production default | Phase 06 ALNS-only candidate/replay | Phase 06/07 accepted baseline, C-17 scope, OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
+| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13와 production default | Phase 06 ALNS-only candidate/replay | Phase 06/07/08 accepted + Phase 14A `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`, C-17 scope, OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
 | `Q-VAR-01` | DEFERRED | Product·Domain·Algorithm | Optional variant 질문/구현 | Current pair/fixed-terminal contract | Representative fixture, feasibility와 별도 승인 |
 | Multi-trip/rotation | DEFERRED FEATURE | Product·Domain·Algorithm | Trip/reset/depot resource 의미 | Oneway + single roundtrip | Exact contract/example/verifier impact와 승인 |
 | Apply/undo | GATED BY MEASUREMENT/APPROVAL | Algorithm + Performance + Review | State strategy 변경 | `CHANGED_ROUTE_COW_V1` | `RM-7` profiling, round-trip/fault/trace/verifier equality와 별도 승인 |
@@ -1583,7 +1606,7 @@ Phase 06 `ACCEPTED`는 다음을 뜻한다.
 - `E-P05-PAIR`, `E-P05-INSERTION`, `E-P05-PORTFOLIO` refs와 rollback point
 - Pure `PairInsertionEvaluator`/`FeasibleInsertionOption` contract; Phase 06 repair의 feasibility authority
 
-Phase 05는 phase-1 champion, screen 수치, destroy/repair proposal, `TrialDraft/current/stageBest/solveBest`, acceptance/adaptive/RNG/termination, verifier/final outcome을 넘기지 않는다. Phase 06은 candidate를 직접 mutate하지 않고 자기 COW state로 가져오며, screen/RNG/operator/acceptance/adaptive/step config를 별도 manifest로 제공한다. Actual Phase 05 v1.1 document review는 `CHANGES_REQUIRED`이고 implementation/evidence는 `NOT_STARTED`/`NOT_PRODUCED`이므로 implementation entry는 여전히 차단된다.
+Phase 05는 phase-1 champion, screen 수치, destroy/repair proposal, `TrialDraft/current/stageBest/solveBest`, acceptance/adaptive/RNG/termination, verifier/final outcome을 넘기지 않는다. Phase 06은 candidate를 직접 mutate하지 않고 자기 COW state로 가져오며, screen/RNG/operator/acceptance/adaptive/step config를 별도 manifest로 제공한다. Actual Phase 05 v1.3 document review는 `CHANGES_REQUIRED`이고 implementation/evidence는 `NOT_STARTED`/`NOT_PRODUCED`이므로 implementation entry는 여전히 차단된다.
 
 ### 16.2 Next — actual but unaccepted Phase 07
 
@@ -1621,7 +1644,8 @@ Phase 07은 `rpdptw-solver`를 compile-depend하지 않고 core authority에서 
 | Consumer | 소비할 것 | 소비하면 안 되는 것 | Handoff verification |
 |---|---|---|---|
 | Phase 10 Coordinator | Worker identity, warm start, requested/completed steps, exact termination, candidate/replay/evidence | Operator internals, completion-first winner, partial worker champion | Retry seed/config identity, all-worker completeness와 stable reducer future tests |
-| Phase 13 Optional hybrid — GATED | Accepted Phase 06 COW baseline, ALNS candidate/replay, explicit state lifecycle seam | Vendor API, raw selector incumbent, apply/undo | `C-17` separate entry approval + Phase 07 both-gate baseline |
+| Phase 14A ALNS benchmark | Accepted ALNS candidate/trace/replay와 measurement schema | Test-only 값을 official threshold로 승격, MIP 비교를 correctness oracle로 사용 | Phase 07/08 accepted + approved benchmark protocol |
+| Phase 13 Optional hybrid — GATED | Accepted Phase 06 COW baseline, ALNS candidate/replay, explicit state lifecycle seam | Vendor API, raw selector incumbent, apply/undo | Phase 14A `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT` + `C-17` 별도 승인 |
 | `RM-7` COW profiling | Copy/allocation/GC/work counters와 representative accepted path | Automatic switch threshold | Measured bottleneck attribution; no-switch is valid result |
 
 ## 17. Source → requirement → test → evidence traceability
