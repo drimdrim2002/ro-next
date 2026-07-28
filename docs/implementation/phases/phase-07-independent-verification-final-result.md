@@ -1416,7 +1416,7 @@ Phase 07 expected result는 search가 만든 정상 candidate를 그대로 복�
   ./mvnw -B -ntp -Dstyle.color=never clean verify
   ```
 
-- **Expected:** License-free full reactor green; required test failed/error/skipped 0; verification→solver/search/cache/provider/vendor edge 0; evidence bundle digest와 independent Phase 07 review `PASS`.
+- **Expected:** OR-Tools-free ALNS-only full reactor green; required test failed/error/skipped 0; verification→solver/search/cache/provider/vendor edge 0; evidence bundle digest와 independent Phase 07 review `PASS`.
 - **Failure/rollback:** Bundle/review가 불완전하면 최대 `IMPLEMENTED_PENDING_EVIDENCE`; `ACCEPTED`, publishable authority와 Phase 08 handoff를 주장하지 않는다. Last accepted predecessor bundle과 last green WP artifact를 유지한다.
 - **Handoff:** §15.2의 exact `Phase07HandoffManifest`와 typed output contract를 actual-but-unaccepted Phase 08 owner에게 전달.
 
@@ -1433,7 +1433,7 @@ Phase 07 expected result는 search가 만든 정상 candidate를 그대로 복�
 | Result/both-gate corruption | WP-07.5 command | Every corruption rejected, normal failure payload 0 |
 | Architecture | WP-07.6 architecture command | Forbidden dependency/import/bytecode/customer branch 0 |
 | Module | `./mvnw -B -ntp -Dstyle.color=never -pl build/test-fixtures,rpdptw/verification -am clean verify` | Fixture test-jar와 module tests/package green, required skips 0 |
-| Reactor | `./mvnw -B -ntp -Dstyle.color=never clean verify` | License-free full reactor green, unrelated required module skip 없음 |
+| Reactor | `./mvnw -B -ntp -Dstyle.color=never clean verify` | OR-Tools-free ALNS-only full reactor green, unrelated required module skip 없음 |
 
 Selected command는 `-am`을 제거하고 `-Dsurefire.failIfNoSpecifiedTests=true`를 사용해 upstream module의 nonmatching test 때문에 fail-closed 검사를 끄지 않는다. 각 selected run 전에 **같은 exact source commit/archive**를 root `./mvnw -B -ntp -Dstyle.color=never clean install`로 full-test 설치하고 dependency artifact digest를 기록한다. 이 preparation run의 green은 selected method report를 대신하지 않고, source/digest가 다르거나 dependency resolution이 안 되면 selected run을 시작하지 않는다. Test-fixtures/verification의 cross-module suite는 selected filter 없이 full `clean verify`를 실행한다. 각 command 직후 fresh Surefire XML을 content-addressed evidence 위치로 봉인한 뒤 다음 `clean`을 실행하며, expected class/method manifest에서 missing/duplicate/failed/error/skipped required test가 하나라도 있으면 실패다. `-DskipTests`, `-Dmaven.test.skip=true`, required test disable, `surefire.failIfNoSpecifiedTests=false`, stale `target/`, console summary 한 줄 또는 이전 run 혼합은 exit evidence가 아니다.
 
@@ -1541,7 +1541,7 @@ Phase 07 `ACCEPTED`는 다음을 뜻한다.
 | `GateIncomplete` Phase 08 mapping | RESOLVED_BY_PHASE08_V1_1 | Phase 08 Application + independent reviewer | 더 이상 document-contract blocker가 아님; Phase 08 implementation/evidence gate는 별도 유지 | Phase 08 v1.1의 three-variant receipt, `VERIFICATION_INCOMPLETE`와 no-payload mapping | Variant/field contract가 바뀌거나 future integration test가 실패할 때만 재개 |
 | `Q-BENCH-02` official execution values | OPEN — EXPERIMENT_REQUIRED | Benchmark·Quality | Phase 14 official manifest/baseline/cutover; generic Phase 07 test는 안 막음 | Explicit test-only values and value-free contract | Calibration corpus/protocol, measured review, explicit approval |
 | Current Win fixture decimal `D/U` | BLOCKER FOR OFFICIAL USE | Input·Matrix + Benchmark | 해당 fixture official result; generic Phase 07 integer fixture는 안 막음 | `P07_TINY_PD_3_TEST_ONLY` | Compliant integer matrix 또는 explicit contract/migration approval |
-| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + solver/license | Phase 13와 production default | ALNS-only candidate/result contract | Phase 06/07 accepted baseline, separate scope와 solver/license/native/fallback approval |
+| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13와 production default | ALNS-only candidate/result contract | Phase 06/07 accepted baseline, C-17 scope와 OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
 | `Q-VAR-01` | DEFERRED | Product·Domain·Algorithm | Optional variant 질문/구현 | Current pair/terminal/bank contract | Representative fixture, core-impact feasibility와 별도 승인 |
 | Multi-trip/rotation | DEFERRED FEATURE | Product·Domain·Algorithm | Single-trip 밖 verifier/result 의미 | Oneway + single roundtrip | Trip/reset/depot/resource/pair non-crossing contract와 승인 |
 | Phase 08/09+ runtime/storage/provider | OUT OF SCOPE / FUTURE GATE | Application/Platform/Operations | Publication/retrieval/storage/distribution | Pure `Phase07Output` contract | Phase 08 accepted ports/local runtime부터 순서대로 |

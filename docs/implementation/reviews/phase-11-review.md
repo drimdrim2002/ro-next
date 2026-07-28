@@ -362,7 +362,7 @@ Phase 00/build owner가 다룰 inventory이며, AWS distribution의 reproducible
 | Final Domain/Architecture Q-INFRA source drift | Document governance + Domain/Architecture owners | Canonical Master/register conflict rule | Stale status/count sync + cross-document review |
 | `Q-BENCH-02`/quota/cost/retention 값 open | Benchmark/Quality/Platform/FinOps/Security | Explicit test-only/non-prod config | Workload evidence와 owner approval; official hidden value 금지 |
 | Production authority 없음 | Product/Platform/Security/Ops + Phase 14 | Accepted local 또는 미래 non-prod reference | Phase 14 gates + exact production deploy/cutover approval |
-| `Q-VAR-01` deferred / `C-17` gated | Product/Domain/Algorithm/Architecture | Current baseline only | Register restart evidence와 별도 scope/solver/license 승인 |
+| `Q-VAR-01` deferred / `C-17` gated | Product/Domain/Algorithm/Architecture | Current baseline only | Register restart evidence와 별도 C-17 scope + OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback 승인 |
 
 ## 7. 변경 요약
 

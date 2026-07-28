@@ -140,7 +140,7 @@ handoff를 대조했다.
 | Branch | Phase 14가 받는 것 | 금지 |
 |---|---|---|
 | `Skip` | Scheduler-owned `C17_GATE_CLOSED`, exact ALNS-only plan, signed applicability envelope + action-time trust/validity/revocation/freshness verification, pool/model/outcome/hybrid/`E-P13-*` refs absent | Phase 13 실행, `ACCEPTED` 위장, unsigned/stale receipt, hidden hybrid/fallback |
-| `Activated` | Gate-open authority, 동등한 signed applicability/action-time verification, accepted Phase 13 review/`E-P13-*`, backend/license/native/fallback, last ALNS-only rollback point | Raw incumbent/ObjVal, partial evidence, Phase 12 requirement 또는 Phase 14 자체 gate 우회 |
+| `Activated` | Gate-open authority, 동등한 signed applicability/action-time verification, accepted Phase 13 review/`E-P13-*`, OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback, last ALNS-only rollback point | Raw incumbent/ObjVal, partial evidence, Phase 12 requirement 또는 Phase 14 자체 gate 우회 |
 
 `C-17` closed는 Phase 14 ALNS-only의 blocker가 아니다. Signed applicability `Skip`가
 없다는 것이 blocker다. Phase 13 v1.2가 envelope/verification **field schema**를

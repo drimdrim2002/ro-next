@@ -1617,7 +1617,7 @@ Green 구현은 현재 red test가 요구하는 최소 semantic scope만 추가�
 | S3/backend boundary | `TBD_BY_APPROVED_PHASE_09_11_BOUNDARY` — 현재 실행 명령으로 사용 금지 | Integrated §13.12/Plan Phase 09가 요구한 same abstract suite의 승인된 owning Phase | Owner/module/environment/evidence가 승인되기 전 Phase 09 exit BLOCKED |
 | Contract bundle | `mvn -pl build/port-contract-tests -am test` | Artifact/state/publisher/fault/corruption/security/lifecycle | Backend-specific waiver 0 unless exact non-applicability approved |
 | Phase slice | `mvn -pl rpdptw/application,adapters/object-common,adapters/object-memory,adapters/object-filesystem,build/port-contract-tests -am verify` | All P09 tests + architecture report | Required skip 0, dependency/list/default violations 0 |
-| Full reactor | `mvn verify` | License-free system regression | Reactor green; unrelated required module skip 없음 |
+| Full reactor | `mvn verify` | OR-Tools-free ALNS-only system regression | Reactor green; unrelated required module skip 없음 |
 
 선택 test를 실행해야 할 때 `-Dtest=<exact class>`는 해당 module POM을 직접 대상으로 하고 discovered method count를 matrix와 대조한다. `-Dsurefire.failIfNoSpecifiedTests=false`, zero-test success, `-DskipTests`, `-Dmaven.test.skip=true`, stale `target/`, console 마지막 줄 또는 이전 run 결과 혼합은 evidence가 아니다.
 
@@ -1813,7 +1813,7 @@ Phase 09 `ACCEPTED`는 다음을 뜻한다.
 | Local filesystem atomic capability | ENVIRONMENT-GATED | Local Runtime/Platform | Local adapter Phase 09 acceptance | In-memory reference contract | Approved target FS probe + recovery/atomicity evidence |
 | `Q-BENCH-02` official 실행 수치 | OPEN — EXPERIMENT_REQUIRED | Benchmark·Quality | Phase 14 official manifest/baseline/cutover; generic storage test 안 막음 | Explicit `TEST_ONLY` fixture values | Calibration corpus/protocol, measured review, approval |
 | Current Win decimal `D/U` | BLOCKER FOR OFFICIAL USE | Input·Matrix + Benchmark | 해당 fixture official use; storage contract 안 막음 | Storage fixtures with opaque bytes | Compliant integer matrix 또는 contract/migration approval |
-| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + solver/license | Phase 13/production default | Generic immutable artifact kind only | Phase 06/07 baseline, scope/solver/license/native/fallback approval |
+| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13/production default | Generic immutable artifact kind only | Phase 06/07 baseline, C-17 scope, OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
 | `Q-VAR-01` | DEFERRED | Product·Domain·Algorithm | Optional variant 질문/구현 | Generic artifact identity | Restart evidence와 별도 승인 |
 | Multi-trip/rotation | DEFERRED FEATURE | Product·Domain·Algorithm | Domain/solver meaning; storage contract 안 막음 | Opaque artifact bytes | Trip/reset/depot/resource contract와 승인 |
 | AWS S3 implementation | BOUNDARY DECISION REQUIRED | Architecture/Platform/Security/Operations + scheduler | Phase 09/11 provider adapter 위치와 evidence | Provider-neutral ports + local/memory conformance | 위 Phase 09/11 S3 경계 blocker 해제 뒤 승인된 Phase의 contract/parity/security evidence |

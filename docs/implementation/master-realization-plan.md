@@ -80,7 +80,7 @@ end-to-end acceptance다. 다만 AWS production traffic 전환, Phase 13 optiona
 | Final Domain §18과 Final Architecture §6 일부가 `Q-INFRA-01`을 `DEFERRED`, 상태를 `25/1/2`로 표시 | 최신 canonical Master/질문 등록부의 `Q-INFRA-01 RESOLVED`, `26/1/1`을 적용 |
 | Final Architecture가 provider 미결정을 전제로 한 package 설명을 포함 | Provider-neutral 경계는 유지하고, integrated design의 AWS S3 + Step Functions + Lambda target/reference를 Phase 11에 적용 |
 | AWS target 선택과 실제 AWS 구현·cutover를 혼동할 가능성 | 선택은 확정이지만 Phase 11 parity/evidence와 Phase 14 production authority 전에는 구현·배포·cutover 완료를 주장하지 않음 |
-| Route pool/MIP 상세 설계가 존재 | `C-17 GATED TARGET`을 유지하고 Phase 13 entry approval 전 구현·기본 활성화 금지 |
+| Route pool/MIP 상세 설계가 존재 | `C-17 GATED TARGET`을 유지한다. Gate-open exact backend는 Google OR-Tools direct CP-SAT로 고정하지만 Phase 13 entry approval 전 구현·기본 활성화는 금지한다. |
 | 기존 문서가 decimal Win fixture만 존재한다고 기록 | 원본은 provenance/negative fixture로 유지하고, 사용자 승인 `FLOOR` script로 만든 `win_poc_case_floor.json`을 이 계획의 실행 성공 fixture로 사용 |
 
 ## 3. 2026-07-28 current-state inventory
@@ -157,7 +157,7 @@ root parent/aggregator
 │   ├── object-s3
 │   ├── workflow-aws-stepfunctions
 │   ├── compute-aws-lambda
-│   └── route-selection-<backend>       # Phase 13, GATED
+│   └── route-selection-ortools-cpsat   # Phase 13, GATED
 ├── apps/
 │   ├── cli
 │   ├── api
@@ -175,7 +175,7 @@ root parent/aggregator
 1. Core/solver/verification/application의 cloud SDK reference는 0이다.
 2. Generic core/solver/verification의 customer-name branch는 0이다.
 3. Verification은 solver/search/cache를 compile-depend하지 않는다.
-4. Generic module의 optimizer vendor API reference는 0이며 기본 build는 license-free다.
+4. Generic module의 `com.google.ortools` API reference는 0이며 기본 build/ALNS-only runtime은 OR-Tools/native-loader-free다.
 5. Search는 immutable normalized problem, complete prepared travel와 exact bound profile만 소비한다.
 6. 모든 stable solution은 complete pair와 route/bank exact partition을 만족한다.
 7. Search 중 lazy/reverse/symmetric travel fallback은 0이다.
@@ -271,7 +271,7 @@ Phase 12는 승인된 대체 provider가 있을 때 실행하는 portability bra
 - Entry gate: 이 계획 baseline, current inventory, source authority/conflict 규칙 승인.
 - 입력: root POM/toolchain, current source/test/deployment inventory, target module DAG.
 - 산출물: Parent/aggregator, core/solver/verification/application/capability/profile skeleton, architecture rules, legacy characterization, build provenance.
-- Exit gate: License-free root build 성공, reactor cycle 0, forbidden provider/customer/vendor/verifier dependency 0, legacy characterization 통과.
+- Exit gate: Optional-backend-free root build 성공, reactor cycle 0, forbidden provider/customer/backend/verifier dependency 0, legacy characterization 통과.
 - Evidence/handoff: `E-P00-BUILD`, `E-P00-ARCH`, `E-P00-LEGACY`; Phase 1과 모든 parallel scaffold가 소비.
 
 실행·검증 절차:
@@ -515,7 +515,8 @@ Phase 12는 승인된 대체 provider가 있을 때 실행하는 portability bra
 
 - 상세/review: [상세 문서](phases/phase-13-optional-hybrid-route-selection.md) / [review 문서](reviews/phase-13-review.md)
 - 목표: Immutable evaluated route pool, exact-projectable selection과 strictly-better adoption을 optional branch로 검증한다.
-- Entry gate: Phase 06/07 accepted, `C-17` scope 승인, verified ALNS baseline, solver/license/native/fallback 승인. 승인 없으면 상태는 `GATED`다.
+- Backend 결정: Boolean route/unassigned 변수와 integer/fixed-point 목적·제약이므로 `MPSolver`가 아니라 `com.google.ortools.sat` direct CP-SAT를 사용한다. Adapter는 selected route IDs만 반환한다.
+- Entry gate: Phase 06/07 accepted, `C-17` scope 승인, verified ALNS baseline, OR-Tools exact version/checksum/config·Apache-2.0/applicable notice/SBOM·native/platform·Security·Operations·Cost·compute admission·fallback/rollback 승인. 승인 없으면 상태는 `GATED`다.
 - 입력: Cache-free evaluated ALNS routes, bound projection capability, explicit backend/budget/reproducibility config.
 - 산출물: Route pool delta/snapshot, projected columns/model/warm start, provider-neutral outcome, fresh materialization, hybrid record/fallback.
 - Exit gate: Deterministic pool, tiny oracle, status×incumbent, no-alias, full evaluation, incumbent preservation, adopted-only feedback와 shadow 통과.
@@ -529,7 +530,7 @@ Phase 12는 승인된 대체 provider가 있을 때 실행하는 portability bra
 4. Non-projectable profile을 typed skip하고 hidden Big-M/surrogate를 production exact mode에 넣지 않는다.
 5. Backend outcome에서 incumbent 확인 후 ID만 읽고 새 route/bank로 materialize해 full evaluate한다.
 6. ALNS incumbent보다 strictly better인 candidate만 채택한다. Optional failure는 unchanged incumbent, required failure는 `INCOMPLETE`다.
-7. Vendor-free default build, native cleanup/license capacity와 reproducibility class를 검증한다.
+7. OR-Tools-free ALNS-only default build, direct CP-SAT status×incumbent, native load/temp cleanup, OSS notice/SBOM와 reproducibility class를 검증한다.
 
 ### Phase 14 — Official calibration/cutover
 
@@ -661,7 +662,7 @@ Receipt는 manifest나 review report에 다시 삽입되지 않고 두 선행 ar
 - Source/test 파일 존재만으로 `DONE` 처리
 - Failed/skipped test를 숨기거나 이전 run과 섞기
 - 서로 다른 manifest의 최솟값을 조합해 가상 결과 생성
-- Secret, raw PII, credential/license value를 bundle에 저장
+- Secret, raw PII 또는 credential value를 bundle에 저장
 - Digest 없이 mutable “latest” 경로만 참조
 - Pre-review manifest에 reviewer/review result/`independentReviewRef`/acceptance receipt를 기록하거나 review 후 backfill
 - 두 선행 digest가 없는 acceptance receipt를 만들거나 receipt 없이 `ACCEPTED`로 전이
@@ -790,9 +791,9 @@ Phase 13 hybrid는 별도 applicable 결정과 `C-17` gate를 통과한 경우�
 | Operations | Timeout/cancel/retry가 정상 종료로 오인 | Typed state/termination, idempotent attempt identity, rehearsal |
 | Observability | Elapsed/completion order가 품질 input이 됨 | Requested/completed work 분리, correlation IDs, elapsed는 metadata만 |
 | Reproducibility | Global random, unordered merge, mutable latest | Namespaced seed, stable order, exact version/fingerprint, normal termination |
-| Optional MIP | Unsafe dominance, raw incumbent, license/native failure | Gated pool/oracle/full evaluation, unchanged ALNS fallback, cleanup |
+| Optional MIP | Unsafe dominance, raw incumbent, CP-SAT native/packaging failure | Gated pool/oracle/full evaluation, unchanged ALNS fallback, direct status×incumbent와 cleanup |
 
-필수 correlation은 적용 가능한 범위에서 tenant/solve/manifest/round/worker/run/attempt/problem/travel/profile/build/termination/verifier/artifact digest를 포함한다. Raw address, full input, secret/license value는 log/trace에서 제외한다.
+필수 correlation은 적용 가능한 범위에서 tenant/solve/manifest/round/worker/run/attempt/problem/travel/profile/build/termination/verifier/artifact digest를 포함한다. Raw address, full input과 secret value는 log/trace에서 제외한다.
 
 ## 14. OPEN, GATED, deferred와 restart condition
 
@@ -801,7 +802,7 @@ Phase 13 hybrid는 별도 applicable 결정과 `C-17` gate를 통과한 경우�
 | `Q-BENCH-02` official 수치 | `OPEN — EXPERIMENT_REQUIRED` | Benchmark·Quality | Phase 14 official manifest/baseline/cutover | Calibration corpus와 protocol 실행, measured result review, explicit approval |
 | Raw `win_poc_case.json` decimal `D/U` | `RESOLVED_FOR_PLAN_EXECUTION` | Input·Matrix + Benchmark | 원본 bytes를 직접 canonical 실행하는 경로만 차단 | 사용자 승인 script와 `win_poc_case_floor.json` digest/검증 완료; 원본은 provenance/negative fixture로 유지 |
 | `win_poc_case_floor.json` 실제 solver run | `NOT_RUN` | Implementation + Verification | 이 계획의 사용자 고정 최종 성공 | Phase 01~08 local path 구현, both-verifier PASS, deterministic replay와 §11.3 결과 제시 |
-| `C-17` route pool/MIP | `GATED TARGET` | Product·Algorithm·Architecture + solver/license owner | Phase 13 착수와 production default | Phase 06/07 baseline, separate scope, solver/license/native/fallback 승인, RM-9A~C/Phase 13 evidence |
+| `C-17` route pool/MIP | `GATED TARGET`; backend policy resolved | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost owners | Phase 13 착수와 production default | Phase 06/07 baseline, separate scope, OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/compute-admission/fallback/rollback 승인, RM-9A~C/Phase 13 evidence |
 | `Q-VAR-01` optional variants | `DEFERRED` | Product·Domain·Algorithm | MDVRP/OVRP/SDVRP 질문·구현 | Variant/시점 선택, representative fixture, core-impact feasibility와 별도 승인 |
 | Multi-trip/rotation | Deferred feature | Product·Domain·Algorithm | Single-trip 밖 route 의미 | Trip/reset/depot/resource 계약, pair non-crossing, example/evidence와 승인 |
 | Phase 12 provider adoption | Approval-gated per provider | Platform·Operations·Security | 특정 GCS/Azure/ECS/Cloud Run/Kubernetes adapter/cutover | Workload, parity, security, retention, retry/recovery, cost와 별도 adoption 승인 |

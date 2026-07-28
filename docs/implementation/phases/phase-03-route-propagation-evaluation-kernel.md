@@ -66,7 +66,7 @@ historical_cross_check:
 |---|---|---|
 | [Canonical Master](../../master-design.md) | §4.3~§4.6, §6, §7.2~§7.3, §8~§9, §12, §15.4, §16~§17 | Propagator 책임, pair/route 불변조건, checked arithmetic, time/travel, hard/metric/score/objective 분리, cache 비권위, `RM-2` gate |
 | [Final Domain](../../2026-07-26-domain-design.md) | §5.1~§5.2, §6~§7, §9~§10, §17.5~§17.6, §18 | Exact 단위, full-arc restart, load/stop/resource 공식, profile lifecycle, acceptance 경계 |
-| [Final Architecture](../../2026-07-26-architecture-design.md) | §2.1~§2.7, §5.6, §6 | `rpdptw-core` package owner, module DAG, verifier/search/cache 격리, license-free build |
+| [Final Architecture](../../2026-07-26-architecture-design.md) | §2.1~§2.7, §5.6, §6 | `rpdptw-core` package owner, module DAG, verifier/search/cache 격리, OR-Tools-free ALNS-only build |
 | [Integrated design](../../architecture-domain-implementation-design.md) | §3, §6, §7, §8, §22~§25 | Target tree, Phase 02 artifact, Phase 03 순서/SPI/gate, Phase 04 handoff, corruption test와 anti-pattern |
 | [질문 등록부](../../master-design-open-questions.md) | `Q-NUM-01~03`, `Q-TIME-01~04`, `Q-IN-01~02`, `Q-REQ-01~02`, `Q-OBJ-01~03`, `Q-BENCH-02`, `Q-VAR-01` | 확정 수치/경계, official 미확정 수치, deferred 범위 |
 | [Master Realization Plan](../master-realization-plan.md) | §2~§4, Phase 02~04, §8~§15 | Current inventory, phase entry/exit, evidence/DoD, blocker와 traceability |
@@ -953,7 +953,7 @@ Red test를 skip/disable하거나 expected result를 production helper로 바꾸
   ./mvnw -B -ntp -Dstyle.color=never clean verify
   ```
 
-- **Expected:** License-free root build green; required test class/method의 fresh Surefire XML manifest가 exact하고 failed/error/skipped 0; forbidden dependencies/package cycle/customer branches 0; immutable digest-protected bundle과 independent review `PASS`.
+- **Expected:** OR-Tools-free ALNS-only root build green; required test class/method의 fresh Surefire XML manifest가 exact하고 failed/error/skipped 0; forbidden dependencies/package cycle/customer branches 0; immutable digest-protected bundle과 independent review `PASS`.
 - **Failure/rollback:** Bundle/review가 불완전하면 최대 `IMPLEMENTED_PENDING_EVIDENCE`; `ACCEPTED`/handoff authority를 주장하지 않는다. Last accepted predecessor artifact를 유지한다.
 - **Handoff:** §13의 Phase 04/05/07 consumers에 exact identities와 compatibility report를 전달한다.
 
@@ -968,7 +968,7 @@ Red test를 skip/disable하거나 expected result를 production helper로 바꾸
 | Corruption/cache | WP-03.1/3/4 selected command | 각 one-field corruption이 expected `Invalid`; poisoned cache가 full 결과를 바꾸지 않음 |
 | Architecture | WP-03.5 architecture command | Forbidden import/dependency/bytecode/customer/vendor reference 0 |
 | Module | `./mvnw -B -ntp -Dstyle.color=never -pl rpdptw/core,build/test-fixtures -am clean verify` | Core와 independent oracle test module green, reactor cycle 0 |
-| Reactor | `./mvnw -B -ntp -Dstyle.color=never clean verify` | License-free full reactor green, unrelated required module skip 없음 |
+| Reactor | `./mvnw -B -ntp -Dstyle.color=never clean verify` | OR-Tools-free ALNS-only full reactor green, unrelated required module skip 없음 |
 
 Selected core command는 `-Dsurefire.failIfNoSpecifiedTests=true`를 사용하고 `-am`을 제거해 upstream module의 nonmatching test 때문에 fail-closed 검사를 끄지 않는다. Test-fixtures/architecture는 full module `verify`를 실행한다. 각 command 직전 해당 module report directory를 clean하고, 실행 뒤 §9.3의 exact class/method 이름을 fresh Surefire XML에서 manifest로 대조한다. Missing report/method, duplicate result, failed/error/skipped required test는 exit code가 0이어도 evidence failure다. `-DskipTests`, `-Dmaven.test.skip=true`, 특정 required test disable, stale `target/` report, console summary 한 줄과 이전 run 혼합은 exit evidence가 아니다.
 
@@ -997,7 +997,7 @@ metric/objective key + unit + non-sensitive aggregate
 test fixture ordinal / generator seed
 ```
 
-Raw external ID, 주소/좌표, full route/input bytes, customer/profile secret, credential/license/provider locator, arbitrary component exception message와 stack의 입력값은 log/trace/evidence attribute에 넣지 않는다. Fingerprint는 correlation/identity이며 authorization이나 encryption을 대신하지 않는다. Wall-clock duration, thread ID, cache hit order와 completion order는 운영 metadata로만 분리하고 feasibility, objective, tie, canonical bytes 또는 fingerprint의 입력이 될 수 없다.
+Raw external ID, 주소/좌표, full route/input bytes, customer/profile secret, credential/provider locator, arbitrary component exception message와 stack의 입력값은 log/trace/evidence attribute에 넣지 않는다. Fingerprint는 correlation/identity이며 authorization이나 encryption을 대신하지 않는다. Wall-clock duration, thread ID, cache hit order와 completion order는 운영 metadata로만 분리하고 feasibility, objective, tie, canonical bytes 또는 fingerprint의 입력이 될 수 없다.
 
 `E-P03-*`에는 result category별 count, first stable failure code, checked overflow/corruption/sensitivity fixture ordinal, redaction 검사와 full-vs-cache/repeated equality를 넣는다. Core에 telemetry side effect를 추가하거나 failure payload를 최종 사용자 diagnostic으로 직렬화하면 Phase 07/08 책임 침범이다.
 
@@ -1018,7 +1018,7 @@ Raw external ID, 주소/좌표, full route/input bytes, customer/profile secret,
 - Cache hit/miss/full, sequential/parallel repeated run의 canonical result/fingerprint가 exact 일치함.
 - Core의 cloud/solver/verifier/customer/vendor/test-fixtures 역의존, propagation/evaluation package cycle와 customer-name branch가 0임.
 - Security/redaction/safe-failure evidence와 elapsed/thread/cache-order 비의미성이 확인됨.
-- Root license-free `./mvnw -B -ntp -Dstyle.color=never verify`와 immutable evidence bundle, independent Phase 03 review가 통과함.
+- Root OR-Tools-free ALNS-only `./mvnw -B -ntp -Dstyle.color=never verify`와 immutable evidence bundle, independent Phase 03 review가 통과함.
 - Actual-but-unaccepted Phase 04/05/07 handoff contract와 rollback point가 명시됨.
 - OPEN/GATED/deferred/official 미확정 값을 default로 넣지 않음.
 
@@ -1064,7 +1064,7 @@ Source 파일이나 test가 존재하는 것만으로 완료되지 않는다. Ph
 | Typed facet SPI | OPEN/PROPOSED | Domain + Capability + Verification | Facet extension만; base propagation/evaluation은 계속 가능 | Facet provider empty list, no customer hook | `ADR-004` 또는 동등 review, Phase 04/07 recomputation evidence |
 | `Q-BENCH-02` official steps/workers/rounds/watchdog | OPEN — EXPERIMENT_REQUIRED | Benchmark·Quality | Phase 14 official manifest/baseline/cutover; Phase 03 generic kernel은 안 막음 | 값 없는 exact contract, test-only 명시값만 | Calibration corpus/protocol, measured review, explicit approval |
 | Current Win fixture decimal `D/U` | BLOCKER FOR OFFICIAL USE | Input·Matrix + Benchmark | 그 fixture의 official baseline; generic integer Phase 03 fixture는 안 막음 | §9.2 test-only integer fixture | Compliant integer matrix 또는 explicit contract/migration approval |
-| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + solver/license | Phase 13/production default | Phase 03은 vendor-neutral core만 | Phase 06/07 baseline, separate scope와 solver/license/native/fallback 승인 |
+| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13/production default | Phase 03은 vendor-neutral core만 | Phase 06/07 baseline, C-17 scope와 OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback 승인 |
 | `Q-VAR-01` | DEFERRED | Product·Domain·Algorithm | Optional variant 질문/구현 | Current fixed-terminal single-trip contract | Representative fixture, core-impact feasibility와 별도 승인 |
 | Multi-trip/rotation | DEFERRED FEATURE | Product·Domain·Algorithm | Trip/reset/depot 재출발 의미 | Oneway + single roundtrip | Trip/resource/reset/window/pair non-crossing 계약과 승인 |
 | Proposed public API/schema/numeric default | OPEN | Product/API/Data | External compatibility 약속 | Internal package-private contract | Versioned contract, compatibility/security review와 approval |

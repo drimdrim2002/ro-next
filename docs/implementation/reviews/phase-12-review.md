@@ -334,7 +334,7 @@ parity 성공을 증명하지 않는다.
 | Migration/rollback | `ADEQUATE PLAN / EVIDENCE MISSING` | Exact closure/digest/shadow/no-authority plan; actual rehearsal 0 |
 | Evidence sealing | `PASS DOCUMENT CONTRACT / EVIDENCE NOT_PRODUCED` | `RESOLVED_BY_PHASE11_V1_2_AND_PHASE12_V1_2`; DAG/anti-cycle contract 정합, actual digest/receipt는 없음 |
 | Phase 11 handoff | `BLOCKED` | Cycle 때문이 아니라 review changes required, implementation/evidence not started와 accepted receipt 부재로 handoff not ready |
-| Phase 13/C-17 boundary | `PASS DOCUMENT / GATED` | Infra evidence only; hybrid/solver/license/activation authority false |
+| Phase 13/C-17 boundary | `PASS DOCUMENT / GATED` | Infra evidence only; hybrid/OR-Tools activation/native distribution/production authority false |
 | Production authority | `PASS DOCUMENT / NOT GRANTED` | Recommendation/receipt 모두 `productionAuthority=false`; cutover command 없음 |
 
 ## 6. 적용한 변경 요약
@@ -404,7 +404,7 @@ provider parity evidence로도 해석하지 않는다.
 - **Implementation/deployment/evidence:** `NOT_STARTED / NOT_DEPLOYED / NOT_PRODUCED`
 - **Candidate/adoption/production:** `NOT_SELECTED / NOT_APPROVED / NOT_GRANTED`
 - **Phase 11 handoff:** `NOT_READY`
-- **Phase 13 handoff:** `NOT_READY`; `C-17`, solver/license/hybrid/production authority 0
+- **Phase 13 handoff:** `NOT_READY`; `C-17`, OR-Tools activation/native distribution/hybrid/production authority 0
 - **Safe next action:** 남은 cross-phase public contract를 승인하고 Phase 11 actual
   evidence/review acceptance를 생산한 뒤 candidate/axis/environment adoption record를
   별도로 만든다. 그 다음 target reactor의 red applicability/config와 anti-cycle

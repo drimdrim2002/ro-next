@@ -186,7 +186,7 @@ immutable manifest and solve snapshot
 - GCP Workflows/Cloud Run/GCS 또는 다른 provider adapter 구현
 - Object prefix listing, event stream 또는 workflow history를 source of truth로 만드는 기능
 - Distributed lock, coordinator leader lease, database, multi-object transaction 또는 last-write-wins
-- Phase 13 route pool/MIP, cross-worker pool merge, central selector와 optimizer capacity lease
+- Phase 13 route pool/MIP, cross-worker pool merge, central selector와 CP-SAT CPU/memory admission
 - `Q-BENCH-02`의 official `screenMaxSteps`, worker 수, `phase2MaxSteps`, `maxRounds`, watchdog 수치
 - `Q-VAR-01`, multi-trip/rotation, dynamic routing과 실시간 replanning
 - Exceptional last committed best를 normal success/official result로 승격하는 product 정책
@@ -872,7 +872,7 @@ rpdptw-application MUST NOT
   → solver internal COW/search/cache/operator package
   → verification internal scratch/cache/builder
   → customer profile implementation or customer-name branch
-  → optimizer vendor/license/native API
+  → optional optimizer backend/native API
 ```
 
 Coordinator가 comparator interface를 호출할 수는 있지만 objective vector를 `double` 하나로 축약하거나 고객별 비교를 구현하지 않는다.
@@ -897,7 +897,7 @@ Coordinator가 comparator interface를 호출할 수는 있지만 objective vect
 | Any nonterminal | Deadline/safety observation | Typed exceptional terminal/stop | `MAX_*` 정상 종료로 rename |
 | Any terminal | Same command/event | Same terminal/no-op | State 후퇴 또는 재publication |
 
-`REJECTED_INPUT`, `BINDING_FAILED`는 search 시작 전 terminal이다. `BACKEND_UNAVAILABLE`, `LICENSE_UNAVAILABLE`, `ROUTE_SELECTION_FAILED`는 Phase 13 future manifest가 허용할 때도 worker/phase typed outcome이며 baseline Phase 10이 정상 ALNS-only success로 재해석하지 않는다.
+`REJECTED_INPUT`, `BINDING_FAILED`는 search 시작 전 terminal이다. `BACKEND_UNAVAILABLE`, `NATIVE_RUNTIME_UNAVAILABLE`, `MODEL_INVALID`, `ROUTE_SELECTION_FAILED`는 Phase 13 future manifest가 허용할 때도 worker/phase typed outcome이며 baseline Phase 10이 정상 ALNS-only success로 재해석하지 않는다.
 
 Actual Phase 09는 run-state pointer와 published-result pointer를 별도 one-key CAS로 둔다. Multi-object transaction 없이 cancellation/publication이 서로 다른 terminal meaning을 만들지 않도록 **run-state `PUBLISHING` CAS를 publication authorization fence**로 사용한다.
 
@@ -1422,7 +1422,7 @@ Property runner는 generated sequence seed, minimized failing sequence, manifest
   ./mvnw -B -ntp -Dstyle.color=never clean verify
   ```
 
-- **Expected:** License-free reactor green, required failed/error/skipped 0, provider/storage/solver/verifier-internal forbidden edge 0, immutable `E-P10-*` bundle와 independent review `PASS`.
+- **Expected:** OR-Tools-free ALNS-only reactor green, required failed/error/skipped 0, provider/storage/solver/verifier-internal forbidden edge 0, immutable `E-P10-*` bundle와 independent review `PASS`.
 - **Failure/rollback:** Bundle/review가 불완전하면 최대 `IMPLEMENTED_PENDING_EVIDENCE`; `ACCEPTED`나 Phase 11 readiness를 주장하지 않는다. Last accepted predecessor와 last green WP artifact를 보존한다.
 - **Handoff:** §14.2의 provider-neutral definition/ports만 Phase 11에 전달한다.
 
@@ -1440,7 +1440,7 @@ Property runner는 generated sequence seed, minimized failing sequence, manifest
 | Finalization/publication | WP-10.6 | Both-gate only, result synthesis 0, CAS convergence |
 | Architecture/port | WP-10.7 | Forbidden dependency/semantic path 0 |
 | Module | `./mvnw -B -ntp -Dstyle.color=never -pl rpdptw/application -am clean verify` | Application + required upstream tests/package green |
-| Reactor | `./mvnw -B -ntp -Dstyle.color=never clean verify` | License-free full reactor green; unrelated required modules not skipped |
+| Reactor | `./mvnw -B -ntp -Dstyle.color=never clean verify` | OR-Tools-free ALNS-only full reactor green; unrelated required modules not skipped |
 
 Selected command는 `-am`을 제거하고 `-Dsurefire.failIfNoSpecifiedTests=true`를 사용한다. 각 selected run 전에 **같은 exact source commit/archive**를 root `./mvnw -B -ntp -Dstyle.color=never clean install`로 full-test 설치하고 dependency artifact digest를 기록한다. 이 preparation run은 selected class/method report를 대신하지 않는다. 각 selected command 직후 fresh Surefire XML을 content-addressed evidence 위치에 봉인하고 expected class/method manifest와 discovered/passed/failed/error/skipped를 대조한 뒤 다음 `clean`을 실행한다.
 

@@ -174,7 +174,7 @@ Phase 01 문서에만 다음을 반영했다.
 | Canonical comparator/encoding | Domain·Architecture | Stable cross-version fingerprint promise | Versioned proposed internal comparator | ADR, replay/migration, collision/framing test 승인 |
 | Current decimal Win `D/U` | Input·Matrix + Benchmark | 해당 fixture의 canonical/official use | Negative rejection fixture | Compliant integer matrix 또는 explicit contract migration |
 | `Q-BENCH-02` | Benchmark·Quality | Phase 14 official manifest | Phase 01 unaffected | Calibration/measured review/explicit approval |
-| `C-17` | Product·Algorithm·Architecture + solver/license | Phase 13 | ALNS-only critical path | Phase 06/07 baseline + scope/solver/license/fallback approval |
+| `C-17` | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13 | ALNS-only critical path | Phase 06/07 baseline + C-17 scope + OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
 | `Q-VAR-01` | Product·Domain·Algorithm | Optional variants | Current pair/single-trip facts | Variant/fixture/core-impact evidence + separate approval |
 | Multi-trip/rotation | Product·Domain·Algorithm | Non-single-trip input | Reject unsupported rotation | Trip/reset/depot/resource contract + approval |
 

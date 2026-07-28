@@ -1093,7 +1093,7 @@ Required test를 skip/disable하거나 production helper로 oracle expected를 �
   ./mvnw -B -ntp -Dstyle.color=never clean verify
   ```
 
-- **Expected:** License-free root build green; required failed/error/skipped 0; forbidden edge/customer branch/dynamic execution 0; digest-protected bundle과 independent review `PASS`.
+- **Expected:** OR-Tools-free ALNS-only root build green; required failed/error/skipped 0; forbidden edge/customer branch/dynamic execution 0; digest-protected bundle과 independent review `PASS`.
 - **Failure/rollback:** Bundle/review가 불완전하면 최대 `IMPLEMENTED_PENDING_EVIDENCE`; `ACCEPTED`/production profile/handoff authority를 주장하지 않는다. Last accepted Phase 03 artifact를 유지한다.
 - **Handoff:** §14의 actual-but-unaccepted Phase 05와 Phase 07 consumer에게 exact artifact/API/evidence identity를 전달한다.
 
@@ -1111,7 +1111,7 @@ Required test를 skip/disable하거나 production helper로 oracle expected를 �
 | Reproducibility | `BoundProfileReproducibilityTest` | Repeated/parallel/backend/order permutations의 closure/declaration/fingerprint exact equality |
 | Architecture | WP-04.5 architecture command | Forbidden module/import/bytecode/customer/script/reflection/raw-map reference 0 |
 | Modules | `./mvnw -B -ntp -Dstyle.color=never -pl rpdptw/core,rpdptw/capabilities,rpdptw/profile-catalog -am clean verify` | Selected modules와 required upstream green |
-| Reactor | `./mvnw -B -ntp -Dstyle.color=never clean verify` | License-free full reactor green, unrelated required module skip 없음 |
+| Reactor | `./mvnw -B -ntp -Dstyle.color=never clean verify` | OR-Tools-free ALNS-only full reactor green, unrelated required module skip 없음 |
 
 Selected command는 module POM을 `-f`로 직접 실행하고 `-Dsurefire.failIfNoSpecifiedTests=true`로 fail-closed한다. 각 command 직전 해당 module report directory를 `clean`하고, 실행 뒤 §9.3의 exact class/method 이름을 fresh Surefire XML에서 manifest로 대조한다. Missing report/method, duplicate result, failed/error/skipped required test는 command exit가 0이어도 evidence failure다. `-DskipTests`, `-Dmaven.test.skip=true`, required test disable, stale `target/`, console summary 한 줄, 이전 run 혼합 또는 `ADR-004` 부재를 모든 facet test skip 근거로 쓰는 것은 exit evidence가 아니다.
 
@@ -1164,7 +1164,7 @@ Raw descriptor 전체/bytes, parameter value, full customer identity/PII, secret
 - Empty/unapproved/approved-if-applicable facet gate와 verifier recomputation contract가 evidence에 명시됨.
 - Core/solver/verifier/application의 customer/capability/provider 역의존과 customer-name branch가 0임.
 - Profile-local test helper가 production DAG 또는 Phase 00 generic test-fixtures dependency를 역전하지 않음.
-- Root license-free `./mvnw -B -ntp -Dstyle.color=never clean verify`, immutable `E-P04-*` bundle과 independent Phase 04 review가 통과함.
+- Root OR-Tools-free ALNS-only `./mvnw -B -ntp -Dstyle.color=never clean verify`, immutable `E-P04-*` bundle과 independent Phase 04 review가 통과함.
 - Actual-but-unaccepted Phase 05와 Phase 07 handoff/rollback point가 명시되고 insertion/ALNS/runtime code가 Phase 04에 없음.
 - Production 고객 descriptor/수치, OPEN/GATED/deferred/official 값을 발명하거나 hidden default로 넣지 않음.
 
@@ -1226,7 +1226,7 @@ Generic Phase 04 acceptance는 production 고객 profile의 존재나 활성화�
 | Actual Phase 05 consumer acceptance pending | DOWNSTREAM GATE, NOT A PHASE04 DESIGN BLOCKER | Phase 05 owner | Downstream implementation/compile handoff acceptance | This document + actual Phase 05 proposed consumer contract | Phase 04 accepted artifact/digest 뒤 Phase 05 directional reference·review 갱신 |
 | `Q-BENCH-02` official values | OPEN — EXPERIMENT_REQUIRED | Benchmark·Quality | Phase 14 official manifest; Phase 04 generic binding은 안 막음 | No official numeric field in profile | Calibration review and explicit approval |
 | Current Win fixture decimal `D/U` | BLOCKER FOR OFFICIAL USE | Input·Matrix + Benchmark | Official fixture/baseline; Phase 04 test-only integer problem은 안 막음 | Generic integer fixtures | Compliant integer matrix or explicit contract/migration approval |
-| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + solver/license | Phase 13/production default | Bound profile may declare no selector capability | Phase 06/07 baseline, scope/solver/license/native/fallback approval |
+| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13/production default | Bound profile may declare no selector capability | Phase 06/07 baseline, C-17 scope, OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
 | `Q-VAR-01` | DEFERRED | Product·Domain·Algorithm | Optional variant profile/capability 질문·구현 | Current fixed-terminal single-trip contract | Representative fixture, core-impact feasibility, separate approval |
 | Multi-trip/rotation | DEFERRED FEATURE | Product·Domain·Algorithm | Trip/facet/profile activation | Oneway + single roundtrip | Exact trip/reset/depot/resource/pair contract and approval |
 | Proposed public API/wire schema | OPEN | Product/API/Data | External compatibility promise | Internal proposed types | Versioned contract, compatibility/security review and approval |

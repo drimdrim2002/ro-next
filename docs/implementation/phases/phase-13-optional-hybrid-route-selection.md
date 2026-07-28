@@ -4,7 +4,7 @@
 
 ```yaml
 document_status: REVIEWED_WITH_CORRECTIONS
-document_version: 1.3
+document_version: 1.4
 phase: "13"
 phase_name: optional-hybrid-route-selection
 baseline_date: "2026-07-28"
@@ -30,7 +30,7 @@ owners:
   upstream_verification: Phase 07 Independent Verification/Result owner role
   conditional_provider_substitution_evidence: Phase 12 Provider Substitution owner role
   solver_backend: Optimizer Backend owner role
-  license_and_legal: License/Legal/Procurement owner role
+  oss_license_and_legal: Open Source/Legal/Supply-chain owner role
   operations: Platform/SRE owner role
   security: Platform Security owner role
   cost: FinOps/Cost authority role
@@ -46,8 +46,8 @@ prerequisites:
   - if the approved hybrid scope selects a substituted provider/runtime, the applicable Phase 12 evidence and independent review are approved
   - C-17 separate scope approval
   - explicit hybrid meaning and route-selection authority contract approval
-  - selected solver/backend approval without hidden provider default
-  - license/legal/native redistribution and capacity approval
+  - Google OR-Tools direct CP-SAT exact version/checksum/config approval
+  - Apache-2.0/applicable third-party notice, SBOM, native redistribution and supported-platform approval
   - operations/retry/cancellation/rollback approval
   - security/tenant/secret/access approval
   - cost/capacity/budget authority approval
@@ -95,7 +95,7 @@ reciprocal_document_fingerprint_acceptance: FORBIDDEN
 이 문서 세트의 입력 권위는 **사용자 선언으로 고정**되었다. Source 문서의
 `REVIEW` metadata는 provenance로 보존하지만 상세 문서 작성을 중단하는 조건이
 아니다. 반대로 이 문서에 구체적인 type, interface, state, test와 work package가
-있다는 사실은 Phase 13의 구현, backend 선택, license 승인, evidence, review,
+있다는 사실은 Phase 13의 구현, backend dependency/config 승인, OSS/native 배포 승인, evidence, review,
 official hybrid 실행 또는 production activation이 시작·완료되었다는 뜻이 아니다.
 
 상태 축을 섞지 않는다.
@@ -107,8 +107,9 @@ official hybrid 실행 또는 production activation이 시작·완료되었다�
 | Applicability | `CONDITIONAL_NOT_APPROVED` | Phase 13을 applicable branch로 승인한 기록이 없다. |
 | `C-17` | `GATED TARGET` | Scope/evidence/authority gate 전 구현 착수·default 활성화 금지다. |
 | 구현 | `GATED_NOT_STARTED` | Target module/type/test/backend가 존재한다고 주장하지 않는다. |
-| Backend/solver | `NOT_SELECTED` | 특정 optimizer/provider를 기본값으로 정하지 않는다. |
-| License/legal | `NOT_APPROVED` | 설치, 사용, native 재배포, concurrency 권한이 없다. |
+| Backend policy | `GOOGLE_OR_TOOLS_DIRECT_CP_SAT_SELECTED_NOT_IMPLEMENTED` | C-17이 열릴 경우의 canonical backend만 고정한다. 활성화·구현 완료가 아니다. |
+| Dependency/config | `OPEN/GATED_NOT_APPROVED` | OR-Tools exact version/checksum, workers, seed, time/gap과 platform matrix가 승인되지 않았다. |
+| OSS license/legal | `APACHE_2_0_IDENTIFIED_DISTRIBUTION_REVIEW_OPEN` | OR-Tools 자체 license는 확인했으나 native/transitive notice·SBOM·재배포 evidence가 없다. |
 | Operations/security/cost | `NOT_APPROVED` | 운영, 접근, 비용, capacity와 rollback 승인이 없다. |
 | Evidence | `NOT_PRODUCED` | `E-P13-*`는 미래 bundle requirement다. |
 | Review | `COMPLETE_DOCUMENT_CONTRACT_ONLY` | [독립 review](../reviews/phase-13-review.md)는 구현/evidence/activation acceptance가 아니다. |
@@ -123,7 +124,7 @@ official hybrid 실행 또는 production activation이 시작·완료되었다�
 3. [Final Domain Design](../../2026-07-26-domain-design.md)의 immutable route,
    projection, materialization, verification 의미
 4. [Final Architecture Design](../../2026-07-26-architecture-design.md)의
-   module/package/vendor/license/lifecycle 경계
+   module/package/OR-Tools/native/OSS-license lifecycle 경계
 5. [Integrated implementation design](../../architecture-domain-implementation-design.md)의
    15 Phase와 Phase 12~14 배치
 6. [Master Realization Plan](../master-realization-plan.md),
@@ -135,8 +136,8 @@ authority, API, backend, 승인 또는 evidence로 사용하지 않는다.
 
 Final Domain §18과 Final Architecture §6 말미의 `Q-INFRA-01 DEFERRED`,
 `25/1/2` 표기는 최신 Canonical Master와 질문 등록부의
-`Q-INFRA-01 RESOLVED`, `26/1/1`로 해소한다. AWS 선택은 Phase 13 solver/backend
-선택이 아니며 Phase 13 activation evidence를 대신하지 않는다.
+`Q-INFRA-01 RESOLVED`, `26/1/1`로 해소한다. AWS 선택은 Phase 13 backend activation
+활성화나 OR-Tools dependency/config/native 배포 승인이 아니며 Phase 13 activation evidence를 대신하지 않는다.
 
 ### 1.1 직접 소비한 source section
 
@@ -144,15 +145,15 @@ Final Domain §18과 Final Architecture §6 말미의 `Q-INFRA-01 DEFERRED`,
 |---|---|---|
 | [Canonical Master](../../master-design.md) | §1~§4, §10~§17, 특히 `C-17`, §11.7~§11.10, `RM-9A~C`, §16.3 | GATED target, immutable pool, exact projection, materialize/full-evaluate/strict adoption, two-gate authority, fallback와 별도 approval |
 | [Final Domain](../../2026-07-26-domain-design.md) | §7~§10, §12~§18 | Artifact/column identity 분리, exact partition, typed outcome, fresh materialization, hybrid state, acceptance evidence |
-| [Final Architecture](../../2026-07-26-architecture-design.md) | §2~§6 | Vendor-free DAG, selection SPI, capacity lease/native lifecycle, full evaluation, security와 AR-H1~H3 |
+| [Final Architecture](../../2026-07-26-architecture-design.md) | §2~§6 | OR-Tools-free default DAG, direct CP-SAT adapter boundary/native lifecycle, full evaluation, security와 AR-H1~H3 |
 | [Integrated design](../../architecture-domain-implementation-design.md) | §3, §10~§25, 특히 §16~§18 | Phase 12 독립 substitution branch, Phase 13 contract, Phase 14 conditional predecessor, provenance/failure/test/anti-pattern |
 | [질문 등록부](../../master-design-open-questions.md) | `Q-BENCH-02`, `Q-INFRA-01`, `Q-VAR-01`, §3~§4 | Official 수치 open, AWS target resolved, optional variant deferred; 어느 것도 hybrid hidden default를 만들지 않음 |
 | [Master Realization Plan](../master-realization-plan.md) | §2~§7 Phase 06/07/12/13/14, §8~§15 | Current inventory, GATED status, evidence/DoD/rollback, conditional Phase 14 handoff |
 | [구현 문서 지도](../README.md) | §1~§7 | Canonical filename, status/review/scheduler 권한과 conditional branch |
 | [Execution Progress](../execution-progress-and-results.md) | §2, §5, §8~§9 | Phase 13 registry `GATED`, task ID 미지정, scheduler-only status/applicability |
-| [Actual Phase 06](phase-06-cow-alns-reproducibility.md) | §16.3 only | Accepted ALNS baseline/candidate/replay/state-lifecycle seam만 소비; vendor/raw incumbent/apply-undo 금지 |
+| [Actual Phase 06](phase-06-cow-alns-reproducibility.md) | §16.3 only | Accepted ALNS baseline/candidate/replay/state-lifecycle seam만 소비; raw backend incumbent/apply-undo 금지 |
 | [Actual Phase 07](phase-07-independent-verification-final-result.md) | §15.3 only | Materialize/full-evaluate된 candidate도 동일 both-gate path를 통과 |
-| [Actual Phase 12](phase-12-provider-substitution.md) | §18.3 only, plus Integrated §16 and Master Plan Phase 12 | `INFRASTRUCTURE_DECISION_INPUT_ONLY`; approved hybrid scope가 substituted provider/runtime을 실제 선택할 때만 해당 evidence를 조건부 소비하며 `C-17`/solver/license/hybrid authority를 부여하지 않음 |
+| [Actual Phase 12](phase-12-provider-substitution.md) | §18.3 only, plus Integrated §16 and Master Plan Phase 12 | `INFRASTRUCTURE_DECISION_INPUT_ONLY`; approved hybrid scope가 substituted provider/runtime을 실제 선택할 때만 해당 evidence를 조건부 소비하며 `C-17`/backend activation/hybrid authority를 부여하지 않음 |
 | [Actual Phase 14](phase-14-official-calibration-cutover.md) | §3.1~§3.2 and §5.3, plus Integrated §18 and Master Plan Phase 14 | Scheduler-owned gate-closed skip, official hybrid의 accepted Phase 13 evidence와 Phase 14 자체 gate를 분리 |
 | [Root README](../../../README.md)와 actual inventory | 기술 기준·placeholder/GCP 흐름 | 현재 코드가 target ALNS, pool, selector, verifier 또는 approved runtime이 아님 |
 
@@ -200,7 +201,7 @@ ALNS incumbent와 비교하는 조건부 흐름**이다. 다음은 원문에서 
 - Worker-local인지 cross-worker인지, 몇 회/cadence로 호출할지
 - Optional fallback만 허용할지 required mode도 제품에 노출할지
 - 누가 route selection 요청·채택·production activation authority를 갖는지
-- 어떤 solver/provider/backend와 license 모델을 사용할지
+- OR-Tools exact version/checksum, supported platform/native packaging과 실행 파라미터를 어떻게 승인할지
 - Pool cap, pruning, budget, threshold, traffic split과 성능/cost 기준
 
 ### 2.2 포함 범위 — gate가 열린 뒤에만
@@ -211,26 +212,25 @@ ALNS incumbent와 비교하는 조건부 흐름**이다. 다음은 원문에서 
 - Deterministic append/import/reload, no-alias, incumbent pin과 conservative dominance
 - Profile projection capability와 typed non-projectable skip
 - Request/unassigned/concrete-vehicle exact partition model 후보
-- Solver-neutral session/outcome/budget/cancellation boundary
-- Selected ID만 반환하는 approved backend adapter와 native/license lifecycle
+- Backend-neutral session/outcome/budget/cancellation boundary
+- Selected ID만 반환하는 direct Java CP-SAT adapter와 native/OSS-license lifecycle
 - Stale/partial candidate, stale snapshot, fingerprint divergence와 corruption 거부
 - Fresh materialization, exact partition, full propagation/evaluation과 strict adoption
 - Optional fallback의 exact incumbent preservation과 required-mode incomplete 구분
 - Pool/model/warm-start/backend/decision/reproducibility lineage
 - Phase 07 independent candidate/result verifier를 우회하지 않는 worker handoff
-- Security, license, operations, performance, cost와 rollback/shadow evidence
+- Security, OSS license/SBOM, operations, performance, cost와 rollback/shadow evidence
 - Phase 14용 gate-closed skip 또는 gate-open accepted evidence handoff
 
 ### 2.3 명시적 비범위
 
-- Gate 충족 전 Java/module/test/backend/license profile/IaC 구현 시작
-- 특정 solver/provider/backend를 이 문서만으로 선택
-- Gurobi 또는 다른 vendor를 production default로 가정
+- Gate 충족 전 Java/module/test/backend/dependency profile/IaC 구현 시작
+- OR-Tools CP-SAT 외 Gurobi, `MPSolver` 또는 다른 exact backend를 production default/fallback으로 가정
 - Hidden `enabled=false`, 자동 backend discovery, classpath first-wins 또는 silent fallback
 - Pool cap, age, memory threshold, route count, MIP node/time/work budget의 무승인 기본값
 - Hybrid cadence, 적용 비율, customer allowlist 또는 traffic split의 무승인 기본값
 - `SET_PARTITION_EXACT`, compatibility cover mode 또는 required mode의 product default 승인
-- Cross-worker pool fan-in, central selector 또는 distributed license broker의 자동 포함
+- Cross-worker pool fan-in, central selector 또는 distributed backend broker의 자동 포함
 - Core result/outcome/publication 의미, Phase 07 verifier와 comparator 재설계
 - Raw optimizer incumbent, objective, feasibility flag 또는 selected column 직접 publication
 - Phase 12 cloud provider adapter 재구현 또는 provider cutover
@@ -246,11 +246,11 @@ ALNS incumbent와 비교하는 조건부 흐름**이다. 다음은 원문에서 
 2. Hybrid 요청이 **없음**은 canonical absence/no-op다. 승인 없는 명시적 요청은
    no-op이 아니라 `UNAUTHORIZED_HYBRID_ACTIVATION`으로 fail closed한다.
 3. Gate receipt는 `C-17` scope, Phase 06/07 acceptance,
-   solver/license/operations/security/cost authority를 AND로 확인한다. Approved
+   OR-Tools dependency/native/OSS-license/operations/security/cost authority를 AND로 확인한다. Approved
    hybrid scope가 substituted provider/runtime을 선택한 경우에만 그 선택에 해당하는
    accepted Phase 12 evidence를 추가로 요구한다.
-4. Generic core/solver/verification/application의 optimizer vendor API reference는
-   0이며 기본 root build는 license-free다.
+4. Generic core/solver/verification/application의 `com.google.ortools` API reference는
+   0이며 기본 root build와 ALNS-only runtime은 OR-Tools/native-loader-free다.
 5. Pool artifact와 projected column은 같은 type/identity가 아니다.
 6. Pool에는 same problem/travel/profile authority의 nonempty, pair-complete,
    completed, hard-feasible, full-evaluated immutable route만 들어간다.
@@ -261,10 +261,11 @@ ALNS incumbent와 비교하는 조건부 흐름**이다. 다음은 원문에서 
    correctness를 바꾸는 hidden pruning을 활성화하지 않는다.
 10. Non-projectable constraint/dimension은 누락·surrogate·hidden Big-M로 바꾸지
     않고 typed skip한다.
-11. Selected backend/provider, mode, budget, thread, seed, numeric setting과
+11. Backend는 direct Java CP-SAT로 고정하되 exact dependency/checksum, platform,
+    mode, budget, `num_workers`, `random_seed`, time/gap, numeric setting과
     reproducibility class는 explicit approved config와 fingerprint를 가진다.
-12. Backend outcome은 incumbent 존재 확인 뒤 selected stable ID만 노출한다.
-    Vendor model/status/handle은 adapter 밖으로 나오지 않는다.
+12. Backend outcome은 CP-SAT status × incumbent 계약을 확인한 뒤 selected stable
+    ID만 노출한다. `CpModel`, `CpSolver`, raw status/handle은 adapter 밖으로 나오지 않는다.
 13. Selected ID는 exact pool/model identity에 속해야 하며 stale/partial/different
     fingerprint면 materialization 전에 거부한다.
 14. Materialization은 pool route를 alias/mutate하지 않고 새 route/bank를 만든다.
@@ -279,7 +280,7 @@ ALNS incumbent와 비교하는 조건부 흐름**이다. 다음은 원문에서 
     result verifier를 모두 통과해야 publication/official comparison 대상이다.
 20. Retry는 logical pool/model/warm-start/run identity를 바꾸지 않는다.
     Timeboxed optimize 시작 뒤 result-bearing retry는 새 logical run을 요구한다.
-21. Secret, license material, raw PII와 provider credential은 artifact,
+21. Secret, raw PII와 provider credential은 artifact,
     fingerprint, log/trace에 포함하지 않는다.
 22. Gate-closed Phase 14 handoff에는 pool/model/outcome/hybrid evidence가
     존재한다고 쓰지 않는다. Skip은 non-applicability이며 Phase 13 성공이 아니다.
@@ -303,7 +304,9 @@ ALNS incumbent와 비교하는 조건부 흐름**이다. 다음은 원문에서 
 | Reconstruction | FIXED | Fresh clone/materialization + exact partition + full evaluation |
 | Adoption | FIXED | Strictly-better only; otherwise incumbent unchanged |
 | Failure | FIXED | Optional fallback와 required incomplete를 구분 |
-| Default build | FIXED | Vendor/license-free |
+| Exact backend policy | FIXED | Google OR-Tools direct Java CP-SAT; `MPSolver` 사용 금지 |
+| Exact model class | FIXED | Boolean decision variables + integer/fixed-point coefficients only |
+| Default build | FIXED | OR-Tools/native-loader-free ALNS-only path |
 | Gate-closed behavior | FIXED | Omitted branch = absence/no-op; explicit unauthorized request = fail closed |
 | Phase 14 skip | FIXED | Phase 13 output 없이 ALNS-only path 진행 가능 |
 
@@ -315,15 +318,16 @@ ALNS incumbent와 비교하는 조건부 흐름**이다. 다음은 원문에서 
 | Route selection authority | OPEN/GATED | Product/Algorithm authority + independent review | Backend가 candidate/adoption/publication authority를 가짐 |
 | Applicable solve/customer/profile | OPEN/GATED | Product/Profile owner | 모든 solve, 특정 고객명 또는 classpath profile 자동 적용 |
 | Model mode | PROPOSED/OPEN | Projection owner + tiny oracle + approval | `SET_PARTITION_EXACT` 또는 cover mode 자동 선택 |
-| Solver/backend/provider | OPEN/GATED | Solver/backend + Security/Operations/Cost | Gurobi/다른 provider를 default로 선택 |
-| License/native distribution | OPEN/GATED | Legal/Procurement/Security | 개발자 설치를 production 권한으로 간주 |
+| OR-Tools dependency/version/checksum | OPEN/GATED | Architecture + Security/Supply-chain | Maven example/latest를 승인 pin으로 사용 |
+| Native/platform packaging | OPEN/GATED | Architecture/Operations/Security | 모든 OS/arch transitive JAR 또는 temp extraction을 검증 없이 허용 |
+| OSS license/notice/SBOM | OPEN/GATED | Legal/Supply-chain/Security | Apache-2.0 확인만으로 bundled/transitive notice 의무가 완료됐다고 주장 |
 | Pool retention/cap/pruning | OPEN — EXPERIMENT_REQUIRED | Performance/Algorithm | 고정 route 수, age, memory threshold |
-| Selection budget | OPEN — EXPERIMENT_REQUIRED | Performance/Cost | time/node/work/thread 수치 |
+| Selection budget/CP-SAT params | OPEN — EXPERIMENT_REQUIRED | Performance/Cost | time/workers/seed/gap/deterministic-time 수치 |
 | Cadence/phase count | OPEN — EXPERIMENT_REQUIRED | Algorithm/Product | 매 segment 또는 매 round 자동 실행 |
 | Traffic split/rollout | OPEN/GATED | Product/Release/Operations | 1%, 10%, 50% 같은 비율 |
 | Optional vs required exposure | OPEN/GATED | Product/Operations | 실패를 degraded 또는 incomplete로 임의 분류 |
-| Reproducibility class | OPEN per backend/config | Algorithm/Benchmark | Timeboxed multi-thread 실행에 strong replay 주장 |
-| Cross-worker selection | DEFERRED SEPARATE ADR | Architecture/Operations/License | Worker-local baseline과 함께 자동 구현 |
+| Reproducibility class | OPEN per approved config | Algorithm/Benchmark | Fixed seed나 timeboxed multi-worker 실행에 strong replay 주장 |
+| Cross-worker selection | DEFERRED SEPARATE ADR | Architecture/Operations | Worker-local baseline과 함께 자동 구현 |
 | Public degraded/error schema | OPEN | Product/API/Data | Internal enum을 public compatibility로 승격 |
 | Cost/performance go-live bar | OPEN — EXPERIMENT_REQUIRED | FinOps/Performance/Product | 측정 없는 threshold와 pass claim |
 
@@ -366,10 +370,10 @@ AND Phase07.accepted
 AND C17 scope approved
 AND HybridMeaningContract approved
 AND RouteSelectionAuthorityContract approved
-AND solver/backend approved
-AND license/legal/native/capacity approved
+AND OR-Tools exact version/checksum/config approved
+AND Apache-2.0/applicable notices/SBOM/native/platform distribution approved
 AND operations/retry/cancel/rollback approved
-AND security/tenant/secret/access approved
+AND security/tenant/access/native-supply-chain approved
 AND cost/budget/capacity approved
 AND measured ALNS-only baseline approved
 AND scheduler task/owners assigned
@@ -378,9 +382,9 @@ AND (selected runtime is not substituted
 = Phase13 implementation READY
 ```
 
-한 항목이라도 없으면 `GATED`다. Product scope 승인만으로 solver/license/security
+한 항목이라도 없으면 `GATED`다. Product scope 승인만으로 dependency/native/security
 gate를 대신할 수 없다. Phase 12 parity 결과는 selected substituted runtime의
-조건부 infrastructure evidence일 뿐 Phase 13 applicability, solver/backend 선택 또는
+조건부 infrastructure evidence일 뿐 Phase 13 applicability, backend activation 또는
 hybrid authority가 아니다.
 
 ### 4.2 Activation receipt 후보
@@ -398,8 +402,8 @@ Phase13ActivationReceipt
   selectedRuntimeIdentity
   optional Phase12ToPhase13SubstitutionEvidence ref/digest
     required only when selectedRuntimeIdentity denotes an approved substituted runtime
-  solverBackendApprovalRef/digest
-  licenseLegalNativeApprovalRef/digest
+  ortoolsDependencyConfigApprovalRef/digest
+  ossLicenseNoticeSbomNativeApprovalRef/digest
   operationsApprovalRef/digest
   securityApprovalRef/digest
   costBudgetApprovalRef/digest
@@ -412,7 +416,7 @@ Phase13ActivationReceipt
   receiptContentDigest
 ```
 
-Secret/license value, credential, commercial price와 raw customer data는 receipt에
+Secret/credential, commercial infrastructure price와 raw customer data는 receipt에
 넣지 않는다. Approval ref는 immutable record identity만 담는다. Receipt
 validation은 서명/issuer/expiry/schema/content digest와 allowed scope를 모두
 확인한다.
@@ -427,8 +431,9 @@ validation은 서명/issuer/expiry/schema/content digest와 allowed scope를 모
 | `C-17` scope | Explicit approval record | 없음 | GATED |
 | Hybrid meaning | Approved contract | 원문은 최소 boundary만 있고 product meaning 미확정 | CONTRACT_GATE |
 | Route selection authority | Approved authority matrix | Backend 비권위는 고정, 요청/채택/rollout authority 미승인 | CONTRACT_GATE |
-| Solver/backend | Selected exact backend/version/config | 없음 | GATED |
-| License/legal/native | Use/redistribution/capacity approval | 없음 | GATED |
+| Backend policy | Google OR-Tools direct CP-SAT | User decision and current canonical documents | FIXED_POLICY_ONLY |
+| OR-Tools dependency/config | Exact version/checksum/workers/seed/time/gap | 없음 | GATED |
+| OSS license/legal/native | Apache-2.0 + applicable notice/SBOM/redistribution/platform approval | OR-Tools license만 식별; distribution evidence 없음 | GATED |
 | Operations | Retry/cancel/fallback/rollback runbook approval | 없음 | GATED |
 | Security | Tenant/access/secret/log/native review | 없음 | GATED |
 | Cost | Capacity/budget/cost authority | 없음 | GATED |
@@ -467,7 +472,7 @@ historical characterization이다. 현재 live review registry나 phase acceptan
 | 영역 | 실제 사실 | Phase 13 해석 |
 |---|---|---|
 | Maven | Root `pom.xml` 하나, `com.ronext:ro-next`, Java 25 | Multi-module `rpdptw-solver/application/verification` 없음 |
-| Dependencies | Google Workflow, GCS, Jackson, JUnit가 root classpath | Optimizer vendor dependency는 없지만 architecture isolation도 없음 |
+| Dependencies | Google Workflow, GCS, Jackson, JUnit가 root classpath | `com.google.ortools:ortools-java`와 Phase 13 adapter/module은 없음 |
 | Main Java | `com.ronext.optimizer` 아래 6개 파일 | `com.ronext.rpdptw.*` target namespace 없음 |
 | Engine | `AlnsBatchEngine`이 `SplittableRandom`으로 합성 `double objective` 생성 | RPDPTW/ALNS/route evaluation/pool/selection이 아님 |
 | API | `Map<String,Object>`, `gs://`, 현재 시각/UUID와 numeric fallback | Approved hybrid request/config/authority boundary가 아님 |
@@ -487,8 +492,9 @@ Actual code의 `parallelRuns=8`, `iterationsPerRun=5000`,
 
 ### 5.2 Gate-open 뒤의 proposed change tree
 
-아래 tree는 **후보**다. Gate 전에는 만들지 않는다. Exact module/package 이름은
-Phase 00/Architecture/C-17 review에서 바뀔 수 있다.
+아래 tree는 **후보**다. Gate 전에는 만들지 않는다. Generic type/package 이름은
+Phase 00/Architecture/C-17 review에서 바뀔 수 있지만 backend module boundary는
+OR-Tools CP-SAT 격리를 나타낸다.
 
 ```text
 rpdptw/
@@ -520,8 +526,8 @@ rpdptw/
     # Phase 07 verifier를 재사용하며 Phase 13 전용 shortcut을 만들지 않음
 
 adapters/
-└── route-selection-<approved-backend>/
-    # solver/license/security/cost approval 뒤에만 정확한 이름으로 생성
+└── route-selection-ortools-cpsat/
+    # C-17과 dependency/native/OSS-license/security/ops/cost 승인 뒤에만 생성
 
 build/
 ├── test-fixtures/
@@ -538,18 +544,18 @@ Dependency 후보:
 rpdptw-solver              → rpdptw-core
 rpdptw-application         → rpdptw-core; ↛ solver/pool/backend
 rpdptw-hybrid-application  → rpdptw-core + solver + verification
-route-selection-<backend>  → rpdptw-core + rpdptw-solver
+route-selection-ortools-cpsat → rpdptw-core + rpdptw-solver
 verification              ↛ solver/search/pool/backend
-core/solver/application    ↛ vendor API
+core/solver/application    ↛ com.google.ortools
 ```
 
-Selection backend adapter는 route reconstruction, full evaluation, comparator,
+OR-Tools CP-SAT adapter는 route reconstruction, full evaluation, comparator,
 candidate/result verification과 publication을 소유하지 않는다. Phase 12의 cloud
 storage/workflow/compute adapter와 Phase 13 optimizer backend adapter는 서로 다른
 축이며 한 module로 합치지 않는다.
 
 Gate-closed canonical assembly는 `rpdptw-hybrid-application`, `rpdptw-solver`와
-`route-selection-<backend>`를 dependency graph에 포함하지 않는다. Gate-open
+`route-selection-ortools-cpsat`를 dependency graph에 포함하지 않는다. Gate-open
 scheduler disposition과 validated receipt가 있는 별도 assembly만 이 optional
 module들을 포함할 수 있다.
 
@@ -581,11 +587,11 @@ module들을 포함할 수 있다.
 | `ProjectedRouteColumn` | Projection | Artifact ID, exact rows/coefficients, digest | Snapshot/model-scoped |
 | `RouteSelectionModelManifest` | Selection API | Mode, row/column maps, coefficient proofs, identity | Immutable before backend |
 | `MipWarmStartManifest` | Selection API | Selected/unassigned mapping and feasibility proof | Exact model-scoped |
-| `RouteSelectionOutcome` | Backend adapter through API | Generic status, incumbent count, selected IDs, bounded evidence | Immutable; candidate 아님 |
+| `RouteSelectionOutcome` | Backend adapter through API | Generic status/termination/provenance, incumbent presence와 selected route IDs only | Immutable; candidate 아님 |
 | `MaterializationRecord` | Conversion/application | ID membership, fresh copy, exact partition | Immutable evidence |
 | `EvaluatedSelectionCandidate` | Core evaluation/application | Fresh routes/bank, recomputed facts/objective, fingerprint | Adoption input only |
 | `HybridPhaseRecord` | Application | ALNS/pool/model/backend/materialization/adoption/fallback lineage | Commit once |
-| `Phase13EvidenceManifest` | Evidence owner | Test/oracle/security/license/ops/cost/shadow refs | Content-addressed |
+| `Phase13EvidenceManifest` | Evidence owner | Test/oracle/security/OSS-license/SBOM/ops/cost/shadow refs | Content-addressed |
 | `Phase13ApplicabilityReceipt` | Scheduler + Security/Release trust owner | Exact version/identity, signed envelope/trust/validity and action-time verification for `Skip`, or accepted `Activated` | Phase 14 entry control; actual signed receipt NOT_PRODUCED |
 | `Phase13ActivatedHandoff` | Phase 13 owner/reviewer | Accepted review, `E-P13-*`, rollback point | Official hybrid candidate only |
 
@@ -634,7 +640,7 @@ Fingerprint algorithm/version은 upstream serialization/identity ADR을 소비�
 이 문서의 SHA-256 source fingerprint를 product artifact의 hidden hash default로
 재사용하지 않는다.
 
-Provider locator, native handle, license token, elapsed time, completion order와
+Provider locator, native handle, elapsed time, completion order와
 traffic assignment는 domain/result identity가 아니다. Backend version, thread,
 seed, numeric/work configuration은 route-selection reproducibility identity에
 포함할 수 있지만 secret value는 제외한다.
@@ -769,7 +775,7 @@ Gate open:
 ```text
 accepted Phase13 implementation/evidence review
 + E-P13-GATE/POOL/SELECTION/HYBRID
-+ security/license/ops/cost evidence
++ security/OSS-license/SBOM/native/ops/cost evidence
 + shadow/rollback evidence
 + exact official-hybrid manifest selection
 = Phase13ActivatedHandoff
@@ -785,7 +791,7 @@ travel, Phase 11, production authority와 다른 gate를 우회하지 않는다.
 ## 7. Proposed Java 25 contract와 dependency
 
 이 절의 이름/signature/config는 모두 **PROPOSED/OPEN INTERNAL**이다. 승인된
-public API, wire schema, backend choice 또는 gate 통과 증거가 아니다.
+public API, wire schema, backend implementation/config approval 또는 gate 통과 증거가 아니다.
 
 ### 7.1 Scheduler applicability, authorized scope와 plan
 
@@ -872,7 +878,7 @@ public sealed interface RouteProjectionResult {
 canonical route와 full evaluation/authority identity만 담는 handoff projection
 후보다.
 
-### 7.3 Solver-neutral selection session
+### 7.3 Backend-neutral selection session과 OR-Tools isolation
 
 ```java
 public interface RouteSelectionSolverFactory {
@@ -892,19 +898,39 @@ public interface RouteSelectionSession extends AutoCloseable {
     @Override
     void close();
 }
-
-public interface OptimizerCapacityLeasePort {
-    OptimizerCapacityLease acquire(
-        ApprovedBackendCapability capability,
-        RouteSelectionRunId runId,
-        LeaseDeadline deadline
-    );
-}
 ```
 
 `ApprovedBackendConfig`, budget와 backend capability key는 activation receipt의
-allowed scope와 exact match해야 한다. Capability assembly 부재와 license
-획득 실패를 같은 status로 합치지 않는다.
+allowed scope와 exact match해야 한다. `route-selection-ortools-cpsat`만
+`com.google.ortools:ortools-java:${ortools.version}`와
+`com.google.ortools.sat` API를 참조한다. `${ortools.version}`, artifact checksum,
+supported OS/architecture, `num_workers`, `random_seed`, wall/deterministic time와
+gap 값은 모두 `OPEN/GATED_NOT_APPROVED`다. `MPSolver`나 `MPSolver("SAT")`를
+중간 계층으로 사용하지 않는다.
+
+Direct CP-SAT surface는 `Loader.loadNativeLibraries()`, `CpModel`, `BoolVar`,
+`LinearExpr`, `CpSolver`, `CpSolverStatus`, `SatParameters`로 제한한다. 모델은
+Boolean 변수와 checked int64 fixed-point 계수만 만들며 rounding/scale/overflow
+proof가 없으면 `MODEL_BUILD_FAILED`로 종료한다.
+
+이 결정의 최신 기술 사실은 Google 공식 자료만으로 확인했다.
+
+- [MIP solver 선택 가이드](https://developers.google.com/optimization/mip#which_solver_should_i_use)와
+  [integer-only CP-SAT 계약](https://developers.google.com/optimization/cp/cp_solver):
+  현재 0-1 pure integer model에는 direct CP-SAT가 canonical이다.
+- [Java 설치 문서](https://developers.google.com/optimization/install/java):
+  Maven coordinate는 `com.google.ortools:ortools-java`; 예시/latest version은
+  project 승인 pin이 아니므로 `${ortools.version}`은 `OPEN`이다.
+- [CP-SAT status 정의](https://github.com/google/or-tools/blob/stable/ortools/sat/cp_model.proto)와
+  [Java `CpSolver`](https://or-tools.github.io/docs/java/classcom_1_1google_1_1ortools_1_1sat_1_1CpSolver.html):
+  solution 값은 `OPTIMAL`/`FEASIBLE`에서만 읽고 cancellation은 `stopSearch()`로 전달한다.
+- [`SatParameters`](https://github.com/google/or-tools/blob/stable/ortools/sat/sat_parameters.proto):
+  time, workers, seed, deterministic-time와 gap은 명시적으로 bind한다. Library
+  default나 hardware core count를 production policy로 상속하지 않는다.
+- [`Loader` source](https://or-tools.github.io/docs/java/ortools_2java_2com_2google_2ortools_2Loader_8java_source.html)와
+  [OR-Tools license](https://github.com/google/or-tools/blob/stable/LICENSE):
+  native resource fallback extraction/`deleteOnExit()`와 Apache-2.0은 확인했지만
+  supported-platform packaging과 bundled/transitive notice/SBOM evidence는 여전히 gate다.
 
 ### 7.4 Outcome, materialization과 adoption
 
@@ -913,11 +939,10 @@ public enum RouteSelectionStatus {
     OPTIMAL,
     FEASIBLE_LIMIT,
     NO_INCUMBENT_LIMIT,
-    INFEASIBLE_MODEL,
-    NUMERICAL_FAILURE,
-    CANCELLED,
+    PROVEN_INFEASIBLE,
+    MODEL_INVALID,
     BACKEND_UNAVAILABLE,
-    LICENSE_UNAVAILABLE,
+    NATIVE_RUNTIME_UNAVAILABLE,
     MODEL_BUILD_FAILED,
     SOLVER_FAILED,
     SKIPPED_NON_PROJECTABLE_PROFILE,
@@ -926,10 +951,9 @@ public enum RouteSelectionStatus {
 
 public record RouteSelectionOutcome(
     RouteSelectionStatus status,
-    int incumbentCount,
+    IncumbentPresence incumbentPresence,
     List<ProjectedColumnId> selectedColumns,
-    Set<RequestId> selectedUnassigned,
-    Optional<RouteSelectionBoundEvidence> boundedEvidence,
+    RouteSelectionTerminationCause terminationCause,
     RouteSelectionRunId runId,
     Fingerprint modelFingerprint,
     Fingerprint poolFingerprint,
@@ -954,9 +978,18 @@ public interface HybridCandidateAdopter {
 }
 ```
 
-`incumbentCount == 0`이면 selected/objective attribute를 읽지 않는다. Outcome
-constructor/decoder가 status별 field admissibility를 검증해야 한다. Raw backend
-objective를 `EvaluatedSelectionCandidate`에 복사하지 않는다.
+CP-SAT mapping은 `OPTIMAL → OPTIMAL`, `FEASIBLE → FEASIBLE_LIMIT`,
+`INFEASIBLE → PROVEN_INFEASIBLE`, `MODEL_INVALID → MODEL_INVALID`,
+`UNKNOWN → NO_INCUMBENT_LIMIT`이다. Native/JNI load failure는 raw enum 밖의
+`NATIVE_RUNTIME_UNAVAILABLE`이다. `OPTIMAL`/`FEASIBLE`만 incumbent가 있으며 이
+두 상태에서만 Boolean 값을 읽어 selected IDs를 만든다. 다른 상태에서 value,
+objective, bound를 읽는 것은 계약 위반이다.
+
+Time limit, caller cancellation과 resource termination은 raw status에서 추측하지
+않고 `RouteSelectionTerminationCause`로 별도 기록한다. `CpSolver.objectiveValue()`
+는 `double`이므로 outcome/adoption authority에 넣지 않는다. Unassigned set은
+selected columns의 coverage complement로 materialization 경계가 재구성한다.
+Outcome constructor/decoder가 status × incumbent field admissibility를 검증해야 한다.
 
 ### 7.5 Application orchestration boundary
 
@@ -985,7 +1018,7 @@ public sealed interface HybridExecutionResult {
 }
 ```
 
-Gate decision이 `Absent`이면 이 orchestrator를 호출하지 않는다. `Rejected`이면
+Gate decision이 `Skip`이면 이 orchestrator를 호출하지 않는다. `Reject`이면
 solve 준비 단계에서 종료한다. `Committed` candidate는 아직 verified/publishable
 result가 아니며 Phase 07 경계로 전달한다.
 
@@ -1007,7 +1040,7 @@ DOCUMENTED_GATED
    → ACCEPTED_FOR_APPROVED_SCOPE
 ```
 
-Receipt validation 전에는 pool memory, license lease, native session, backend
+Receipt validation 전에는 pool memory, native loader/session, backend
 client와 selection run ID를 만들지 않는다.
 
 ### 8.2 Gate-open hybrid execution
@@ -1020,7 +1053,8 @@ ALNS_INCUMBENT_COMMITTED
 │  ├─ optional → INCUMBENT_RETAINED → HYBRID_COMMITTED
 │  └─ required → HYBRID_INCOMPLETE
 └─ MODEL_FROZEN
-   → CAPACITY_LEASE_ACQUIRED
+   → RUNTIME_ADMISSION_GRANTED
+   → NATIVE_RUNTIME_READY
    → SESSION_OPENED
    → SELECTION_FINISHED
    ├─ NO_INCUMBENT / FAILED / CANCELLED
@@ -1035,8 +1069,10 @@ ALNS_INCUMBENT_COMMITTED
       └─ EQUAL/WORSE/INVALID → INCUMBENT_RETAINED → HYBRID_COMMITTED
 ```
 
-Session close 후 lease를 반환한다. 어떤 예외 경로에서도 model → session/native
-environment → lease 순서를 지킨다.
+`CpSolver.stopSearch()` cancellation registration과 solve-local reference는
+`finally`에서 해제한다. OR-Tools JNI load는 JVM lifetime이고 per-solve native
+environment unload API가 없으므로 commercial-optimizer-style model/environment/lease close 순서를
+만들지 않는다.
 
 ### 8.3 Pseudocode
 
@@ -1077,14 +1113,15 @@ if projection is rejected:
 model = freezeModel(projection, snapshot, explicitConfig)
 warmStart = buildAndValidateWarmStart(incumbent, model, snapshot)
 
-lease = null
 session = null
 try:
-    lease = capacityLease.acquire(plan.backend.capability, runId, deadline)
+    requireRuntimeAdmission(plan, remainingOverallBudget)
+    ensureOrToolsNativeRuntimeLoadedAndSmokeTested(plan.backend.config)
     session = factory.openSession(plan.backend.config)
     outcome = session.solve(model, snapshot, warmStart, plan.budget, cancellation)
 finally:
-    closeSessionThenReleaseLease(session, lease)
+    clearCancellationRegistrationAndSolveReferences(session)
+    closeJavaSession(session)
 
 if outcome has no admissible incumbent:
     return optionalRetainOrRequiredIncomplete(plan, pre, outcome)
@@ -1118,15 +1155,15 @@ return Committed(champion, record)
 | Same signature/different evaluation | Corruption | Fail closed | Fail closed | No arbitrary winner |
 | Non-projectable profile | Typed skip | Retain incumbent if approved | Incomplete | No surrogate |
 | Backend unavailable | Capability | Retain if policy allows | Incomplete | No fake outcome |
-| License unavailable | License/capacity | Approved retry then retain | Incomplete after retry policy | Lease/session cleanup |
+| Native runtime unavailable | JNI/platform/packaging | Retain if policy allows; alert | Incomplete | No outcome/value read |
 | No incumbent limit | Selection | Retain | Incomplete | Selected attributes unread |
-| Numerical/model failure | Defect/integrity | Only clean fallback; investigate | Incomplete | Model/pool immutable |
+| Model invalid/build overflow | Defect/integrity | Only clean fallback; investigate | Incomplete | Model/pool immutable |
 | Cancel | Cancellation | No normal success conversion | Incomplete/cancelled | Draft/session discarded |
 | Stale/partial selected IDs | Integrity | Reject outcome | Incomplete | No materialization commit |
 | Materialization/full-eval divergence | Integrity/defect | Retain if uncontaminated | Incomplete | Pool/incumbent fingerprints unchanged |
 | Equal/worse candidate | Normal non-adoption | Retain | Retain unless approved policy says otherwise | Next warm start exact incumbent |
 | Nondeterministic fixed-envelope selection | Repro failure | No strong claim; rollback activation | Same | Last accepted ALNS-only manifest |
-| Security/license/cost breach | Operational gate | Disable applicable scope, rollback | Same | Accepted ALNS-only distribution/plan |
+| Security/OSS-license/SBOM/cost breach | Operational gate | Disable applicable scope, rollback | Same | Accepted ALNS-only distribution/plan |
 
 Last safe point는 항상 **accepted ALNS-only candidate/manifest/build와 Phase 07
 both-gate path**다. Phase 13 rollback은 pool/selection artifacts를 삭제하거나
@@ -1153,11 +1190,11 @@ immutable ALNS-only pointer/manifest를 사용한다.
 | `P13_COLUMN_DIVERGENCE_TEST_ONLY` | Row/coefficient digest differs from model | Projection integrity failure |
 | `P13_STALE_SELECTED_ID_TEST_ONLY` | Outcome column not in frozen model/snapshot | No materialization |
 | `P13_ALIAS_ATTACK_TEST_ONLY` | Backend/converter attempts pool route mutation | Snapshot/incumbent byte/fingerprint unchanged |
-| `P13_LICENSE_DENIED_TEST_ONLY` | Backend present, capacity/license denied | `LICENSE_UNAVAILABLE`, cleanup, no secret leak |
-| `P13_BACKEND_ABSENT_TEST_ONLY` | Vendor-free assembly | `BACKEND_UNAVAILABLE`, default build green |
+| `P13_NATIVE_LOAD_FAILURE_TEST_ONLY` | Unsupported/missing/corrupt JNI resource | `NATIVE_RUNTIME_UNAVAILABLE`, no value read |
+| `P13_BACKEND_ABSENT_TEST_ONLY` | OR-Tools-free ALNS-only assembly | `BACKEND_UNAVAILABLE`, default build green |
 | `P13_SELECTION_TIE_TEST_ONLY` | Multiple equal objective combinations | Stable explicit tie rule or no strong replay claim per approved contract |
 | `P13_MATERIALIZATION_DIVERGENCE_TEST_ONLY` | Backend coefficient claim differs from full evaluator | Candidate rejected, incumbent preserved |
-| `P13_SECURITY_CROSS_TENANT_TEST_ONLY` | Wrong tenant artifact/lease handle | Access denied before read/solve |
+| `P13_SECURITY_CROSS_TENANT_TEST_ONLY` | Wrong tenant artifact/runtime scope | Access denied before read/solve |
 | `P13_TIMEBOXED_POST_OPTIMIZE_RETRY_TEST_ONLY` | Optimize began then timebox | No same logical result-bearing retry |
 | `P13_PHASE14_SKIP_TEST_ONLY` | C-17 closed, all other Phase 14 prerequisites simulated | ALNS-only predecessor accepted without P13 artifacts |
 | `P13_UNSIGNED_OR_STALE_SKIP_TEST_ONLY` | Unsigned, unknown-profile, wrong-scope, expired, revoked와 stale verification variants | Phase 14 action fail closed; Phase 13 load and manifest/action count 0 |
@@ -1184,8 +1221,8 @@ consumption과 hand-authored lexicographic vector를 계산한다.
 | `Phase13Phase14SkipContractTest` | `expiredRevokedStaleOrWrongScopeSkipFailsAtActionTime` | Current verification non-`PASS`; Phase 13 load 0 |
 | `Phase13Phase14SkipContractTest` | `pastPassCannotBypassCurrentRevocationOrFreshnessPolicy` | Action-time re-verification required |
 | `HybridSecurityContractTest` | `crossTenantPoolReadIsDeniedBeforeBackendOpen` | Backend open count 0 |
-| `HybridSecurityContractTest` | `licenseSecretNeverAppearsInArtifactLogOrFingerprint` | Redaction/allowlist exact |
-| `HybridArchitectureTest` | `defaultReactorHasNoVendorDependencyOrServiceDiscoveryActivation` | Vendor refs 0 |
+| `HybridSecurityContractTest` | `providerSecretsNeverAppearInArtifactLogOrFingerprint` | Redaction/allowlist exact |
+| `HybridArchitectureTest` | `defaultReactorHasNoOrToolsDependencyOrServiceDiscoveryActivation` | `com.google.ortools` refs 0 |
 | `HybridArchitectureTest` | `closedCanonicalAssemblyHasNoPhase13SolverPoolBackendOrProviderEdge` | Phase 13 assembly/provider edge 0 |
 
 ### 9.3 Pool/identity/determinism test
@@ -1210,19 +1247,23 @@ consumption과 hand-authored lexicographic vector를 계산한다.
 | `RouteSelectionProjectionTest` | `requestUnassignedAndConcreteVehicleRowsRoundTripExactly` | Tiny exact | Hand coefficients |
 | `RouteSelectionProjectionTest` | `coefficientOverflowOrLossyRoundTripIsRejected` | Boundary long | No backend call |
 | `TinyExactRouteSelectionOracleTest` | `backendOutcomeMatchesExhaustiveOptimumAndStableIds` | Tiny exhaustive oracle | Exact lexicographic optimum |
+| `CpSatAdapterContractTest` | `usesDirectSatApiWithoutMPSolver` | Bytecode/dependency scan | `com.google.ortools.sat` only; `MPSolver` refs 0 |
+| `CpSatAdapterContractTest` | `onlyOptimalOrFeasibleReadBooleanValues` | CP-SAT status matrix | Unsafe value/objective read 0 |
+| `CpSatAdapterContractTest` | `looseGapCannotClaimExactOptimality` | Test-only gap profile | Exact profile bind/solve rejected |
 | `LexicographicSelectionTest` | `feasibleLimitDoesNotOptimizeLowerPriorityDimension` | Staged fake backend | Lower stage not called |
 | `WarmStartContractTest` | `warmStartMustReferenceEveryPinnedIncumbentColumnAndExactBank` | Tiny exact | Exact row feasibility |
 | `SelectionOutcomeContractTest` | `noIncumbentStatusesNeverReadSelectedOrObjectiveAttributes` | Status×incumbent matrix | Unsafe getter call 0 |
 | `SelectionOutcomeContractTest` | `staleSelectedIdIsRejectedBeforeMaterialization` | Stale selected ID | Draft count 0 |
-| `BackendLifecycleTest` | `modelSessionEnvironmentAndLeaseCloseInRequiredOrderOnEveryFailure` | Fault matrix | Leak count 0 |
-| `BackendLifecycleTest` | `backendUnavailableDiffersFromLicenseUnavailable` | Two fixtures | Distinct status |
+| `BackendLifecycleTest` | `nativeLoadFailureDiffersFromBackendAssemblyAbsence` | Two fixtures | Distinct status |
+| `BackendLifecycleTest` | `cancellationCallsStopSearchAndClearsSolveReferences` | Fault/race matrix | No retained callback/reference |
+| `BackendLifecycleTest` | `alnsOnlyAssemblyNeverLoadsNativeLibraries` | Default assembly | Loader call count 0 |
 
 ### 9.5 Materialization/divergence/fallback/repro test
 
 | Class | Exact method | Fixture/oracle | Expected |
 |---|---|---|---|
 | `RouteSelectionMaterializationTest` | `selectedArtifactsAreClonedIntoFreshExactPartition` | Tiny exact | No alias, exact bank |
-| `RouteSelectionMaterializationTest` | `backendUnassignedEvidenceMustMatchCoverageComplement` | Corrupted \(u_i\) | Integrity failure |
+| `RouteSelectionMaterializationTest` | `unassignedSetIsRebuiltAsSelectedCoverageComplement` | Tiny exact + corrupted fake side-channel | Side-channel ignored; exact complement |
 | `HybridAdoptionTest` | `strictlyBetterCandidateIsOnlyAdoptableCandidate` | Better/equal/worse | Adopt count 1 |
 | `HybridAdoptionTest` | `rawBackendObjectiveNeverOverridesFullComparator` | Divergence fixture | Incumbent retained |
 | `HybridFallbackTest` | `optionalNoIncumbentPreservesIncumbentAndNextWarmStartFingerprint` | No incumbent | Exact pre/post equality |
@@ -1232,14 +1273,14 @@ consumption과 hand-authored lexicographic vector를 계산한다.
 | `HybridReproducibilityTest` | `fixedStrongEnvelopeRepeatsPoolModelOutcomeDecisionAndCandidateFingerprints` | Deterministic fake | Exact trace/result |
 | `HybridReproducibilityTest` | `nondeterministicBackendCannotClaimStrongReplay` | Permuted fake | Classification failure |
 | `HybridPhase07BoundaryTest` | `adoptedCandidateStillRequiresCandidateAndResultVerifierPass` | Corrupted result | Publication blocked |
-| `HybridRollbackTest` | `securityLicenseOrCostTripRestoresAcceptedAlnsOnlyPlan` | Operational fault | Prior plan/pointer |
+| `HybridRollbackTest` | `securitySupplyChainOrCostTripRestoresAcceptedAlnsOnlyPlan` | Operational fault | Prior plan/pointer |
 
 ### 9.6 Performance/cost tests without hidden threshold
 
 | Class | Exact method | Measurement | Pass rule |
 |---|---|---|---|
 | `RoutePoolWorkAccountingTest` | `reportsAdmissionMergeSealBytesAndPeakMemoryWithoutChangingSelection` | Route count/bytes/RSS/work | Counters complete; no quality input |
-| `RouteSelectionWorkAccountingTest` | `separatesQueueLeaseBuildOptimizeMaterializeAndFullEvaluationWork` | Phase work counters | All declared stages accounted |
+| `RouteSelectionWorkAccountingTest` | `separatesQueueAdmissionBuildSolveMaterializeAndFullEvaluationWork` | Phase work counters | All declared stages accounted |
 | `HybridExperimentManifestTest` | `requiresExplicitTestOrExperimentBudgetAndScope` | Missing each field | Bind failure |
 | `HybridCostAuthorityTest` | `unapprovedBudgetOrCapacityCannotOpenBackend` | Cost approval absent | Backend open 0 |
 | `HybridTrafficAuthorityTest` | `missingTrafficSplitAuthorityCannotSelectHybridPopulation` | No rollout approval | No implicit split |
@@ -1263,7 +1304,7 @@ explicit approval 뒤 별도 manifest/version으로 추가한다.
 | 9 | Backend objective가 comparator를 우회 | Full evaluate + strict adoption | Core/application |
 | 10 | Failure가 incumbent를 바꿈 | Optional exact fallback / required incomplete | Fault/rollback |
 | 11 | Fixed envelope가 nondeterministic인데 strong claim | Exact replay or declared weaker class | Repro |
-| 12 | Vendor/secret/tenant/cost authority leakage | Architecture/security/license/cost green | Root/integration |
+| 12 | OR-Tools/secret/tenant/cost authority leakage | Architecture/security/OSS-license/SBOM/cost green | Root/integration |
 | 13 | Phase 07 bypass 또는 skip handoff 불명확 | Both-gate + Phase 14 conditional contract | E2E/handoff |
 | 14 | Evidence/review 일부만 있음 | Required test skipped 0 + immutable bundle + independent implementation/evidence review PASS | Review |
 
@@ -1305,26 +1346,26 @@ Target module/profile 이름은 proposed다. Exact reactor가 Phase 00에서 승
 failure/error/skipped가 모두 0임을 fail closed로 대조한다. 이름 오타, report 누락,
 disabled test 또는 empty selection은 exit code 0이어도 evidence가 아니다.
 
-Approved backend가 생긴 뒤에만 isolated licensed profile에서 다음 범주의 exact
+Gate가 열리고 dependency/native/OSS-license 승인이 난 뒤에만 isolated OR-Tools profile에서 다음 범주의 exact
 command를 approval record에 고정한다.
 
 ```text
-./mvnw -P<approved-phase13-backend-integration-profile> \
-  -pl adapters/route-selection-<approved-backend> -am verify
+./mvnw -P<approved-phase13-ortools-integration-profile> \
+  -pl adapters/route-selection-ortools-cpsat -am verify
 ```
 
 Pass criteria:
 
 - Required test failed/error/skipped `0`
-- Gate-closed backend open/session/lease/artifact count `0`
+- Gate-closed backend open/native-load/session/artifact count `0`
 - Gate-closed Phase 14 action에는 trusted/in-scope/in-window/non-revoked/fresh
   action-time applicability verification `PASS`; unsigned/stale/non-`PASS` acceptance `0`
 - Fixed-envelope pool/model/outcome/decision/candidate fingerprint exact equality
 - Tiny exhaustive oracle와 selected stable IDs/objective exact equality
-- Fault/cancel/security/license path native/session/lease leak `0`
-- Core/generic solver/application/verification vendor reference `0`
+- Fault/cancel/security/native path callback/session/reference leak `0`
+- Core/generic solver/application/verification `com.google.ortools` reference `0`
 - Verification→solver/search/pool/backend dependency `0`
-- Secret/raw PII/license material match `0`
+- Secret/raw PII match `0`
 - Unauthorized traffic/config default `0`
 - Optional failure 전후 incumbent/next-warm-start fingerprint exact equality
 - Required failure의 degraded-success count `0`
@@ -1425,13 +1466,13 @@ gate-closed skip/rejection contract는 scheduler/Phase 14 control-plane 책임�
 - **Handoff:** Frozen model/warm-start contract, oracle report와
   `E-P13-SELECTION` partial candidate를 WP-13.3에 전달.
 
-### WP-13.3 — Solver-neutral API와 deterministic fake
+### WP-13.3 — Backend-neutral API와 deterministic fake
 
 - **Prerequisite/gate:** WP-13.2 green, route-selection authority matrix 승인.
-  특정 production backend/license는 아직 필요하지 않으며 fake는 test-only다.
+  OR-Tools production dependency/native approval는 아직 필요하지 않으며 fake는 test-only다.
 - **Change target:** `selection.api`, outcome validation, fake backend/session,
   cancellation와 status×incumbent contract.
-- **Concrete tasks:** Vendor-neutral factory/session, typed outcome, selected stable
+- **Concrete tasks:** Backend-neutral factory/session, typed outcome, selected stable
   IDs, incumbent-presence guard, cancellation, work accounting과 deterministic
   fake/oracle adapter를 구현한다.
 - **Verification commands/tests:**
@@ -1442,32 +1483,35 @@ gate-closed skip/rejection contract는 scheduler/Phase 14 control-plane 책임�
     -Dtest=SelectionOutcomeContractTest,TinyExactRouteSelectionOracleTest,BackendLifecycleTest
   ```
 
-- **Expected:** Vendor reference 0; status/incumbent unsafe attribute read 0; fake
+- **Expected:** `com.google.ortools` reference 0; status/incumbent unsafe attribute read 0; fake
   selected IDs가 oracle와 exact 일치.
 - **Failure/rollback:** Fake 값을 production default나 backend approval evidence로
   승격하면 WP를 거부한다. Solver-neutral contract만 last safe draft로 보존한다.
 - **Handoff:** Reviewed API/outcome contract와 fake oracle evidence를 WP-13.4/13.5에 전달.
 
-### WP-13.4 — Approved backend, license와 native lifecycle
+### WP-13.4 — Approved OR-Tools dependency, CP-SAT adapter와 native lifecycle
 
-- **Prerequisite/gate:** WP-13.3 green, **exact solver/backend selected**, version/config
-  approved, license/legal/native redistribution/capacity, security, operations와 cost
-  approval가 모두 유효.
-- **Change target:** `adapters/route-selection-<approved-backend>`와 isolated
+- **Prerequisite/gate:** WP-13.3 green, OR-Tools CP-SAT policy에 대한 exact
+  version/checksum/config, Apache-2.0/applicable notice/SBOM/native redistribution와
+  platform matrix, security, operations와 cost approval가 모두 유효.
+- **Change target:** `adapters/route-selection-ortools-cpsat`와 isolated
   integration profile/assembly. 승인 전 module을 만들지 않는다.
-- **Concrete tasks:** Model build, warm start mapping, optimize, status/incumbent
-  mapping, stable ID extraction, model/session/environment cleanup, distributed
-  capacity lease와 secret redaction만 구현한다.
+- **Concrete tasks:** Direct `com.google.ortools.sat` model build, warm-start hint
+  mapping, solve/`stopSearch`, raw status × incumbent mapping, stable ID extraction,
+  process-wide `Loader.loadNativeLibraries()` smoke test, callback/reference cleanup,
+  temp-resource operations와 OSS notice/SBOM evidence만 구현한다. `MPSolver`와
+  commercial license/capacity lease contract는 만들지 않는다.
 - **Verification commands/tests:**
 
   ```text
-  ./mvnw -P<approved-phase13-backend-integration-profile> \
-    -pl adapters/route-selection-<approved-backend> -am verify
+  ./mvnw -P<approved-phase13-ortools-integration-profile> \
+    -pl adapters/route-selection-ortools-cpsat -am verify
   ```
 
-- **Expected:** License-free default `./mvnw clean verify` green; isolated backend status/oracle
-  parity; normal/exception/cancel leak 0; secret/license value artifact/log match 0.
-- **Failure/rollback:** License/native/security/cost authority 만료 또는 cleanup
+- **Expected:** OR-Tools-free default `./mvnw clean verify` green; isolated CP-SAT
+  status/oracle parity; normal/exception/cancel callback/reference leak 0; native
+  smoke/platform/SBOM/notice evidence complete.
+- **Failure/rollback:** OSS-license/SBOM/native/security/cost authority 만료 또는 cleanup
   failure 시 backend assembly를 비선택 상태로 되돌리고 default ALNS-only build를
   유지한다. Fake success로 대체하지 않는다.
 - **Handoff:** Approved backend capability/config fingerprint와 integration evidence를
@@ -1523,14 +1567,14 @@ gate-closed skip/rejection contract는 scheduler/Phase 14 control-plane 책임�
 - **Handoff:** Immutable `HybridPhaseRecord`, fallback/repro report와
   `E-P13-HYBRID` candidate를 WP-13.7에 전달.
 
-### WP-13.7 — Security, license, operations, performance와 cost evidence
+### WP-13.7 — Security, OSS license/SBOM, operations, performance와 cost evidence
 
 - **Prerequisite/gate:** WP-13.4/13.6 green, isolated approved environment,
   owner별 test protocol과 **실험용 explicit 수치** 승인.
-- **Change target:** Tenant/access/secret tests, lease/cancel/recovery/rollback,
-  pool/model work/memory, backend capacity/license/cost/shadow measurement.
-- **Concrete tasks:** Cross-tenant denial, secret/license redaction, least privilege,
-  lease exhaustion, cancel/timeout/native cleanup, pool growth, selection work,
+- **Change target:** Tenant/access/secret tests, runtime admission/cancel/recovery/rollback,
+  pool/model work/memory, backend CPU/memory/native/cost/shadow measurement.
+- **Concrete tasks:** Cross-tenant denial, secret redaction, least privilege,
+  admission exhaustion, cancel/timeout/native temp cleanup, pool growth, selection work,
   latency/quality/fallback/cost 측정과 no-hidden-threshold 검사를 수행한다.
 - **Verification commands/tests:**
 
@@ -1546,7 +1590,7 @@ gate-closed skip/rejection contract는 scheduler/Phase 14 control-plane 책임�
 
 - **Expected:** Unauthorized access/backend open 0; secret leak 0; cleanup leak 0;
   counters complete; 측정되지 않은 threshold/pass/traffic default 0.
-- **Failure/rollback:** Security/license/operations/cost approval 또는 measured bar가
+- **Failure/rollback:** Security/OSS-license/SBOM/operations/cost approval 또는 measured bar가
   충족되지 않으면 production recommendation을 만들지 않고 ALNS-only plan을
   유지한다. Experiment 결과를 official evidence로 이름 바꾸지 않는다.
 - **Handoff:** `E-P13-SECURITY-LICENSE-OPS-COST`와 go/no-go owner verdict를 WP-13.8에 전달.
@@ -1559,7 +1603,7 @@ gate-closed skip/rejection contract는 scheduler/Phase 14 control-plane 책임�
 - **Change target:** ALNS-only A/B shadow, rollback rehearsal, immutable
   `Phase13EvidenceManifest`, review input와 conditional Phase 14 handoff.
 - **Concrete tasks:** Same authority/manifest의 ALNS-only와 hybrid를 비교하되
-  independent verifier, reproducibility class, quality/memory/license/cost/fallback
+  independent verifier, reproducibility class, quality/memory/native/cost/fallback
   evidence를 분리한다. Rollback rehearsal와 activated handoff를 content-address한다.
 - **Verification commands/tests:**
 
@@ -1571,7 +1615,7 @@ gate-closed skip/rejection contract는 scheduler/Phase 14 control-plane 책임�
     -Dtest=HybridPhase07BoundaryTest,HybridRollbackTest
   ```
 
-- **Expected:** Root vendor-free green; shadow lineage same-authority; both-gate
+- **Expected:** Root OR-Tools-free ALNS-only green; shadow lineage same-authority; both-gate
   failure 0 accepted; rollback exact; complete `E-P13-*`; independent Phase 13
   implementation/evidence review `PASS`.
 - **Failure/rollback:** Bundle/review/authority 중 하나라도 불완전하면 최대
@@ -1591,7 +1635,7 @@ gate-closed skip/rejection contract는 scheduler/Phase 14 control-plane 책임�
 | `E-P13-POOL` | Admission/merge/dominance/pin/no-alias/digest/memory | NOT_PRODUCED |
 | `E-P13-SELECTION` | Projection/tiny oracle/model/warm start/status/backend lifecycle | NOT_PRODUCED |
 | `E-P13-HYBRID` | Materialization/full evaluation/strict adoption/fallback/repro | NOT_PRODUCED |
-| `E-P13-SECURITY-LICENSE-OPS-COST` | Tenant/secret/license/native/lease/cancel/capacity/cost owner verdict | NOT_PRODUCED |
+| `E-P13-SECURITY-LICENSE-OPS-COST` | Tenant/secret/Apache-2.0/applicable notices/SBOM/native/admission/cancel/capacity/cost owner verdict | NOT_PRODUCED |
 | `E-P13-SHADOW-ROLLBACK` | ALNS-only A/B, parity, fallback statistics, rollback rehearsal | NOT_PRODUCED |
 | `E-P13-HANDOFF` | Accepted implementation/evidence review와 gate-open activated handoff only | NOT_PRODUCED |
 | Scheduler Phase 13 skip receipt | `C17_GATE_CLOSED`, exact schema/version/decision/ALNS-only identity, signed envelope, trust-policy refs, validity, action-time revocation/freshness verification, Phase 13 refs absent | NOT_PRODUCED; scheduler-owned, not `E-P13-*` |
@@ -1599,11 +1643,11 @@ gate-closed skip/rejection contract는 scheduler/Phase 14 control-plane 책임�
 각 bundle은 source/build/runtime/problem/travel/profile/config/pool/model/warm-start/
 backend/reproducibility identity, exact command, environment, exit code, passed/failed/
 skipped count, fixture/oracle ref, owner verdict, known limitation과 rollback point를
-가진다. Raw secret/license value, mutable latest와 console 한 줄은 evidence가 아니다.
+가진다. Raw secret, mutable latest와 console 한 줄은 evidence가 아니다.
 
 ### 11.2 Layer matrix
 
-| Layer | 필수 test | Provider/license 필요 여부 |
+| Layer | 필수 test | OR-Tools/native 필요 여부 |
 |---|---|---|
 | Gate/unit | Absence, unauthorized, partial/stale receipt | 없음 |
 | Pool unit/property | Admission, merge, no-alias, dominance, digest | 없음 |
@@ -1611,9 +1655,9 @@ skipped count, fixture/oracle ref, owner verdict, known limitation과 rollback p
 | Solver-neutral contract | Status×incumbent, fake, cancel | 없음 |
 | Materialization/application | Clone, full eval, strict adoption | 없음 |
 | Phase 07 boundary | Both-gate and corruption block | 없음 |
-| Architecture | Vendor/verification/provider leakage | 없음 |
-| Licensed backend integration | Native/status/oracle/cleanup | **승인 뒤 필요** |
-| Security/operations | Tenant/secret/lease/cancel/recovery | 승인된 isolated env |
+| Architecture | OR-Tools/verification/provider leakage | 없음 |
+| OR-Tools CP-SAT integration | Native/status/oracle/cancel/cleanup | **승인 뒤 필요** |
+| Security/operations | Tenant/secret/admission/cancel/recovery | 승인된 isolated env |
 | Performance/cost | Pool/model/work/fallback/cost measurement | 승인된 experiment |
 | Shadow/rollback | Same-authority ALNS-only A/B | 승인된 staging |
 | Official hybrid | Phase 14 gates까지 포함 | 별도 production authority |
@@ -1642,14 +1686,14 @@ Gate가 닫혀 있는 현재 Phase 13 implementation은 `GATED`이며 `ACCEPTED`
 - Pool admission/import/reload deterministic digest, no alias, pin, safe dominance
 - Tiny exact oracle와 projection/model/warm-start exact
 - All outcome × incumbent status safe access
-- Approved backend의 vendor/license/native/capacity/security isolation
+- Approved OR-Tools dependency/native/platform/SBOM/security isolation
 - Fresh materialization, exact partition, full recomputation
 - Strictly-better-only adoption
 - Optional failure exact fallback, required failure incomplete
 - Stale/partial/divergent candidate fail closed
 - Fixed-envelope deterministic result 또는 explicit weaker reproducibility class
 - Phase 07 both-gate bypass 0
-- Security/license/operations/performance/cost/shadow/rollback evidence
+- Security/OSS-license/SBOM/operations/performance/cost/shadow/rollback evidence
 - Required test failed/error/skipped 0
 - Immutable `E-P13-*` bundle과 independent Phase 13 implementation/evidence review `PASS`
 - Phase 14 activated handoff와 rollback point
@@ -1666,12 +1710,12 @@ Phase 13은 gate-open scope에서 다음 AND gate를 모두 만족할 때만 sch
 3. Same-authority route만 deterministic immutable pool에 들어간다.
 4. Exact projection이 가능하거나 typed skip하며 hidden approximation은 0이다.
 5. Independent tiny oracle가 model/backend result를 검증한다.
-6. Backend/native/license가 generic build와 semantic module에서 격리된다.
+6. OR-Tools dependency/native runtime이 generic build와 semantic module에서 격리되고 Apache-2.0/applicable notice/SBOM evidence가 있다.
 7. Outcome ID만으로 fresh candidate를 만들고 full evaluator/comparator가 권위다.
 8. Optional/required failure와 retry가 incumbent/identity를 오염시키지 않는다.
 9. Strong replay claim은 fixed deterministic envelope에서만 evidence가 있다.
 10. Phase 07 candidate/result verifier를 모두 통과한 결과만 downstream에 간다.
-11. Security, operations, license/legal, performance, cost owner verdict가 모두
+11. Security, operations, OSS-license/SBOM/legal, performance, cost owner verdict가 모두
     approved scope와 일치한다.
 12. ALNS-only shadow/rollback이 재현되고 Phase 14 handoff가 conditional contract와
     일치한다.
@@ -1683,11 +1727,11 @@ Phase 13은 gate-open scope에서 다음 AND gate를 모두 만족할 때만 sch
 
 - Gate가 닫힌데 `hybrid.enabled=false`를 넣고 구현 완료라고 주장
 - 명시적 hybrid 요청을 승인 없이 ALNS-only success로 조용히 fallback
-- Phase 12 evidence 또는 provider SDK 설치를 `C-17`, solver/license나 hybrid
+- Phase 12 evidence 또는 provider SDK 설치를 `C-17`, OR-Tools activation이나 hybrid
   authority의 대체물로 간주
 - Baseline/non-substituted runtime에 Phase 12 evidence를 보편 선행조건으로 발명
-- 특정 solver/provider/license를 문서 예시에서 production default로 승격
-- Root/common dependency에 vendor JAR/native library 추가
+- 문서의 OR-Tools version 예시를 승인된 production pin/config로 승격
+- Root/common dependency에 OR-Tools JAR/native library 추가
 - ServiceLoader/classpath 순서로 backend를 자동 선택
 - Environment variable 하나로 C-17/traffic/required policy 활성화
 - Route pool cap/pruning/budget/threshold를 코드 상수로 숨김
@@ -1704,7 +1748,7 @@ Phase 13은 gate-open scope에서 다음 AND gate를 모두 만족할 때만 sch
 - Optional failure 뒤 incumbent/next warm start fingerprint 변경
 - Required failure를 `DEGRADED_ALNS_ONLY` normal success로 표시
 - Optimize 시작 뒤 같은 logical run으로 result-bearing retry
-- Secret/license material/raw PII를 log/artifact/fingerprint에 포함
+- Secret/raw PII를 log/artifact/fingerprint에 포함
 - Timeboxed multi-thread backend에 strong reproducibility 주장
 - Phase 07 verifier 하나 또는 둘 다 생략
 - Gate-closed skip receipt에 가짜 `E-P13-*` 또는 hybrid artifact ref 포함
@@ -1724,21 +1768,22 @@ Phase 13은 gate-open scope에서 다음 AND gate를 모두 만족할 때만 sch
 | `C-17` scope | GATED | Product·Algorithm·Architecture | 모든 Phase 13 source/evidence | ALNS-only path | Separate scope approval |
 | Hybrid meaning | OPEN/GATED | Product + Algorithm | Applicable behavior/plan | Minimum adapter boundary only | Versioned meaning contract approval |
 | Route selection authority | OPEN/GATED | Product/Algorithm authority | Request/adoption/rollout 권한 | Backend non-authority fixed | Authority matrix approval |
-| Solver/backend | OPEN/GATED | Solver Backend owner | Adapter/integration | Solver-neutral API proposal | Exact backend/version/config approval |
-| License/legal/native | GATED | Legal/Procurement/Security | Install/use/redistribution/capacity | Vendor-free build | Written approval and isolated profile |
+| Backend policy | RESOLVED POLICY — IMPLEMENTATION GATED | Solver Backend owner | Canonical adapter family | Direct Java CP-SAT policy | C-17 remains closed; no implementation authority |
+| OR-Tools dependency/config | OPEN/GATED | Architecture/Security/Operations | Adapter/integration | Backend-neutral API proposal | Exact version/checksum/params/platform approval |
+| OSS license/SBOM/native | GATED | Legal/Supply-chain/Security | Notice/SBOM/redistribution/platform packaging | OR-Tools-free ALNS-only build | Written approval and isolated profile |
 | Operations | GATED | SRE/Platform | Retry/cancel/recovery/rollback | ALNS-only runbook | Approved runbook/rehearsal |
 | Security | GATED | Platform Security | Tenant/access/secret/native | No backend | Threat model and negative tests approved |
-| Cost/capacity | GATED | FinOps/Product | Budget/lease/rollout | No selector spend | Measured cost/capacity approval |
+| Cost/capacity | GATED | FinOps/Product | Budget/admission/rollout | No selector spend | Measured cost/capacity approval |
 | Pool/budget/cadence/traffic 수치 | OPEN — EXPERIMENT_REQUIRED | Performance/Product/FinOps | Official config/rollout | Explicit TEST_ONLY values | Measured experiment + approval |
-| Reproducibility class | OPEN per backend | Algorithm/Benchmark | Strong claim/official comparison | ALNS-only replay | Fixed envelope evidence or explicit weaker class |
+| Reproducibility class | OPEN per approved CP-SAT config | Algorithm/Benchmark | Strong claim/official comparison | ALNS-only replay | Fixed envelope evidence or explicit weaker class |
 | Scheduler task/owners | BLOCKER | Total scheduler | Authoritative READY/status | `TBD_NOT_SUPPLIED` | Exact task ID and role separation |
 | Scheduler gate-closed signed skip receipt/evidence 부재 | HANDOFF BLOCKER | Scheduler + Phase 14 Application owner | Gate-closed Phase 14 predecessor receipt | Canonical ALNS-only path; no Phase 13 artifact/acceptance claim | Exact signed envelope, action-time verification receipt, Phase 13 assembly/class-load/provider edge 0 and unauthorized pre-solve rejection evidence |
 | Applicability signing/trust policy 미승인 | OPEN/GATED BLOCKER | Security + Release evidence-trust owner | Phase 14 consumption of Skip/Activated applicability | Unsigned proposed schema and negative tests only; no Phase 14 action | Approved signature profile/trust roots/revocation/time/freshness/canonicalization/verifier policy and evidence |
 | Phase 13 implementation/evidence review | REVIEW_GATE | Independent reviewer | ACCEPTED/activated handoff | Reviewed conditional document; no implementation/evidence | Complete evidence + implementation review PASS |
-| Phase 12/13/14 reciprocal contract alignment | RESOLVED — NOT A BLOCKER | Phase 12/13/14 documentation owners | 없음; semantic regression 시에만 재개 | Phase 12 v1.2 conditional bounded evidence + Phase 13 v1.3 signed applicability + Phase 14 consumer seam | Universal Phase12→13 premise와 adjacent/reciprocal digest acceptance가 제거되고 signed envelope/action-time verification 의미가 정렬됨 |
+| Phase 12/13/14 reciprocal contract alignment | RESOLVED — NOT A BLOCKER | Phase 12/13/14 documentation owners | 없음; semantic regression 시에만 재개 | Phase 12 v1.2 conditional bounded evidence + Phase 13 v1.4 signed applicability + Phase 14 consumer seam | Universal Phase12→13 premise와 adjacent/reciprocal digest acceptance가 제거되고 signed envelope/action-time verification 의미가 정렬됨 |
 | Phase 14 official values | OPEN/SEPARATE | Benchmark/Quality | Official hybrid 또는 ALNS cutover | Experiment-only | `Q-BENCH-02`, compliant fixture, Phase 14 authority |
 | `Q-VAR-01` | DEFERRED | Product·Domain·Algorithm | Optional variant 질문/구현 | Current pair/terminal/bank | Exact restart evidence + approval |
-| Cross-worker central selector | DEFERRED SEPARATE ADR | Architecture/Operations/License | Non-local hybrid | Worker-local candidate boundary | RM-9C evidence + scalability ADR |
+| Cross-worker central selector | DEFERRED SEPARATE ADR | Architecture/Operations | Non-local hybrid | Worker-local candidate boundary | RM-9C evidence + scalability ADR |
 
 같은 blocker가 반복되어도 가짜 owner, evidence, approval, solver, threshold 또는
 traffic default를 만들지 않는다. Gate가 닫힌 동안의 restart point는 이 문서와
@@ -1755,7 +1800,7 @@ Actual Phase 06 §16.3에서 다음만 소비한다.
 - Explicit state lifecycle seam
 - Phase 07 both-gate baseline dependency
 
-Vendor API, raw selector incumbent, apply/undo, final result claim은 받지 않는다.
+Backend API, raw selector incumbent, apply/undo, final result claim은 받지 않는다.
 
 Actual Phase 07 §15.3에서 다음을 소비한다.
 
@@ -1780,7 +1825,7 @@ accepted evidence를 조건부로 소비한다. 그 경우에도 다음 제한�
 ```text
 evidenceApplicability = INFRASTRUCTURE_DECISION_INPUT_ONLY
 c17Approval = NOT_GRANTED_BY_THIS_HANDOFF
-solverOrLicenseApproval = NOT_GRANTED_BY_THIS_HANDOFF
+ortoolsActivationOrDistributionApproval = NOT_GRANTED_BY_THIS_HANDOFF
 hybridImplementationAuthority = false
 productionCutoverAuthority = false
 ```
@@ -1865,13 +1910,13 @@ Phase 14는 이 handoff의 scope와 official manifest가 exact 일치하는지 �
 | `REQ-HYBRID` | Master §11.9~11.10, Domain §14, `RM-9C` | §8 lifecycle/adoption/fallback | `Hybrid*Test.*` | `E-P13-HYBRID` |
 | `REQ-VERIFY` | `C-21`, Phase 07 §15.3 | Same both-gate path | `HybridPhase07BoundaryTest.*` | `E-P13-HYBRID` |
 | `REQ-IDENTITY` | Master §13, Integrated §19 | Stable pool/model/run/result identity | Determinism/divergence tests | `E-P13-POOL/SELECTION/HYBRID` |
-| `REQ-LICENSE-SECURITY-OPS-COST` | Architecture §4~§5, Plan §13~§14 | Approved backend/lease/redaction/runbook/cost | `HybridSecurity*`, lifecycle/cost tests | `E-P13-SECURITY-LICENSE-OPS-COST` |
+| `REQ-LICENSE-SECURITY-OPS-COST` | Architecture §4~§5, Plan §13~§14 | Approved OR-Tools native/OSS notice/SBOM/admission/runbook/cost | `HybridSecurity*`, lifecycle/cost tests | `E-P13-SECURITY-LICENSE-OPS-COST` |
 | `REQ-ROLLBACK` | Master §16.2, Integrated §21, Plan §12 | Exact ALNS-only fallback/rollback | `HybridRollbackTest.*` | `E-P13-SHADOW-ROLLBACK` |
 | `REQ-P14-SKIP` | User fixed input, Plan Phase 13~14, Phase 14 `G14-P13-APPLICABILITY/G14-SIGNING-TRUST` | §6.5/§14.3 no-output signed skip + action-time trust/validity/revocation/freshness verification | `Phase13Phase14SkipContractTest.*` | Scheduler signed applicability envelope + action-time verification receipt, both NOT_PRODUCED |
 | `REQ-P14-ACTIVATED` | Plan Phase 14 | §6.5/§14.4 accepted evidence handoff | Activated handoff contract tests | `E-P13-HANDOFF` |
 | `REQ-NO-HIDDEN-DEFAULT` | `Q-BENCH-02`, `C-17`, `Q-VAR-01` | §3 open matrix | Config/traffic/cost negative tests | All `E-P13-*` known limitations |
 
-새 hybrid meaning, authority, solver/backend, pool policy, projection mode, public
+새 hybrid meaning, authority, OR-Tools config, pool policy, projection mode, public
 status, threshold, traffic rule 또는 retry 의미가 발견되면 source/owner/test/evidence를
 이 표에 연결하고 approval record와 relevant canonical/Phase 12~14 semantic
 compatibility를 review한다. 인접 whole-file/section digest나 reciprocal fingerprint를

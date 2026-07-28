@@ -991,7 +991,7 @@ NormalizedInputArtifact
 | Canonical comparator/encoding name | `PROPOSED INTERNAL` | Domain·Architecture | Stable fingerprint compatibility | Test-only versioned comparator | Review/ADR와 replay/migration rule 승인 |
 | Current Win fixture decimal `D/U` | `BLOCKER FOR OFFICIAL USE ONLY` | Input·Matrix + Benchmark | 해당 fixture의 compliant/official use | Negative rejection fixture | Integer matrix 제공 또는 명시적 contract/migration 승인 |
 | `Q-BENCH-02` values | `OPEN — EXPERIMENT_REQUIRED` | Benchmark·Quality | Phase 14 official manifest | Phase 01 unaffected | Calibration + measured review + explicit approval |
-| `C-17` route pool/MIP | `GATED TARGET` | Product·Algorithm·Architecture | Phase 13 | Phase 01 unaffected | Phase 06/07 baseline + scope/solver/license/fallback 승인 |
+| `C-17` route pool/MIP | `GATED TARGET` | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13 | Phase 01 unaffected | Phase 06/07 baseline + C-17 scope + OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback 승인 |
 | `Q-VAR-01` | `DEFERRED` | Product·Domain·Algorithm | Optional variants | Current pair/trip facts only | Variant/fixture/core-impact approval |
 | Multi-trip/rotation | `DEFERRED FEATURE` | Product·Domain·Algorithm | Non-single-trip input | Reject unsupported input | Trip/reset/depot/resource contract와 승인 |
 

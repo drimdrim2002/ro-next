@@ -2,8 +2,8 @@
 
 ```yaml
 status: REVIEW
-version: 1.3-review
-last_updated: 2026-07-26
+version: 1.4-review
+last_updated: 2026-07-28
 owner: RPDPTW Architecture·Application·Platform 설계 역할
 scope: Java 25와 Maven 기반 project/module 구조, 의존 방향, 확장 seam, logical execution·integration 경계
 supersedes: null
@@ -94,7 +94,7 @@ related_documents:
 
 충돌 시 이 문서가 Master나 Domain의 의미를 바꾸지 않는다. 현재 모든 상위 설계는 `REVIEW`이며 Master §1의 authority와 변경 절차를 따른다.
 
-현재 tracked Java path는 실제 ALNS/MIP가 아니라 synthetic objective placeholder다. 아래 ALNS, pool, route selection과 Gurobi backend는 모두 **TARGET / NOT IMPLEMENTED**이며 current module이나 배포가 그 계약을 만족한다고 읽어서는 안 된다. Solver-neutral target을 설계하는 것과 `C-17` gate를 지나 licensed backend를 production에서 활성화하는 것도 별도 결정이다.
+현재 tracked Java path는 실제 ALNS/MIP가 아니라 synthetic objective placeholder다. 아래 ALNS, pool, route selection과 Google OR-Tools CP-SAT backend는 모두 **TARGET / NOT IMPLEMENTED**이며 current module이나 배포가 그 계약을 만족한다고 읽어서는 안 된다. CP-SAT backend 정책 선택, `C-17` activation, 구현 acceptance와 production 활성화는 서로 별도 결정이다.
 
 ## 2. Current-state inventory와 migration 기준
 
@@ -244,7 +244,7 @@ Multi-round execution은 `SolveSnapshot` 뒤의 worker execution을 반복한다
 | `RoutePoolSnapshot` | `solver.pool` | Stable evaluated routes, incumbent pins, merge/pruning policy와 content digest |
 | `RouteSelectionModelManifest` | `solver.selection.api` | Mode, request/vehicle mapping, projected column IDs/objective dimensions, pool/config fingerprints |
 | `MipWarmStartManifest` | `solver.selection.api` | Model fingerprint, selected projected-column/unassigned IDs, feasibility disposition와 incumbent lineage |
-| `RouteSelectionOutcome` | `solver.selection.api` | Generic status, incumbent count, selected IDs, optional bound/gap와 backend evidence |
+| `RouteSelectionOutcome` | `solver.selection.api` | Generic status/termination/provenance, incumbent presence와 selected route IDs only |
 | `PartitionConversionRecord` | `solver.selection.conversion` | Duplicate decisions, fresh route IDs, recomputation and exact-partition evidence |
 | `HybridPhaseRecord` | `application.hybrid` | ALNS, pool, selection, reconstruction, adoption/fallback와 next warm-start lineage |
 | `VerifiedSolution` | Candidate verifier | Recomputed facts/metrics/objective + verifier report |
@@ -322,8 +322,8 @@ ro-next/
 │   │   └── src/main/java/com/ronext/rpdptw/adapter/
 │   │       ├── json/
 │   │       └── local/
-│   ├── route-selection-gurobi/            # OPTIONAL/GATED: artifactId rpdptw-route-selection-gurobi
-│   │   └── src/main/java/com/ronext/rpdptw/adapter/routeselection/gurobi/
+│   ├── route-selection-ortools-cpsat/      # OPTIONAL/GATED: artifactId rpdptw-route-selection-ortools-cpsat
+│   │   └── src/main/java/com/ronext/rpdptw/adapter/routeselection/ortools/cpsat/
 │   ├── object-s3/                          # selected AWS target adapter
 │   ├── workflow-aws-stepfunctions/         # selected AWS target adapter
 │   ├── compute-aws-lambda/                 # selected AWS target adapter
@@ -344,7 +344,7 @@ ro-next/
 └── docs/
 ```
 
-Maven leaf module은 `core`, `solver`, `verification`, `application`, 각 profile JAR, optional optimizer backend, provider adapter와 deployable app이다. `route-selection-gurobi`는 cloud provider adapter가 아니라 algorithm backend이며 `C-17`/`RM-9B` gate 전에는 기본 reactor assembly나 production image에 포함하지 않는다. 각 leaf는 일반적으로 다음 shape를 사용한다.
+Maven leaf module은 `core`, `solver`, `verification`, `application`, 각 profile JAR, optional optimizer backend, provider adapter와 deployable app이다. `route-selection-ortools-cpsat`는 cloud provider adapter가 아니라 algorithm backend이며 `C-17`/`RM-9B` gate 전에는 기본 reactor assembly나 production image에 포함하지 않는다. 각 leaf는 일반적으로 다음 shape를 사용한다.
 
 ```text
 <module>/
@@ -462,14 +462,14 @@ GetVerifiedResult
 | Module | 책임 |
 |---|---|
 | `adapters/common` | `adapter.json`과 `adapter.local` package; JSON mapping, local artifact/state/dispatch |
-| `adapters/route-selection-gurobi` | Optional `RouteSelectionSolverFactory`/session implementation, model/env lifecycle, status mapping과 licensed integration test |
+| `adapters/route-selection-ortools-cpsat` | Optional `RouteSelectionSolverFactory`/session implementation, CP-SAT model/hint/status mapping, native-loader와 integration test |
 | `adapters/object-s3`, `workflow-aws-stepfunctions`, `compute-aws-lambda` | 선택된 AWS target의 artifact/state, durable workflow, compute/telemetry event mapping |
 | `adapters/<provider>` | ECS, GCP, Kubernetes 등 future substitution의 artifact/state/workflow/compute/telemetry package |
 | `apps/cli` | Local/offline invocation과 human-readable failure |
 | `apps/api` | Submission/status/result transport entrypoint |
 | `apps/worker` | Headless prepare/search/verify/finalize process entrypoint |
 
-App module은 composition root다. SDK client, optional route-selection backend, profile provider와 application runtime을 생성·주입하는 곳이며 domain/search 내부에서 global singleton, vendor model/env 또는 SDK default client를 만들지 않는다. Route-selection backend capability가 없는 assembly는 MIP 성공을 흉내 내는 fake가 아니라 typed `UnavailableRouteSelectionSolverFactory`를 주입하고 `BACKEND_UNAVAILABLE`로 optional fallback 또는 required failure를 명시한다. 설치된 backend의 license 획득 실패인 `LICENSE_UNAVAILABLE`과 구분한다.
+App module은 composition root다. SDK client, optional route-selection backend, profile provider와 application runtime을 생성·주입하는 곳이며 domain/search 내부에서 global singleton, backend model/solver 또는 SDK default client를 만들지 않는다. Route-selection backend capability가 없는 assembly는 MIP 성공을 흉내 내는 fake가 아니라 typed `UnavailableRouteSelectionSolverFactory`를 주입하고 `BACKEND_UNAVAILABLE`로 optional fallback 또는 required failure를 명시한다. OR-Tools assembly가 있으나 native load/platform 초기화가 실패한 `NATIVE_RUNTIME_UNAVAILABLE`과 구분한다.
 
 JSON과 local 구현은 별도 Maven module로 쪼개지 않고 `adapters/common`의 package로 둔다. AWS module과 deployment assembly는 선택된 target이지만 `RM-8` parity/cutover gate 전에는 production 완료를 뜻하지 않는다. AWS SDK dependency는 domain·core·solver·verification·application classpath에 넣지 않고 해당 adapter/deployment module에만 격리한다. future provider도 같은 규칙을 따른다.
 
@@ -501,25 +501,47 @@ public interface RouteSelectionSession extends AutoCloseable {
 - `RouteSelectionModelSpec`: Domain §12.5의 exact projection, coefficient range와 model fingerprint
 - `RoutePoolSnapshot`: Stable evaluated-artifact IDs/order와 incumbent pins
 - `MipWarmStart`: Projected-column/unassigned mapping과 prechecked feasibility
-- `RouteSelectionBudget`: Deterministic work/node/solution budget, wall-clock watchdog/reserve와 required/optional policy
-- `RouteSelectionOutcome`: Generic status, incumbent count, selected projected-column/unassigned IDs와 bounded backend evidence
+- `RouteSelectionBudget`: Approved CP-SAT time/deterministic-work budget, wall-clock reserve와 required/optional policy. 숫자는 승인 전 `OPEN`
+- `RouteSelectionOutcome`: Generic status, incumbent presence, selected projected-column IDs, provenance와 termination cause. Unassigned는 materialization이 coverage complement로 재구성한다.
 - `SolverCancellationProbe`: `solver.termination`이 소유하는 provider-neutral read-only cancellation contract. Application type이나 SDK context를 참조하지 않음
 
-Gurobi adapter는 model build, `Start`, parameter mapping, optimize, status/incumbent gate, selected ID extraction과 native cleanup만 소유한다. Reconstruction, cover conversion, full route evaluation, comparator adoption과 final verification은 vendor adapter 밖에 둔다.
+OR-Tools CP-SAT adapter는 checked integer model build, hint/parameter mapping, solve, raw `CpSolverStatus`×incumbent gate, selected ID extraction, cancellation hook와 callback/reference cleanup만 소유한다. Reconstruction, cover conversion, full route evaluation, comparator adoption과 final verification은 backend adapter 밖에 둔다.
 
 Architecture test는 이 backend가 exported `solver.selection.api`와 immutable `solver.pool` contract만 참조하고 `solver.search`, `solver.state`, `application.hybrid`, `verification`을 0회 참조하는지 검사한다.
 
-Native lifecycle:
+OR-Tools CP-SAT/native lifecycle:
 
-1. `RouteSelectionSolverFactory.openSession()`은 명시적 `RouteSelectionSession extends AutoCloseable`을 반환한다.
-2. Model은 모든 정상·예외 경로에서 먼저 dispose한다.
-3. 소유 environment는 그 환경의 모든 model이 dispose된 뒤 닫는다.
-4. 하나의 environment를 여러 solve thread가 공유하지 않는다.
-5. License concurrency가 제한되면 application이 `OptimizerCapacityLeasePort`에서 explicit capacity lease를 획득한 뒤 session을 열고 wait를 telemetry에 기록한다. Backend 내부의 process-local semaphore만으로 분산 concurrency를 보장했다고 주장하지 않는다.
-6. Status와 incumbent count를 확인하기 전 variable value, objective, bound/gap attribute를 읽지 않는다.
-7. Secret/license value는 log, artifact와 fingerprint에 넣지 않고 capability/availability/version만 남긴다.
+1. `RouteSelectionSolverFactory.openSession()`은 명시적
+   `RouteSelectionSession extends AutoCloseable`을 반환한다. Session close는
+   cancellation registration과 callbacks를 clear하고 Java references를 해제한다.
+2. Process startup 또는 isolated capability initialization에서
+   `Loader.loadNativeLibraries()`를 호출한다. Load/platform 실패는
+   `NATIVE_RUNTIME_UNAVAILABLE`로 fail closed한다.
+3. `CpModel`은 `BoolVar`/integer linear constraint와 checked int64 coefficient만
+   사용한다. 이 0-1 exact model에는 MPSolver를 사용하지 않는다.
+4. ALNS incumbent는 CP-SAT hint로 전달하되 채택을 가정하지 않는다.
+5. Application deadline의 remaining budget을 각 lexicographic stage의
+   `max_time_in_seconds`에 매핑하고 cancellation은 실행 중인
+   `CpSolver.stopSearch()`로 전파한다. 숫자는 승인 전 `OPEN`이다.
+6. Raw `CpSolverStatus.OPTIMAL`/`FEASIBLE`에서만 selected value를 읽는다.
+   `INFEASIBLE`/`MODEL_INVALID`/`UNKNOWN`에서는 `value()`/`booleanValue()` 접근이
+   0이어야 한다. Stop/time limit cause는 raw status와 별도 기록한다.
+7. `num_workers`, `random_seed`, time/deterministic-work limit, absolute/relative
+   gap과 model/order는 config/fingerprint에 명시한다. Single-worker/fixed-seed
+   profile도 `PROPOSED TEST_ONLY`이며 evidence 없이 strong replay를 주장하지
+   않는다. Gap limit 충족으로 반환된 `OPTIMAL`을 exact proof로 받아들이지 않는다.
+8. Native library는 process-wide로 load되며 solve마다 unload하지 않는다. Packaged
+   resource가 임시 디렉터리에 풀리면 JVM `deleteOnExit` cleanup, writable temp와
+   잔여 temp를 runtime test에서 확인한다.
+9. OR-Tools는 Apache License 2.0이다. 선택된 artifact/version의 LICENSE와 포함된
+   NOTICE/third-party attribution, transitive native closure를 distribution에 보존하고
+   SBOM·checksum·취약점 evidence를 만든다. 상용 license/server/token/capacity lease를
+   가정하지 않는다.
 
-Default build/test는 Gurobi 설치와 라이선스 없이 통과해야 한다. Licensed integration test는 별도 Maven/CI profile과 isolated environment에서만 실행하고, native library/JAR 재배포는 별도 license review 없이 허용하지 않는다.
+Default build/test는 OR-Tools artifact/native runtime 없이 통과해야 한다.
+Gate-open integration은 별도 Maven/CI profile과 isolated environment를 사용한다.
+`com.google.ortools:ortools-java:${ortools.version}`는 backend module에만 선언하고
+`${ortools.version}`은 승인 전 `OPEN`이다.
 
 ## 7. Dependency direction와 cycle 방지
 
@@ -546,7 +568,7 @@ rpdptw-application
   → rpdptw-solver
   → rpdptw-verification
 
-adapters/route-selection-gurobi (optional/gated)
+adapters/route-selection-ortools-cpsat (optional/gated)
   → rpdptw-core
   → rpdptw-solver
 
@@ -576,7 +598,7 @@ deployment/*
 | From | 금지 대상 | 이유 |
 |---|---|---|
 | `rpdptw-core`, `rpdptw-solver`, `rpdptw-verification` | Provider SDK, HTTP/framework package | Provider/runtime 침투 방지 |
-| `rpdptw-core`, generic solver, verification, application | `gurobi.*`와 다른 optimizer vendor API | Algorithm backend 격리와 license-free build |
+| `rpdptw-core`, generic solver, verification, application | `com.google.ortools.*`와 다른 optimizer backend API | Algorithm backend 격리와 optimizer-free build |
 | `rpdptw-core` | Solver, verification, application, adapter/app/deployment | Stable kernel의 inward dependency 보존 |
 | `rpdptw-solver` | Verification, application, customer profile implementation, adapter | Customer branch와 미검증 publication 방지 |
 | `rpdptw-verification` | `rpdptw-solver`와 그 search/cache package | 독립 검증 |
@@ -596,8 +618,8 @@ deployment/*
 4. Core source에서 provider package, customer-name switch와 global SDK client 생성을 검색한다.
 5. Maven reactor dependency graph에 cycle이 없음을 검사한다.
 6. Test-fixture module이 production scope로 들어오지 않음을 검사한다.
-7. `gurobi.*` bytecode reference가 `adapters/route-selection-gurobi` 밖에 0개인지 검사한다.
-8. License-free profile에서 core/solver/application/unit test가 실행되고, gated assembly만 backend capability를 광고하는지 검사한다.
+7. `com.google.ortools.*` bytecode reference가 `adapters/route-selection-ortools-cpsat` 밖에 0개인지 검사한다.
+8. Optimizer-free profile에서 core/solver/application/unit test가 실행되고, gated assembly만 backend capability를 광고하는지 검사한다.
 
 Module 간 순환을 interface module 추가로 숨기지 않는다. 순환이 발견되면 공유 의미의 진짜 owner를 정하고 더 안쪽의 작은 contract module로 옮긴다.
 
@@ -643,7 +665,7 @@ com.ronext.rpdptw.application.execution
 com.ronext.rpdptw.application.hybrid
 com.ronext.rpdptw.adapter.json
 com.ronext.rpdptw.adapter.local
-com.ronext.rpdptw.adapter.routeselection.gurobi  # optional/gated algorithm backend
+com.ronext.rpdptw.adapter.routeselection.ortools.cpsat  # optional/gated algorithm backend
 com.ronext.rpdptw.adapter.object.s3
 com.ronext.rpdptw.adapter.workflow.aws.stepfunctions
 com.ronext.rpdptw.adapter.compute.aws.lambda
@@ -814,7 +836,7 @@ Local runner도 raw result를 직접 stdout에 정상 결과로 표시하지 않
 ### 10.3 Single-run과 local multi-worker
 
 - Single-run은 하나의 explicit run config와 warm start를 실행한다.
-- Hybrid single-run은 worker-local pool과 backend session을 solve/run scope에 묶고 종료 시 native resource를 deterministic하게 닫는다.
+- Hybrid single-run은 worker-local pool과 backend session을 solve/run scope에 묶고 종료 시 callback/cancellation registration을 정리한다. Process-wide native library를 solve마다 unload하지 않는다.
 - Backend가 없을 때 optional plan은 typed ALNS-only fallback, required plan은 explicit unavailable failure를 반환한다.
 - Local multi-worker test는 같은 `WorkerAssignment` 목록을 stable order로 실행하고 completion order와 무관하게 aggregator가 champion을 고르는지 검증한다.
 - Thread pool size는 result fingerprint나 algorithm budget이 아니다.
@@ -865,7 +887,8 @@ ASSIGNED
 exceptional solve/worker:
   REJECTED_INPUT | BINDING_FAILED | CANCEL_REQUESTED | CANCELLED
   WATCHDOG_REACHED | RESOURCE_LIMIT_REACHED | PLATFORM_TIMEOUT
-  BACKEND_UNAVAILABLE | LICENSE_UNAVAILABLE | ROUTE_SELECTION_FAILED
+  BACKEND_UNAVAILABLE | NATIVE_RUNTIME_UNAVAILABLE | MODEL_INVALID
+  | ROUTE_SELECTION_FAILED
   FAILED | INCOMPLETE | PUBLICATION_REJECTED
 ```
 
@@ -932,7 +955,7 @@ ArtifactDigest
 - `WorkerRunId`는 logical round/worker/warm-start/config identity에 고정된다.
 - Retry `AttemptId`는 바뀔 수 있지만 seed, warm start, requested steps와 logical worker identity는 바뀌지 않는다.
 - `STRONG_REPLAY` route-selection은 같은 pool/model/warm-start/backend config와 `RouteSelectionRunId`를 보존하고 attempt만 바꿀 수 있다.
-- `TIMEBOXED_HYBRID`는 optimize가 시작되기 전 dispatch/lease failure만 같은 `RouteSelectionRunId`로 retry한다. Optimize가 시작된 뒤에는 같은 logical ID로 결과-bearing retry를 하지 않고 optional plan은 ALNS fallback, required plan은 `INCOMPLETE`다. 다시 실행하려면 새 logical run/manifest를 만든다.
+- `TIMEBOXED_HYBRID`는 solve가 시작되기 전 dispatch/admission/native-init failure만 같은 `RouteSelectionRunId`로 retry한다. Solve가 시작된 뒤에는 같은 logical ID로 result-bearing retry를 하지 않고 optional plan은 ALNS fallback, required plan은 `INCOMPLETE`다. 다시 실행하려면 새 logical run/manifest를 만든다.
 - 같은 logical worker의 duplicate success가 같은 verified-candidate digest면 하나로 수렴할 수 있다.
 - `STRONG_REPLAY`의 같은 logical worker identity에 서로 다른 verified-candidate digest가 생기면 integrity violation이며 임의의 하나를 선택하지 않는다. Timeboxed execution은 위 no-result-bearing-retry rule로 이 충돌을 예방한다.
 - Champion과 final publication은 compare-and-set으로 한 번만 확정한다.
@@ -954,17 +977,18 @@ ArtifactDigest
 | `CancellationPort` | Cancellation intent 기록·조회·전파 | Solve/worker identity, requested-at/reason |
 | `ProfileCatalogPort` | Approved profile inventory/config snapshot 제공 | Exact identity + signed/digested content |
 | `SecretResolver` | Adapter credential/secret resolution | Opaque secret handle; core에 전달하지 않음 |
-| `OptimizerCapacityLeasePort` | Distributed license/session capacity의 acquire/release | Backend capability key, opaque lease, expiry/owner; secret 없음 |
 | `ResultPublisher` | Both-gate verified result CAS publication | Result ref + reports + expected state version |
 | `TelemetryPort` | Structured event/metric/trace export | Provider-neutral event fields |
-| `Clock` | Application elapsed/lease 관측 | Monotonic/application time; algorithm quality에 미사용 |
+| `Clock` | Application elapsed/deadline 관측 | Monotonic/application time; algorithm quality에 미사용 |
 
 ### 12.2 Port boundary rules
 
 - Port method에 provider resource name/URI, workflow event, function context 또는 job request type을 넣지 않는다.
 - `ArtifactRef`의 provider location은 adapter-owned opaque locator다. Core는 digest와 schema identity만 사용한다.
 - `SecretResolver` 결과를 domain/profile fingerprint에 넣지 않는다. Secret value는 log/artifact에 쓰지 않는다.
-- Optimizer session은 필요한 경우 `OptimizerCapacityLeasePort` lease를 얻은 worker만 열고 `finally`에서 session close 뒤 lease를 반환한다. Provider가 정해지지 않은 local path는 bounded in-process implementation을 사용할 수 있다.
+- OR-Tools CP-SAT에는 commercial entitlement/capacity lease port를 두지 않는다.
+  WorkerDispatcher/deployment의 일반 queue·CPU·memory admission으로 동시 solve를
+  제한하며 구체 수치는 측정과 승인 전 `OPEN`이다.
 - Orchestration port는 route, matrix와 result 전체를 state payload로 운반하지 않는다.
 - Provider retry와 application retry를 구분한다. Logical attempt 기록 없이 SDK가 business operation을 무한 재시도하게 두지 않는다.
 
@@ -1129,9 +1153,9 @@ routeSelectionStatus
 - Phase duration: adapter, normalization, travel, binding, portfolio, ALNS, pool seal, model build, route selection, conversion, verification, finalization, publication
 - Search work: requested/completed steps, operator별 call/reward/weight/removal count, repair cheap/exact/feasible insertion count
 - Pool: imported/new/rejected-origin/dominated/replaced/pruned/protected artifacts, bytes와 seal/merge time; projection별 column count
-- Route selection: variables/request/vehicle/resource rows, warm-start coverage/disposition, status/incumbent count, bound/gap/nodes/work, selected count와 fallback/adoption reason
-- Resource: heap/native RSS, CPU, GC, artifact bytes, cache statistic와 license wait/concurrency
-- Reliability: retry, duplicate, lease, cancellation latency와 rollback/discard outcome
+- Route selection: variables/request/vehicle/resource rows, warm-start coverage/disposition, raw CP-SAT/generic status, incumbent presence, deterministic work/wall time, selected count와 fallback/adoption reason
+- Resource: heap/native RSS, CPU, GC, artifact bytes, cache statistic와 application queue/admission/concurrency
+- Reliability: retry, duplicate, native load/temp state, cancellation latency, callback cleanup와 rollback/discard outcome
 - Quality: verified objective vector와 metric breakdown
 - Integrity: fingerprint mismatch, verifier failure, incomplete audit와 publication rejection
 
@@ -1151,9 +1175,10 @@ Elapsed time과 provider completion order는 quality objective, seed selection �
 | Pool integrity/dominance failure | 자동 retry 금지 | Same corrupt snapshot 재사용 금지 | Pool 전체를 폐기했고 alias가 없으며 cache-free validated ALNS incumbent가 byte/fingerprint상 그대로일 때만 optional degraded 가능; 그 외 worker failure |
 | Route-selection `FEASIBLE_LIMIT` + incumbent | Hybrid policy | Retry하지 않고 해당 incumbent를 materialize/full-evaluate | Strictly-better adoption 뒤 가능 |
 | Route-selection `NO_INCUMBENT_LIMIT` | Hybrid policy | Same model/pool/warm start retry는 manifest/reproducibility policy가 허용할 때만 | Optional이면 ALNS fallback, required이면 불가 |
-| Route-selection `INFEASIBLE_MODEL` | 자동 성공 변환 금지 | Feasible warm start/model manifest 조사 | Model/projection/snapshot integrity defect; 정상 fallback으로 품질 결과화 금지 |
+| Route-selection `PROVEN_INFEASIBLE` | 자동 성공 변환 금지 | Feasible warm start/model manifest 조사 | Model/projection/snapshot integrity defect; 정상 fallback으로 품질 결과화 금지 |
+| Route-selection `MODEL_INVALID` | 자동 성공 변환 금지 | Model validation/overflow/config 조사 | Optional clean fallback 외 정상 결과 불가 |
 | Backend capability unavailable | Application assembly | `BACKEND_UNAVAILABLE`; capability 변경 전 same attempt retry 없음 | Optional이면 `DEGRADED_ALNS_ONLY`, required이면 불가 |
-| Optimizer license unavailable | Application/backend lease owner | `LICENSE_UNAVAILABLE`; optimize 시작 전 같은 `RouteSelectionRunId`의 새 attempt만 policy에 따라 가능 | Optional이면 `DEGRADED_ALNS_ONLY`, required이면 불가 |
+| OR-Tools native runtime unavailable | Application/backend owner | `NATIVE_RUNTIME_UNAVAILABLE`; solve 시작 전 같은 `RouteSelectionRunId`의 새 attempt만 policy에 따라 가능 | Optional이면 `DEGRADED_ALNS_ONLY`, required이면 불가 |
 | Model build/numeric/backend failure | 자동 성공 변환 금지 | Defect/config investigation | Optional이면 ALNS fallback만 가능 |
 | Conversion/full-evaluation failure | 정상 retry 대상 아님 | Converter/model investigation | Raw solver incumbent는 불가; ALNS fallback만 가능 |
 | Candidate verifier `FAIL` | 정상 retry 대상 아님 | Defect/input investigation | 불가 |
@@ -1201,7 +1226,7 @@ Fixture와 expected result가 비준수 입력을 canonical contract로 바꾸�
 | Search | 8개 policy combination trace, `CLOCK` unavailable case, phase-1 champion selection, 9 operator family fixtures, pair atomicity, shortlist→exact insertion oracle, adaptive/acceptance trace, COW isolation, cache-free equality, fault/cancel discard |
 | Route pool | Accepted/rejected route admission, interrupted exclusion, append/import equality, no-alias, safe dominance/Pareto oracle, incumbent pin, stable digest와 memory growth |
 | Selection API/conversion | Tiny exact-model oracle, request/unassigned/concrete-vehicle/global-resource rows, projection version/fingerprint와 coefficient range/round-trip, lexicographic stage-optimality preservation, warm-start manifest, status×incumbent result, non-projectable typed skip, clone-not-mutate conversion와 full recomputation |
-| Gurobi backend | License-free default build, licensed model/status integration, feasible-limit/no-incumbent/infeasible-model/numeric/cancel/backend/license fault, TIMEBOXED optimize 전/후 retry identity, model→env cleanup와 concurrent-session isolation |
+| OR-Tools CP-SAT backend | Optimizer-free default build, direct integer model/hint, raw status×incumbent mapping, feasible/no-incumbent/infeasible/model-invalid/cancel/native-init fault, TIMEBOXED solve 전/후 retry identity, callback/temp/native lifecycle, Apache-2.0 notice·SBOM/native closure |
 | Hybrid application | ALNS→pool→selection→materialization/full evaluation→ALNS feedback, invalid/worse/no-incumbent fallback fingerprint, adopted-only warm start와 required/optional behavior |
 | Candidate verifier | Corrupted pair/terminal/travel/metric/objective rejection, poisoned cache 무관성 |
 | Finalization | Static `PROVEN`, required exhaustive audit, feasible insertion 발견의 no-auto-fix, bounded diagnostic |
@@ -1255,7 +1280,7 @@ Maven은 dependency graph로 실제 순서를 계산하지만 review 기준의 t
 2. rpdptw-core
 3. owner contract를 소비하는 test-fixtures
 4. rpdptw-solver + rpdptw-verification + profile modules
-5. optional route-selection backend (GATED: `C-17` scope approval과 `RM-9B`, licensed profile 분리 때만)
+5. optional route-selection backend (GATED: `C-17` scope approval과 `RM-9B`, OR-Tools CP-SAT integration profile 분리 때만)
 6. rpdptw-application
 7. adapters/common
 8. apps/cli + apps/api + apps/worker
@@ -1281,7 +1306,7 @@ Maven은 dependency graph로 실제 순서를 계산하지만 review 기준의 t
 | `AR-9 / RM-6-official` | Approved manifest와 official workflow | `Q-BENCH-02` calibration 승인 + compliant integer travel + all worker `MAX_STEPS_REACHED`/verification |
 | `AR-10 / RM-7` | COW profiling | COW 유지 또는 별도 evidence/ADR; 자동 apply/undo 전환 없음 |
 | `AR-H1 / RM-9A` | `rpdptw-solver` immutable evaluated-artifact pool/snapshot | Admission/merge/dominance/digest/memory evidence와 separate scope approval |
-| `AR-H2 / RM-9B` | Selection SPI + tiny fake/oracle + optional Gurobi backend | Exact model/warm-start/status/fallback/native cleanup; license-free default build |
+| `AR-H2 / RM-9B` | Selection SPI + tiny fake/oracle + optional OR-Tools CP-SAT backend | Exact integer model/hint/status/fallback/native packaging·callback cleanup; optimizer-free default build |
 | `AR-H3 / RM-9C` | `AR-5/RM-5` both-gate application baseline과 `AR-H2/RM-9B` 위의 worker-local hybrid application + shadow | Adopted-only feedback, optional/required fallback, reproducibility class와 ALNS-only A/B |
 | `AR-11 / RM-8-aws` | AWS S3/Step Functions/Lambda adapter/deployment | Local↔AWS semantic parity, SDK isolation, retry/CAS/cancel fault, two-gate publication, shadow/rollback evidence |
 | `AR-12 / RM-9-other` | Future topology/variant/multi-trip 후속 | provider parity or deferred resume evidence와 별도 scope 승인 |
@@ -1341,8 +1366,8 @@ Maven은 dependency graph로 실제 순서를 계산하지만 review 기준의 t
 | Pool route를 conversion 중 mutate | Alias, stale metric과 다음 snapshot 오염 |
 | `(vehicle type, request set)` scalar minimum만 보존 | Concrete vehicle·terminal·다차원 objective의 안전하지 않은 dominance |
 | Raw MIP selected columns를 `CommittedCandidate`로 cast | Overlap/vehicle conflict와 verifier 우회 |
-| Generic solver에 `gurobi.*` import | Vendor/license/native lifecycle이 core에 침투 |
-| MIP no-incumbent/license failure를 empty solution으로 변환 | Valid ALNS incumbent 손실과 false success |
+| Generic solver에 `com.google.ortools.*` import | OR-Tools/native lifecycle이 core에 침투 |
+| MIP no-incumbent/native-runtime failure를 empty solution으로 변환 | Valid ALNS incumbent 손실과 false success |
 
 ## 21. 남은 ADR와 decision backlog
 
@@ -1363,7 +1388,7 @@ Maven은 dependency graph로 실제 순서를 계산하지만 review 기준의 t
 | `ADR-ARCH-011` | JPMS 사용 여부 | Dependency/toolchain compatibility |
 | `ADR-ARCH-012` | AWS production cutover 또는 future provider substitution | AWS cutover evidence 또는 future provider parity·별도 승인 |
 | `ADR-ARCH-013` | Route-selection production activation, exact partition vs compatibility mode와 profile projection 범위 | `C-17`, `RM-9A/B`, tiny-model/shadow evidence |
-| `ADR-ARCH-014` | Worker-local hybrid 유지 vs cross-worker pool fan-in/central selector | `RM-9C` 뒤 artifact/license/bottleneck/idempotency evidence |
+| `ADR-ARCH-014` | Worker-local hybrid 유지 vs cross-worker pool fan-in/central selector | `RM-9C` 뒤 artifact/CPU·memory bottleneck/admission/idempotency evidence |
 
 별도 backlog:
 
@@ -1371,7 +1396,7 @@ Maven은 dependency graph로 실제 순서를 계산하지만 review 기준의 t
 - AWS production cutover: `RM-8` parity/shadow/rollback 및 운영 승인
 - `Q-VAR-01`: Optional variant feasibility 시점/대상
 - Multi-trip/rotation: Exact trip/reset/depot/resource contract
-- Route pool/MIP production activation: Master §11.7~§11.10과 `RM-9A`~`RM-9C`; solver/licensing/native/fallback와 shadow decision
+- Route pool/MIP production activation: Master §11.7~§11.10과 `RM-9A`~`RM-9C`; OR-Tools version/config/native packaging/Apache-2.0 notice·SBOM/security/operations/compute-cost/admission/fallback/rollback와 shadow decision
 
 ## 22. Traceability와 상태 보존
 
@@ -1426,7 +1451,7 @@ gated optional:
   immutable route pool
   exact-projectable route selection
   worker-local ALNS↔MIP hybrid
-  licensed/native optimizer adapter
+  OR-Tools CP-SAT/native optimizer adapter
 
 portable:
   application use cases
@@ -1441,4 +1466,4 @@ replaceable:
 
 구현의 기준은 “특정 cloud에서 실행된다”가 아니라 **같은 immutable semantic snapshot과 logical execution contract가 local runner와 향후 승인된 infrastructure adapter에서 같은 verified result 의미를 보존한다**는 것이다.
 
-현재 placeholder는 이 target을 구현하지 않는다. Optional hybrid의 구현 완료는 generic API나 Gurobi dependency의 존재가 아니라 `AR-H1`~`AR-H3`의 pool integrity, exact model, native/status fallback, full reconstruction evaluation과 shadow evidence로만 주장할 수 있다.
+현재 placeholder는 이 target을 구현하지 않는다. Optional hybrid의 구현 완료는 generic API나 OR-Tools dependency의 존재가 아니라 `AR-H1`~`AR-H3`의 pool integrity, exact CP-SAT model, native/status fallback, full reconstruction evaluation과 shadow evidence로만 주장할 수 있다.

@@ -2054,7 +2054,7 @@ Green 순서를 맞추려고 Phase 07 fake를 full E2E로 이름 바꾸거나, f
   ```
 - **Exact tests / expected**
   - §11.10의 3 `LegacyMigrationBoundaryTest.*` methods와 all architecture methods green.
-  - License-free full reactor green; required failed/error/skipped 0.
+  - OR-Tools-free ALNS-only full reactor green; required failed/error/skipped 0.
   - Cloud/DB/vendor dependency in default local/application 0.
   - Three evidence bundle digests complete and independent review `PASS`.
   - Phase 09/10 compatibility receipt present; AWS/object storage/coordinator implementation claim 0.
@@ -2094,7 +2094,7 @@ Maven: 3.9.14 or accepted compatible version under root Enforcer
 | Real local E2E | WP-08.6 commands | §11.9 all methods; real both-gate path |
 | Migration | WP-08.7 first command | Legacy/new cross-call/write 0; rollback exact |
 | Application/local module set | WP-08.7 second command | Required module verify green |
-| Full reactor | `./mvnw -B -ntp -Dstyle.color=never clean verify` | License-free required reactor green |
+| Full reactor | `./mvnw -B -ntp -Dstyle.color=never clean verify` | OR-Tools-free ALNS-only required reactor green |
 
 Selected test 전에 exact implementation source에서
 `./mvnw -B -ntp -Dstyle.color=never clean install`을 통과시켜 reactor dependency를 설치한다.
@@ -2290,7 +2290,7 @@ Phase 08은 다음이 모두 참일 때만 `ACCEPTED` 후보다.
 | `Q-BENCH-02` official values | `OPEN — EXPERIMENT_REQUIRED` | Benchmark/Quality | Official manifest/baseline/cutover | Explicit `TEST_ONLY`/experiment config | Calibration corpus/protocol, measured review, approval |
 | Current Win fixture decimal `D/U` | `BLOCKER FOR OFFICIAL USE` | Input/Matrix + Benchmark | That fixture's official run | `P08_LOCAL_PD_3_TEST_ONLY` integer fixture | Compliant integer matrix or approved migration |
 | AWS target implementation/cutover | `FUTURE GATE` | Phase 09~11/14 owners | S3/Step Functions/Lambda and production | Provider-neutral ports + local reference | Storage/coordinator/AWS parity, security, shadow, rollback evidence |
-| `C-17` route pool/MIP | `GATED TARGET` | Product/Algorithm/Architecture + solver/license | Phase 13 and default activation | ALNS-only local path | Phase 06/07 accepted baseline and separate approval |
+| `C-17` route pool/MIP | `GATED TARGET` | Product/Algorithm/Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13 and default activation | ALNS-only local path | Phase 06/07 accepted baseline and C-17 OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
 | `Q-VAR-01` | `DEFERRED` | Product/Domain/Algorithm | Optional variant question/implementation | Current pair/terminal/bank contract | Representative fixture, feasibility and separate approval |
 | Multi-trip/rotation/dynamic routing | `DEFERRED FEATURE` | Product/Domain/Algorithm | Extended runtime semantics | Oneway/single roundtrip immutable solve | Approved domain/runtime/replanning contract |
 

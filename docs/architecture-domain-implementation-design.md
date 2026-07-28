@@ -2,13 +2,13 @@
 
 ```yaml
 status: REVIEW
-version: 1.3-review
-last_updated: 2026-07-26
+version: 1.4-review
+last_updated: 2026-07-28
 owner: RPDPTW Domain·Architecture·Application·Platform 설계 역할
 document_role: Domain 계약과 project architecture를 실제 구현 순서로 통합한 신규 설계안
 source_documents:
-  - architecture-design.md@1.3-review
-  - domain-design.md@2.3-review
+  - architecture-design.md@1.4-review
+  - domain-design.md@2.4-review
   - master-design.md
 selected_target_reference_runtime:
   storage: AWS S3
@@ -121,7 +121,7 @@ supersedes: null
 - Multi-trip/rotation 활성화
 - MDVRP·OVRP·SDVRP 구현
 - Dynamic traffic, realtime replanning, geocoding
-- Route pool/MIP의 production 기본 활성화와 특정 optimizer license 승인
+- Route pool/MIP의 production 활성화, OR-Tools dependency version·native 배포·실행 파라미터 승인
 - `Q-BENCH-02` calibration 전 공식 worker/round/step/watchdog 수치
 - Database 기반 검색·집계·관리 화면
 - Object storage listing에 의존하는 query API
@@ -526,7 +526,7 @@ ro-next/
 │   ├── compute-gcp-cloudrun/               # FUTURE: 실제 채택 시 생성
 │   ├── workflow-kubernetes-controller/     # FUTURE: 실제 채택 시 생성
 │   ├── compute-kubernetes-job/             # FUTURE: 실제 채택 시 생성
-│   └── route-selection-gurobi/             # OPTIONAL/GATED algorithm backend
+│   └── route-selection-ortools-cpsat/       # OPTIONAL/GATED exact 0-1 backend
 │
 ├── apps/
 │   ├── pom.xml
@@ -578,7 +578,7 @@ Maven module은 다음 중 하나가 필요할 때만 만든다.
 1. 독립 deployable artifact
 2. Cloud/optimizer SDK처럼 무겁고 교체 가능한 dependency 격리
 3. Solver와 verifier처럼 compile dependency 물리 차단
-4. 독립 release/security/license lifecycle
+4. 독립 release/security/OSS-license/native-runtime lifecycle
 
 고객 수는 POM 수를 결정하지 않는다.
 
@@ -654,7 +654,7 @@ adapters/workflow-*
 adapters/compute-*
   → rpdptw-application
 
-adapters/route-selection-gurobi
+adapters/route-selection-ortools-cpsat
   → rpdptw-core
   → exported rpdptw-solver selection API only
 
@@ -680,7 +680,7 @@ distributions/*
 1. Core/solver/verification/application에서 AWS/GCP/Azure/Kubernetes SDK reference 0개
 2. Core/solver/verification에서 customer-name conditional 0개
 3. Verification → solver dependency 0개
-4. Generic module에서 optimizer vendor API reference 0개
+4. Generic module에서 `com.google.ortools` API reference 0개
 5. Profile descriptor가 승인된 capability key/version만 참조
 6. Customer identity가 profile catalog와 adapter authorization 밖에 나타나지 않음
 7. Provider adapter가 application port를 구현하고 역방향 interface를 강요하지 않음
@@ -1612,7 +1612,7 @@ versioned input mapping
 | 새 물리·domain 상태 필요 | `capabilities/<business-name>` typed facet, normalization/propagation hook, verifier recomputation; generic seam 변경은 ADR | Customer field/nullable map, provider/application, unrelated profiles | Full propagation hand case, candidate verifier parity, facet 부재 회귀, fingerprint/version migration |
 | 입력 schema/mapping만 다름 | `adapters/common` 아래 versioned typed mapper/DTO, alias/reference fixtures; profile exact identity | Canonical domain 의미, solver, verifier, storage/workflow/compute ports | Golden mapping, alias conflict, invalid reference/unit/time, canonical-equivalence test |
 | 기존 capability의 새 조합 | Descriptor가 capability key/version/typed parameter와 preset만 조합 | Capability implementation, core, POM, worker | Binding closure, duplicate/missing component, end-to-end profile test |
-| 독립 SDK/license/security lifecycle | 해당 capability만 별도 Maven module/POM과 distribution opt-in | Root/core 공통 dependency, 다른 distribution | License-free default build, dependency leakage, enabled distribution integration |
+| 독립 SDK/license/security lifecycle | 해당 capability만 별도 Maven module/POM과 distribution opt-in | Root/core 공통 dependency, 다른 distribution | Dependency-free default build, dependency leakage, enabled distribution integration |
 
 Core, solver, verifier, application, worker POM은 일반적인 신규 고객에서 변경하지 않는다. 새 facet seam이 genuinely 필요한 경우에만 core의 **customer-neutral SPI**를 확장할 수 있으며, 그때도 solver의 고객 분기는 허용되지 않는다.
 
@@ -2134,9 +2134,8 @@ Artifact는 단계 사이의 입력과 결과를 보존하는 versioned 자료�
 | `WorkflowScheduler` | Durable top-level execution start/query/cancel |
 | `CancellationPort` | Cancellation intent record/read |
 | `SecretResolver` | Adapter-only credential/secret handle |
-| `OptimizerCapacityLeasePort` | Optional distributed optimizer session/license capacity |
 | `TelemetryPort` | Provider-neutral event/metric/trace |
-| `Clock` | Application elapsed/lease observation |
+| `Clock` | Application elapsed/deadline observation |
 
 Port method에 bucket/container, provider URI, workflow event, Lambda context, Cloud Run request, Kubernetes Job type를 넣지 않는다.
 
@@ -2986,11 +2985,11 @@ both-gate publication
 
 ### 17.1 Activation gate
 
-**`[GATED]`** 이 phase는 Phase 6 ALNS와 Phase 7 independent verification baseline이 완료된 뒤에만 시작한다. Generic contract 구현이 production MIP 활성화나 특정 optimizer/license 승인을 뜻하지 않는다.
+**`[GATED]`** 이 phase는 Phase 6 ALNS와 Phase 7 independent verification baseline이 완료된 뒤에만 시작한다. 활성화될 경우 canonical exact backend는 **Google OR-Tools direct Java CP-SAT API**다. 이 정책 결정은 production 활성화, 구현 완료, dependency version·native 배포·실행 파라미터 승인을 뜻하지 않는다.
 
 이 절은 첫 구현의 필수 범위가 아니다. 처음 읽는 개발자는 Phase 12까지 구현한 뒤 필요할 때 돌아와도 된다.
 
-Route pool은 ALNS가 발견한 실행 가능한 개별 차량 경로들을 모은 immutable 후보 집합이다. Route selection은 그중 어떤 경로 조합이 모든 request와 차량 조건을 만족하면서 가장 좋은지 MIP 같은 별도 backend로 고르는 과정이다.
+Route pool은 ALNS가 발견한 실행 가능한 개별 차량 경로들을 모은 immutable 후보 집합이다. Route selection은 그중 어떤 경로 조합이 모든 request와 차량 조건을 만족하면서 가장 좋은지 0-1 exact model로 고르는 과정이다. 현재 모델은 Boolean 변수와 정수/fixed-point 선형식만 사용하므로 `MPSolver`가 아니라 `com.google.ortools.sat` CP-SAT를 직접 사용한다.
 
 ```text
 일반 ALNS
@@ -2999,11 +2998,11 @@ Route pool은 ALNS가 발견한 실행 가능한 개별 차량 경로들을 모�
 선택적 hybrid
   → ALNS가 발견한 좋은 개별 route를 pool에 저장
   → route 조합 문제로 투영 가능한 고객 objective인지 확인
-  → MIP backend가 route 조합을 선택
+  → OR-Tools CP-SAT가 route 조합을 선택
   → 선택 결과를 전체 해로 다시 만들고 propagation/verifier로 재검증
 ```
 
-MIP가 선택했다는 사실만으로 결과를 신뢰하지 않는다. Profile의 일부 규칙을 정확히 선형식으로 표현할 수 없으면 이 기능을 건너뛰며, 선택 결과는 반드시 기존 propagation과 evaluation으로 처음부터 재계산한다.
+CP-SAT가 선택했다는 사실만으로 결과를 신뢰하지 않는다. Profile의 일부 규칙을 정확히 정수 선형식으로 표현할 수 없으면 이 기능을 건너뛰며, backend는 selected route IDs만 반환한다. 선택 결과는 반드시 fresh materialization, 기존 propagation/full evaluation, Phase 7 independent verification을 거친 뒤 strictly-better일 때만 채택한다.
 
 Reference baseline은 worker-local이다.
 
@@ -3182,18 +3181,28 @@ MipWarmStart
 OPTIMAL
 FEASIBLE_LIMIT
 NO_INCUMBENT_LIMIT
-INFEASIBLE_MODEL
-NUMERICAL_FAILURE
-CANCELLED
+PROVEN_INFEASIBLE
+MODEL_INVALID
 BACKEND_UNAVAILABLE
-LICENSE_UNAVAILABLE
+NATIVE_RUNTIME_UNAVAILABLE
 MODEL_BUILD_FAILED
 SOLVER_FAILED
 SKIPPED_NON_PROJECTABLE_PROFILE
 SKIPPED_NO_BUDGET
 ```
 
-Incumbent가 있을 때만 selected variables/objective/bound/gap을 읽는다. Raw backend status/objective는 final candidate authority가 아니다.
+Direct CP-SAT raw status mapping은 다음과 같다.
+
+| CP-SAT raw status | Incumbent | Provider-neutral outcome |
+|---|---:|---|
+| `OPTIMAL` | 있음 | `OPTIMAL` |
+| `FEASIBLE` | 있음 | `FEASIBLE_LIMIT` |
+| `INFEASIBLE` | 없음 | `PROVEN_INFEASIBLE` |
+| `MODEL_INVALID` | 없음 | `MODEL_INVALID` |
+| `UNKNOWN` | 없음 | `NO_INCUMBENT_LIMIT` |
+| native/JNI load failure | 없음 | `NATIVE_RUNTIME_UNAVAILABLE` |
+
+시간 제한·호출자 취소·resource termination은 raw status와 분리한 termination cause로 기록한다. `OPTIMAL` 또는 `FEASIBLE`일 때만 Boolean 값을 읽어 selected route IDs를 추출한다. `CpSolver.objectiveValue()`의 `double` 값은 exact 채택 판단에 사용하지 않는다. Loose absolute/relative gap으로 얻은 `OPTIMAL`을 exact proof로 오인하지 않도록 production exact profile의 gap tolerance는 별도 승인 전 `OPEN`이며, exact 계약을 약화하는 값은 금지한다.
 
 ### 17.8 Materialization과 adoption
 
@@ -3221,11 +3230,11 @@ Selector failure가 current/stageBest/solveBest, pool snapshot 또는 next warm 
 5. 각 temporary solution을 bound comparator로 비교한다.
 6. Exact request/vehicle partition을 다시 검증한다.
 
-단일 additive compatibility mode의 marginal shortcut은 별도 승인된 경우만 사용한다. General lexicographic/non-additive profile은 full temporary solution evaluation을 하거나 mode를 skip한다. Backend `ObjVal`은 conversion 전 model evidence일 뿐 evaluated candidate objective가 아니다.
+단일 additive compatibility mode의 marginal shortcut은 별도 승인된 경우만 사용한다. General lexicographic/non-additive profile은 full temporary solution evaluation을 하거나 mode를 skip한다. Backend objective는 conversion 전 model evidence일 뿐 evaluated candidate objective가 아니다.
 
 ### 17.9 Backend isolation
 
-`solver.selection.api`만 vendor-neutral interface를 제공한다.
+`solver.selection.api`만 backend-neutral interface를 제공하고 `adapters/route-selection-ortools-cpsat`만 `com.google.ortools`에 의존한다. Canonical integration은 `CpModel`, `BoolVar`, `LinearExpr`, `CpSolver`, `CpSolverStatus`, `SatParameters`를 사용하는 direct CP-SAT Java API이며 `MPSolver` 또는 `MPSolver("SAT")`를 사용하지 않는다.
 
 ```java
 public interface RouteSelectionSolverFactory {
@@ -3243,15 +3252,15 @@ public interface RouteSelectionSession extends AutoCloseable {
 }
 ```
 
-Vendor adapter가 소유하는 것:
+OR-Tools adapter가 소유하는 것:
 
 ```text
-model build
-parameter/status mapping
-optimize call
+integer/fixed-point model build와 overflow 검증
+CP-SAT parameter/status × incumbent mapping
+solve/stopSearch call
 selected ID extraction
 native resource lifecycle
-license availability
+dependency/runtime identity
 ```
 
 소유하지 않는 것:
@@ -3264,16 +3273,17 @@ comparator adoption
 candidate/result verification
 ```
 
-Default build/test는 vendor install/license 없이 통과한다.
+Default ALNS-only build/test는 OR-Tools dependency와 native loader 없이 통과한다. Gated adapter의 Maven coordinate는 `com.google.ortools:ortools-java:${ortools.version}`이고 exact version/checksum과 지원 OS/architecture matrix는 `OPEN`이다.
 
 Native/session lifecycle:
 
-1. `openSession()`은 solve/thread scope의 `AutoCloseable` session을 반환한다.
-2. Model/native handle은 정상·예외 경로에서 deterministic하게 닫는다.
-3. 소유 environment는 모든 model이 닫힌 뒤 닫는다.
-4. 하나의 native environment를 unrelated solve thread가 공유하지 않는다.
-5. 분산 license/session 제한이 있으면 `OptimizerCapacityLeasePort` lease를 획득한 뒤 session을 열고 `finally`에서 session close 후 lease를 반환한다.
-6. Secret/license value는 log/artifact/fingerprint에 넣지 않는다.
+1. Gated adapter bootstrap이 `Loader.loadNativeLibraries()`를 process-wide로 한 번 호출하고 startup smoke test로 JNI/runtime availability를 확인한다. ALNS-only composition은 이 호출을 하지 않는다.
+2. OR-Tools Java API에는 per-solve native environment unload/close 계약이 없다. JVM lifetime의 native load를 Gurobi식 model/environment cleanup 계약으로 위장하지 않는다.
+3. Caller cancellation은 `CpSolver.stopSearch()`로 전달하며, 남은 전체 wall-clock budget에서 solve time limit를 파생한다. race의 실제 termination cause와 raw status를 함께 기록한다.
+4. Callback/cancellation registration과 solve-local Java reference는 정상·예외 경로에서 해제한다. Loader가 fallback으로 만든 temp resource는 `deleteOnExit()`에 의존하므로 비정상 종료 뒤 stale-temp 검사/정리 정책을 activation 전에 정한다.
+5. `num_workers`, `random_seed`, `max_time_in_seconds`, deterministic-time/gap 관련 값을 manifest에서 명시한다. 승인된 숫자는 아직 없으므로 모두 `OPEN`; single-worker/fixed-seed는 `proposed/test-only`이며 cross-version/platform bitwise 재현성을 보장하지 않는다.
+6. CPU/memory/cold-start 보호는 application/deployment admission으로 관리한다. OR-Tools에는 상용 license, license server, token 또는 license-capacity lease가 없으며 이를 나타내는 port를 만들지 않는다.
+7. OR-Tools 자체 Apache-2.0 license와 resolved Java/native/transitive component의 applicable notices, checksum, SBOM, CVE evidence를 배포 전에 보존한다.
 
 ### 17.10 Hybrid identity와 retry
 
@@ -3335,7 +3345,10 @@ or
 - Fresh materialization/full recomputation
 - Invalid/worse/failure 뒤 ALNS incumbent fingerprint 불변
 - Strictly-better only adoption
-- Vendor-free default build와 native cleanup test
+- OR-Tools-free ALNS-only default build와 gated native load/cleanup test
+- Direct CP-SAT API, integer/fixed-point overflow와 no-loose-gap exactness
+- Explicit version/checksum/platform/worker/seed/time parameter evidence
+- Apache-2.0, applicable third-party notice/SBOM/security evidence
 
 ## 18. Phase 14 — Calibration, migration과 cutover
 
@@ -3394,7 +3407,7 @@ selected distribution/provider
 | Pool/selection | Admission/projection/backend/budget | Hybrid manifest required |
 | Logical execution | Round/worker/seed/warm start | Manifest required |
 | Platform | Region/concurrency/runtime retry/resources | Deployment/run metadata |
-| Secret | Credential/token/license | Value excluded |
+| Secret | Provider credential/token | Value excluded |
 
 Core가 environment variable을 직접 읽지 않는다. Solve 시작 뒤 semantic/profile/algorithm config를 mutable remote source에서 다시 읽지 않는다.
 
@@ -3448,7 +3461,7 @@ optional hybrid identifiers/fingerprints
 - Retry/duplicate/cancellation latency
 - Verified objective/metric breakdown
 - Fingerprint/verifier/publication integrity failure
-- Optional pool/backend/license resource
+- Optional pool/backend CPU·memory·native-runtime resource
 
 Elapsed time과 completion order를 quality objective에 넣지 않는다.
 
@@ -3668,7 +3681,7 @@ database/read-model introduction
 ```text
 [ ] Architecture rules
 [ ] Unit/property/integration/corruption tests
-[ ] License-free default build
+[ ] OR-Tools-free ALNS-only default build
 [ ] Immutable build/runtime digest
 [ ] Approved profile/manifest fingerprints
 [ ] Both verifier PASS
@@ -3742,7 +3755,7 @@ database/read-model introduction
 | Step Functions → 다른 workflow | `adapters/workflow-*`, deployment | Coordinator state machine, score/champion/verifier | Re-entry/wakeup/cancel, duplicate, completeness |
 | Kubernetes 채택 | Workflow/compute adapter와 deployment 중 필요한 축만 | 선택하지 않은 storage 축과 semantic modules | Reconcile/Job contract, tenant isolation, rollback |
 | Artifact schema 변경 | Application artifact contract + all relevant adapters, version/migration ADR | Domain 의미가 같다면 solver/profile | Backward/forward compatibility, digest, replay |
-| Route-selection backend 추가 | `adapters/route-selection-<backend>`, gated distribution | Generic core/application과 ALNS fallback | License-free build, model oracle, fallback/verifier |
+| Route-selection backend 추가 | `adapters/route-selection-ortools-cpsat`, gated distribution | Generic core/application과 ALNS fallback | OR-Tools-free ALNS-only build, CP-SAT model oracle, fallback/verifier |
 
 ## 29. 용어집
 
@@ -3803,7 +3816,7 @@ replaceable compute:
 gated optimization:
   immutable route pool
   exact-projectable route selection
-  vendor-isolated optimizer backend
+  isolated Google OR-Tools direct CP-SAT backend
 ```
 
 이 설계의 구현 성공 기준은 특정 cloud에서 실행되는 것이 아니다. 같은 `CanonicalInput`, `ProblemInstance`, `PreparedTravel`, `BoundProfile`, `ExecutionManifest`가 어떤 지원 storage/workflow/compute adapter 조합에서도 같은 verified result 의미와 provenance를 보존해야 한다.

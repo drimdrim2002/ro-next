@@ -1,8 +1,8 @@
 ---
 title: RPDPTW Domain Design
 status: REVIEW
-version: 3.0-review
-last_updated: 2026-07-26
+version: 3.1-review
+last_updated: 2026-07-28
 owner: RPDPTW Domain·Input·Evaluation·Result 설계 역할
 scope: Master Design의 도메인, 정규화, travel preparation, 해 상태, 전파, 평가, ALNS–MIP 경계와 결과 계약의 상세화
 supersedes: domain-design.md (v2.3-review)
@@ -305,7 +305,7 @@ Architecture mapping은 다음 의미 분리를 보존해야 한다.
 | Propagation, policy SPI, binding, insertion evaluation | `rpdptw-core` | `propagation`, `evaluation.api`, `evaluation.runtime`, `evaluation.insertion` |
 | Portfolio, COW와 ALNS | `rpdptw-solver` | `solver.portfolio`, `solver.state`, `solver.search`, `solver.termination` |
 | Route pool, selection SPI와 conversion | `rpdptw-solver` | `solver.pool`, `solver.selection.api`, `solver.selection.conversion`, `solver.hybrid` |
-| Licensed optimizer backend | optional algorithm-backend adapter | domain 의미를 재해석하거나 mutate하지 않는 별도 backend package |
+| Google OR-Tools CP-SAT backend | optional/gated algorithm-backend adapter | domain 의미를 재해석하거나 mutate하지 않는 `route-selection-ortools-cpsat` package |
 | Candidate/result verification | `rpdptw-verification` | `verification.candidate`, `result.finalization`, `verification.result` |
 | Use case와 execution identity | `rpdptw-application` | `application.port`, `application.service`, `application.execution` |
 | Customer composition | 독립 profile JAR | `profile.<stable_namespace>` |
@@ -816,7 +816,7 @@ MaterializedSelectionDraft
 | `TrialDraft` | 한 ALNS step 안의 mutable changed-route COW 작업 | 아니오 |
 | `CompletedTrial` | exact structure와 full evaluation을 마친 commit 직전 결과 | 아니오 |
 | `SearchSnapshot` | immutable routes/bank/evaluation/fingerprint | 예 |
-| `RouteSelectionIncumbent` | backend raw selected columns/unassigned/evidence | 아니오 |
+| `RouteSelectionIncumbent` | backend raw status/termination/provenance와 selected projected-column IDs only | 아니오 |
 | `MaterializedSelectionDraft` | selected artifacts를 새 route/bank로 복사한 evaluation 전 결과 | 아니오 |
 | `EvaluatedSelectionCandidate` | exact structure와 authoritative evaluation을 통과한 selector 결과 | 예, verifier 전 |
 | `VerifiedSolution` | independent candidate verifier가 `PASS`한 immutable solution | 예, publication 전 |
@@ -1307,7 +1307,7 @@ $$
 
 Objective는 bound comparator와 같은 dimension order의 lexicographic minimization이다. 단계별 solve는 \(Q_d\)의 optimality가 증명된 뒤에만 \(Q_d=Q_d^\*\)를 고정하고 다음 dimension으로 간다. `FEASIBLE_LIMIT`에서는 더 낮은 priority dimension을 풀지 않는다.
 
-Native multi-objective는 exact priority와 zero/declared tolerance가 같은 의미임을 oracle test로 증명해야 한다. 근거 없는 finite Big-M로 strict priority를 평탄화하지 않는다. Authoritative checked `long` coefficient를 backend `double`로 바꾸기 전에 exact-integer range, sum bound, scaling과 round-trip을 검증한다.
+Canonical backend는 Google OR-Tools CP-SAT다. 단계 \(d\)의 exact `OPTIMAL`이 증명된 뒤에만 integer equality \(Q_d=Q_d^\*\)를 다음 model stage에 추가한다. CP-SAT gap limit 충족도 `OPTIMAL`로 보고될 수 있으므로 loose absolute/relative gap은 exact proof가 아니며 exactness를 보존하는 gap 정책 승인 전에는 활성화하지 않는다. 모든 variable, constraint와 objective coefficient를 checked int64 model로 구성하고 domain/sum overflow를 model build 전에 검증한다. Continuous variable가 없으므로 MPSolver는 canonical backend가 아니다. 근거 없는 finite Big-M로 strict priority를 평탄화하지 않는다.
 
 Win PoC projection은 다음과 같은 **예시**다.
 
@@ -1361,23 +1361,28 @@ Provider-neutral outcome:
 OPTIMAL
 FEASIBLE_LIMIT
 NO_INCUMBENT_LIMIT
-INFEASIBLE_MODEL
-NUMERICAL_FAILURE
-CANCELLED
+PROVEN_INFEASIBLE
+MODEL_INVALID
 BACKEND_UNAVAILABLE
-LICENSE_UNAVAILABLE
+NATIVE_RUNTIME_UNAVAILABLE
 MODEL_BUILD_FAILED
 SOLVER_FAILED
 SKIPPED_NON_PROJECTABLE_PROFILE
 SKIPPED_NO_BUDGET
 ```
 
-Outcome은 raw backend status, incumbent count, selected `ProjectedColumnId`, selected-unassigned IDs 또는 backend \(u_i\) evidence, optional model objective/bound/gap, work/elapsed, backend/config fingerprint와 warm-start disposition을 보존한다.
+Outcome은 raw backend status, incumbent presence, selected `ProjectedColumnId`, work/elapsed, backend/config fingerprint와 warm-start disposition을 보존한다. Backend adapter의 선택 반환은 route IDs뿐이며 unassigned set은 selected coverage의 exact complement로 materialization 경계가 재구성한다. `CpSolver.objectiveValue()`/bound/gap은 outcome 반환이나 adoption authority에 넣지 않는다.
 
-- Incumbent가 있을 때만 selected variable/objective attribute를 읽는다.
-- `BACKEND_UNAVAILABLE`: 설치/assembly capability 부재
-- `LICENSE_UNAVAILABLE`: 설치된 backend가 license를 획득하지 못함
-- Feasible warm start가 있는 exact model의 `INFEASIBLE_MODEL`: 품질 결과가 아니라 model/snapshot defect
+- CP-SAT `OPTIMAL`/`FEASIBLE`에서만 selected value를 읽고 각각 provider-neutral
+  `OPTIMAL`/`FEASIBLE_LIMIT`로 매핑한다.
+- `INFEASIBLE`/`MODEL_INVALID`/`UNKNOWN`은 각각 `PROVEN_INFEASIBLE`/
+  `MODEL_INVALID`/`NO_INCUMBENT_LIMIT`이며 selected value를 읽지 않는다.
+- Time limit, asynchronous `stopSearch()` cancellation, memory/custom limit은 raw status와
+  별도 cause다. Cancellation 뒤 `FEASIBLE`이면 incumbent-present,
+  `UNKNOWN`이면 no-incumbent다.
+- `BACKEND_UNAVAILABLE`: optional assembly capability 부재
+- `NATIVE_RUNTIME_UNAVAILABLE`: `Loader.loadNativeLibraries()` 또는 platform-native 초기화 실패
+- Feasible warm start가 있는 exact model의 `PROVEN_INFEASIBLE`: 품질 결과가 아니라 model/snapshot defect
 - Backend model objective는 conversion 뒤 evaluated solution objective의 authority가 아니다.
 
 <a id="materialization-conversion"></a>
@@ -1392,7 +1397,7 @@ I \setminus
 \bigcup_{r:x_r=1}\operatorname{coverage}(r)
 $$
 
-Backend selected-unassigned IDs/\(u_i\)는 이 complement와 같아야 하는 cross-check evidence다. Pool entry를 alias하거나 mutate하지 않는다.
+이 complement와 exact request row/model identity를 교차검증하며 backend의 \(u_i\) value를 별도 반환하지 않는다. Pool entry를 alias하거나 mutate하지 않는다.
 
 `SET_COVER_THEN_CONVERT`는 다음 순서를 지킨다.
 
@@ -1431,7 +1436,7 @@ Hybrid 비교 기준은 직전 ALNS segment가 완료한 cache-free validated `s
 ```text
 selector candidate = equal/worse/invalid
 or no incumbent
-or backend/license/model/conversion/evaluation failure
+or backend/native-runtime/model/conversion/evaluation failure
 → preserve HybridPhaseIncumbent fingerprint
 ```
 
@@ -1447,7 +1452,8 @@ phase budget + reproducibility class
 ALNS termination/best/operator stats/decision trace digest
 pool before/delta/after fingerprints + admission/pruning counts
 projection/model/warm-start/backend fingerprints
-selection status/incumbent/selected projected-column and unassigned IDs
+selection status/incumbent/selected projected-column IDs
+materialized unassigned coverage complement
 conversion/materialization/full-evaluation record
 incumbent-vs-selector comparator decision
 adopted champion or typed fallback
@@ -1603,7 +1609,7 @@ Search/domain defect:
 
 Watchdog, cancellation, resource/platform timeout과 failure는 별도다. 예외 종료의 last committed best도 두 verifier를 통과해야 recovery candidate가 될 수 있으며 official benchmark completion으로 표시하지 않는다.
 
-`NO_INCUMBENT_LIMIT`, backend/license/model/solver/conversion/full-evaluation failure는 ALNS step termination이 아니다. Optional hybrid plan에서는 typed incumbent-preserving fallback이고, MIP-required plan에서는 `INCOMPLETE`/failure다. Raw backend incumbent와 model objective는 recovery candidate가 아니다.
+`NO_INCUMBENT_LIMIT`, backend/native-runtime/model/solver/conversion/full-evaluation failure는 ALNS step termination이 아니다. Optional hybrid plan에서는 typed incumbent-preserving fallback이고, MIP-required plan에서는 `INCOMPLETE`/failure다. Raw backend incumbent와 model objective는 recovery candidate가 아니다.
 
 <a id="acceptance-evidence"></a>
 ## 17. Acceptance evidence
@@ -1700,7 +1706,7 @@ Watchdog, cancellation, resource/platform timeout과 failure는 별도다. 예�
 - integer-to-backend coefficient range/round-trip
 - warm-start column completeness와 row feasibility
 - 모든 selection status × incumbent presence의 safe attribute access
-- `BACKEND_UNAVAILABLE`/`LICENSE_UNAVAILABLE` 구분
+- `BACKEND_UNAVAILABLE`/`NATIVE_RUNTIME_UNAVAILABLE` 구분과 CP-SAT status×incumbent matrix
 - exact materialization의 complement bank와 backend \(u_i\) cross-check
 - OGC conversion의 pair-atomic clone, empty-route removal, full recomputation과 exact partition
 - general lexicographic profile에서 marginal scalar rule을 오용하지 않음
@@ -1726,7 +1732,11 @@ hybrid pool-artifact/column/projection/conversion order
 backend version/thread/seed/numeric/work-budget identity
 ```
 
-Time-limited multi-thread MIP는 strong class를 자동 만족하지 않는다. `TIMEBOXED_HYBRID`는 model/pool/conversion identity를 보존하되 quality distribution과 fallback rate를 별도 evidence로 쓴다.
+Time-limited multi-worker CP-SAT는 strong class를 자동 만족하지 않는다. OR-Tools
+version/platform, `num_workers`, `random_seed`, time/deterministic-work limit과 model
+order를 manifest에 명시한다. 구체 숫자는 승인 전 `OPEN`이며 single-worker/fixed-seed
+profile도 먼저 `PROPOSED TEST_ONLY`다. `TIMEBOXED_HYBRID`는 model/pool/conversion
+identity를 보존하되 quality distribution과 fallback rate를 별도 evidence로 쓴다.
 
 <a id="gates-traceability"></a>
 ## 18. Gate, deferred boundary와 추적성
@@ -1738,7 +1748,7 @@ Time-limited multi-thread MIP는 strong class를 자동 만족하지 않는다. 
 | Roadmap gate | Target | 필요한 evidence |
 |---|---|---|
 | `RM-9A` | immutable evaluated-artifact pool/snapshot | admission, merge, dominance, digest, memory, incumbent pin과 separate scope approval |
-| `RM-9B` | solver-neutral selection + optional backend | exact model, tiny oracle, warm start, status/fallback, native cleanup, license-free default build와 solver/licensing 승인 |
+| `RM-9B` | solver-neutral selection + optional OR-Tools CP-SAT adapter | exact integer model, tiny oracle, CP-SAT hint/status/fallback, native packaging/load/temp cleanup, optimizer-free default build와 OR-Tools version/license-notice/SBOM 승인 |
 | `RM-9C` | worker-local hybrid feedback/shadow | `RM-5` both-gate publication baseline, adopted-only feedback, optional/required fallback, reproducibility class, ALNS-only A/B |
 
 순서는 verified ALNS baseline → `RM-9A` pool → `RM-9B` selector → `RM-9C` feedback/shadow다. 이 target이 문서에 상세하다는 사실은 current reactor에 vendor dependency를 추가하거나 default `SolvePlan`에서 MIP를 켤 권한이 아니다.
@@ -1748,7 +1758,7 @@ Time-limited multi-thread MIP는 strong class를 자동 만족하지 않는다. 
 | Item | Current boundary | Resume requirement |
 |---|---|---|
 | Multi-trip/rotation | oneway + single roundtrip, pair crossing 금지 | exact trip/reset/depot/resource contract와 별도 승인 |
-| Route pool/MIP production | §§12~14 target, default off | `C-17`, `RM-9A~C`, verified baseline, measured value, solver/license/native/fallback 승인 |
+| Route pool/MIP production | §§12~14 target, OR-Tools CP-SAT policy, default off | `C-17`, `RM-9A~C`, verified baseline, measured value, OR-Tools version/config/native packaging/Apache-2.0 notice·SBOM/security/operations/compute-cost/admission/fallback/rollback 승인 |
 | Physical topology | logical port와 run/round lineage | workload/security/retention/retry/cost evidence, `Q-INFRA-01` 승인 |
 | Optional variants | pair, terminal, bank, travel contract 유지 | `Q-VAR-01` 선택·fixture·core-impact 승인 |
 

@@ -231,7 +231,7 @@ eligibility의 hidden input이 아니다.
 - Lambda memory/timeout/reserved concurrency, Step Functions concurrency, retention,
   cost cap 등의 미측정 production 기본값
 - Phase 12 provider abstraction 재설계, GCP/ECS/Kubernetes 구현 또는 provider cutover
-- `C-17 GATED TARGET`인 Phase 13 route pool/MIP, optimizer/license와 optional
+- `C-17 GATED TARGET`인 Phase 13 route pool/MIP과 optional OR-Tools/native
   backend 구현·활성화
 - Phase 14 official benchmark, production deployment, traffic shift 또는 cutover 승인
 - Multi-trip/rotation, `Q-VAR-01` 또는 다른 deferred variant
@@ -290,7 +290,7 @@ eligibility의 hidden input이 아니다.
 | Log/trace retention과 cost cap | `OPEN/OWNER_APPROVAL_REQUIRED` | Security/Operations/FinOps가 stage별 승인하기 전 production gate를 열지 않는다. |
 | `Q-BENCH-02` official 수치 | `OPEN — EXPERIMENT_REQUIRED` | Test fixture 값만 explicit하게 사용하고 official run/cutover를 주장하지 않는다. |
 | Phase 12 target provider | `GATED/UNSELECTED` | Phase 11 AWS evidence/receipt만 handoff하고 Phase 12-owned conformance manifest, adapter 또는 cutover를 당기지 않는다. |
-| `C-17` optional hybrid | `GATED TARGET` | Phase 13 route pool/MIP/backend/solver/license를 만들거나 AWS distribution에서 활성화하지 않는다. |
+| `C-17` optional hybrid | `GATED TARGET` | Phase 13 route pool/MIP/OR-Tools dependency/native distribution을 만들거나 AWS distribution에서 활성화하지 않는다. |
 | `Q-VAR-01` | `DEFERRED` | 질문·활성화·AWS config 반영 금지다. |
 | Production deployment/cutover | `AUTHORITY GATED` | Phase 14 조건과 explicit production approval 전 금지다. |
 
@@ -1695,7 +1695,7 @@ path 한 번은 DoD가 아니다.
 | `Q-BENCH-02` official 수치 없음 | Benchmark/Quality | Explicit test-only manifests | Calibration result와 사용자 승인 |
 | Quota/cost/retention 수치 미확정 | Platform/FinOps/Security/Ops | Non-production candidate config | Workload measurement와 owner-approved thresholds |
 | Phase 12 provider 미선택 | Product/Platform | Immutable Phase 11 AWS evidence/receipt만 준비; Phase 12 manifest 미소유 | Provider별 adoption scope 별도 승인 |
-| `C-17` optional hybrid gated | Product/Algorithm/Architecture | ALNS-only AWS reference와 infra evidence only | Phase 13 separate scope/solver/license/evidence approval |
+| `C-17` optional hybrid gated | Product/Algorithm/Architecture | ALNS-only AWS reference와 infra evidence only | Phase 13 C-17 scope + OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
 | Production authority 없음 | Product/Platform/Security/Ops + Phase 14 owner | Accepted non-prod reference 또는 local runtime | Phase 14 gates + explicit production deploy/cutover approval |
 | `Q-VAR-01` deferred | Product/Domain/Algorithm | Current pair/terminal/bank contract | Register의 restart evidence와 별도 승인 |
 

@@ -218,7 +218,7 @@ oracle이 아니다. AWS와 candidate가 같은 adapter/common bug로 같은 오
 - Core/domain/solver/verifier/application port의 provider별 fork
 - Artifact/result schema 또는 logical ID의 provider-specific version
 - Database, queue 또는 provider listing을 새 authority로 도입
-- Phase 13 route pool/MIP/hybrid 구현, backend/solver/license 선택
+- Phase 13 route pool/MIP/hybrid 구현, OR-Tools version/config/native/distribution 선택
 - Phase 14 official 수치, benchmark, official manifest와 cutover
 - `Q-BENCH-02` 공식 수치, `Q-VAR-01` deferred 변형의 해소
 - Legacy GCP placeholder를 target parity 또는 구현 evidence로 승격
@@ -1807,7 +1807,7 @@ happy path 한 번은 DoD가 아니다.
 | 빠르거나 싸다는 이유로 semantic/security failure 허용 | Gate 우선순위 위반 |
 | Test-only threshold를 production performance default로 사용 | `Q-BENCH-02`/operations gate 임의 해소 |
 | Shadow run에 publication/traffic/state mutation 허용 | Cutover를 Phase 12로 당김 |
-| Phase 13 hybrid module/backend/license를 함께 구현 | `C-17` gate 위반 |
+| Phase 13 hybrid module/OR-Tools dependency/native distribution을 함께 구현 | `C-17` gate 위반 |
 | Phase 11/12 whole-file reciprocal hash 저장 | Neighbor metadata cycle과 drift |
 | Evidence manifest와 review가 서로 content digest를 포함 | 봉인 불가능한 reciprocal review cycle |
 | Provider evidence가 conformance manifest/review/receipt를 역참조 | Forward manifest와 cycle을 만들어 immutable seal 순서 붕괴 |
@@ -1833,7 +1833,7 @@ happy path 한 번은 DoD가 아니다.
 | Security control evidence 없음 | Security/Data governance | No deploy/activation | Negative matrix/encryption/tenant evidence |
 | Performance policy/수치 open | Performance/FinOps/Ops | Measurement schema, experiment-only run | Workload-based approved envelope |
 | `Q-BENCH-02` open | Benchmark/Quality | Explicit test-only values | Calibration and approval |
-| `C-17` Phase 13 gated | Product/Algorithm/Architecture | Substitution evidence only | Separate hybrid scope/solver/license approval |
+| `C-17` Phase 13 gated | Product/Algorithm/Architecture | Substitution evidence only | Separate C-17 scope + OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
 | `Q-VAR-01` deferred | Product/Domain/Algorithm | Current pair/terminal/bank | Register restart evidence and approval |
 | Production authority 없음 | Product/Platform/Security/Ops | Non-prod evidence/recommendation | Separate production cutover authority |
 
@@ -1918,14 +1918,14 @@ Phase12ToPhase13SubstitutionEvidence
   unsupportedGatedOpenDifferences[]
   evidenceApplicability = INFRASTRUCTURE_DECISION_INPUT_ONLY
   c17Approval = NOT_GRANTED_BY_THIS_HANDOFF
-  solverOrLicenseApproval = NOT_GRANTED_BY_THIS_HANDOFF
+  ortoolsActivationOrDistributionApproval = NOT_GRANTED_BY_THIS_HANDOFF
   hybridImplementationAuthority = false
   productionCutoverAuthority = false
 ```
 
 이 evidence는 optional hybrid의 worker runtime, artifact movement, memory/concurrency와
 operational viability 판단에 사용할 수 있다. Route pool schema, MIP projection,
-backend 선택, strictly-better adoption, license 또는 production activation을
+OR-Tools version/config/native distribution 선택, strictly-better adoption 또는 production activation을
 승인하지 않는다. Phase 13 owner는 별도 `C-17` entry gate를 충족해야 한다.
 
 ### 18.4 Future adoption/cutover boundary

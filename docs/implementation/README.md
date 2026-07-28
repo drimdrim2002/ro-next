@@ -70,7 +70,7 @@ candidate verifier와 result-integrity verifier가 모두 `PASS`한 결과를 �
 - AWS 선택은 실제 구현·배포·production cutover 승인이 아니다.
 - `win_poc_case_floor.json`은 사용자 승인 `D/U FLOOR` migration을 거친 이 구현 작업의 최종 실행 fixture다.
 - `Q-BENCH-02` 공식 수치와 production authority는 별도 Phase 14 production gate로 남는다.
-- Route pool/MIP는 `C-17 GATED TARGET`이며 Phase 13 별도 승인 전 시작·기본 활성화하지 않는다.
+- Route pool/MIP는 `C-17 GATED TARGET`이며 Phase 13 별도 승인 전 시작·기본 활성화하지 않는다. Gate가 열릴 경우 canonical exact backend는 Google OR-Tools direct Java CP-SAT이고, 이 정책은 현재 구현·dependency/native/SBOM/production 승인이 아니다.
 - `Q-VAR-01`은 `DEFERRED`이며 restart evidence 전 질문·활성화하지 않는다.
 
 ## 4. Canonical Phase와 review index

@@ -270,7 +270,7 @@ acceptance 또는 scheduler status에 사용하지 않는다.
 - Current decimal `data/win_poc_case.json`을 자동 반올림해 official fixture로 만들기
 - Great Circle earth model/constant/library/version을 구현자 편의로 고르기
 - Phase 13을 calibration 또는 cutover를 위해 강제 실행하거나 default 활성화하기
-- `C-17` gate, solver/license/native/fallback approval를 Phase 14가 대신 닫기
+- `C-17` gate와 OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval를 Phase 14가 대신 닫기
 - Phase 12 future provider를 빈 module로 만들거나 채택하지 않은 provider를 배포하기
 - Legacy GCP/Cloud Run/Workflows/Cloud Storage 자료를 AWS parity나 rollback authority로 승격하기
 - `docs/codex` 역사 11-phase result/evidence, ignored `target/` 또는 `.serverless/` 생성물을 재사용하기
@@ -578,7 +578,7 @@ production activation identity:
 
 Provider account/ARN/bucket/key, execution ID, attempt ID와 credential은 semantic result
 identity가 아니다. Restricted opaque reference는 deployment/audit metadata에 둘 수 있다.
-Secret/license/private key value는 어떤 fingerprint에도 넣지 않는다.
+Secret/private key value는 어떤 fingerprint에도 넣지 않는다.
 
 ### 5.3 Phase 13 two-branch contract
 
@@ -616,7 +616,7 @@ Phase13ApplicabilityReceipt
 - `Skip`: Phase 13 actual §6.5/§14.3의 scheduler-owned applicability control record다.
   Phase 13을 실행하거나 `ACCEPTED`로 만들지 않고 ALNS-only manifest만 허용한다.
 - `Activated`: Phase 13 actual §6.5/§14.4의 exact activated handoff다. Accepted Phase 13
-  evidence, exact hybrid plan, backend/license/native/fallback approval, reproducibility
+  evidence, exact hybrid plan, OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval, reproducibility
   class와 Phase 13이 요구한 Phase 12 accepted receipt를 모두 포함한다.
 
 두 branch의 schema/signature field 부재는 `RESOLVED_BY_PHASE13_V1_2`지만 actual
@@ -814,7 +814,7 @@ quality regression으로 직접 비교하지 않는다.
 | Operations | Cancel/retry/recovery, duplicate/out-of-order, quota/deadline, reconciliation, on-call/runbook | `OPERATIONS_GATE_FAILED` |
 
 Cost/security/observability evidence가 성능·quality result와 분리되어야 한다. Raw address,
-full input, credential, secret, license value, private signing material은 evidence/log에
+full input, credential, secret, private signing material은 evidence/log에
 넣지 않는다. 승인된 numeric bound가 없으면 통과로 간주하지 않고 blocker로 남긴다.
 
 ## 7. Official manifest, run and benchmark contract
@@ -1018,7 +1018,7 @@ Fingerprint가 다르면 quality를 비교하지 않고 `NOT_COMPARABLE`로 hold
 - Required telemetry/alarm/control-plane visibility 누락
 - Rollback target/role/runbook가 unavailable
 - Unknown state/event, duplicate event의 divergent digest, retry identity drift
-- Phase 13 branch/solver/license/fallback scope mismatch
+- Phase 13 branch/C-17/OR-Tools version/config/native/admission/fallback/rollback scope mismatch
 
 Performance, reliability, SLO, error, latency, cost와 canary traffic stop threshold는
 현재 `OPEN`; approved `CutoverAcceptancePolicy`에 explicit해야 한다. 누락되면 canary를
@@ -1996,7 +1996,7 @@ Production Operations가 받는 것:
 
 받지 않는 것:
 
-- Raw PII/full input/credential/private key/license value
+- Raw PII/full input/credential/private key
 - Prefix listing이나 mutable latest만 있는 locator
 - Test signer/fake approval/test-only fixture
 - Legacy GCP semantics를 target fallback이라고 부른 record

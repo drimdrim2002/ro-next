@@ -72,7 +72,7 @@ historical_cross_check:
 |---|---|---|
 | [Canonical Master](../../master-design.md) | §4.1~§4.6, §6, §9, §10.1, §11.1~§11.2, §12, §15.5~§15.6, §16~§17 | Pair evaluator 책임, stable partition, atomic mutation, 최대 8개 portfolio, full evaluation 권위, Phase 06 경계 |
 | [Final Domain](../../2026-07-26-domain-design.md) | §2.1~§2.4, §3, §5.3, §6~§11, §17.5~§17.6, §18 | Pair/service pattern, bank와 stable state, prepared travel, insertion option, portfolio와 acceptance evidence |
-| [Final Architecture](../../2026-07-26-architecture-design.md) | §2.1~§2.7, §5.6, §6 | `evaluation.insertion`, `solver.portfolio`, `solver.state`, module DAG, license-free architecture gate |
+| [Final Architecture](../../2026-07-26-architecture-design.md) | §2.1~§2.7, §5.6, §6 | `evaluation.insertion`, `solver.portfolio`, `solver.state`, module DAG, OR-Tools-free ALNS-only architecture gate |
 | [Integrated design](../../architecture-domain-implementation-design.md) | §3, §6~§10, §22~§25 | Upstream artifact, Phase 04 binding, Phase 05 stable/insertion/portfolio, Phase 06 COW 분리, test/corruption/anti-pattern |
 | [질문 등록부](../../master-design-open-questions.md) | `Q-REQ-01~02`, `Q-OBJ-01~03`, `Q-ALG-01~02`, `Q-BENCH-02`, `Q-VAR-01` | Mixed service pattern, objective binding, 4×2 portfolio, COW의 다음 Phase 소유, official 수치 open, variant deferred |
 | [Master Realization Plan](../master-realization-plan.md) | §3~§4, Phase 03~06, §8~§15 | Current inventory, Phase 05 entry/exit, test/evidence/DoD, blocker와 traceability |
@@ -1378,7 +1378,7 @@ Red test를 disabled/skip하거나 expected 값을 production enumerator/kernel/
     test
   ```
 
-- **Expected:** Default license-free build pass; forbidden dependency/type 0; test pass/fail/skip exact report; handoff manifest와 rollback point digest.
+- **Expected:** Default OR-Tools-free ALNS-only build pass; forbidden dependency/type 0; test pass/fail/skip exact report; handoff manifest와 rollback point digest.
 - **Failure/rollback:** Bundle/review가 불완전하면 최대 `IMPLEMENTED_PENDING_EVIDENCE`; `ACCEPTED` 또는 Phase 06 handoff authority를 주장하지 않는다.
 - **Handoff:** §15.2의 `Phase05SeedPortfolioHandoff`와 accepted evidence identities를 actual but unaccepted Phase 06에 전달.
 
@@ -1525,7 +1525,7 @@ Phase 05는 다음을 모두 만족할 때만 `ACCEPTED`다.
 | Identity encoding/hash | PROPOSED/OPEN | Architecture/Serialization | External compatibility와 evidence encoding | Semantic field set, internal package-private identity | Canonical encoding/version/migration review |
 | `Q-BENCH-02` official steps/workers/rounds/watchdog | OPEN — EXPERIMENT_REQUIRED | Benchmark·Quality | Phase 06 official run/Phase 14; Phase 05 deterministic construction은 안 막음 | Phase 05는 step/worker 숫자를 갖지 않음 | Calibration protocol, measured review, explicit approval |
 | `Q-ALG-02` | RESOLVED — KEEP_COW | Algorithm·Performance | Phase 06 state strategy; Phase 05 functional construction은 영향 없음 | Immutable seed snapshot | COW는 Phase 06에서 구현; apply/undo는 별도 evidence/승인 전 금지 |
-| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + solver/license | Phase 13/production default | Phase 05 seed portfolio only | Phase 06/07 baseline + separate scope/solver/license/native/fallback 승인 |
+| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13/production default | Phase 05 seed portfolio only | Phase 06/07 baseline + C-17 scope + OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback 승인 |
 | `Q-VAR-01` | DEFERRED | Product·Domain·Algorithm | MDVRP/OVRP/SDVRP 질문/구현 | Fixed-terminal single-trip pair | Representative fixture, impact study와 별도 승인 |
 | Multi-trip/rotation | DEFERRED FEATURE | Product·Domain·Algorithm | Trip crossing/reset/depot revisit | Oneway + single roundtrip, pair non-crossing | Trip/resource/reset/window/pair 계약과 승인 |
 | Proposed public API/schema/numeric default | OPEN | Product/API/Data | External compatibility 약속 | Internal immutable contract/test-only values | Versioned contract, compatibility/security review와 approval |

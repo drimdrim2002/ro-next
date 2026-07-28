@@ -156,6 +156,22 @@ Phase 12/13처럼 조건부 branch의 applicability가 총괄 스케줄러에 �
 - Phase 14 review baseline 당시에는 Q-BENCH-02·official integer fixture·Great Circle·ALNS values·signing trust·deployment·production authority가 없어 `BLOCKED_NOT_READY`였다. 이후 FLOOR fixture가 local 실행 기준으로 추가됐지만 나머지 production gate는 유지된다.
 - 안전하게 결정할 수 없는 cross-Phase/API/운영 계약은 임의 값으로 닫지 않고 §8의 residual blocker로 유지했다.
 
+#### 2026-07-28 Phase 13 backend 정책 addendum — registry/status 불변
+
+사용자 결정에 따라, `C-17`이 향후 별도 승인으로 열릴 경우의 canonical exact
+backend는 **Google OR-Tools direct Java CP-SAT**로 고정했다. Boolean
+route/unassigned 변수와 integer/fixed-point 목적·제약을 사용하므로 `MPSolver`는
+canonical backend가 아니다. 이 addendum은 §5 task registry의 ID, 문서/review
+결과 또는 구현 상태를 바꾸지 않는다. Phase 13은 계속
+`C17_GATE_CLOSED / NOT_ACCEPTED`, implementation/evidence는
+`NOT_STARTED / NOT_PRODUCED`다.
+
+남은 backend-specific gate는 OR-Tools exact version/checksum, supported
+OS/architecture와 native packaging/temp cleanup, explicit workers/seed/time/gap,
+Apache-2.0 및 applicable bundled/transitive notice·SBOM, security/operations/cost와
+rollback evidence다. 상용 solver license/server/token/capacity lease는 Phase 13
+전제가 아니다.
+
 ### 6.3 현재 구현 결과
 
 `NONE CLAIMED`.
@@ -192,7 +208,7 @@ Phase 12/13처럼 조건부 branch의 applicability가 총괄 스케줄러에 �
 | `Q-BENCH-02` official 실행 수치 | `OPEN — EXPERIMENT_REQUIRED` | Phase 14 official manifest/baseline/cutover 차단 | Benchmark·Quality가 calibration/승인 |
 | Raw `win_poc_case.json` decimal `D/U` | `RESOLVED_FOR_PLAN_EXECUTION` | 원본 직접 canonical 실행만 차단 | 승인 script/FLOOR fixture/digest 검증 완료; 원본은 provenance/negative fixture 유지 |
 | `win_poc_case_floor.json` final run | `NOT_RUN` | 사용자 고정 구현 성공 gate 미충족 | 실제 solver 실행, both-verifier PASS, deterministic replay와 결과 제시 |
-| `C-17` route pool/MIP | `GATED TARGET` | Phase 13 착수/production activation 차단 | Product·Algorithm·Architecture와 solver/license owner가 별도 승인 |
+| `C-17` route pool/MIP | `GATED TARGET`; direct CP-SAT policy only resolved | Phase 13 착수/production activation 차단 | Product·Algorithm·Architecture와 OR-Tools/Legal/Supply-chain/Security/Operations/Cost owners가 scope 및 version/config/native/SBOM/security/operations/cost/compute-admission/fallback/rollback evidence를 별도 승인 |
 | `Q-VAR-01` | `DEFERRED` | Optional variant 질문/구현 금지 | Product·Domain·Algorithm restart evidence 전 유지 |
 | Multi-trip/rotation | Deferred feature | Current single-trip 밖 기능 차단 | 별도 domain/algorithm/verifier 계약 승인 |
 | Phase 12 target provider | Provider별 미선택 | 특정 future adapter 구현/cutover 차단 | Platform·Operations·Security adoption decision |

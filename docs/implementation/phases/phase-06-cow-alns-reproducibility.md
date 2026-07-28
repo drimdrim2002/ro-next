@@ -1442,7 +1442,7 @@ Green이 된 뒤 test를 지우거나 expected value를 production output으로 
   ./mvnw -B -ntp -Dstyle.color=never clean verify
   ```
 
-- **Expected:** License-free root green, failed/error/skipped required 0, forbidden reference 0, no sensitive raw value, copy/work exact, immutable evidence bundle와 independent review `PASS`.
+- **Expected:** OR-Tools-free ALNS-only root green, failed/error/skipped required 0, forbidden reference 0, no sensitive raw value, copy/work exact, immutable evidence bundle와 independent review `PASS`.
 - **Failure/rollback:** Bundle/review가 불완전하면 최대 `IMPLEMENTED_PENDING_EVIDENCE`; `ACCEPTED`, verified 또는 downstream authority를 주장하지 않는다. Last accepted predecessor와 last green WP artifact를 보존한다.
 - **Handoff:** §16에 명시한 candidate/evidence/replay manifest만 Phase 07/10에 전달한다.
 
@@ -1461,7 +1461,7 @@ Green이 된 뒤 test를 지우거나 expected value를 production output으로 
 | Security/performance | WP-06.7 selected test | Allowlisted trace only, copy/work counters exact, no wall-clock quality input |
 | Architecture | WP-06.7 architecture command | Forbidden dependency/reference/owner/global random 0 |
 | Module | `./mvnw -B -ntp -Dstyle.color=never -pl rpdptw/solver -am clean verify` | Solver + required upstream tests/package green |
-| Reactor | `./mvnw -B -ntp -Dstyle.color=never clean verify` | License-free full reactor green; unrelated required modules not skipped |
+| Reactor | `./mvnw -B -ntp -Dstyle.color=never clean verify` | OR-Tools-free ALNS-only full reactor green; unrelated required modules not skipped |
 
 Selected solver command는 `-Dsurefire.failIfNoSpecifiedTests=true` 또는 `-Dfailsafe.failIfNoSpecifiedTests=true`를 사용하고 `-am`을 제거한다. Upstream nonmatching test 때문에 fail-closed 검사를 끄지 않으며, accepted predecessor artifact를 해소하지 못하면 command 자체가 실패하는 것이 맞다. Architecture는 selected name을 느슨하게 적용하지 않고 module 전체 `clean verify`를 실행한다. 각 command는 해당 report directory를 clean한 뒤 §11.1의 exact class/method를 fresh Surefire/Failsafe XML manifest와 대조한다. Missing/duplicate report나 method, failed/error/skipped required test는 Maven exit code가 0이어도 evidence failure다.
 
@@ -1501,7 +1501,7 @@ Selected solver command는 `-Dsurefire.failIfNoSpecifiedTests=true` 또는 `-Dfa
 - Cache hit/miss, unordered source construction, parallel schedule과 platform `AttemptId`가 canonical trace/candidate fingerprint를 바꾸지 않음.
 - Solver의 cloud/customer/verifier/application/vendor dependency와 global/static/thread-local random reference가 0임.
 - Trace에 raw address/input/secret이 없고 COW copy/work counters가 exact함.
-- License-free module/root build, immutable `E-P06-*` bundle과 independent Phase 06 review가 통과함.
+- OR-Tools-free ALNS-only module/root build, immutable `E-P06-*` bundle과 independent Phase 06 review가 통과함.
 - Phase 07에 candidate/evidence/replay manifest만 전달하고 verifier/final result/publication을 당기지 않음.
 - OPEN/GATED/deferred/official 미확정 값을 default나 완료 상태로 채우지 않음.
 
@@ -1543,7 +1543,7 @@ Phase 06 `ACCEPTED`는 다음을 뜻한다.
 - Watchdog/cancel/resource/platform failure를 `MAX_STEPS_REACHED`로 변환
 - 같은 strong replay identity의 다른 digest 중 더 좋은 것을 선택
 - Production implementation을 호출해 expected replay output 생성
-- Trace에 raw input/address/PII/secret/license 값 저장
+- Trace에 raw input/address/PII/secret 값 저장
 - Phase 07 verifier `PASS`, final outcomes/result/publication eligibility를 Phase 06에서 생성
 - Gated route pool/MIP/vendor/backend type을 선반영
 
@@ -1562,7 +1562,7 @@ Phase 06 `ACCEPTED`는 다음을 뜻한다.
 | `Q-BENCH-02` official screen/worker/round/watchdog | OPEN — EXPERIMENT_REQUIRED | Benchmark·Quality | Phase 14 official manifest/baseline/cutover | Explicit test-only/experiment config only | Calibration corpus/protocol, measured review, explicit approval |
 | Additional attempt/resource numeric limits | OPEN/PROPOSED | Algorithm + Quality + Operations | 해당 safety policy의 official use | Fail-closed + external typed resource signal | Explicit config, measurement와 approval |
 | Current Win decimal `D/U` | BLOCKER FOR OFFICIAL USE | Input·Matrix + Benchmark | 해당 fixture official run | Test-only compliant integer fixture | Compliant integer matrix 또는 contract/migration approval |
-| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + solver/license | Phase 13와 production default | Phase 06 ALNS-only candidate/replay | Phase 06/07 accepted baseline, separate scope, backend/license/native/fallback approval |
+| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13와 production default | Phase 06 ALNS-only candidate/replay | Phase 06/07 accepted baseline, C-17 scope, OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback approval |
 | `Q-VAR-01` | DEFERRED | Product·Domain·Algorithm | Optional variant 질문/구현 | Current pair/fixed-terminal contract | Representative fixture, feasibility와 별도 승인 |
 | Multi-trip/rotation | DEFERRED FEATURE | Product·Domain·Algorithm | Trip/reset/depot resource 의미 | Oneway + single roundtrip | Exact contract/example/verifier impact와 승인 |
 | Apply/undo | GATED BY MEASUREMENT/APPROVAL | Algorithm + Performance + Review | State strategy 변경 | `CHANGED_ROUTE_COW_V1` | `RM-7` profiling, round-trip/fault/trace/verifier equality와 별도 승인 |

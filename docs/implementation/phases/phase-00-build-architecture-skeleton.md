@@ -110,7 +110,7 @@ Phase 00의 목표는 다음 Phase가 잘못된 dependency 방향 위에서 시�
 1. 현재 단일 Maven/GCP placeholder를 의미 변경 없이 보존·characterize한다.
 2. Java 25 기반 parent/aggregator reactor와 stable module DAG를 만든다.
 3. `com.ronext.rpdptw` target namespace와 package ownership을 빈 marker class가 아닌 package/build contract로 예약한다.
-4. Provider, customer, optimizer vendor, verification 역의존과 test fixture production leakage를 `mvn verify`에서 차단한다.
+4. Provider, customer, optional backend, verification 역의존과 test fixture production leakage를 `mvn verify`에서 차단한다.
 5. Toolchain, plugin, dependency와 archive 생성 조건을 pin하고 online warm-up 뒤 offline build 가능한 조건을 evidence로 남긴다.
 6. Phase 01이 canonical input/normalization을 구현할 수 있는 `rpdptw-core` skeleton과 test/evidence seam만 handoff한다.
 
@@ -124,7 +124,7 @@ Phase 00의 목표는 다음 Phase가 잘못된 dependency 방향 위에서 시�
 - Current `com.ronext.optimizer` source/test의 explicit legacy module 격리
 - Existing HTTP/GCS/Workflow/synthetic objective behavior의 golden characterization
 - ArchUnit, Maven Enforcer, dependency tree와 bytecode/source boundary 검사
-- License-free default `verify`, offline-prefetched `verify`, deterministic artifact digest evidence
+- Optional-backend-free default `verify`, offline-prefetched `verify`, deterministic artifact digest evidence
 - `E-P00-BUILD`, `E-P00-ARCH`, `E-P00-LEGACY` bundle과 rollback/handoff
 
 ### 2.3 비범위
@@ -134,7 +134,7 @@ Phase 00의 목표는 다음 Phase가 잘못된 dependency 방향 위에서 시�
 - Legacy endpoint를 target public API로 승인하거나 현재 합성 objective를 target behavior로 보존하는 결정
 - S3, Step Functions, Lambda adapter/IaC, GCP cutover 또는 provider parity
 - Database/object-storage CAS, coordinator와 multi-round runtime 구현
-- Route pool/MIP module, vendor dependency 또는 capability 광고
+- Route pool/MIP module, `com.google.ortools` dependency 또는 capability 광고
 - Public wire schema, public Java API, 공식 performance threshold
 - `Q-BENCH-02`의 step/worker/round/watchdog 수치 확정
 - Decimal `D/U` Win fixture를 official baseline으로 사용
@@ -186,13 +186,13 @@ legacy-gcp-placeholder
 3. `core`는 다른 target module을 compile-depend하지 않는다.
 4. `verification`은 `solver`, search/cache package 또는 legacy module을 compile-depend하지 않는다.
 5. Core/solver/verification/application의 AWS/GCP/Azure/Kubernetes/HTTP SDK reference는 0이다.
-6. Generic target module의 optimizer vendor API reference는 0이다.
+6. Generic target module의 `com.google.ortools` API reference는 0이다.
 7. Core/solver/verification의 customer-name conditional과 customer-specific package는 0이다.
 8. 다른 module의 `.internal` package에 접근하지 않는다.
 9. Test fixture bytecode는 attached `tests` classifier에만 넣고 consumer가
    `type=test-jar`, `classifier=tests`, `scope=test`로만 의존한다. Main artifact나 production
    compile/runtime classpath로 새지 않는다.
-10. License-free root `verify`는 cloud credential, optimizer 설치 또는 license 없이 통과해야 한다.
+10. Default root `verify`는 cloud credential, OR-Tools 설치 또는 native runtime 없이 통과해야 한다.
 11. Core는 environment variable, system clock, global random과 static mutable registry를 읽지 않는다.
 12. OPEN/GATED/DEFERRED 기능을 나타내는 fake success provider나 production default를 만들지 않는다.
 13. Legacy GCP dependency는 명시적 legacy allowlist 경계에서만 허용하며 target DAG의 예외로 전파하지 않는다.
@@ -229,6 +229,8 @@ git ls-files | sort
 find src/main/java src/test/java gcp -type f -print | sort
 rg -n '<module>|<packaging>|<maven.compiler.release>' pom.xml
 rg -n 'com\.google|software\.amazon|com\.azure|io\.kubernetes|gurobi' pom.xml src
+# Phase 13 gate-closed specific check:
+rg -n 'com\.google\.ortools|route-selection-ortools-cpsat' pom.xml src
 ```
 
 ## 5. 현 상태 inventory와 target gap
@@ -810,7 +812,7 @@ Script는 evidence에 기록한 exact implementation commit 또는 content-addre
 - Wrapper는 Maven 3.9.14로 실행되고 compiler/test toolchain은 Java `[25,26)`를 선택한다. 현재 local Corretto 25.0.3은 허용되는 관측값이지 vendor-wide 요구사항이 아니다.
 - Warm-up이 완료된 isolated repository에서 offline root `verify`가 성공한다.
 - 같은 source의 두 clean build artifact digest가 일치한다.
-- Default root build가 cloud credential/optimizer license를 요구하지 않는다.
+- Default root build가 cloud credential/OR-Tools native runtime을 요구하지 않는다.
 
 **Failure/rollback**
 
@@ -910,6 +912,7 @@ Script는 evidence에 기록한 exact implementation commit 또는 content-addre
 ./mvnw -B -ntp -Dstyle.color=never verify
 ./build/verify-bytecode-boundaries.sh
 if rg -n 'com\.google|software\.amazon\.awssdk|com\.azure|io\.kubernetes|gurobi' rpdptw; then exit 1; fi
+if rg -n 'com\.google\.ortools|route-selection-ortools-cpsat' pom.xml rpdptw adapters; then exit 1; fi
 ```
 
 **기대 결과**
@@ -948,7 +951,7 @@ if rg -n 'com\.google|software\.amazon\.awssdk|com\.azure|io\.kubernetes|gurobi'
 
 **구체 작업**
 
-1. License-free online root `verify`와 prefetched offline root `verify`를 각각 실행한다.
+1. Optional-backend-free online root `verify`와 prefetched offline root `verify`를 각각 실행한다.
 2. Test/architecture/legacy/reproducible build 결과와 exact command/exit code를 저장한다.
 3. `./build/verify-evidence-bundle.sh`로 모든 regular file의 canonical relative path, byte length와
    SHA-256을 stable-order manifest에 넣고 nested file 누락, symlink, same path/different bytes와 manifest
@@ -1051,7 +1054,7 @@ Maven model/enforcer
 3. **Green legacy isolation:** legacy module test가 기존 observable behavior를 보존한다.
 4. **Green module DAG:** target skeleton이 allowlist edge만으로 compile한다.
 5. **Green architecture:** Enforcer + ArchUnit + bytecode/source scan이 실제 target bytecode에 대해 통과한다.
-6. **Green root integration:** License-free root `verify`가 통과한다.
+6. **Green root integration:** Optional-backend-free root `verify`가 통과한다.
 7. **Green offline:** Controlled cache에서 `-o verify`가 통과한다.
 8. **Green reproducibility:** 두 clean build artifact digest가 일치한다.
 9. **Review green:** Evidence digest와 rollback/handoff가 독립 review를 통과한다.
@@ -1134,7 +1137,7 @@ Solver quality, route performance, ALNS memory와 benchmark는 Phase 00에 해�
 다음은 AND 조건이다.
 
 ```text
-license-free root verify PASS
+optional-backend-free root verify PASS
 AND prefetched offline root verify PASS
 AND two-clean-build artifact digest equality
 AND reactor cycle = 0
@@ -1211,7 +1214,7 @@ Phase 00은 다음을 모두 만족해야만 `ACCEPTED`다.
 | Ignored `.serverless`, `node_modules`, `target`을 source/evidence로 사용 | Tracked authority와 재현성 상실 |
 | GCP/AWS 실제 배포 성공을 Phase 00 exit로 요구 | Provider phase와 build phase 혼합 |
 | `Q-BENCH-02` 수치를 POM/test default로 고정 | OPEN decision의 무단 확정 |
-| Phase 13 package/vendor dependency를 미리 생성 | `C-17` gate 우회 |
+| Phase 13 package/OR-Tools dependency를 미리 생성 | `C-17` gate 우회 |
 
 ## 14. Blocker, deferred/open decision과 마지막 안전 지점
 
@@ -1224,7 +1227,7 @@ Phase 00은 다음을 모두 만족해야만 `ACCEPTED`다.
 | Archive timestamp derivation | OPEN internal build choice | Build/Release | Reproducible gate seal 금지 | UTF-8/current build baseline | Explicit deterministic value/derivation ADR와 two-build proof |
 | `Q-BENCH-02` official values | OPEN — EXPERIMENT_REQUIRED | Benchmark·Quality | Phase 00을 막지 않음; 수치 default 금지 | No official numeric manifest | Calibration + explicit approval |
 | Current Win fixture decimal `D/U` | Blocker for official fixture only | Input·Matrix + Benchmark | Phase 00을 막지 않음 | Fixture read-only | Compliant integer matrix 또는 계약 변경 승인 |
-| `C-17` route pool/MIP | GATED TARGET | Product·Algorithm·Architecture + license owner | Module/package/vendor dependency 생성 금지 | ALNS-only DAG | Phase 06/07 baseline, scope와 solver/license/native/fallback 승인 |
+| `C-17` route pool/MIP | GATED TARGET; backend policy = direct OR-Tools CP-SAT | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain owners | Module/package/OR-Tools dependency 생성 금지 | ALNS-only DAG | Phase 06/07 baseline, scope와 OR-Tools version/config/native/OSS-license/SBOM/fallback 승인 |
 | `Q-VAR-01` optional variants | DEFERRED | Product·Domain·Algorithm | 질문·skeleton·구현 금지 | Single-trip boundary | Variant/fixture/core-impact 승인 |
 | Multi-trip/rotation | Deferred feature | Product·Domain·Algorithm | Phase 01 skeleton에 hook 미리 추가 금지 | Current single-trip contract | Trip/reset/depot/resource 계약과 승인 |
 | AWS implementation/cutover | Selected target, implementation gated | Platform·Operations·Security | AWS module/IaC 생성 금지 | Provider-neutral target DAG | Phase 10/11 entry, parity/security/operations approval |
@@ -1287,7 +1290,7 @@ Phase 01은 다음을 모두 확인하기 전 구현을 시작하지 않는다.
 | `P00-REQ-PROVIDER` | `C-20`, Final Architecture §2.2/§2.7 | Stable module provider SDK reference 0 | Enforcer + provider isolation ArchUnit/jdeps | `E-P00-ARCH` |
 | `P00-REQ-VERIFY-ISO` | `C-21`, Final Architecture §2.2, Integrated §23.10 | Verification → solver/search/cache 0 | `verificationDependsOnlyOnCore()` | `E-P00-ARCH` |
 | `P00-REQ-CUSTOMER` | `C-03`, Final Architecture §2.6, Integrated §3.6 | Generic customer branch/module 0 | Customer isolation source/package test | `E-P00-ARCH` |
-| `P00-REQ-VENDOR` | `C-17`, Final Architecture §2.2/§4.1 | Vendor-free default build, no Phase 13 skeleton | Vendor Enforcer/ArchUnit + tree absence | `E-P00-ARCH` |
+| `P00-REQ-VENDOR` | `C-17`, Final Architecture §2.2/§4.1 | OR-Tools-free default build, no Phase 13 skeleton | Dependency Enforcer/ArchUnit + tree absence | `E-P00-ARCH` |
 | `P00-REQ-TEST-SCOPE` | Final Architecture §2.7, Integrated §3.6 | Test fixture production leakage 0 | `TestScopeLeakageArchitectureTest` | `E-P00-ARCH` |
 | `P00-REQ-LEGACY` | Master §16.2, Integrated §1.3/§18.2, Realization Phase 00 | Existing GCP behavior를 golden characterization | Legacy contract/workflow tests | `E-P00-LEGACY` |
 | `P00-REQ-NO-DOMAIN` | Realization Phase 00/01, README §2 | Phase 01 normalization logic 선취 금지 | Production class inventory, marker/fake scan | `E-P00-ARCH` |
