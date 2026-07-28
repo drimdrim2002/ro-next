@@ -124,6 +124,21 @@ historical_authoring_snapshot:
 neighbor_validation_policy: STABLE_CITED_SECTION_SEMANTIC_REVIEW_NO_ADJACENT_OR_RECIPROCAL_DIGEST_ACCEPTANCE
 ```
 
+## 0. 2026-07-28 사용자 고정 실행 성공 amendment
+
+사용자는 [win_poc_case_floor.json](../../../data/win_poc_case_floor.json)을 실제
+solver로 실행해 검증된 결과를 보여주는 것을 현재 구현 작업의 최종 성공 기준으로
+고정했다. 이 파일은 raw fixture의 `D`를 integer meter, `U`를 integer second로
+exact decimal `FLOOR`한 별도 artifact이며, 변환 script/source/output digest는
+[Master Realization Plan §1.1](../master-realization-plan.md#11-사용자-고정-최종-성공-기준)에
+고정돼 있다.
+
+따라서 “integer execution fixture가 repository에 없다”는 이 문서와 기존 review의
+baseline 관측은 현재 실행 계획에는 더 이상 적용되지 않는다. 다만 이 amendment는
+Phase 14의 AWS deployment, `Q-BENCH-02`, signing trust, production authority,
+cutover를 승인하거나 과거 review 결과를 소급 변경하지 않는다. 현재 구현 성공은
+Master Plan §11.3으로 판정하고 production System DoD는 별도 gate로 유지한다.
+
 ## 1. 문서 지위, 권위와 source 해석
 
 이 문서는 Phase 14를 실행하기 위한 상세 계약이다. 문서는 검토할 수 있는 상태지만
@@ -415,7 +430,8 @@ Gate owner에게 typed failure와 last safe state를 handoff한다.
 | Fan-in | GCS prefix listing과 scalar `double objective` 최소 선택 | Declared completeness/exact comparator/both-gate를 만족하지 않음 |
 | Deployment | Docker, GCP Cloud Build/Run/Workflows/Cloud Storage 자료 | Historical migration inventory; AWS production evidence 아님 |
 | AWS | Target adapter/IaC/deployment evidence 없음 | `G14-PROVIDER-DEPLOYMENT CLOSED` |
-| Data | `data/win_poc_case.json`, SHA-256 `ea003...b7d7`, 14,157,512 bytes | Read-only primary source candidate지만 decimal `D/U`로 official 사용 불가 |
+| Raw data | `data/win_poc_case.json`, SHA-256 `ea003...b7d7`, 14,157,512 bytes | Read-only provenance/negative fixture; decimal `D/U`를 직접 canonical 실행하지 않음 |
+| Execution data | `data/win_poc_case_floor.json`, SHA-256 `c246...6873`, 12,373,785 bytes | 사용자 승인 `D/U FLOOR` migration output; 이 계획의 final execution fixture, solver run은 아직 `NOT_RUN` |
 | Phase docs | Phase 00~13 actual detail; 12 `NOT_STARTED`, 13 `GATED_NOT_STARTED` | Detail 존재는 implementation/evidence acceptance가 아님 |
 | Review/evidence | Review 15/15 완료: 00/13 `PASS_WITH_RESIDUAL_BLOCKERS`, 01 `ACCEPTED_WITH_APPLIED_CORRECTIONS`, 02 `PASS_AFTER_APPLIED_CORRECTIONS`, 03~12/14 `CHANGES_REQUIRED`; accepted implementation/evidence bundle 없음 | Document review와 implementation acceptance 분리; Phase 14 entry closed |
 
@@ -1832,7 +1848,7 @@ Scheduler는 evidence에 따라 `ROLLED_BACK`, `FAILED`, `GATED` 또는 `ACCEPTE
 | Phase 00~11 implementation/evidence unaccepted; document review는 live 15/15 완료 | Phase owners + scheduler/reviewers | Current document verdict와 offline test 설계; official action 0 | Residual contract 해소와 모든 applicable implementation/evidence/review receipt accepted |
 | Phase 12 applicability unknown | Product/Platform | AWS reference assumption도 production에는 사용 안 함 | Signed provider/applicability decision; substituted provider면 accepted Phase 12 |
 | Phase 13 applicability actual authority/receipt 없음; schema/signature field 부재는 `RESOLVED_BY_PHASE13_V1_2` | Scheduler + Product/Algorithm/Architecture + Security/Release | Phase 13 v1.2 proposed envelope/action-time verification schema; `ALNS_ONLY_GATE_CLOSED`, pool/model/outcome/hybrid refs와 Phase 13 실행 0 | Closed면 approved-policy actual signed `Skip` + current action-time `PASS`; hybrid면 동등한 signed `Activated` + accepted Phase 13 handoff. Phase 14→13 entry 역의존 금지 |
-| Integer travel fixture 없음 | Input/Matrix + Benchmark | Current decimal fixture read-only, test-only oracle | Versioned integer bytes/digest/validation/source approval |
+| Official integer fixture authority 불완전 | Input/Matrix + Benchmark | Plan-final local execution에는 approved FLOOR fixture 사용 가능; production official action은 hold | FLOOR artifact의 official scope 승인과 나머지 G14 authority evidence |
 | Great Circle 상세 미승인 | Input/Matrix + Domain/Architecture | Missing-`D` official/production path blocked | Function/version/earth model/constants/precision/vectors approval |
 | Official ALNS parameters 없음 | Algorithm + Quality | Explicit experiment config only | Complete measured parameter envelope approval |
 | `Q-BENCH-02` 공식 수치 없음 | Benchmark/Quality | Logical coordinator/test-only manifest | Frozen calibration, measured result, separate explicit approval |

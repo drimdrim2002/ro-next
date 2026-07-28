@@ -8,6 +8,9 @@ current_documentation_task_id: 019fa5c8-4efa-70a3-b6b6-205a4230e0af
 master_plan_task_id: 019fa5c9-3acf-78d2-ac5d-93f14ec0a137
 final_audit_task_id: 019fa6ad-495d-7cd1-87f3-9815ed58145d
 implementation_completion_claim: NONE
+execution_success_fixture: data/win_poc_case_floor.json
+execution_success_status: NOT_RUN
+fixture_migration_status: COMPLETE_VERIFIED
 ```
 
 ## 1. 목적과 갱신 권한
@@ -16,8 +19,16 @@ implementation_completion_claim: NONE
 
 1. 이 구현 문서 세트를 조사·작성·검증한 **문서 생성 workflow**
 2. [Master Realization Plan](master-realization-plan.md)의 Phase 00~14를 실제로 구현·검증한 **구현 workflow**
+3. `win_poc_case_floor.json`을 실제 solver로 실행해 검증 결과를 제시하는 **사용자 고정 최종 성공 gate**
 
 문서가 작성되었다고 코드 Phase가 완료된 것은 아니며, 코드나 test 파일이 존재한다고 Phase exit gate가 승인된 것도 아니다.
+
+2026-07-28 사용자 결정으로 `distanceMatrix.D`는 meter, `distanceMatrix.U`는 second
+단위에서 exact decimal `FLOOR`하는 migration이 승인되었다.
+`scripts/floor_win_poc_matrix.py`가 원본을 변경하지 않고
+`data/win_poc_case_floor.json`을 생성했다. 205,209개 matrix row에서 fractional
+`D` 201,198개와 `U` 183,715개를 처리했고, `D/U` 외 필드 불변과 모든 결과값의
+`FLOOR(original)` 일치를 검증했다. 이것은 fixture 준비 완료이며 solver 실행 완료가 아니다.
 
 이 문서 세트의 총괄 scheduler task는 `019fa5c8-4efa-70a3-b6b6-205a4230e0af`다. 전체 계획 1개, Phase 상세 15개, Phase review 15개, 최종 read-only audit 1개로 별도 작업 32개를 생성·추적했다. 보완 turn은 기존 작업을 재사용했으며 새 작업 수에 더하지 않는다.
 
@@ -70,6 +81,7 @@ Phase 상태의 정확한 의미와 DoD는 [Master Realization Plan §10~§11](m
 | 구현 accepted-gate 완료율 | `ACCEPTED` Phase / applicable Phase | 0/15 = 0% | Target exit evidence가 승인된 Phase가 없음 |
 | 코드 작성량 | 별도 계측 대상 | NOT_MEASURED | 구현 완료율의 대용치가 아님 |
 | 배포 완료율 | 승인된 distribution cutover / applicable distribution | 0 | 현재 GCP 자료나 AWS 선택을 production cutover로 계산하지 않음 |
+| 최종 실행 성공 | §11.3 AND gate | `NOT_RUN` | FLOOR fixture는 준비됐지만 실제 solver/result/verifier/replay evidence가 없음 |
 
 Phase 12/13처럼 조건부 branch의 applicability가 총괄 스케줄러에 의해 바뀌면 분모와 근거를 같이 기록한다. 현재 baseline은 canonical 15 Phase 전체를 registry에 두되, Phase 12는 provider별 approval-gated, Phase 13은 `C-17 GATED`로 표시한다.
 
@@ -141,7 +153,7 @@ Phase 12/13처럼 조건부 branch의 applicability가 총괄 스케줄러에 �
 - Phase 00~07: Maven/architecture/evaluation/identity/portfolio/ALNS/verifier의 false-green, ownership, replay와 handoff 결함을 교정했다.
 - Phase 08~12: `GateIncomplete`, non-ambient authority boundary, immutable storage/CAS, coordinator crash-resume, AWS authority separation와 provider conformance DAG를 교정했다.
 - Phase 13: `C-17` closed path를 scheduler-owned no-load/fail-closed/signed applicability 계약으로 고정했다.
-- Phase 14: Q-BENCH-02·official integer fixture·Great Circle·ALNS values·signing trust·deployment·production authority가 없으면 `BLOCKED_NOT_READY`인 상태를 유지하고 cutover/rollback 순서를 보강했다.
+- Phase 14 review baseline 당시에는 Q-BENCH-02·official integer fixture·Great Circle·ALNS values·signing trust·deployment·production authority가 없어 `BLOCKED_NOT_READY`였다. 이후 FLOOR fixture가 local 실행 기준으로 추가됐지만 나머지 production gate는 유지된다.
 - 안전하게 결정할 수 없는 cross-Phase/API/운영 계약은 임의 값으로 닫지 않고 §8의 residual blocker로 유지했다.
 
 ### 6.3 현재 구현 결과
@@ -178,7 +190,8 @@ Phase 12/13처럼 조건부 branch의 applicability가 총괄 스케줄러에 �
 | Publication/cancellation/deadline/S3 ownership | `RESIDUAL CROSS-PHASE BLOCKER` | Phase 09~12 CAS race, crash-resume와 adapter evidence acceptance 차단 | Phase 08~12 + Operations/Architecture가 precondition, same-state cancel fence, durable deadline와 Phase 09/11 owner 승인 |
 | Signed applicability trust와 actual receipt | `OPEN / NOT_PRODUCED` | Phase 13 handoff와 Phase 14 applicability consumption 차단 | Scheduler + Security/Release가 algorithm/trust/validity/revocation policy 승인 후 signed envelope/verification receipt 생성 |
 | `Q-BENCH-02` official 실행 수치 | `OPEN — EXPERIMENT_REQUIRED` | Phase 14 official manifest/baseline/cutover 차단 | Benchmark·Quality가 calibration/승인 |
-| `win_poc_case.json` decimal `D/U` | Non-compliant fixture blocker | 해당 fixture official run 차단 | Input·Matrix/Benchmark가 integer matrix 또는 contract change 승인 |
+| Raw `win_poc_case.json` decimal `D/U` | `RESOLVED_FOR_PLAN_EXECUTION` | 원본 직접 canonical 실행만 차단 | 승인 script/FLOOR fixture/digest 검증 완료; 원본은 provenance/negative fixture 유지 |
+| `win_poc_case_floor.json` final run | `NOT_RUN` | 사용자 고정 구현 성공 gate 미충족 | 실제 solver 실행, both-verifier PASS, deterministic replay와 결과 제시 |
 | `C-17` route pool/MIP | `GATED TARGET` | Phase 13 착수/production activation 차단 | Product·Algorithm·Architecture와 solver/license owner가 별도 승인 |
 | `Q-VAR-01` | `DEFERRED` | Optional variant 질문/구현 금지 | Product·Domain·Algorithm restart evidence 전 유지 |
 | Multi-trip/rotation | Deferred feature | Current single-trip 밖 기능 차단 | 별도 domain/algorithm/verifier 계약 승인 |

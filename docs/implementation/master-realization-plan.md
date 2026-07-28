@@ -2,11 +2,13 @@
 
 ```yaml
 document_status: DOCUMENT_SET_COMPLETE
-plan_version: 1.0
+plan_version: 1.1
 baseline_date: 2026-07-28
 scope: Phase 0~14의 구현·검증·전환 계획
 implementation_status: ACCEPTED_0_OF_15
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+execution_success_fixture: data/win_poc_case_floor.json
+execution_success_status: NOT_RUN
 ```
 
 ## 1. 목적과 사용 범위
@@ -17,13 +19,41 @@ source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
 
 이 문서 세트의 입력 권위는 **사용자 선언으로 고정**되었다. 원문 metadata의 `REVIEW`는 출처 provenance로 보존하지만 이 문서 작성의 중단 조건으로 사용하지 않는다. 반대로 원문이 `REVIEW`라는 이유로 구현 phase의 실제 review·승인·evidence gate를 생략할 수도 없다.
 
+### 1.1 사용자 고정 최종 성공 기준
+
+이 구현 작업의 최종 성공 기준은
+[win_poc_case_floor.json](../../data/win_poc_case_floor.json)을 실제 solver 실행 경로로
+처리하고, 독립 검증된 결과를 생성해 사용자에게 보여주는 것이다. Source 파일·test 파일의
+존재, 합성 objective, parser 성공 또는 실행 로그 한 줄은 이 기준을 충족하지 않는다.
+
+실행 입력의 고정 계보는 다음과 같다.
+
+```text
+data/win_poc_case.json
+  -- scripts/floor_win_poc_matrix.py
+     D: exact decimal FLOOR → integer meter
+     U: exact decimal FLOOR → integer second
+     all other fields unchanged
+→ data/win_poc_case_floor.json
+```
+
+| Artifact | 역할 | SHA-256 |
+|---|---|---|
+| `data/win_poc_case.json` | 변경하지 않는 원본 provenance | `ea003bac326ebdbbb5f49595388767ed223c03539fd6579b96f3acbedce6b7d7` |
+| `scripts/floor_win_poc_matrix.py` | 사용자 승인 `D/U FLOOR` migration | `0423e0cef4d93ed51525a8f237b48f0c680c7d6e134af1ea70ba3a48b5ed77d0` |
+| `data/win_poc_case_floor.json` | 이 계획의 최종 실행 입력 | `c246abd375211877c4ec3467998651deb13fbd01768d2d1d84b8d234f5f56873` |
+
+최종 판정은 §11.3의 AND gate를 사용한다. 이 실행 성공은 solver 구현의 실제
+end-to-end acceptance다. 다만 AWS production traffic 전환, Phase 13 optional hybrid
+활성화 또는 별도 공식 baseline 승인을 자동으로 의미하지는 않는다.
+
 ## 2. 입력 권위와 충돌 규칙
 
 ### 2.1 고정 입력
 
 | 우선순위/역할 | 입력 | 이 계획에서의 사용 |
 |---|---|---|
-| 1. 사용자 선언 | 이 구현 문서 세트의 입력 목록, 15 Phase canonical map, 파일 규칙 | 문서 세트의 최상위 scope와 phase numbering |
+| 1. 사용자 선언 | 이 구현 문서 세트의 입력 목록, 15 Phase canonical map, 파일 규칙, `win_poc_case_floor.json` 최종 실행 성공 기준 | 문서 세트의 최상위 scope, phase numbering과 실행 acceptance |
 | 2. Canonical Master | [Master Design](../master-design.md) | 전체 requirement, `C-*`/`P-*`, 완료 정의, AWS 최신 결정, 질문 수와 gate |
 | 3. 질문/결정 등록부 | [Master Design open questions](../master-design-open-questions.md) | `Q-*` exact 상태, owner boundary, restart/approval 조건 |
 | 4. Final Domain | [2026-07-26 Domain Design](../2026-07-26-domain-design.md) | 값, 불변조건, normalization, travel, propagation, evaluation, result 상세 |
@@ -51,6 +81,7 @@ source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
 | Final Architecture가 provider 미결정을 전제로 한 package 설명을 포함 | Provider-neutral 경계는 유지하고, integrated design의 AWS S3 + Step Functions + Lambda target/reference를 Phase 11에 적용 |
 | AWS target 선택과 실제 AWS 구현·cutover를 혼동할 가능성 | 선택은 확정이지만 Phase 11 parity/evidence와 Phase 14 production authority 전에는 구현·배포·cutover 완료를 주장하지 않음 |
 | Route pool/MIP 상세 설계가 존재 | `C-17 GATED TARGET`을 유지하고 Phase 13 entry approval 전 구현·기본 활성화 금지 |
+| 기존 문서가 decimal Win fixture만 존재한다고 기록 | 원본은 provenance/negative fixture로 유지하고, 사용자 승인 `FLOOR` script로 만든 `win_poc_case_floor.json`을 이 계획의 실행 성공 fixture로 사용 |
 
 ## 3. 2026-07-28 current-state inventory
 
@@ -86,7 +117,7 @@ source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
 | GCP orchestration | [gcp/workflows/optimization.yaml](../../gcp/workflows/optimization.yaml)이 parallel batch HTTP 호출 후 finalize | 일부 worker 결과·prefix listing·raw objective에 의존하며 target coordinator 의미를 충족하지 않음 |
 | GCP guide | [gcp/README.md](../../gcp/README.md)에 Cloud Run API/worker, Workflows, GCS, IAM 예시 | 배포 가이드일 뿐 현재 배포 또는 보안 승인 evidence가 아님 |
 | AWS 흔적 | ignored `.serverless/`와 ignored `node_modules/`이 local working tree에 존재하지만 tracked AWS source/config는 없음 | 실제 AWS 배포, target implementation 또는 dependency authority를 추론하지 않음 |
-| Data | [ro_input_json_spec.pdf](../../data/ro_input_json_spec.pdf), [win_poc_case.json](../../data/win_poc_case.json) | 전자는 legacy CVRPTW 참고, 후자는 read-only fixture이며 decimal `D/U` 때문에 official baseline 불가 |
+| Data | [ro_input_json_spec.pdf](../../data/ro_input_json_spec.pdf), [win_poc_case.json](../../data/win_poc_case.json), [win_poc_case_floor.json](../../data/win_poc_case_floor.json) | PDF는 legacy 참고, 원본 JSON은 provenance/negative fixture, FLOOR JSON은 205,209개 `D/U`가 integer인 사용자 승인 최종 실행 fixture |
 
 ### 3.4 현재 gap 요약
 
@@ -200,7 +231,9 @@ flowchart TD
     P11 --> P14["Phase 14 Calibration/cutover — AUTHORITY GATE"]
     P07 --> P14
     P13 -. "official hybrid manifest일 때만" .-> P14
-    Q["Q-BENCH-02 승인값 + compliant integer D/U"] --> P14
+    Q["Q-BENCH-02 승인값 + production authority"] --> P14
+    F["win_poc_case_floor.json + both verifier PASS"] --> S["사용자 고정 실행 성공"]
+    P08 --> S
 ```
 
 ### 6.1 Critical path
@@ -518,6 +551,22 @@ Phase 12는 승인된 대체 provider가 있을 때 실행하는 portability bra
 6. Shadow, versioned endpoint/adapter, artifact/state migration, cancellation/retry/security와 rollback을 rehearsal한다.
 7. 명시적 production authority 승인 후에만 pointer/traffic을 전환하고, 승인 전에는 test/staging 결과를 official/production으로 표시하지 않는다.
 
+### Plan-final execution — `win_poc_case_floor.json`
+
+- 목표: 사용자 승인 integer travel fixture를 실제 end-to-end 경로로 실행해 검증된 결과를 생성하고 표시한다.
+- Entry gate: Phase 01~08의 local critical path가 실행 가능하고, Phase 07 candidate/result verifier가 독립적으로 동작하며, 입력·profile·algorithm config가 immutable identity로 고정됨.
+- 입력: `data/win_poc_case_floor.json` exact bytes/digest, 명시적 seed/step/worker envelope와 bound profile.
+- 산출물: Machine-readable result, 사람이 읽을 수 있는 summary, 실행 manifest, trace/termination, candidate/result verification report와 artifact fingerprints.
+- Exit gate: §11.3의 모든 항목이 통과하고 실제 명령, exit code, result path/digest와 핵심 결과가 사용자에게 제시됨.
+- 비범위: AWS production cutover, optional hybrid 활성화, 승인되지 않은 quality threshold 또는 서로 다른 manifest 간 우열 주장.
+
+계획된 canonical 실행기는 다음 형태를 제공해야 한다. 최종 구현에서 launcher 내부
+배치는 달라질 수 있지만 입력·출력·exit semantics는 유지한다.
+
+```bash
+./scripts/run_win_poc.sh data/win_poc_case_floor.json
+```
+
 ## 8. 공통 테스트 전략
 
 ### 8.1 Test pyramid
@@ -684,6 +733,26 @@ Phase 하나는 다음을 모두 만족할 때만 `ACCEPTED`다.
 
 Phase 13 hybrid는 별도 applicable 결정과 `C-17` gate를 통과한 경우에만 System DoD에 추가한다.
 
+### 11.3 사용자 고정 실행 성공 DoD
+
+이 구현 요청은 다음을 **모두** 만족할 때만 성공이다.
+
+1. `data/win_poc_case_floor.json`의 SHA-256이 실행 manifest에 기록되고 예상 digest와 일치한다.
+2. 입력의 452개 order, 31개 vehicle, 205,209개 directed matrix cell이 누락·중복 없이 해석된다.
+3. 모든 provided `D/U`는 integer meter/second이며 solver와 verifier가 같은 immutable prepared travel fingerprint를 소비한다.
+4. Synthetic objective가 아닌 initial portfolio와 실제 search step이 실행되고 정상 termination reason과 requested/completed work가 기록된다.
+5. 모든 request가 결과에서 `ASSIGNED` 또는 `UNASSIGNED` 정확히 한 번 나타나며 route/bank partition, vehicle, capacity, time window, stop과 terminal 규칙을 만족한다.
+6. Candidate solution verifier와 result-integrity verifier가 각각 독립 report로 `PASS`한다.
+7. 결과에는 최소한 unassigned count, used vehicle count, total distance meter, total operational time second, route별 vehicle/order sequence와 diagnostic이 포함된다.
+8. 같은 manifest를 재실행했을 때 정상 종료 trace, objective vector와 canonical result fingerprint가 일치한다.
+9. 실행 명령이 exit code `0`으로 끝나고 machine-readable result와 human-readable summary의 path 및 SHA-256을 남긴다.
+10. 사용자에게 실제 objective/result summary, 두 verifier verdict, termination, fingerprint와 재현 명령을 보여준다.
+
+하나라도 실패하거나 실행되지 않았으면 상태는 `NOT_RUN`, `FAILED` 또는
+`BLOCKED`이며 성공으로 표시하지 않는다. 숫자 품질 threshold는 `Q-BENCH-02` 승인
+전까지 성공 gate가 아니다. 본 §11.3 성공은 §11.2의 AWS production System DoD를
+자동 충족시키지 않는다.
+
 ## 12. 변경, rollback과 release 전략
 
 ### 12.1 변경 통제
@@ -730,7 +799,8 @@ Phase 13 hybrid는 별도 applicable 결정과 `C-17` gate를 통과한 경우�
 | 항목 | 상태 | Owner boundary | 막는 범위 | Restart/해제 조건 |
 |---|---|---|---|---|
 | `Q-BENCH-02` official 수치 | `OPEN — EXPERIMENT_REQUIRED` | Benchmark·Quality | Phase 14 official manifest/baseline/cutover | Calibration corpus와 protocol 실행, measured result review, explicit approval |
-| Current Win fixture decimal `D/U` | Blocker | Input·Matrix + Benchmark | 해당 fixture의 official use | Compliant integer matrix 제공 또는 명시적 계약 변경·migration 승인 |
+| Raw `win_poc_case.json` decimal `D/U` | `RESOLVED_FOR_PLAN_EXECUTION` | Input·Matrix + Benchmark | 원본 bytes를 직접 canonical 실행하는 경로만 차단 | 사용자 승인 script와 `win_poc_case_floor.json` digest/검증 완료; 원본은 provenance/negative fixture로 유지 |
+| `win_poc_case_floor.json` 실제 solver run | `NOT_RUN` | Implementation + Verification | 이 계획의 사용자 고정 최종 성공 | Phase 01~08 local path 구현, both-verifier PASS, deterministic replay와 §11.3 결과 제시 |
 | `C-17` route pool/MIP | `GATED TARGET` | Product·Algorithm·Architecture + solver/license owner | Phase 13 착수와 production default | Phase 06/07 baseline, separate scope, solver/license/native/fallback 승인, RM-9A~C/Phase 13 evidence |
 | `Q-VAR-01` optional variants | `DEFERRED` | Product·Domain·Algorithm | MDVRP/OVRP/SDVRP 질문·구현 | Variant/시점 선택, representative fixture, core-impact feasibility와 별도 승인 |
 | Multi-trip/rotation | Deferred feature | Product·Domain·Algorithm | Single-trip 밖 route 의미 | Trip/reset/depot/resource 계약, pair non-crossing, example/evidence와 승인 |
@@ -759,6 +829,7 @@ Phase 13 hybrid는 별도 applicable 결정과 `C-17` gate를 통과한 경우�
 | `REQ-RESULT` bank/outcome 분리와 final audit | `C-15`, 질문 `Q-RES-*`, [Master §10](../master-design.md#10-search-solution과-final-result) | 07 | `E-P07-AUDIT` |
 | `REQ-VERIFY` 두 독립 verifier와 publication block | `C-21`, [Master §14.1](../master-design.md#141-publication-gate) | 07 | `E-P07-CANDIDATE-VERIFY`, `E-P07-RESULT-VERIFY` |
 | `REQ-LOCAL-PORT` provider-neutral local reference | [Integrated §12](../architecture-domain-implementation-design.md#12-phase-8--application-ports와-local-reference-runtime) | 08 | `E-P08-LOCAL-E2E` |
+| `REQ-FINAL-EXEC` `win_poc_case_floor.json` actual run, both-verifier PASS, replay와 결과 제시 | 사용자 고정 기준, 이 계획 §1.1/§11.3 | 01~08 | `E-WIN-POC-EXECUTION`, `E-WIN-POC-REPLAY`, `E-WIN-POC-RESULT` |
 | `REQ-NODB` immutable object + exact key + CAS, listing 금지 | [Integrated §13](../architecture-domain-implementation-design.md#13-phase-9--database-없는-object-storage-architecture) | 09 | `E-P09-STORAGE-CONTRACT`, `E-P09-CAS` |
 | `REQ-COORD` declared worker completeness/retry identity | `C-22`, [Integrated §14](../architecture-domain-implementation-design.md#14-phase-10--provider-neutral-logical-coordinator) | 10 | `E-P10-COMPLETENESS`, `E-P10-RETRY` |
 | `REQ-AWS` selected S3/Step Functions/Lambda with semantic parity | `C-20`, 질문 `Q-INFRA-01`, [Integrated §15](../architecture-domain-implementation-design.md#15-phase-11--selected-aws-targetreference-distribution) | 11 | `E-P11-AWS-CONTRACT`, `E-P11-PARITY` |

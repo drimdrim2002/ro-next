@@ -65,8 +65,21 @@ historical_cross_check_only:
 | Final Domain/Architecture 일부가 `Q-INFRA-01 DEFERRED`, 질문 상태 `25/1/2`로 남아 있음 | 최신 Canonical Master와 질문 등록부의 `Q-INFRA-01 RESOLVED`, `26/1/1`을 적용한다. Phase 02 core에는 여전히 provider SDK를 넣지 않는다. |
 | `PreparedTravel` 내부 표현과 구체 Java API는 `P-03`으로 미확정 | 본 문서의 type/file/signature는 **proposed internal candidate**다. 의미·검증 기준만 고정하며 public API로 승인하지 않는다. |
 | Great Circle 사용은 확정됐으나 Earth model, 함수 ID, library와 version은 미기재 | 값을 만들지 않는다. 승인된 `GreatCirclePolicyId/functionVersion`이 entry evidence로 제출될 때까지 missing-`D` 경로와 Phase acceptance를 막는다. |
-| 현재 Win fixture에는 decimal `D/U`가 존재 | 해당 fixture는 non-compliant이며 Phase 02 generic 구현이나 test-only hand oracle을 official travel/benchmark evidence로 승격할 수 없다. |
+| Raw Win fixture에는 decimal `D/U`가 존재 | 원본은 non-compliant provenance/negative fixture로 유지한다. 사용자 승인 migration으로 생성된 `win_poc_case_floor.json`은 이 계획의 integer 실행 fixture이며 별도 digest/source identity로 소비한다. |
 | Registry는 Phase 02를 `PLANNED`로 기록 | 본 문서가 entry blocker를 상세화해도 authoritative registry를 직접 변경하지 않는다. 총괄 스케줄러만 상태를 전이한다. |
+
+### 1.3 2026-07-28 실행 fixture authority
+
+[win_poc_case_floor.json](../../../data/win_poc_case_floor.json)은 205,209개 directed
+matrix cell의 provided `D/U`가 모두 integer meter/second인 사용자 승인 실행
+fixture다. Phase 02는 raw decimal 값을 다시 읽거나 절삭하지 않고 이 파일의 exact
+bytes와 migration provenance를 Phase 01 handoff에 결합한다. Self arc `0/0`
+normalization, `M²` coverage, directed identity, duplicate/reference와 fingerprint
+검증은 그대로 적용한다.
+
+이 fixture의 존재는 이 계획의 최종 local execution input blocker를 해소하지만,
+Great Circle missing-`D` policy, `Q-BENCH-02` 수치 또는 AWS production authority를
+해소하지 않는다.
 
 ## 2. 목표, 범위와 비범위
 
@@ -150,10 +163,10 @@ Phase 03의 route propagation은 raw `D/U`, coordinate, speed, provider response
 | Phase 01 accepted | `E-P01-NUMERIC`, `E-P01-TIME`, `E-P01-COMPAT`, `E-P01-ERROR`, accepted review | [Phase 01 상세](phase-01-canonical-input-normalization.md)은 actual document지만 registry `PLANNED`/implementation `NOT_STARTED`이고 artifact/evidence 없음 | `BLOCKED` |
 | Great Circle approval | 함수 ID/version, Earth model/constant, coordinate validation, deterministic precision, reference vectors, approval record | Authority 문서는 “approved function/version”만 요구하고 구체값은 제공하지 않음 | `BLOCKED` |
 | Typed source policy | allowed source kinds, provided/generated priority, declared sparse-input meaning, source identity와 no-fallback rule review | 본 문서가 proposed contract를 제공하지만 승인 record 없음 | `BLOCKED` |
-| Integer travel evidence scope | Generic Phase 02는 test-only integer hand oracle로 검증 가능; official fixture/snapshot은 별도 authority 필요 | repository에는 승인된 integer fixture가 없고 current Win fixture는 decimal | Generic entry blocker 아님; official/benchmark 사용만 `BLOCKED` |
+| Integer travel evidence scope | Plan-final execution fixture와 official production fixture authority를 분리 | `win_poc_case_floor.json` bytes/digest/FLOOR provenance 검증 완료; official production label은 별도 gate | Plan execution input `READY`; official/production benchmark는 별도 `BLOCKED` |
 | Owner/task | implementation/reviewer와 scheduler task identity | Scheduler task ID `TBD`; registry `PLANNED` | 실행 전 확인 필요 |
 
-Phase 02 구현자는 `BLOCKED`로 판정된 entry gate가 충족되기 전 production code를 시작하지 않는다. Test plan과 pure core source contract를 review하는 것은 가능하지만 fake/test value를 production default나 승인된 source로 승격하지 않는다. Approved integer fixture나 official snapshot의 부재만으로 generic Phase 02를 막지 않으며, test-only oracle을 official/benchmark evidence로 승격하는 것만 금지한다.
+Phase 02 구현자는 `BLOCKED`로 판정된 entry gate가 충족되기 전 production code를 시작하지 않는다. Test plan과 pure core source contract를 review하는 것은 가능하지만 fake/test value를 production default나 승인된 source로 승격하지 않는다. 사용자 승인 FLOOR fixture는 plan-final local execution에 사용할 수 있지만, 그 사실만으로 official production label이나 다른 닫힌 authority gate를 승격하지 않는다.
 
 ### 4.2 Entry artifact acceptance checklist
 

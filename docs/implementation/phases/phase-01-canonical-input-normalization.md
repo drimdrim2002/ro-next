@@ -82,6 +82,21 @@ source_sections:
 
 위 파일들은 metadata의 SHA-256과 절 범위까지 전체 대조했다. Source fingerprint가 달라지면 구현 전에 영향 절을 다시 읽고 이 문서의 requirement/test trace를 review한다. `docs/codex/*`는 역사/참고 자료이므로 이 문서의 authority로 인용하거나 복사·수정하지 않는다.
 
+### 1.2 2026-07-28 사용자 승인 Win fixture migration
+
+사용자는 raw [win_poc_case.json](../../../data/win_poc_case.json)의
+`distanceMatrix.D`를 meter, `distanceMatrix.U`를 second로 해석하고 각각 exact
+decimal `FLOOR`해 별도 파일로 만드는 migration을 승인했다.
+[floor_win_poc_matrix.py](../../../scripts/floor_win_poc_matrix.py)는 원본을 변경하지
+않고 [win_poc_case_floor.json](../../../data/win_poc_case_floor.json)을 생성한다.
+
+이 결정은 generic canonical parser가 임의의 decimal distance/time을 조용히
+절삭하도록 바꾸지 않는다. Raw fixture는 decimal rejection/provenance 입력으로
+유지하고, FLOOR fixture는 이미 integer로 migration된 별도 schema input으로
+받는다. Migration identity와 source/output digest는
+[Master Realization Plan §1.1](../master-realization-plan.md#11-사용자-고정-최종-성공-기준)을
+따른다.
+
 ## 2. 목표, 범위와 비범위
 
 ### 2.1 목표
