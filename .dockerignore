@@ -2,7 +2,12 @@
 .DS_Store
 .idea
 .vscode
+**/target
 target
-node_modules
 .serverless
+.serverless_plugins
+node_modules
 .gcloud
+.env
+docs/implementation/human-guides
+docs/codex

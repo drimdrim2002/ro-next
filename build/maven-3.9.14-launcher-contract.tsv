@@ -1,0 +1,20 @@
+scope	tool-or-class	classification	line-contract
+launcher-interpreter	sh	ACTUAL	mvnw /bin/sh interpreter compatibility preflight; controlled launcher is shell-sourced
+launcher-controlled-source	controlled-maven-launcher	ACTUAL	regular non-symlink immutable source snapshot
+launcher-controlled-core	controlled-maven-launcher-core	ACTUAL	regular non-symlink immutable source snapshot; production supplies fixed rc paths and pinned Maven home positionally
+launcher-platform	uname	ACTUAL	mvnw OS selection exported once to the controlled launcher
+launcher-home	dirname	ACTUAL	mvnw identity and official -f file fallback base resolution; non-empty MAVEN_BASEDIR bypasses fallback
+launcher-user-config	mavenrc-source	ACTUAL	official /usr/local/etc then /etc then HOME ordering; non-empty MAVEN_SKIP_RC skips all; syntax/read failure is fail-closed NOT_EVALUATED
+launcher-basedir	MAVEN_BASEDIR	STATIC_CONTRACT	non-empty raw override selects jvm.config, MAVEN_PROJECTBASEDIR, maven.config and multiModuleProjectDirectory before cwd/-f fallback
+launcher-runtime	java	ACTUAL	Classworlds feature probe and final exec
+launcher-dynamic-boundary	dynamic-maven-executable	ACTUAL	exact MAVEN_HOME/bin/mvn regular-file SHA-256 authority pin before controlled launch
+launcher-classworlds	maven-classworlds-inventory	ACTUAL	exactly one Maven 3.9.14 boot/plexus-classworlds-*.jar
+launcher-config	maven-launcher-config	ACTUAL	Maven 3.9.14 bin/m2.conf regular-file SHA-256 pin
+launcher-symlink	ls	CONDITIONAL	only while bin/mvn is a symlink; Phase 00 rejects a symlink before launch
+launcher-symlink	expr	CONDITIONAL	only while bin/mvn is a symlink; Phase 00 rejects a symlink before launch
+launcher-platform	cygpath	PLATFORM_CONDITIONAL	Cygwin path normalization
+launcher-jvm-config	tr	CONDITIONAL	only when selected MAVEN_PROJECTBASEDIR .mvn/jvm.config exists
+launcher-shell-builtins	read,test,printf,cd,pwd,command,unset,export,exec,dot	SHELL_BUILTIN_OR_KEYWORD	no external executable boundary
+launcher-source-pin	f9381d0cb98abaaf9592dae421eddc497e84ed9bfb723b84c111d1350863c3a2	PINNED_SHA256	Apache Maven 3.9.14 distribution bin/mvn
+launcher-config-pin	e336769bf93a902baa7a3e827ba55e4cef7de4af2ed1a9541a4261094d748ba9	PINNED_SHA256	Apache Maven 3.9.14 distribution bin/m2.conf
+launcher-classworlds-pin	1ad3292cd563381e3fd632f3fded1988f9e9b2be7a9f3db63ff4c4cedba13fa5	PINNED_SHA256	Apache Maven 3.9.14 distribution boot/plexus-classworlds-2.9.0.jar

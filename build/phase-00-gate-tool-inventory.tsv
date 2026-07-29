@@ -1,0 +1,55 @@
+tool-or-class	classification	exit-semantics	representative-gate-path	coverage
+awk	GATE_CRITICAL	nonzero=NOT_EVALUATED	manifest projection, XML/report parsing, dependency canonicalization	helper-awk-exit-9 plus normal parsers
+basename	GATE_CRITICAL_WRAPPER_ACTUAL	nonzero=NOT_EVALUATED	checked-in mvnw identity and download extraction fallback	actual-basename-exit-41
+cat	GATE_CRITICAL_WRAPPER_CONDITIONAL	nonzero=NOT_EVALUATED	Maven wrapper Java downloader source materialization	conditional-cat-exit-41
+chmod	GATE_CRITICAL_SELF_TEST	nonzero=NOT_EVALUATED	fault-shim and unreadable-entry construction	wrapper fault matrix plus integrity self-test
+cmp	GATE_CRITICAL_TRI_STATE	0=equal;1=EVALUATED_FAILURE;other=NOT_EVALUATED	effective POM, manifests, reproducible artifacts, legacy topology	helper-cmp-exit-9 plus mismatch attacks
+cp	GATE_CRITICAL	nonzero=NOT_EVALUATED	cache/evidence/report staging, receipt publication and redaction file inventory	actual redaction fault, receipt stale-PASS matrix plus wrapper fault matrix
+curl	GATE_CRITICAL_WRAPPER_CONDITIONAL	nonzero=NOT_EVALUATED	Maven distribution download when wget is unavailable	conditional-curl-exit-41
+cygpath	GATE_CRITICAL_PLATFORM_CONDITIONAL	nonzero=NOT_EVALUATED	Cygwin/MinGW wrapper and pinned Maven launcher path conversion	conditional-cygpath-exit-41
+date	GATE_CRITICAL	nonzero=NOT_EVALUATED	evidence generation provenance	actual generator date fault
+dirname	GATE_CRITICAL_WRAPPER_LAUNCHER_ACTUAL	nonzero=NOT_EVALUATED	checked-in mvnw path and pinned Maven launcher home/base resolution	actual-dirname-exit-41
+dynamic-maven-executable	GATE_CRITICAL_DYNAMIC_EXECUTABLE	validation/launch failure=NOT_EVALUATED; Maven goal result remains evaluated	MAVEN_HOME/bin/mvn pinned launcher boundary	actual-dynamic-maven-executable-exit-41 plus SHA-256 pin
+controlled-maven-launcher	GATE_CRITICAL_LAUNCHER_ACTUAL	missing/non-regular/symlink=NOT_EVALUATED; immutable source is shell-sourced	checked-in fail-closed Maven 3.9.14 Classworlds launcher	actual-controlled-maven-launcher-missing plus complete source snapshot
+controlled-maven-launcher-core	GATE_CRITICAL_LAUNCHER_ACTUAL	missing/non-regular/symlink=NOT_EVALUATED; production arguments are fixed before immutable core is sourced	checked-in shared Maven 3.9.14 launcher core	actual-controlled-maven-launcher-core-missing plus complete source snapshot
+mavenrc-source	GATE_CRITICAL_LAUNCHER_ACTUAL	unreadable or syntax/command-resolution source error=NOT_EVALUATED; ordinary rc variable mutation and Maven/JVM result preserve official status	official system/user mavenrc chain before launcher resolution	actual-mavenrc-source-syntax-error plus pinned official A/B parity
+env	GATE_CRITICAL_LAUNCHER	child status propagated; launcher failure=NOT_EVALUATED	controlled environment for negative/offline commands	wrapper fault matrix
+expr	GATE_CRITICAL_LAUNCHER_CONDITIONAL	nonzero=NOT_EVALUATED	pinned Maven launcher symlink target resolution	conditional-expr-exit-41
+find	GATE_CRITICAL	nonzero=NOT_EVALUATED	complete tree traversal and artifact/report discovery	forced partial-output/nonzero traversal attacks
+git	GATE_CRITICAL_GIT_CHECK_SEMANTICS	tracked 0 clean/2 whitespace; no-index 0 same/1 ordinary difference/3 difference+whitespace; other=NOT_EVALUATED	source identity/archive/status/tree/show and whitespace gates	git whitespace six-case regression plus actual pre-move git fault
+grep	GATE_CRITICAL_TRI_STATE	predicate-specific 0/1;other=NOT_EVALUATED	forbidden/required content, redaction, manifest and bytecode gates	exit-2/3 detector matrix
+jar	GATE_CRITICAL	nonzero=NOT_EVALUATED	bytecode/resource archive inventory	helper and actual bytecode exit-9
+java	GATE_CRITICAL_WRAPPER_LAUNCHER_ACTUAL	nonzero=NOT_EVALUATED	pinned Java identity, downloader fallback, Maven Classworlds launch	actual-java-exit-41 plus toolchain regression
+javac	GATE_CRITICAL_WRAPPER_CONDITIONAL	nonzero=NOT_EVALUATED	Maven wrapper Java downloader compilation	conditional-javac-exit-41
+jdeps	GATE_CRITICAL	nonzero=NOT_EVALUATED	stable-module bytecode dependency scan	actual bytecode exit-9
+ln	GATE_CRITICAL_SELF_TEST	nonzero=NOT_EVALUATED	symlink attack construction	wrapper fault matrix plus integrity self-test
+ls	GATE_CRITICAL_WRAPPER_LAUNCHER_CONDITIONAL	nonzero=NOT_EVALUATED	download diagnostics and pinned launcher symlink resolution	conditional-ls-exit-41 plus helper-ls-exit-9
+mkdir	GATE_CRITICAL_WRAPPER_CONDITIONAL	nonzero=NOT_EVALUATED	staging/scratch/candidate and wrapper distribution parent construction	conditional-mkdir-exit-41 plus wrapper fault matrix
+mkfifo	GATE_CRITICAL_SELF_TEST	nonzero=NOT_EVALUATED	non-regular-entry attack construction	wrapper fault matrix plus integrity self-test
+mktemp	GATE_CRITICAL_BOOTSTRAP_WRAPPER_CONDITIONAL	nonzero=NOT_EVALUATED	private invocation staging and wrapper download roots	conditional-mktemp-exit-41 plus gate_make_temporary_directory matrix
+mv	GATE_CRITICAL_PUBLICATION_WRAPPER_CONDITIONAL	nonzero=NOT_EVALUATED	atomic report/receipt/seal/bundle publication and wrapper installation	conditional-mv-exit-41, receipt stale-PASS matrix plus first/second seal publication faults
+readlink	GATE_CRITICAL_SELF_TEST	nonzero=NOT_EVALUATED	read-only tree snapshot for mutation assertions	wrapper fault matrix plus integrity self-test
+rg	GATE_CRITICAL_TRI_STATE	0=match;1=no-match;other=NOT_EVALUATED	source policy scans	actual source-scan exit-2
+rm	GATE_CRITICAL_INVALIDATION_WRAPPER_CONDITIONAL	nonzero=NOT_EVALUATED for stale/PASS invalidation and wrapper cleanup	stale report invalidation, transient receipt cleanup, fault fixture mutation, wrapper download cleanup	conditional-rm-exit-41 plus stale-PASS/receipt tests
+sed	GATE_CRITICAL	nonzero=NOT_EVALUATED	report/XML parsing and legacy normalization	actual comparator/capture fault plus wrapper matrix
+sh	GATE_CRITICAL_LAUNCHER_ACTUAL	nonzero=NOT_EVALUATED	controlled execution of exact pinned Maven 3.9.14 bin/mvn launcher	actual-sh-exit-41
+sha256sum	GATE_CRITICAL_WRAPPER_CONDITIONAL	0=checksum match;1=EVALUATED_FAILURE mismatch;other=NOT_EVALUATED	Maven distribution checksum on platforms providing sha256sum	conditional-sha256sum-exit-41
+shasum	GATE_CRITICAL_WRAPPER_LAUNCHER_ACTUAL	0=checksum match;1=EVALUATED_FAILURE mismatch;other=NOT_EVALUATED	Maven launcher pin, report/receipt byte binding, distribution fallback and evidence digests	actual-shasum-exit-41, helper-shasum-exit-9 plus receipt producer/consumer hash faults
+sort	GATE_CRITICAL	nonzero=NOT_EVALUATED	canonical path/multiset ordering	helper-sort-exit-9
+tar	GATE_CRITICAL_WRAPPER_CONDITIONAL	nonzero=NOT_EVALUATED	baseline/reproducibility snapshots and Maven distribution fallback	conditional-tar-exit-41 plus actual reproducibility/pre-move faults
+tr	GATE_CRITICAL_WRAPPER_LAUNCHER_ACTUAL	nonzero=NOT_EVALUATED	wrapper property trim, Maven jvm.config normalization, legacy manifest normalization	actual-tr-exit-41 plus comparator fault
+uname	GATE_CRITICAL_WRAPPER_LAUNCHER_ACTUAL	nonzero=NOT_EVALUATED	checked-in wrapper and pinned Maven launcher platform selection	actual-uname-exit-41 plus full generator attack
+unzip	GATE_CRITICAL_WRAPPER_CONDITIONAL	nonzero=NOT_EVALUATED	Maven distribution extraction and shaded manifest extraction	conditional-unzip-exit-41 plus actual pre-move fault
+wc	GATE_CRITICAL	nonzero=NOT_EVALUATED	byte length and digest line count	helper-wc-exit-9
+wget	GATE_CRITICAL_WRAPPER_CONDITIONAL	nonzero=NOT_EVALUATED	preferred unauthenticated Maven distribution download	conditional-wget-exit-41
+mvnw	GATE_CRITICAL_EXECUTABLE	zero=completed gate; Maven test/contract failure=EVALUATED_FAILURE; prerequisite/launch failure=NOT_EVALUATED	root/target/offline/effective-POM/reproducibility commands	wrapper recursive matrix plus full regression
+phase00-script	GATE_CRITICAL_EXECUTABLE	child exact status/result propagated	generator and architecture test invoke synchronous inventory wrapper; generator invokes sealer, comparator, cache and scope scripts	receipt token/exit negatives, child fault regressions and full generation
+maven-wrapper-source-snapshot	GATE_CRITICAL_STATIC_CONTRACT	exact SHA-256 and complete shell-source inventory must match	checked-in mvnw and all build shell acceptance sources	verify-gate-tool-inventory plus mutation negative
+maven-private-test-driver	GATE_CRITICAL_PRIVATE_TEST_HARNESS	positional fixture inputs are reachable only by direct test invocation; public mvnw has no selection path	system rc, executable, Maven home and conditional fault injection	public override attack matrix plus complete source snapshot
+maven-3.9.14-launcher-contract	GATE_CRITICAL_STATIC_CONTRACT	exact f9381d0c... SHA-256 and classified external-command graph	MAVEN_HOME/bin/mvn before every launch	runtime pin verification plus static contract
+MAVEN_BASEDIR	GATE_CRITICAL_STATIC_CONTRACT	non-empty value is an unnormalized official override; empty/unset uses cwd/-f ancestor fallback	jvm.config, MAVEN_PROJECTBASEDIR, maven.config and multiModuleProjectDirectory	pinned official A/B absolute/relative/nonexistent/file/fallback parity
+maven-classworlds-inventory	GATE_CRITICAL_LAUNCHER_ACTUAL	missing or multiple launcher jars=NOT_EVALUATED	exactly one Maven 3.9.14 boot/plexus-classworlds-*.jar	actual-classworlds-missing and actual-classworlds-multiple
+maven-launcher-config	GATE_CRITICAL_LAUNCHER_ACTUAL	missing/non-regular/symlink or digest mismatch=NOT_EVALUATED	Maven 3.9.14 bin/m2.conf Classworlds configuration	actual-maven-launcher-config-missing plus runtime SHA-256 pin
+tail	ELIMINATED_EXTERNAL	no Phase 00 acceptance-path external invocation	report replay uses shell read/printf; tail helper removed	recursive static source snapshot
+read,test,printf,cd,pwd,command,trap,set,shift,return,unset,export,exec,dot,kill	SHELL_BUILTIN_OR_KEYWORD	not an external executable	control flow, parsing, signaling, redirection, cleanup and controlled launcher sourcing	explicit classification
+rm(cleanup)	NON_GATE_INFORMATIONAL	cleanup diagnostic does not replace an already-failing primary gate	trap-only private scratch cleanup	seal cleanup audit

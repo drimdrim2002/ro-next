@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.ronext</groupId>
+        <artifactId>ro-next-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <artifactId>rpdptw-parent</artifactId>
+    <packaging>pom</packaging>
+    <name>RPDPTW stable modules</name>
+
+    <modules>
+        <module>core</module>
+        <module>solver</module>
+        <module>verification</module>
+        <module>application</module>
+        <module>capabilities</module>
+        <module>profile-catalog</module>
+    </modules>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-stable-module-dependencies</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <dependencyConvergence/>
+                                <requireUpperBoundDeps/>
+                                <bannedDependencies>
+                                    <searchTransitive>true</searchTransitive>
+                                    <excludes>
+                                        <exclude>${forbidden.dependency.01}</exclude>
+                                        <exclude>${forbidden.dependency.02}</exclude>
+                                        <exclude>${forbidden.dependency.03}</exclude>
+                                        <exclude>${forbidden.dependency.04}</exclude>
+                                        <exclude>${forbidden.dependency.05}</exclude>
+                                        <exclude>${forbidden.dependency.06}</exclude>
+                                        <exclude>${forbidden.dependency.07}</exclude>
+                                        <exclude>${forbidden.dependency.08}</exclude>
+                                        <exclude>${forbidden.dependency.09}</exclude>
+                                        <exclude>${forbidden.dependency.10}</exclude>
+                                    </excludes>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -5,67 +5,198 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.ronext</groupId>
-    <artifactId>ro-next</artifactId>
+    <artifactId>ro-next-parent</artifactId>
     <version>0.1.0-SNAPSHOT</version>
-    <name>ro-next</name>
-    <description>CVRPTW optimization workflow for Cloud Run and Google Cloud Workflows</description>
+    <packaging>pom</packaging>
+    <name>ro-next reactor parent</name>
+    <description>Build and architecture parent for the RPDPTW implementation.</description>
+
+    <modules>
+        <module>rpdptw</module>
+        <module>build</module>
+        <module>legacy</module>
+    </modules>
 
     <properties>
+        <maven.minimum.version>3.9.14</maven.minimum.version>
+        <maven.next.version>3.9.15</maven.next.version>
         <maven.compiler.release>25</maven.compiler.release>
+        <maven.compiler.testRelease>25</maven.compiler.testRelease>
+        <toolchain.jdk.version>[25,26)</toolchain.jdk.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <google.cloud.workflow.executions.version>2.94.0</google.cloud.workflow.executions.version>
-        <google.cloud.storage.version>2.70.0</google.cloud.storage.version>
-        <jackson.version>2.19.2</jackson.version>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- Baseline date, not wall clock time. It is part of the Phase 00 build policy. -->
+        <project.build.outputTimestamp>2026-07-28T00:00:00Z</project.build.outputTimestamp>
+
         <junit.version>5.13.1</junit.version>
+        <junit.platform.version>1.13.1</junit.platform.version>
+        <maven.clean.plugin.version>3.2.0</maven.clean.plugin.version>
+        <maven.compiler.plugin.version>3.14.1</maven.compiler.plugin.version>
+        <maven.dependency.plugin.version>3.7.0</maven.dependency.plugin.version>
+        <maven.deploy.plugin.version>3.1.2</maven.deploy.plugin.version>
+        <maven.enforcer.plugin.version>3.6.1</maven.enforcer.plugin.version>
+        <maven.help.plugin.version>3.5.1</maven.help.plugin.version>
+        <maven.install.plugin.version>3.1.2</maven.install.plugin.version>
+        <maven.jar.plugin.version>3.5.0</maven.jar.plugin.version>
+        <maven.resources.plugin.version>3.4.0</maven.resources.plugin.version>
+        <maven.shade.plugin.version>3.6.1</maven.shade.plugin.version>
+        <maven.site.plugin.version>3.12.1</maven.site.plugin.version>
+        <maven.surefire.plugin.version>3.5.4</maven.surefire.plugin.version>
+        <maven.toolchains.plugin.version>3.2.0</maven.toolchains.plugin.version>
+
+        <!-- Central artifact-level policy; split Google coordinates keep the
+             prescribed source-leakage scan distinct from this deny list. -->
+        <forbidden.google.base>com.google</forbidden.google.base>
+        <forbidden.dependency.01>${forbidden.google.base}.cloud:*</forbidden.dependency.01>
+        <forbidden.dependency.02>${forbidden.google.base}.api:*</forbidden.dependency.02>
+        <forbidden.dependency.03>${forbidden.google.base}.apis:*</forbidden.dependency.03>
+        <forbidden.dependency.04>software.amazon.awssdk:*</forbidden.dependency.04>
+        <forbidden.dependency.05>com.amazonaws:*</forbidden.dependency.05>
+        <forbidden.dependency.06>com.azure:*</forbidden.dependency.06>
+        <forbidden.dependency.07>io.kubernetes:*</forbidden.dependency.07>
+        <forbidden.dependency.08>${forbidden.google.base}.ortools:*</forbidden.dependency.08>
+        <forbidden.dependency.09>com.gurobi:*</forbidden.dependency.09>
+        <forbidden.dependency.10>com.ronext:legacy-gcp-placeholder</forbidden.dependency.10>
     </properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>com.google.cloud</groupId>
-            <artifactId>google-cloud-workflow-executions</artifactId>
-            <version>${google.cloud.workflow.executions.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.cloud</groupId>
-            <artifactId>google-cloud-storage</artifactId>
-            <version>${google.cloud.storage.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.platform</groupId>
+                <artifactId>junit-platform-launcher</artifactId>
+                <version>${junit.platform.version}</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <version>${maven.clean.plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven.compiler.plugin.version}</version>
+                    <configuration>
+                        <release>${maven.compiler.release}</release>
+                        <testRelease>${maven.compiler.testRelease}</testRelease>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>${maven.dependency.plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>${maven.deploy.plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>${maven.enforcer.plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-help-plugin</artifactId>
+                    <version>${maven.help.plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>${maven.install.plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>${maven.jar.plugin.version}</version>
+                    <configuration>
+                        <outputTimestamp>${project.build.outputTimestamp}</outputTimestamp>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>${maven.resources.plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>${maven.shade.plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>${maven.site.plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${maven.surefire.plugin.version}</version>
+                    <configuration>
+                        <failIfNoTests>false</failIfNoTests>
+                    </configuration>
+                    <dependencies>
+                        <!-- Make the provider an explicit, go-offline-resolvable
+                             part of the pinned Surefire build policy. -->
+                        <dependency>
+                            <groupId>org.apache.maven.surefire</groupId>
+                            <artifactId>surefire-junit-platform</artifactId>
+                            <version>${maven.surefire.plugin.version}</version>
+                            <exclusions>
+                                <exclusion>
+                                    <groupId>org.junit.platform</groupId>
+                                    <artifactId>junit-platform-launcher</artifactId>
+                                </exclusion>
+                            </exclusions>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.junit.platform</groupId>
+                            <artifactId>junit-platform-launcher</artifactId>
+                            <version>${junit.platform.version}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-toolchains-plugin</artifactId>
+                    <version>${maven.toolchains.plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.6.1</version>
                 <executions>
                     <execution>
-                        <id>enforce-build-toolchain</id>
-                        <goals><goal>enforce</goal></goals>
+                        <id>enforce-phase-00-build-policy</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
                         <configuration>
                             <rules>
                                 <requireJavaVersion>
                                     <version>[25,26)</version>
                                 </requireJavaVersion>
                                 <requireMavenVersion>
-                                    <version>[3.9.14,)</version>
+                                    <version>[${maven.minimum.version},${maven.next.version})</version>
                                 </requireMavenVersion>
+                                <requirePluginVersions/>
+                                <banDuplicatePomDependencyVersions/>
                             </rules>
                         </configuration>
                     </execution>
@@ -74,33 +205,30 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.14.1</version>
-                <configuration>
-                    <release>${maven.compiler.release}</release>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.4</version>
+                <configuration>
+                    <failIfNoTests>false</failIfNoTests>
+                    <systemPropertyVariables>
+                        <phase00.repoRoot>${maven.multiModuleProjectDirectory}</phase00.repoRoot>
+                    </systemPropertyVariables>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.6.1</version>
+                <artifactId>maven-jar-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-toolchains-plugin</artifactId>
                 <executions>
                     <execution>
-                        <phase>package</phase>
-                        <goals><goal>shade</goal></goals>
-                        <configuration>
-                            <createDependencyReducedPom>false</createDependencyReducedPom>
-                            <finalName>${project.artifactId}-${project.version}-app</finalName>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.ronext.optimizer.adapter.in.http.OptimizationHttpServer</mainClass>
-                                </transformer>
-                            </transformers>
-                        </configuration>
+                        <id>select-reviewed-java-25-toolchain</id>
+                        <goals>
+                            <goal>select-jdk-toolchain</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>

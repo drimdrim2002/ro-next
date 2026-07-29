@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<toolchains>
+    <!-- Copy to ~/.m2/toolchains.xml and replace the placeholder outside source control. -->
+    <toolchain>
+        <type>jdk</type>
+        <provides>
+            <version>25</version>
+        </provides>
+        <configuration>
+            <jdkHome>/absolute/path/to/a/jdk-25</jdkHome>
+        </configuration>
+    </toolchain>
+</toolchains>
