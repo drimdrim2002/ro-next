@@ -5,8 +5,8 @@ version: 1.2
 date: 2026-07-31
 approved_date: 2026-07-31
 owner: design
-normative_input: docs/2026-07-30-design-interview-phase-a.md
-approved_master: docs/2026-07-30-master-design.md
+normative_input: docs/deprecated/2026-07-30-design-interview-phase-a.md
+approved_master: docs/master-design.md
 authority: >
   Phase A 인터뷰 정리와 APPROVED Master가 규범이다.
   기존 Domain(2026-07-26)·explainer·implementation/* 는 상속 후보/참고일 뿐,
@@ -18,7 +18,7 @@ terminology_style: >
   주요 용어는 English first, 이어서 괄호로 쉬운 한국어.
   예: immutable solve snapshot (풀이용 문제 고정본)
 inheritance:
-  candidate: docs/2026-07-26-domain-design.md
+  candidate: docs/deprecated/2026-07-26-domain-design.md
   policy: >
     pair·정규화·travel·전파·평가·결과 등 상세 의미는 상속 후보에서 재구성.
     multi-version 입력 스키마 전제·compute=Lambda 단정은 배제(D1·D2).
@@ -71,9 +71,9 @@ out_of_scope:
 | **지위** | Domain — 값·수식·normalization·travel·propagation·evaluation·**solution/search**·**verification/result** 의 **정확한 의미**와 acceptance 방향 |
 | **status** | **`APPROVED`** (2026-07-31). Architecture 도 **APPROVED** |
 | **version** | **1.2** (editorial restructure; 규범 불변) |
-| **규범 입력 (MUST)** | `docs/2026-07-30-design-interview-phase-a.md` |
-| **상위 설계** | `docs/2026-07-30-master-design.md` (`APPROVED`) |
-| **비권위 상속 후보** | `docs/2026-07-26-domain-design.md` 등 |
+| **규범 입력 (MUST)** | `docs/deprecated/2026-07-30-design-interview-phase-a.md` |
+| **상위 설계** | `docs/master-design.md` (`APPROVED`) |
+| **비권위 상속 후보** | `docs/deprecated/2026-07-26-domain-design.md` 등 |
 
 ### 1.1 Domain 범위 · 문서 경계 (A6)
 
@@ -1520,7 +1520,7 @@ Architecture 배치; C-17 수치; multi-version 입력; 새 실험 수치; imple
 ## 19. 다음 액션
 
 1. ~~Domain `REVIEW` 검수~~ → **`APPROVED`** (2026-07-31, deep-interview 반영)  
-2. ~~Architecture 검수~~ → **`APPROVED`** (`docs/2026-07-31-architecture-design.md`, 2026-07-31)  
+2. ~~Architecture 검수~~ → **`APPROVED`** (`docs/architecture-design.md`, 2026-07-31)  
 3. **(선택) 다음:** Phase C — 구 문서 SUPERSEDED·링크  
 4. ~~Domain editorial restructure~~ → **v1.2** (규범 불변, 구조·중복 정리)  
 5. 구현은 별 세션 (implementation 문서 세트)

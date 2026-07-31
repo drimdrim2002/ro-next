@@ -6,16 +6,16 @@ date: 2026-07-30
 approved_date: 2026-07-31
 reorganized_date: 2026-07-31
 owner: design
-normative_input: docs/2026-07-30-design-interview-phase-a.md
+normative_input: docs/deprecated/2026-07-30-design-interview-phase-a.md
 authority: >
   본 문서는 Phase A 인터뷰 정리만을 규범 입력으로 한다.
-  기존 explainer·2026-07-26 시리즈·architecture-design.md·implementation/*
+  기존 explainer·deprecated 2026-07-26 시리즈·deprecated 구 architecture-design.md·implementation/*
   와 충돌 시 인터뷰 정리 및 본 문서가 이긴다.
 language: ko
 identifiers: en
 related_designs:
-  - docs/2026-07-31-domain-design.md
-  - docs/2026-07-31-architecture-design.md
+  - docs/domain-design.md
+  - docs/architecture-design.md
 domain_status: APPROVED
 architecture_status: APPROVED
 supersedes_claim: >
@@ -43,8 +43,8 @@ reorganization_note: >
 |---|---|
 | **지위** | Master — 목표·범위·완료·핵심 결정·e2e·roadmap/gate·검증 개요 |
 | **status** | `APPROVED` (2026-07-31) |
-| **관련 설계** | Domain: `docs/2026-07-31-domain-design.md` (**APPROVED**). Architecture: `docs/2026-07-31-architecture-design.md` (**APPROVED**) |
-| **규범 입력 (MUST)** | `docs/2026-07-30-design-interview-phase-a.md` |
+| **관련 설계** | Domain: `docs/domain-design.md` (**APPROVED**). Architecture: `docs/architecture-design.md` (**APPROVED**) |
+| **규범 입력 (MUST)** | `docs/deprecated/2026-07-30-design-interview-phase-a.md` |
 | **비권위 참고** | 기존 Domain/Architecture 상세, explainer, implementation/* — 상속 후보 또는 지형 참고일 뿐 |
 | **충돌 규칙** | 인터뷰 정리 §3·§4(A1–A12, D1·D2) 우선. 에이전트 신규 설계 결정 금지 |
 
@@ -340,7 +340,7 @@ Master는 MIP 모델·budget·pool 정책을 **확정하지 않는다**.
 
 | Phase | 목표 | 산출 | 상태 |
 |---|---|---|---|
-| **A** | 합의·의도 교정 | `docs/2026-07-30-design-interview-phase-a.md` | **완료** |
+| **A** | 합의·의도 교정 | `docs/deprecated/2026-07-30-design-interview-phase-a.md` | **완료** |
 | **B** | 설계 재작성 | Master → Domain → Architecture, **각각 사용자 검수** | **완료** — Master·Domain·Architecture **APPROVED** (2026-07-31) |
 | **C (선택)** | 구 문서 SUPERSEDED·깨진 링크·README 정합 | O5 | **OPEN** |
 
@@ -424,11 +424,11 @@ Phase B 순서: **Master 단독 → 검수 → Domain → 검수 → Architectur
 ### 9.2 다음 액션
 
 1. ~~Master `REVIEW`~~ → **APPROVED** (2026-07-31)
-2. ~~Domain `REVIEW`~~ → **APPROVED** (`docs/2026-07-31-domain-design.md`, 2026-07-31)
-3. ~~Architecture 검수~~ → **APPROVED** (`docs/2026-07-31-architecture-design.md`, 2026-07-31)
+2. ~~Domain `REVIEW`~~ → **APPROVED** (`docs/domain-design.md`, 2026-07-31)
+3. ~~Architecture 검수~~ → **APPROVED** (`docs/architecture-design.md`, 2026-07-31)
 4. **(선택) 다음:** Phase C — 구 문서 권위·링크 정리 (O5)
 5. 구현은 별 세션 (implementation 문서 세트)
 
 ---
 
-*문서 끝. Master Design `APPROVED` (v1.1 내용 보존 재정비). 규범 입력: `docs/2026-07-30-design-interview-phase-a.md`.*
+*문서 끝. Master Design `APPROVED` (v1.1 내용 보존 재정비). 규범 입력: `docs/deprecated/2026-07-30-design-interview-phase-a.md`.*

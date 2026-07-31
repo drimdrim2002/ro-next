@@ -6,12 +6,12 @@ date: 2026-07-31
 approved_date: 2026-07-31
 owner: design
 normative_input:
-  - docs/2026-07-30-design-interview-phase-a.md
-  - docs/2026-07-30-master-design.md
-  - docs/2026-07-31-domain-design.md
+  - docs/deprecated/2026-07-30-design-interview-phase-a.md
+  - docs/master-design.md
+  - docs/domain-design.md
 authority: >
   Phase A 인터뷰 정리와 APPROVED Master·Domain 이 규범이다.
-  기존 Architecture(2026-07-26)·architecture-design.md·explainer·implementation/*
+  기존 Architecture(2026-07-26)·deprecated 구 architecture-design.md·explainer·implementation/*
   는 상속 후보/참고일 뿐, D1·D2 및 A1–A12·APPROVED Domain 과 충돌하면 채택하지 않는다.
   본 문서는 2026-07-31 사용자 검수 완료로 APPROVED 이다.
 language: ko
@@ -20,7 +20,7 @@ terminology_style: >
   주요 용어는 English first, 이어서 괄호로 쉬운 한국어.
   예: port (포트·경계 인터페이스)
 inheritance:
-  candidate: docs/2026-07-26-architecture-design.md
+  candidate: docs/deprecated/2026-07-26-architecture-design.md
   policy: >
     module DAG·package·port·runtime 배치를 상속 후보로 재구성.
     multi-version 입력 전제·compute=Lambda 단정·C-17 기본 ON·실험 수치 확정은 배제.
@@ -62,7 +62,7 @@ out_of_scope:
 | **지위** | Architecture — Maven module, package, port/SPI, runtime, adapter 배치, dependency 금지선 |
 | **status** | **`APPROVED`** (2026-07-31). v3.4 · 구조 재정비 후 검수 완료 (내용 보존·중복 제거, 신규 합의 없음) |
 | **규범 입력 (MUST)** | Phase A · Master (`APPROVED`) · Domain (`APPROVED`) |
-| **비권위 상속 후보** | `docs/2026-07-26-architecture-design.md` 등 |
+| **비권위 상속 후보** | `docs/deprecated/2026-07-26-architecture-design.md` 등 |
 
 ### 1.1 문서 경계 (A6) — MUST
 
@@ -144,7 +144,7 @@ Master A1 목표 계약을 **module DAG · port · runtime 배치 · adapter sea
 **이 장 함:** 저장/로컬 전제, Master 논리 역할→module/port 배치, compute OPEN 한 줄, **REST 접수→S3 key→worker** 타임라인.  
 **이 장 안 함:** “왜 세 역할인가” 철학, Domain 수식, port 용어 전문 정의(→ **§6**), 모듈 tree(→ **§4**), YAML(→ **§5**).
 
-**역할 개요(의미):** `docs/2026-07-30-master-design.md` **§5.2** (A10, D2).  
+**역할 개요(의미):** `docs/master-design.md` **§5.2** (A10, D2).  
 **e2e 단계 의미:** 같은 Master **§5**.
 
 ### 3.1 Master 역할 → 배치 (한 표)
