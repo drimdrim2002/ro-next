@@ -7,6 +7,7 @@ baseline_date: 2026-07-28
 scope: Phase 0~14의 구현·검증·전환 계획
 implementation_status: ACCEPTED_0_OF_15
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 implementation_direction_decision: ALNS_FIRST_BENCHMARK_BEFORE_OPTIONAL_MIP
 direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 direction_overlay_contract_version: ALNS_FIRST_1.0
@@ -91,14 +92,17 @@ solver/backend version은 승인 전 `OPEN — EXPERIMENT_REQUIRED` 또는 `GATE
 | 우선순위/역할 | 입력 | 이 계획에서의 사용 |
 |---|---|---|
 | 1. 사용자 선언 | 이 구현 문서 세트의 입력 목록, 15 Phase canonical map, 파일 규칙, `win_poc_case_floor.json` 최종 실행 성공 기준 | 문서 세트의 최상위 scope, phase numbering과 실행 acceptance |
-| 2. Canonical Master | [Master Design](../master-design.md) | 전체 requirement, `C-*`/`P-*`, 완료 정의, AWS 최신 결정, 질문 수와 gate |
-| 3. 질문/결정 등록부 | [Master Design open questions](../master-design-open-questions.md) | `Q-*` exact 상태, owner boundary, restart/approval 조건 |
-| 4. Final Domain | [2026-07-26 Domain Design](../2026-07-26-domain-design.md) | 값, 불변조건, normalization, travel, propagation, evaluation, result 상세 |
-| 5. Final Architecture | [2026-07-26 Architecture Design](../2026-07-26-architecture-design.md) | Java/Maven module, package DAG, runtime/port, verifier와 backend 격리 |
-| 6. Implementation integrated design | [Architecture-domain implementation design](../architecture-domain-implementation-design.md) | 15 Phase 순서, capability/profile, no-DB object storage, AWS reference와 provider substitution |
-| 7. Historical cross-check only | [2026-07-26 Master Design — SUPERSEDED](../2026-07-26-master-design.md) | 누락·퇴행 여부만 대조. 결정 authority로 사용 금지 |
+| 2. Current Master (APPROVED) | [Master Design](../master-design.md) | 전체 requirement, 완료 정의, 최신 결정, gate (Phase B 정본) |
+| 3. Current Domain (APPROVED) | [Domain Design](../domain-design.md) | 값·불변조건·정규화·travel·전파·평가·결과 **의미** (Phase B 정본) |
+| 4. Current Architecture (APPROVED) | [Architecture Design](../architecture-design.md) | module/package/port/runtime **배치** (Phase B 정본) |
+| 5. Frozen open-questions (SUPERSEDED) | [Historical open questions](../deprecated/master-design-open-questions.md) | 이 세트 작성 당시 `Q-*` exact 행·evidence (경로 remap only) |
+| 6. Frozen Domain (2026-07-26, SUPERSEDED) | [Historical Final Domain](../deprecated/2026-07-26-domain-design.md) | phase 본문이 작성된 상세 스냅샷; current Domain과 충돌 시 current 우선 |
+| 7. Frozen Architecture (2026-07-26, SUPERSEDED) | [Historical Final Architecture](../deprecated/2026-07-26-architecture-design.md) | 동일 (스냅샷) |
+| 8. Frozen integrated design (SUPERSEDED) | [Historical integrated design](../deprecated/architecture-domain-implementation-design.md) | 15 Phase 순서, no-DB, AWS reference 구조의 작성 스냅샷 |
+| 9. Historical cross-check only | [2026-07-26 Master — SUPERSEDED](../deprecated/2026-07-26-master-design.md) | 누락·퇴행 여부만 대조. 결정 authority로 사용 금지 |
 
-`docs/codex/*`는 2026-07-24의 역사/참고 자료다. 이 문서 세트의 입력 권위가 아니며 복사·수정·삭제하지 않는다.
+`docs/codex/*`는 역사/참고(repo 미존재 가능)다. 이 문서 세트의 입력 권위가 아니며 복사·수정·삭제 대상으로 다루지 않는다.  
+**Phase C:** frozen 경로만 `docs/deprecated/` 로 remap. content hash 미재계산. Phase B 의미 rebase 미실시.
 
 ### 2.2 충돌 해소
 
@@ -917,27 +921,27 @@ Phase 13 hybrid는 별도 applicable 결정과 `C-17` gate를 통과한 경우�
 
 | Requirement | Source | Phase | Planned evidence |
 |---|---|---:|---|
-| `REQ-ARCH-DAG` stable module/provider/vendor/verifier dependency | [Architecture §2](../2026-07-26-architecture-design.md#2-module과-package-경계), [Integrated §3](../architecture-domain-implementation-design.md#3-목표-project-architecture) | 00 | `E-P00-ARCH` |
+| `REQ-ARCH-DAG` stable module/provider/vendor/verifier dependency | [Architecture §2](../deprecated/2026-07-26-architecture-design.md#2-module과-package-경계), [Integrated §3](../deprecated/architecture-domain-implementation-design.md#3-목표-project-architecture) | 00 | `E-P00-ARCH` |
 | `REQ-NUMERIC` n=3/FLOOR/item-first/integer-only/checked | [Master §7.2](../master-design.md#72-fixed-point와-checked-arithmetic), 질문 `Q-NUM-*` | 01 | `E-P01-NUMERIC` |
 | `REQ-TIME` plan/window/work/service meaning | [Master §7.3](../master-design.md#73-planning-period와-time), 질문 `Q-TIME-*`/`Q-IN-*` | 01,03 | `E-P01-TIME`, `E-P03-PROPAGATION` |
-| `REQ-COMPAT` size/capability/zone/ownership | [Domain §5.3](../2026-07-26-domain-design.md#53-size-capability와-zone) | 01,04 | `E-P01-COMPAT`, `E-P04-BINDING` |
+| `REQ-COMPAT` size/capability/zone/ownership | [Domain §5.3](../deprecated/2026-07-26-domain-design.md#53-size-capability와-zone) | 01,04 | `E-P01-COMPAT`, `E-P04-BINDING` |
 | `REQ-TRAVEL` complete directed prepared authority | [Master §8](../master-design.md#8-directed-distancetime-matrix-계약), 질문 `Q-MTX-*` | 02 | `E-P02-TRAVEL` |
 | `REQ-PAIR` same-vehicle/exactly-once/precedence/route-bank XOR | [Master §6](../master-design.md#6-핵심-불변조건과-atomic-mutation), `C-06` | 02,05,07 | `E-P05-PAIR`, `E-P07-CANDIDATE-VERIFY` |
 | `REQ-EVAL` hard/metric/score/objective/SolvePlan 분리 | [Master §9](../master-design.md#9-extensible-policy-evaluation과-profile-architecture), `C-04` | 03,04 | `E-P03-EVALUATION`, `E-P04-ISOLATION` |
-| `REQ-PROFILE` exact customer profile/preset, no fallback | 질문 `Q-OBJ-*`, [Integrated §8](../architecture-domain-implementation-design.md#8-phase-4--capability와-data-driven-customer-profile) | 04 | `E-P04-BINDING` |
+| `REQ-PROFILE` exact customer profile/preset, no fallback | 질문 `Q-OBJ-*`, [Integrated §8](../deprecated/architecture-domain-implementation-design.md#8-phase-4--capability와-data-driven-customer-profile) | 04 | `E-P04-BINDING` |
 | `REQ-PORTFOLIO` 4×2 initial candidates | `C-16`, 질문 `Q-ALG-01`, [Master §11.2](../master-design.md#112-현재-범위의-initial-solution-portfolio) | 05 | `E-P05-PORTFOLIO` |
 | `REQ-COW-ALNS` pair operator, COW, exact step, replay | `C-08`, `C-09`, `C-22`, 질문 `Q-ALG-02` | 05,06 | `E-P06-COW`, `E-P06-REPLAY` |
 | `REQ-RESULT` bank/outcome 분리와 final audit | `C-15`, 질문 `Q-RES-*`, [Master §10](../master-design.md#10-search-solution과-final-result) | 07 | `E-P07-AUDIT` |
 | `REQ-VERIFY` 두 독립 verifier와 publication block | `C-21`, [Master §14.1](../master-design.md#141-publication-gate) | 07 | `E-P07-CANDIDATE-VERIFY`, `E-P07-RESULT-VERIFY` |
-| `REQ-LOCAL-PORT` provider-neutral local reference | [Integrated §12](../architecture-domain-implementation-design.md#12-phase-8--application-ports와-local-reference-runtime) | 08 | `E-P08-LOCAL-E2E` |
+| `REQ-LOCAL-PORT` provider-neutral local reference | [Integrated §12](../deprecated/architecture-domain-implementation-design.md#12-phase-8--application-ports와-local-reference-runtime) | 08 | `E-P08-LOCAL-E2E` |
 | `REQ-FINAL-EXEC` `win_poc_case_floor.json` actual run, both-verifier PASS, replay와 결과 제시 | 사용자 고정 기준, 이 계획 §1.1/§11.3 | 01~08 | `E-WIN-POC-EXECUTION`, `E-WIN-POC-REPLAY`, `E-WIN-POC-RESULT` |
 | `REQ-ALNS-BENCHMARK` MIP-independent correctness/quality/performance/reproducibility acceptance | 사용자 결정 `ALNS_FIRST_BENCHMARK_BEFORE_OPTIONAL_MIP`, 이 계획 §1.2/Phase 14A | 05~08,14A | `E-P14-ALNS-BENCHMARK`, `E-P14-ALNS-BENCHMARK-ACCEPTANCE` |
-| `REQ-NODB` immutable object + exact key + CAS, listing 금지 | [Integrated §13](../architecture-domain-implementation-design.md#13-phase-9--database-없는-object-storage-architecture) | 09 | `E-P09-STORAGE-CONTRACT`, `E-P09-CAS` |
-| `REQ-COORD` declared worker completeness/retry identity | `C-22`, [Integrated §14](../architecture-domain-implementation-design.md#14-phase-10--provider-neutral-logical-coordinator) | 10 | `E-P10-COMPLETENESS`, `E-P10-RETRY` |
-| `REQ-AWS` selected S3/Step Functions/Lambda with semantic parity | `C-20`, 질문 `Q-INFRA-01`, [Integrated §15](../architecture-domain-implementation-design.md#15-phase-11--selected-aws-targetreference-distribution) | 11 | `E-P11-AWS-CONTRACT`, `E-P11-PARITY` |
-| `REQ-SUBSTITUTION` independent storage/workflow/compute replacement | [Integrated §16](../architecture-domain-implementation-design.md#16-phase-12--ecs-gcp와-kubernetes-future-substitution) | 12 | `E-P12-PROVIDER-CONTRACT`, `E-P12-PARITY` |
+| `REQ-NODB` immutable object + exact key + CAS, listing 금지 | [Integrated §13](../deprecated/architecture-domain-implementation-design.md#13-phase-9--database-없는-object-storage-architecture) | 09 | `E-P09-STORAGE-CONTRACT`, `E-P09-CAS` |
+| `REQ-COORD` declared worker completeness/retry identity | `C-22`, [Integrated §14](../deprecated/architecture-domain-implementation-design.md#14-phase-10--provider-neutral-logical-coordinator) | 10 | `E-P10-COMPLETENESS`, `E-P10-RETRY` |
+| `REQ-AWS` selected S3/Step Functions/Lambda with semantic parity | `C-20`, 질문 `Q-INFRA-01`, [Integrated §15](../deprecated/architecture-domain-implementation-design.md#15-phase-11--selected-aws-targetreference-distribution) | 11 | `E-P11-AWS-CONTRACT`, `E-P11-PARITY` |
+| `REQ-SUBSTITUTION` independent storage/workflow/compute replacement | [Integrated §16](../deprecated/architecture-domain-implementation-design.md#16-phase-12--ecs-gcp와-kubernetes-future-substitution) | 12 | `E-P12-PROVIDER-CONTRACT`, `E-P12-PARITY` |
 | `REQ-HYBRID` accepted ALNS benchmark 뒤 immutable pool/exact selection/full-eval fallback | `C-17`, `P-15~P-19`, 사용자 ALNS-first 결정, [Master §11.7~11.10](../master-design.md#117-immutable-route-pool) | 13 | `E-P14-ALNS-BENCHMARK-ACCEPTANCE`, `E-P13-GATE`, `E-P13-POOL`, `E-P13-SELECTION`, `E-P13-HYBRID` |
 | `REQ-OFFICIAL` approved values, comparator, all-worker official run | `C-18`, `Q-BENCH-01~03`, [Master §14.2~14.4](../master-design.md#142-primary-fixture와-manifest) | 14 | `E-P14-CALIBRATION`, `E-P14-OFFICIAL-RUN` |
-| `REQ-CUTOVER` versioned shadow/cutover/rollback/operations | [Master §16.2](../master-design.md#162-migration), [Integrated §18](../architecture-domain-implementation-design.md#18-phase-14--calibration-migration과-cutover) | 11,14 | `E-P11-PARITY`, `E-P14-CUTOVER`, `E-P14-ROLLBACK` |
+| `REQ-CUTOVER` versioned shadow/cutover/rollback/operations | [Master §16.2](../master-design.md#162-migration), [Integrated §18](../deprecated/architecture-domain-implementation-design.md#18-phase-14--calibration-migration과-cutover) | 11,14 | `E-P11-PARITY`, `E-P14-CUTOVER`, `E-P14-ROLLBACK` |
 
 Phase 상세 작성자는 이 표의 requirement를 삭제하거나 다른 의미로 축약하지 않는다. 새로운 requirement/evidence가 필요하면 source와 owner를 연결하고 총괄 스케줄러의 registry에 반영한다.

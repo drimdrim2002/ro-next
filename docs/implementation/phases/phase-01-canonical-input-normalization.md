@@ -12,6 +12,7 @@ canonical_slug: phase-01-canonical-input-normalization
 plan_version: 1.0
 baseline_date: 2026-07-28
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 direction_revision_status: ALNS_FIRST_GATE_OVERLAY_APPLIED_DOCUMENTATION_ONLY
 implementation_claim: NONE
@@ -34,14 +35,14 @@ planned_handoff:
   - phase-02-prepared-travel-immutable-problem.md
 source_fingerprints_sha256:
   docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
-  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
-  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
-  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
-  docs/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
+  docs/deprecated/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/deprecated/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/deprecated/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
+  docs/deprecated/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
   docs/implementation/master-realization-plan.md: 940fe8c2156bf0472deafcd450e0ea49f0036ab6b304d6d051f0148a38cd0f5d
   docs/implementation/README.md: 6454238185af7b7c420f468adf42609a0ec045d6c70c16cc7601f0342fa74358
 historical_cross_check_sha256:
-  docs/2026-07-26-master-design.md: 5da9fd05a027e748b642517d33c0edab86ec818645d5b78c2a0d573fa968419a
+  docs/deprecated/2026-07-26-master-design.md: 5da9fd05a027e748b642517d33c0edab86ec818645d5b78c2a0d573fa968419a
 source_sections:
   master:
     - "§1.5, §3, §4.1~§4.7, §5~§8, §15.1~§15.3, §16~§17"
@@ -65,7 +66,7 @@ source_sections:
 
 현재 checkout에는 Phase 00~14 상세 문서 **15/15**와 독립 review **15/15**가 모두 실제 존재한다. [Phase 00 상세 문서](phase-00-build-architecture-skeleton.md)의 review verdict는 `PASS_WITH_RESIDUAL_BLOCKERS`지만 Phase 00 implementation은 `NOT_STARTED`, evidence는 `NOT_PRODUCED`, phase acceptance는 `PLANNED/NOT_ACCEPTED`다. 이 Phase의 [Phase 01 review](../reviews/phase-01-review.md) verdict는 `ACCEPTED_WITH_APPLIED_CORRECTIONS`이며 문서 계약 review는 완료됐다. 그러나 문서/review의 존재나 verdict만으로 predecessor 구현이 accepted되는 것은 아니므로 Phase 01 실행 상태는 계속 `BLOCKED_BY_PHASE_00_ENTRY_EVIDENCE`다. Entry evidence가 생기기 전 마지막 안전 지점은 **문서 review와 test/fixture 설계**이며 production source나 target POM을 수정하지 않는다.
 
-질문 상태는 [Canonical Master](../../master-design.md)와 [질문 등록부](../../master-design-open-questions.md)의 최신 값인 `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1`을 적용한다. Final Domain/Architecture에 남은 과거 `25/1/2`, `Q-INFRA-01 DEFERRED` 표기는 이 Phase의 결정을 되돌리지 않는다. `Q-BENCH-02`, `C-17`, `Q-VAR-01`과 public API/schema 미확정 항목은 임의의 수치·default·완료 상태로 바꾸지 않는다.
+질문 상태는 [Canonical Master](../../master-design.md)와 [질문 등록부](../../deprecated/master-design-open-questions.md)의 최신 값인 `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1`을 적용한다. Final Domain/Architecture에 남은 과거 `25/1/2`, `Q-INFRA-01 DEFERRED` 표기는 이 Phase의 결정을 되돌리지 않는다. `Q-BENCH-02`, `C-17`, `Q-VAR-01`과 public API/schema 미확정 항목은 임의의 수치·default·완료 상태로 바꾸지 않는다.
 
 구체 package, type, method, canonical encoding과 error code 이름은 모두 **proposed internal design**이다. Phase 00의 accepted module tree 또는 별도 API/schema 승인이 다른 이름을 고르면 이름을 바꿀 수 있지만 이 문서의 의미, 불변조건, failure oracle과 dependency direction은 보존해야 한다.
 
@@ -74,13 +75,13 @@ source_sections:
 | 입력 | 역할 |
 |---|---|
 | [Canonical Master](../../master-design.md) | 전체 requirement, 결정, 불변조건과 `RM-1` gate |
-| [Final Domain Design](../../2026-07-26-domain-design.md) | Input, normalization, time, compatibility, travel handoff의 상세 의미 |
-| [Final Architecture Design](../../2026-07-26-architecture-design.md) | Java 25/Maven module/package와 dependency placement |
-| [Integrated implementation design](../../architecture-domain-implementation-design.md) | 15 Phase numbering과 Phase 01/02 경계 |
-| [Master Design open questions](../../master-design-open-questions.md) | Exact `Q-*` 상태, owner와 restart condition |
+| [Final Domain Design](../../deprecated/2026-07-26-domain-design.md) | Input, normalization, time, compatibility, travel handoff의 상세 의미 |
+| [Final Architecture Design](../../deprecated/2026-07-26-architecture-design.md) | Java 25/Maven module/package와 dependency placement |
+| [Integrated implementation design](../../deprecated/architecture-domain-implementation-design.md) | 15 Phase numbering과 Phase 01/02 경계 |
+| [Master Design open questions](../../deprecated/master-design-open-questions.md) | Exact `Q-*` 상태, owner와 restart condition |
 | [Master Realization Plan](../master-realization-plan.md) | Current inventory, Phase contract, evidence와 DoD |
 | [Implementation document map](../README.md) | Canonical filename, authority와 review workflow |
-| [SUPERSEDED historical Master](../../2026-07-26-master-design.md) | 누락·퇴행 cross-check 전용; 현재 decision authority가 아님 |
+| [SUPERSEDED historical Master](../../deprecated/2026-07-26-master-design.md) | 누락·퇴행 cross-check 전용; 현재 decision authority가 아님 |
 
 위 파일들은 metadata의 SHA-256과 절 범위까지 전체 대조했다. Source fingerprint가 달라지면 구현 전에 영향 절을 다시 읽고 이 문서의 requirement/test trace를 review한다. `docs/codex/*`는 역사/참고 자료이므로 이 문서의 authority로 인용하거나 복사·수정하지 않는다.
 

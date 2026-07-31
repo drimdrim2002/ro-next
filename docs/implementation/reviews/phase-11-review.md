@@ -10,6 +10,7 @@ target_document: docs/implementation/phases/phase-11-aws-reference-distribution.
 target_document_version_after_safe_fixes: 1.3
 target_whole_file_hash: OMITTED_TO_AVOID_RECIPROCAL_DOCUMENT_HASH
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 document_verdict: CHANGES_REQUIRED
 phase_acceptance_verdict: BLOCKED_NOT_IMPLEMENTED
 implementation_status_observed: NOT_STARTED
@@ -80,16 +81,16 @@ Step Functions/Lambda/IAM/KMS run, `E-P11-*`와 rollback evidence가 없다.
 | Source | 직접 대조한 범위 | Review 적용 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | 전체, 특히 §1~§4, §13~§17 | AWS target/reference, C-20 provider boundary, declared completeness, both-gate publication, RM-8와 production 분리 |
-| [Final Domain](../../2026-07-26-domain-design.md) | 전체, 특히 §7~§10, §15~§18 | Immutable authority, verified result, failure/evidence와 잔여 Q-INFRA drift |
-| [Final Architecture](../../2026-07-26-architecture-design.md) | 전체, 특히 §2~§3, §5~§6 | Java 25/Maven DAG, port/state/identity/security/test와 잔여 provider-status drift |
-| [Integrated design](../../architecture-domain-implementation-design.md) | 전체, 특히 §12~§16, §19~§28 | Phase 09~12, S3/Step Functions/Lambda, no-DB, migration/failure/test/invariants |
-| [Question register](../../master-design-open-questions.md) | 전체, exact 28개 질문 | `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1`; Q-INFRA 선택은 배포/production 아님 |
+| [Final Domain](../../deprecated/2026-07-26-domain-design.md) | 전체, 특히 §7~§10, §15~§18 | Immutable authority, verified result, failure/evidence와 잔여 Q-INFRA drift |
+| [Final Architecture](../../deprecated/2026-07-26-architecture-design.md) | 전체, 특히 §2~§3, §5~§6 | Java 25/Maven DAG, port/state/identity/security/test와 잔여 provider-status drift |
+| [Integrated design](../../deprecated/architecture-domain-implementation-design.md) | 전체, 특히 §12~§16, §19~§28 | Phase 09~12, S3/Step Functions/Lambda, no-DB, migration/failure/test/invariants |
+| [Question register](../../deprecated/master-design-open-questions.md) | 전체, exact 28개 질문 | `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1`; Q-INFRA 선택은 배포/production 아님 |
 | [Master Realization Plan](../master-realization-plan.md) | 전체, 특히 §2~§6, Phase 09~12/14, §8~§15 | Source conflict resolution, Phase 11 entry/exit/evidence/DoD |
 | [Implementation map](../README.md) | 전체 | User-locked authority, canonical filename, planned/actual와 review 권한 |
 | [Execution progress](../execution-progress-and-results.md) | 전체 | Scheduler-only status와 implementation claim `NONE` |
 
 Authority는 사용자 선언으로 고정했다. Superseded
-[2026-07-26 Master](../../2026-07-26-master-design.md)와 `docs/codex/*`는
+[2026-07-26 Master](../../deprecated/2026-07-26-master-design.md)와 `docs/codex/*`는
 historical cross-check로만 확인했고 수정하거나 현재 AWS authority로 사용하지
 않았다. `Q-BENCH-02`, `C-17`, `Q-VAR-01`, provider 수치와 production
 authority를 임의로 닫지 않았다.
@@ -229,9 +230,9 @@ Phase 00/build owner가 다룰 inventory이며, AWS distribution의 reproducible
 
 - **Severity/status:** `MEDIUM — RESIDUAL SOURCE GOVERNANCE`
 - **Exact source/evidence:** Final Domain
-  [§18.2~§18.3](../../2026-07-26-domain-design.md#182-deferred-boundary)는
+  [§18.2~§18.3](../../deprecated/2026-07-26-domain-design.md#182-deferred-boundary)는
   `Q-INFRA-01`, `Q-VAR-01`을 둘 다 deferred로 두고 `25/1/2`를 기록한다.
-  Final Architecture [§6.3~§6.5](../../2026-07-26-architecture-design.md#63-phase-dependency와-deferred-decision)도
+  Final Architecture [§6.3~§6.5](../../deprecated/2026-07-26-architecture-design.md#63-phase-dependency와-deferred-decision)도
   provider 미결정과 `Q-INFRA-01 DEFERRED`를 남긴다. 반면 Canonical Master §1/§4/§16,
   질문 등록부 `Q-INFRA-01`, Master Realization Plan §2.2는 2026-07-26 사용자 승인
   AWS reference와 `26/1/1`을 명시한다.

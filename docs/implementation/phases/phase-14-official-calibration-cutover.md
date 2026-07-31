@@ -22,6 +22,7 @@ review_status: COMPLETE_CHANGES_REQUIRED
 review_document: ../reviews/phase-14-review.md
 handoff_status: NOT_READY
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 implementation_direction_decision: ALNS_FIRST_BENCHMARK_BEFORE_OPTIONAL_MIP
 direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 scheduler_task_id: TBD_NOT_SUPPLIED
@@ -85,10 +86,10 @@ source_fingerprints_sha256:
   README.md: 22eff4f63607db29bd4049344986109c680aa970d0865a3b859598e6b3b96c06
   docs/README.md: 5ece2d41fe5a3c3f5f3d938c0440b4d91b0dcc0a9a055e5e76a739b7d29a8569
   docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
-  docs/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
-  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
-  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
-  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
+  docs/deprecated/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
+  docs/deprecated/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/deprecated/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/deprecated/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
   docs/implementation/README.md: 6454238185af7b7c420f468adf42609a0ec045d6c70c16cc7601f0342fa74358
   docs/implementation/master-realization-plan.md: 940fe8c2156bf0472deafcd450e0ea49f0036ab6b304d6d051f0148a38cd0f5d
   docs/implementation/execution-progress-and-results.md: 37f1a8a0ffad1e9614bd54d2b2444739fb83d0951bff73f2a2465ab54a3e8895
@@ -104,7 +105,7 @@ inventory_fingerprints_sha256:
   OptimizationWorkerController.java: 846e64f1ad76386ac4da847d6e2b9585ed5d909841266c06c38915aed06afe3c
   AlnsBatchEngineTest.java: 947cf04529ffb45f8049b5b3cf64a06e00680e1657393d50ef7ca8e627a3f829
 historical_cross_check:
-  file: docs/2026-07-26-master-design.md
+  file: docs/deprecated/2026-07-26-master-design.md
   status: SUPERSEDED_NOT_AUTHORITY
   sha256: 5da9fd05a027e748b642517d33c0edab86ec818645d5b78c2a0d573fa968419a
 live_review_inventory:
@@ -196,13 +197,13 @@ AWS 배포, production authority 또는 traffic cutover가 이루어졌다는 �
 권위 적용 순서는 다음과 같다.
 
 1. 사용자 선언과 [Canonical Master](../../master-design.md)
-2. [질문 등록부](../../master-design-open-questions.md)의 exact `Q-*` 상태
-3. [Final Domain Design](../../2026-07-26-domain-design.md)의 의미와 불변조건
-4. [Final Architecture Design](../../2026-07-26-architecture-design.md)의 module/port 배치
-5. [Integrated implementation design](../../architecture-domain-implementation-design.md)의 15 Phase 구조
+2. [질문 등록부](../../deprecated/master-design-open-questions.md)의 exact `Q-*` 상태
+3. [Final Domain Design](../../deprecated/2026-07-26-domain-design.md)의 의미와 불변조건
+4. [Final Architecture Design](../../deprecated/2026-07-26-architecture-design.md)의 module/port 배치
+5. [Integrated implementation design](../../deprecated/architecture-domain-implementation-design.md)의 15 Phase 구조
 6. [Master Realization Plan](../master-realization-plan.md), [진행 기록](../execution-progress-and-results.md), [구현 문서 지도](../README.md)
 
-[2026-07-26 Master Design — SUPERSEDED](../../2026-07-26-master-design.md)는
+[2026-07-26 Master Design — SUPERSEDED](../../deprecated/2026-07-26-master-design.md)는
 역사 cross-check에만 사용했다. `docs/codex/*`의 역사적 11-phase 계획, progress와
 evidence 표현은 Phase 14 entry, calibration baseline, provider parity, official run
 또는 production approval로 재사용하지 않는다. 현재 canonical Phase 00~11도 실제
@@ -213,10 +214,10 @@ accepted review와 immutable evidence receipt가 있어야만 소비한다.
 | Source | 직접 소비한 section | Phase 14에 고정하는 내용 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | §1~4, §7~8, §13~17 | Official reproducibility, two-gate publication, exact comparator, `Q-BENCH-02`, RM-6/RM-8, migration/rollback |
-| [Final Domain](../../2026-07-26-domain-design.md) | §6~17, §18.1~18.2 | Travel authority, official worker completeness, candidate/result verification, hybrid gate |
-| [Final Architecture](../../2026-07-26-architecture-design.md) | §2~6 | Module/port isolation, identity/retry, artifact/provenance, security/evidence |
-| [Integrated design](../../architecture-domain-implementation-design.md) | §2~3, §12~26 | Phase 08~14, no-DB, AWS mapping, Phase 13 optionality, calibration/cutover, invariants |
-| [질문 등록부](../../master-design-open-questions.md) | `Q-MTX-01~03`, `Q-BENCH-01~03`, `Q-INFRA-01`, `Q-VAR-01`, §3~4 | Integer travel, open official execution values, AWS selection/cutover separation, deferred boundary |
+| [Final Domain](../../deprecated/2026-07-26-domain-design.md) | §6~17, §18.1~18.2 | Travel authority, official worker completeness, candidate/result verification, hybrid gate |
+| [Final Architecture](../../deprecated/2026-07-26-architecture-design.md) | §2~6 | Module/port isolation, identity/retry, artifact/provenance, security/evidence |
+| [Integrated design](../../deprecated/architecture-domain-implementation-design.md) | §2~3, §12~26 | Phase 08~14, no-DB, AWS mapping, Phase 13 optionality, calibration/cutover, invariants |
+| [질문 등록부](../../deprecated/master-design-open-questions.md) | `Q-MTX-01~03`, `Q-BENCH-01~03`, `Q-INFRA-01`, `Q-VAR-01`, §3~4 | Integer travel, open official execution values, AWS selection/cutover separation, deferred boundary |
 | [Master Realization Plan](../master-realization-plan.md) | §2~4, §6~15, Phase 00~14 | Current inventory, predecessor evidence, Phase 14 entry/exit/DoD/rollback |
 | [Execution Progress](../execution-progress-and-results.md) | §1~9 | Scheduler-only status authority, current blockers, no implementation completion claim |
 | [Actual Phase 02](phase-02-prepared-travel-immutable-problem.md) | §13.3 only | Test-only travel artifact의 official 자동 승격 금지, separate approved fixture/fingerprint |

@@ -1,13 +1,19 @@
 ---
 title: Architecture 문서 구조 재정비 핸드오프
-status: READY
+status: ARCHIVED
 date: 2026-07-31
 purpose: >
   수시 수정으로 비대해진 docs/2026-07-31-architecture-design.md 를
   기존 합의·내용을 보존한 채 중복 제거·구조 재정비할 때 사용한다.
 work_document: docs/2026-07-31-architecture-design.md
 do_not_restart: architecture full rewrite with new design decisions
+phase_c: path-and-status-only
+
 ---
+
+<!-- phase-c-authority-banner -->
+> **ARCHIVED (Phase C)** — session handoff/prompt only. Not design authority. See [docs/README.md](../README.md).
+
 
 # 역할
 

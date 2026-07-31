@@ -1,6 +1,6 @@
 # 세션 21 — 정책·평가·목적 조립 규범 초안
 
-> **세션 30 통합 상태 (2026-07-23):** 세션 29에서 `Q-OBJ-01~03`, `Q-RES-01~02`, `Q-BENCH-01`이 해결되었다. 고객사별 승인 preset과 objective availability, mandatory 최상위 사전식 차원, `DIRECT/LEASE` vehicle volume objective, solver `ASSIGNED/UNASSIGNED`, required final audit와 전체 운영시간 공식은 [Master §9~§10·§14](../master-design.md) 및 [등록부](../master-design-open-questions.md)가 현재 계약이다. 본문의 대안/TBD와 `OUTSOURCED`/`DEFERRED` solver status 방향은 역사적 초안으로만 읽는다.
+> **세션 30 통합 상태 (2026-07-23):** 세션 29에서 `Q-OBJ-01~03`, `Q-RES-01~02`, `Q-BENCH-01`이 해결되었다. 고객사별 승인 preset과 objective availability, mandatory 최상위 사전식 차원, `DIRECT/LEASE` vehicle volume objective, solver `ASSIGNED/UNASSIGNED`, required final audit와 전체 운영시간 공식은 [Master §9~§10·§14](../master-design.md) 및 [등록부](../deprecated/master-design-open-questions.md)가 현재 계약이다. 본문의 대안/TBD와 `OUTSOURCED`/`DEFERRED` solver status 방향은 역사적 초안으로만 읽는다.
 
 > 상태: `REVIEW INPUT`
 >

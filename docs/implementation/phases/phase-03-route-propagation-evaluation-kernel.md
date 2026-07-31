@@ -16,6 +16,7 @@ phase_acceptance_status: NOT_ACCEPTED
 evidence_status: NOT_PRODUCED
 entry_gate_status: BLOCKED_BY_UNACCEPTED_PREDECESSORS
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 direction_revision_status: ALNS_FIRST_GATE_OVERLAY_APPLIED_DOCUMENTATION_ONLY
 scheduler_task_id: TBD_NOT_SUPPLIED
@@ -35,14 +36,14 @@ planned_evidence:
   - E-P03-COMPARATOR
 source_fingerprints_sha256:
   docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
-  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
-  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
-  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
-  docs/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
+  docs/deprecated/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/deprecated/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/deprecated/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
+  docs/deprecated/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
   docs/implementation/master-realization-plan.md: 940fe8c2156bf0472deafcd450e0ea49f0036ab6b304d6d051f0148a38cd0f5d
   docs/implementation/README.md: 6454238185af7b7c420f468adf42609a0ec045d6c70c16cc7601f0342fa74358
 historical_cross_check:
-  file: docs/2026-07-26-master-design.md
+  file: docs/deprecated/2026-07-26-master-design.md
   status: SUPERSEDED_NOT_AUTHORITY
   sha256: 5da9fd05a027e748b642517d33c0edab86ec818645d5b78c2a0d573fa968419a
 ```
@@ -54,23 +55,23 @@ historical_cross_check:
 적용 순서는 다음과 같다.
 
 1. 사용자 선언과 [Canonical Master](../../master-design.md)
-2. [질문 등록부](../../master-design-open-questions.md)의 exact `Q-*` 상태
-3. [Final Domain Design](../../2026-07-26-domain-design.md)의 propagation/evaluation 의미
-4. [Final Architecture Design](../../2026-07-26-architecture-design.md)의 module/package/DAG
-5. [Integrated implementation design](../../architecture-domain-implementation-design.md)의 15 Phase 배치
+2. [질문 등록부](../../deprecated/master-design-open-questions.md)의 exact `Q-*` 상태
+3. [Final Domain Design](../../deprecated/2026-07-26-domain-design.md)의 propagation/evaluation 의미
+4. [Final Architecture Design](../../deprecated/2026-07-26-architecture-design.md)의 module/package/DAG
+5. [Integrated implementation design](../../deprecated/architecture-domain-implementation-design.md)의 15 Phase 배치
 6. [Master Realization Plan](../master-realization-plan.md)과 [구현 문서 지도](../README.md)
 
-[2026-07-26 Master Design — SUPERSEDED](../../2026-07-26-master-design.md)는 누락·퇴행 cross-check에만 사용했다. `docs/codex/*`는 권위 입력으로 사용하거나 복사하지 않았고 이 작업에서 수정하지 않는다.
+[2026-07-26 Master Design — SUPERSEDED](../../deprecated/2026-07-26-master-design.md)는 누락·퇴행 cross-check에만 사용했다. `docs/codex/*`는 권위 입력으로 사용하거나 복사하지 않았고 이 작업에서 수정하지 않는다.
 
 ### 1.1 직접 소비한 source section
 
 | Source | 직접 소비한 section | Phase 03에 고정하는 내용 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | §4.3~§4.6, §6, §7.2~§7.3, §8~§9, §12, §15.4, §16~§17 | Propagator 책임, pair/route 불변조건, checked arithmetic, time/travel, hard/metric/score/objective 분리, cache 비권위, `RM-2` gate |
-| [Final Domain](../../2026-07-26-domain-design.md) | §5.1~§5.2, §6~§7, §9~§10, §17.5~§17.6, §18 | Exact 단위, full-arc restart, load/stop/resource 공식, profile lifecycle, acceptance 경계 |
-| [Final Architecture](../../2026-07-26-architecture-design.md) | §2.1~§2.7, §5.6, §6 | `rpdptw-core` package owner, module DAG, verifier/search/cache 격리, OR-Tools-free ALNS-only build |
-| [Integrated design](../../architecture-domain-implementation-design.md) | §3, §6, §7, §8, §22~§25 | Target tree, Phase 02 artifact, Phase 03 순서/SPI/gate, Phase 04 handoff, corruption test와 anti-pattern |
-| [질문 등록부](../../master-design-open-questions.md) | `Q-NUM-01~03`, `Q-TIME-01~04`, `Q-IN-01~02`, `Q-REQ-01~02`, `Q-OBJ-01~03`, `Q-BENCH-02`, `Q-VAR-01` | 확정 수치/경계, official 미확정 수치, deferred 범위 |
+| [Final Domain](../../deprecated/2026-07-26-domain-design.md) | §5.1~§5.2, §6~§7, §9~§10, §17.5~§17.6, §18 | Exact 단위, full-arc restart, load/stop/resource 공식, profile lifecycle, acceptance 경계 |
+| [Final Architecture](../../deprecated/2026-07-26-architecture-design.md) | §2.1~§2.7, §5.6, §6 | `rpdptw-core` package owner, module DAG, verifier/search/cache 격리, OR-Tools-free ALNS-only build |
+| [Integrated design](../../deprecated/architecture-domain-implementation-design.md) | §3, §6, §7, §8, §22~§25 | Target tree, Phase 02 artifact, Phase 03 순서/SPI/gate, Phase 04 handoff, corruption test와 anti-pattern |
+| [질문 등록부](../../deprecated/master-design-open-questions.md) | `Q-NUM-01~03`, `Q-TIME-01~04`, `Q-IN-01~02`, `Q-REQ-01~02`, `Q-OBJ-01~03`, `Q-BENCH-02`, `Q-VAR-01` | 확정 수치/경계, official 미확정 수치, deferred 범위 |
 | [Master Realization Plan](../master-realization-plan.md) | §2~§4, Phase 02~04, §8~§15 | Current inventory, phase entry/exit, evidence/DoD, blocker와 traceability |
 | [구현 문서 지도](../README.md) | §3~§7 | Authority, canonical filename, planned link와 review/status 규칙 |
 
@@ -1116,16 +1117,16 @@ Phase 03은 Phase 05를 위해 insertion delta API나 mutable cache를 만들지
 | `REQ-NUMERIC` checked integer/no new rounding | [Master §7.2](../../master-design.md#72-fixed-point와-checked-arithmetic), `Q-NUM-01~03` | Checked math, overflow `Invalid` | `RoutePropagationBoundaryTest.reportsAccumulationOverflowAsInvalid()` | `E-P03-PROPAGATION` |
 | `REQ-TIME` plan/window/service/full arc | [Master §7.3](../../master-design.md#73-planning-period와-time), `Q-TIME-01~04`, `Q-IN-01~02` | Explicit window rule, inclusive close, `[start,end)`, full-arc restart | Hand/boundary/metamorphic time methods | `E-P03-PROPAGATION` |
 | `REQ-TRAVEL` prepared directed authority | [Master §8](../../master-design.md#8-directed-distancetime-matrix-계약) | Fingerprint equality, directed lookup only, no fallback | `usesDirectedArcWithoutReverseOrSymmetryFallback()`, corruption methods | `E-P03-PROPAGATION` |
-| `REQ-LOAD` mixed delivery/real pickup prefix | [Final Domain §9](../../2026-07-26-domain-design.md#9-route-propagation과-resource), `Q-REQ-01` | Initial delivery load, real delta, prefix/final bounds | Hand oracle + load property | `E-P03-PROPAGATION` |
-| `REQ-RESOURCE` stop/drive/operational breakdown | [Final Domain §9](../../2026-07-26-domain-design.md#9-route-propagation과-resource), `Q-BENCH-01` | Exact neutral totals and inclusive limits | Stop/final-arc/hand/boundary methods | `E-P03-PROPAGATION` |
+| `REQ-LOAD` mixed delivery/real pickup prefix | [Final Domain §9](../../deprecated/2026-07-26-domain-design.md#9-route-propagation과-resource), `Q-REQ-01` | Initial delivery load, real delta, prefix/final bounds | Hand oracle + load property | `E-P03-PROPAGATION` |
+| `REQ-RESOURCE` stop/drive/operational breakdown | [Final Domain §9](../../deprecated/2026-07-26-domain-design.md#9-route-propagation과-resource), `Q-BENCH-01` | Exact neutral totals and inclusive limits | Stop/final-arc/hand/boundary methods | `E-P03-PROPAGATION` |
 | `REQ-EVAL` hard/metric/score/objective separation | [Master §9](../../master-design.md#9-extensible-policy-evaluation과-profile-architecture), `C-04` | Propagation hard → neutral metric → composed hard → score → objective; typed invalid boundary | `RouteEvaluationLayerTest.*` | `E-P03-EVALUATION` |
 | `REQ-SOLUTION-EVAL` full route/solution evaluation authority | [Master `RM-2`](../../master-design.md#154-rm-2--propagation-evaluation과-bound-profile), [Plan Phase 03~05](../master-realization-plan.md#phase-03--경로-전파-계산과-평가-kernel) | **Residual blocker:** route-only API를 solution objective로 승격 금지; exact owner/contract review 필요 | Future Phase 03~05 compile/full-equality/corruption suite | `E-P03-EVALUATION` + downstream handoff review |
-| `REQ-OBJECTIVE` lexicographic priority | `Q-OBJ-01~03`, [Final Domain §10](../../2026-07-26-domain-design.md#10-evaluation-profile과-objective) | Ordered vector, no Big-M, stable tie after equality | `RouteEvaluationComparatorPropertyTest.*` | `E-P03-COMPARATOR` |
+| `REQ-OBJECTIVE` lexicographic priority | `Q-OBJ-01~03`, [Final Domain §10](../../deprecated/2026-07-26-domain-design.md#10-evaluation-profile과-objective) | Ordered vector, no Big-M, stable tie after equality | `RouteEvaluationComparatorPropertyTest.*` | `E-P03-COMPARATOR` |
 | `REQ-CACHE` full recomputation authority | [Master §12](../../master-design.md#12-candidate-state-cache와-rollback) | Cache hit/miss/full exact artifact equality | `RouteEvaluationCacheEquivalenceTest.*` | `E-P03-EVALUATION`, `E-P03-COMPARATOR` |
 | `REQ-REPRO` deterministic kernel | [Master §13](../../master-design.md#13-termination-reproducibility와-execution-provenance) | Stable order/canonical identity, no external state | `sameInputsProduceSameCanonicalResultAcrossRepeatedAndParallelCalls()` | `E-P03-COMPARATOR` |
-| `REQ-ARCH-DAG` core/customer/provider/verifier isolation | [Final Architecture §2](../../2026-07-26-architecture-design.md#2-module과-package-경계) | §7.3 dependency direction | `Phase03KernelArchitectureTest.*` | All three keys + architecture report |
-| `REQ-SECURITY-OBS` safe failure evidence/no semantic telemetry | [Integrated §19~§20](../../architecture-domain-implementation-design.md#19-configuration-provenance와-observability), [Plan §13](../master-realization-plan.md#13-위험-보안-운영-관측과-재현성) | §11.3 redaction/correlation/elapsed boundary | Failure redaction + architecture/reproducibility tests | All three keys + security report |
-| `REQ-ORACLE-SENSITIVITY` independent expected path detects defects | [Integrated §22](../../architecture-domain-implementation-design.md#22-test와-evidence-matrix), [Plan §8](../master-realization-plan.md#8-공통-테스트-전략) | Seeded faulty doubles must produce assertion red | `Phase03OracleSensitivityTest.*` | All three keys |
-| `REQ-HANDOFF` Phase 04/05 stable internal contract | [Integrated §7~§9](../../architecture-domain-implementation-design.md#7-phase-3--경로-전파-계산과-평가-kernel) | Immutable API/artifact/fingerprint, no downstream responsibility pull | Compile/architecture + downstream contract suite | Phase 03 review handoff record |
+| `REQ-ARCH-DAG` core/customer/provider/verifier isolation | [Final Architecture §2](../../deprecated/2026-07-26-architecture-design.md#2-module과-package-경계) | §7.3 dependency direction | `Phase03KernelArchitectureTest.*` | All three keys + architecture report |
+| `REQ-SECURITY-OBS` safe failure evidence/no semantic telemetry | [Integrated §19~§20](../../deprecated/architecture-domain-implementation-design.md#19-configuration-provenance와-observability), [Plan §13](../master-realization-plan.md#13-위험-보안-운영-관측과-재현성) | §11.3 redaction/correlation/elapsed boundary | Failure redaction + architecture/reproducibility tests | All three keys + security report |
+| `REQ-ORACLE-SENSITIVITY` independent expected path detects defects | [Integrated §22](../../deprecated/architecture-domain-implementation-design.md#22-test와-evidence-matrix), [Plan §8](../master-realization-plan.md#8-공통-테스트-전략) | Seeded faulty doubles must produce assertion red | `Phase03OracleSensitivityTest.*` | All three keys |
+| `REQ-HANDOFF` Phase 04/05 stable internal contract | [Integrated §7~§9](../../deprecated/architecture-domain-implementation-design.md#7-phase-3--경로-전파-계산과-평가-kernel) | Immutable API/artifact/fingerprint, no downstream responsibility pull | Compile/architecture + downstream contract suite | Phase 03 review handoff record |
 
 새 요구, rounding, objective dimension, hard rule 또는 facet을 발견하면 이 표에 source/owner/test/evidence를 연결하고 관련 authority/ADR/review를 같은 변경 단위에서 갱신한다. Phase 03 구현 편의를 위해 미확정 의미를 hidden default로 채우지 않는다.

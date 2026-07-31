@@ -12,6 +12,7 @@ target_document_version_after_safe_fixes: 1.1
 target_document_status_after_review: REVIEWED_CHANGES_REQUIRED
 target_whole_file_hash: OMITTED_TO_AVOID_RECIPROCAL_DOCUMENT_HASH
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 document_verdict: CHANGES_REQUIRED
 implementation_entry_verdict: BLOCKED
 implementation_status_observed: NOT_STARTED
@@ -48,10 +49,10 @@ Implementation entry도 별개로 `BLOCKED`다. Phase 00~03 accepted artifact/ev
 | Source | 검토 범위 | 적용 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | §2.4, §3~§5, §7, §9, §13, §15~§17 | Customer 격리, capability/profile, exact binding/lifecycle, `RM-2`, reproducibility와 gate |
-| [Final Domain Design](../../2026-07-26-domain-design.md) | §3, §5, §7, §9~§10, §15~§21 | Compatibility/service/trip/resource 사실, objective/profile 의미, verifier와 acceptance |
-| [Final Architecture Design](../../2026-07-26-architecture-design.md) | §2, §5~§6 | Java 25/Maven module/package DAG, provider/profile 격리와 test evidence |
-| [Integrated implementation design](../../architecture-domain-implementation-design.md) | §1, §3, §7~§9, §19~§25, §28~§30 | Capability/profile split, descriptor/catalog/binder, security/observability, test와 anti-pattern |
-| [Open-question register](../../master-design-open-questions.md) | Exact 28개 `Q-*` 행과 상태 요약 | `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1` 보존 |
+| [Final Domain Design](../../deprecated/2026-07-26-domain-design.md) | §3, §5, §7, §9~§10, §15~§21 | Compatibility/service/trip/resource 사실, objective/profile 의미, verifier와 acceptance |
+| [Final Architecture Design](../../deprecated/2026-07-26-architecture-design.md) | §2, §5~§6 | Java 25/Maven module/package DAG, provider/profile 격리와 test evidence |
+| [Integrated implementation design](../../deprecated/architecture-domain-implementation-design.md) | §1, §3, §7~§9, §19~§25, §28~§30 | Capability/profile split, descriptor/catalog/binder, security/observability, test와 anti-pattern |
+| [Open-question register](../../deprecated/master-design-open-questions.md) | Exact 28개 `Q-*` 행과 상태 요약 | `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1` 보존 |
 | [Master Realization Plan](../master-realization-plan.md) | §2~§15, 특히 Phase 03~05 | Actual inventory, entry/exit, evidence/DoD, blocker, rollback/restart와 traceability |
 | [Implementation README](../README.md) | §1~§7 | 사용자 고정 authority, `REVIEW` 비중단, current/historical/status/link 규칙 |
 
@@ -68,7 +69,7 @@ Read-only로 [Phase 03](../phases/phase-03-route-propagation-evaluation-kernel.m
 
 `concurrent review observed`: 공유 checkout에서 인접 review가 동시 변경되는 것을 한 번 관찰했다. 인접 파일을 재해시·갱신하지 않았고, 위 결론은 exact cited section만 사용하며 인접 review 상태나 whole-file digest를 authority/acceptance 조건으로 삼지 않는다.
 
-[2026-07-26 Master — SUPERSEDED](../../2026-07-26-master-design.md)는 누락·퇴행 cross-check에만 사용했다. Historical [codex Phase 02](../../codex/phases/phase-02-propagation-evaluation-and-profiles.md)는 과거 초안에 `FullEvaluationEngine.evaluateSolution`과 business-quality/tie 분리 개념이 존재했음을 보여 주지만 current API authority나 gap의 자동 해답으로 사용하지 않았다.
+[2026-07-26 Master — SUPERSEDED](../../deprecated/2026-07-26-master-design.md)는 누락·퇴행 cross-check에만 사용했다. Historical codex Phase 02 (`docs/codex/phases/phase-02-propagation-evaluation-and-profiles.md`, repo 미존재 가능)는 과거 초안에 `FullEvaluationEngine.evaluateSolution`과 business-quality/tie 분리 개념이 존재했음을 보여 주지만 current API authority나 gap의 자동 해답으로 사용하지 않았다.
 
 ### 2.3 Actual Java 25/Maven inventory
 

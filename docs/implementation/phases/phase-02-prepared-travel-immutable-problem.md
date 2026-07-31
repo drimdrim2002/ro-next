@@ -14,6 +14,7 @@ baseline_date: 2026-07-28
 baseline_commit: 3424277c9c74f8151a83be056a07dd4659331beb
 scheduler_task_id: TBD
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 direction_revision_status: ALNS_FIRST_GATE_OVERLAY_APPLIED_DOCUMENTATION_ONLY
 prerequisites:
@@ -36,7 +37,7 @@ required_evidence:
   - E-P02-DENSE-ID
   - E-P02-PROBLEM
 historical_cross_check_only:
-  - docs/2026-07-26-master-design.md
+  - docs/deprecated/2026-07-26-master-design.md
 ```
 
 이 문서는 **Phase 02 구현을 실행하기 위한 상세 계약**이지 구현 완료 보고가 아니다. 위 `document_status`와 `phase_registry_status_observed` 및 `implementation_status`는 서로 다른 상태다. `REVIEWED_WITH_CORRECTIONS`는 상세 문서 review 결과일 뿐 Phase 02가 `READY`, `IN_PROGRESS` 또는 `ACCEPTED`라는 뜻이 아니다.
@@ -50,13 +51,13 @@ historical_cross_check_only:
 | Source | 이 Phase가 소비한 section | 적용 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | §1.5, §2.3~§2.4, §3.2~§3.3, §4.1~§4.6, §5~§8, §14.1, §15.3, §16~§17 | 권위·비범위·`C-06`, `C-10~C-14`, `P-03`, travel/immutable problem/verification gate |
-| [Final Domain Design](../../2026-07-26-domain-design.md) | §1, §3~§7, §16~§18 | 정확한 입력 단위, travel 준비, immutable model, 오류·acceptance와 drift 확인 |
-| [Final Architecture Design](../../2026-07-26-architecture-design.md) | §1~§2, §5.2~§5.6, §6 | Java 25/Maven module·package·artifact·검증 경계 |
-| [Integrated implementation design](../../architecture-domain-implementation-design.md) | §1~§3, §5~§7, §19~§25, §27 | 15 Phase 배치, Phase 01/02/03 경계, provider SDK 격리, test/evidence |
-| [Question register](../../master-design-open-questions.md) | §1~§4, 특히 `Q-MTX-01~03`, `Q-NUM-01~03`, `Q-INFRA-01`, `Q-BENCH-02`, `Q-VAR-01` | exact decision/status/owner/gate |
+| [Final Domain Design](../../deprecated/2026-07-26-domain-design.md) | §1, §3~§7, §16~§18 | 정확한 입력 단위, travel 준비, immutable model, 오류·acceptance와 drift 확인 |
+| [Final Architecture Design](../../deprecated/2026-07-26-architecture-design.md) | §1~§2, §5.2~§5.6, §6 | Java 25/Maven module·package·artifact·검증 경계 |
+| [Integrated implementation design](../../deprecated/architecture-domain-implementation-design.md) | §1~§3, §5~§7, §19~§25, §27 | 15 Phase 배치, Phase 01/02/03 경계, provider SDK 격리, test/evidence |
+| [Question register](../../deprecated/master-design-open-questions.md) | §1~§4, 특히 `Q-MTX-01~03`, `Q-NUM-01~03`, `Q-INFRA-01`, `Q-BENCH-02`, `Q-VAR-01` | exact decision/status/owner/gate |
 | [Master Realization Plan](../master-realization-plan.md) | §1~§8, §9~§15, 특히 Phase 01~03 | current inventory, canonical Phase contract, evidence/DoD/traceability |
 | [Implementation README](../README.md) | §1~§7 | 사용자 고정 authority, filename, status와 planned-link 규칙 |
-| [SUPERSEDED Master](../../2026-07-26-master-design.md) | metadata, §1, §6.1~§6.2, §10 | 누락·퇴행 여부만 historical cross-check |
+| [SUPERSEDED Master](../../deprecated/2026-07-26-master-design.md) | metadata, §1, §6.1~§6.2, §10 | 누락·퇴행 여부만 historical cross-check |
 
 `docs/codex/*`는 역사 자료이므로 읽기 권위, 문장 복사 원본 또는 수정 대상으로 사용하지 않는다.
 
@@ -1238,24 +1239,24 @@ Phase 03 entry test는 `ProblemInstance.preparedTravelFingerprint == PreparedTra
 |---|---|---|---|---|
 | `REQ-P02-AUTH` | User-locked authority; REVIEW는 중단 아님, open/gated/deferred 보존 | [README §3](../README.md#3-source-authority), [Plan §2](../master-realization-plan.md#2-입력-권위와-충돌-규칙) | Document citation/link/version/status self-check | Bundle metadata |
 | `REQ-P02-TRAVEL-KEY` | Physical location directed key, node/location identity 분리 | [Master §5.1](../../master-design.md#51-핵심-개념), [Master §8](../../master-design.md#8-directed-distancetime-matrix-계약) | `roundTripsEveryExternalAndDenseId`, `preservesAsymmetricDirectedArcs` | `E-P02-DENSE-ID`, `E-P02-TRAVEL` |
-| `REQ-P02-INTEGER` | Provided `D/U` integer meter/second, decimal reject, `C` non-authoritative | `Q-MTX-01~02`, [Domain §6](../../2026-07-26-domain-design.md#6-travel-preparation) | `rejectsDecimalProvidedDistanceOrTimeWithoutRounding`, `usesProvidedDirectedIntegerDistanceAndCommonTimeFirst` | `E-P02-TRAVEL` |
+| `REQ-P02-INTEGER` | Provided `D/U` integer meter/second, decimal reject, `C` non-authoritative | `Q-MTX-01~02`, [Domain §6](../../deprecated/2026-07-26-domain-design.md#6-travel-preparation) | `rejectsDecimalProvidedDistanceOrTimeWithoutRounding`, `usesProvidedDirectedIntegerDistanceAndCommonTimeFirst` | `E-P02-TRAVEL` |
 | `REQ-P02-SELF` | Self `0/0` regardless raw | `Q-MTX-02`, [Master §8](../../master-design.md#8-directed-distancetime-matrix-계약) | `normalizesEverySelfArcToZeroAndRecordsOverride` | `E-P02-TRAVEL` |
-| `REQ-P02-D-GEN` | Missing D approved Great Circle + meter HALF_UP, coordinate required | `Q-MTX-03`, [Domain §6](../../2026-07-26-domain-design.md#6-travel-preparation) | `generatesOnlyMissingDistanceWithApprovedFunctionAndHalfUp`, `rejectsMissingDistanceWhenCoordinateIsAbsent` | `E-P02-TRAVEL` |
-| `REQ-P02-U-GEN` | Missing U vehicle-specific CEILING, missing speed 45 only | `Q-MTX-02~03`, [Integrated §6.2](../../architecture-domain-implementation-design.md#62-complete-preparation) | `generatesVehicleSpecificMissingTimeWithCeiling`, `usesFortyFiveOnlyWhenSpeedIsMissing`, `rejectsPresentInvalidSpeedInsteadOfDefaulting` | `E-P02-TRAVEL` |
+| `REQ-P02-D-GEN` | Missing D approved Great Circle + meter HALF_UP, coordinate required | `Q-MTX-03`, [Domain §6](../../deprecated/2026-07-26-domain-design.md#6-travel-preparation) | `generatesOnlyMissingDistanceWithApprovedFunctionAndHalfUp`, `rejectsMissingDistanceWhenCoordinateIsAbsent` | `E-P02-TRAVEL` |
+| `REQ-P02-U-GEN` | Missing U vehicle-specific CEILING, missing speed 45 only | `Q-MTX-02~03`, [Integrated §6.2](../../deprecated/architecture-domain-implementation-design.md#62-complete-preparation) | `generatesVehicleSpecificMissingTimeWithCeiling`, `usesFortyFiveOnlyWhenSpeedIsMissing`, `rejectsPresentInvalidSpeedInsteadOfDefaulting` | `E-P02-TRAVEL` |
 | `REQ-P02-COVERAGE` | Complete `M²` and every used-vehicle time before solve | `C-13`, [Plan Phase 02](../master-realization-plan.md#phase-02--이동-자료-준비와-immutable-problem) | `resolvesExactlyAllMByMDirectedDistanceCells`, `resolvesEveryUsedVehicleTimeCell` | `E-P02-TRAVEL` |
-| `REQ-P02-NO-FALLBACK` | No lazy/reverse/symmetric/provider fallback | [Master §8](../../master-design.md#8-directed-distancetime-matrix-계약), [Integrated §6.3](../../architecture-domain-implementation-design.md#63-runtime-prohibition와-provenance) | `upstreamFailureMarkerNeverFallsBackToFixtureCacheReverseOrGenerator`, `doesNotPerformRuntimeOrPostFreezeSourceCalls`, architecture tests | `E-P02-TRAVEL` |
-| `REQ-P02-SOURCE` | Approved fixture/official/provided/generated source 구분과 provenance | [Domain §6](../../2026-07-26-domain-design.md#6-travel-preparation), [Integrated §19](../../architecture-domain-implementation-design.md#19-configuration-provenance와-observability) | `preservesApprovedFixtureAndOfficialSnapshotDistinction`, `differentSourcePolicyOrValueChangesFingerprint` | `E-P02-TRAVEL` |
-| `REQ-P02-BOUNDARY` | Phase 01 artifact is the only source input; application/provider scope is not pulled forward; core SDK 0 | [Phase 01 §6.2](phase-01-canonical-input-normalization.md#62-산출물), [Architecture §2.2~2.5](../../2026-07-26-architecture-design.md#2-module과-package-경계) | `acceptsOnlyTravelSealedInThePhase01Artifact`, `coreHasNoProviderCloudHttpSdkDependency` | `E-P02-TRAVEL`, architecture report |
+| `REQ-P02-NO-FALLBACK` | No lazy/reverse/symmetric/provider fallback | [Master §8](../../master-design.md#8-directed-distancetime-matrix-계약), [Integrated §6.3](../../deprecated/architecture-domain-implementation-design.md#63-runtime-prohibition와-provenance) | `upstreamFailureMarkerNeverFallsBackToFixtureCacheReverseOrGenerator`, `doesNotPerformRuntimeOrPostFreezeSourceCalls`, architecture tests | `E-P02-TRAVEL` |
+| `REQ-P02-SOURCE` | Approved fixture/official/provided/generated source 구분과 provenance | [Domain §6](../../deprecated/2026-07-26-domain-design.md#6-travel-preparation), [Integrated §19](../../deprecated/architecture-domain-implementation-design.md#19-configuration-provenance와-observability) | `preservesApprovedFixtureAndOfficialSnapshotDistinction`, `differentSourcePolicyOrValueChangesFingerprint` | `E-P02-TRAVEL` |
+| `REQ-P02-BOUNDARY` | Phase 01 artifact is the only source input; application/provider scope is not pulled forward; core SDK 0 | [Phase 01 §6.2](phase-01-canonical-input-normalization.md#62-산출물), [Architecture §2.2~2.5](../../deprecated/2026-07-26-architecture-design.md#2-module과-package-경계) | `acceptsOnlyTravelSealedInThePhase01Artifact`, `coreHasNoProviderCloudHttpSdkDependency` | `E-P02-TRAVEL`, architecture report |
 | `REQ-P02-ABSENCE` | Only typed absent generates; invalid/incomplete handoff never absent | [Master §4.2](../../master-design.md#42-단계별-데이터-계약), [Plan Phase 02](../master-realization-plan.md#phase-02--이동-자료-준비와-immutable-problem) | `invalidSourceHandoffFailsBeforeGeneration`, invalid/duplicate/reference tests | `E-P02-TRAVEL` |
-| `REQ-P02-DENSE` | External↔dense bijection, checked range, separate identity kinds | [Domain §7](../../2026-07-26-domain-design.md#7-immutable-solver-model), [Integrated §6.4](../../architecture-domain-implementation-design.md#64-dense-identity와-immutable-problem) | `shuffledEquivalentEntitiesProduceCanonicalMapping`, `checkedCellIndexNeverWraps` | `E-P02-DENSE-ID` |
-| `REQ-P02-PROBLEM` | Immutable ProblemInstance, pair/reference checks, exact travel bind | [Domain §7](../../2026-07-26-domain-design.md#7-immutable-solver-model), `C-06` | `freezesValidPairNodeLocationVehicleReferences`, all `ProblemInstanceCorruptionTest` | `E-P02-PROBLEM` |
+| `REQ-P02-DENSE` | External↔dense bijection, checked range, separate identity kinds | [Domain §7](../../deprecated/2026-07-26-domain-design.md#7-immutable-solver-model), [Integrated §6.4](../../deprecated/architecture-domain-implementation-design.md#64-dense-identity와-immutable-problem) | `shuffledEquivalentEntitiesProduceCanonicalMapping`, `checkedCellIndexNeverWraps` | `E-P02-DENSE-ID` |
+| `REQ-P02-PROBLEM` | Immutable ProblemInstance, pair/reference checks, exact travel bind | [Domain §7](../../deprecated/2026-07-26-domain-design.md#7-immutable-solver-model), `C-06` | `freezesValidPairNodeLocationVehicleReferences`, all `ProblemInstanceCorruptionTest` | `E-P02-PROBLEM` |
 | `REQ-P02-IMMUTABLE` | No constructor/accessor/cross-artifact alias | [Master §4.5~4.6](../../master-design.md#45-상태와-산출물의-생명주기), [Plan §4.2](../master-realization-plan.md#42-compileruntime-invariants) | All `PreparedTravelImmutabilityTest` methods | `E-P02-PROBLEM` |
-| `REQ-P02-FINGERPRINT` | Stable canonical fingerprint/provenance; solver/verifier equality | `C-13`, [Domain §17.4](../../2026-07-26-domain-design.md#174-travel) | `repeatPreparationProducesIdenticalCanonicalBytes`, mismatch/corruption tests | `E-P02-TRAVEL`, `E-P02-PROBLEM` |
-| `REQ-P02-FAULT` | Partial/fault/cancel/overflow publishes no partial artifact | [Plan §8](../master-realization-plan.md#8-공통-테스트-전략), [Integrated §21~22](../../architecture-domain-implementation-design.md#21-failure와-retry-matrix) | All `TravelPreparationFaultInjectionTest` methods | `E-P02-TRAVEL` |
-| `REQ-P02-CORRUPTION` | Value/source/coverage/mapping/digest corruption rejection | [Integrated §22.4](../../architecture-domain-implementation-design.md#224-independent-corruption-fixtures) | `PreparedTravelCorruptionTest`, `ProblemInstanceCorruptionTest` | `E-P02-TRAVEL`, `E-P02-PROBLEM` |
+| `REQ-P02-FINGERPRINT` | Stable canonical fingerprint/provenance; solver/verifier equality | `C-13`, [Domain §17.4](../../deprecated/2026-07-26-domain-design.md#174-travel) | `repeatPreparationProducesIdenticalCanonicalBytes`, mismatch/corruption tests | `E-P02-TRAVEL`, `E-P02-PROBLEM` |
+| `REQ-P02-FAULT` | Partial/fault/cancel/overflow publishes no partial artifact | [Plan §8](../master-realization-plan.md#8-공통-테스트-전략), [Integrated §21~22](../../deprecated/architecture-domain-implementation-design.md#21-failure와-retry-matrix) | All `TravelPreparationFaultInjectionTest` methods | `E-P02-TRAVEL` |
+| `REQ-P02-CORRUPTION` | Value/source/coverage/mapping/digest corruption rejection | [Integrated §22.4](../../deprecated/architecture-domain-implementation-design.md#224-independent-corruption-fixtures) | `PreparedTravelCorruptionTest`, `ProblemInstanceCorruptionTest` | `E-P02-TRAVEL`, `E-P02-PROBLEM` |
 | `REQ-P02-REPRO` | Ordering/cache/provider metadata cannot change semantic result | [Master §13.2](../../master-design.md#132-strong-reproducibility-envelope), [Plan §13](../master-realization-plan.md#13-위험-보안-운영-관측과-재현성) | Property permutation and all `TravelFingerprintReproducibilityTest` | All three keys |
-| `REQ-P02-SECURITY` | No credential/PII/raw input leak; provider locator not domain identity | [Integrated §20](../../architecture-domain-implementation-design.md#20-security와-tenant-boundary) | All `TravelProvenanceSecurityTest` methods | Security report |
-| `REQ-P02-OBS` | Safe aggregate report is coverage-consistent and never semantic authority | [Integrated §19.3](../../architecture-domain-implementation-design.md#193-correlation-fields), [Plan §13](../master-realization-plan.md#13-위험-보안-운영-관측과-재현성) | All `TravelPreparationReportTest` methods | `E-P02-TRAVEL` safe report |
+| `REQ-P02-SECURITY` | No credential/PII/raw input leak; provider locator not domain identity | [Integrated §20](../../deprecated/architecture-domain-implementation-design.md#20-security와-tenant-boundary) | All `TravelProvenanceSecurityTest` methods | Security report |
+| `REQ-P02-OBS` | Safe aggregate report is coverage-consistent and never semantic authority | [Integrated §19.3](../../deprecated/architecture-domain-implementation-design.md#193-correlation-fields), [Plan §13](../master-realization-plan.md#13-위험-보안-운영-관측과-재현성) | All `TravelPreparationReportTest` methods | `E-P02-TRAVEL` safe report |
 | `REQ-P02-HANDOFF` | Phase 03 gets immutable problem/travel only; no propagation/ALNS pull-forward | [Plan Phase 02~03](../master-realization-plan.md#phase-02--이동-자료-준비와-immutable-problem) | Fingerprint equality consumer contract future-red | `E-P02-PROBLEM`, Phase 03 receipt |
 
 새 requirement가 발견되면 source, owner, test와 evidence key를 함께 추가한다. Source 문장 없이 production default/API/수치를 추가하지 않는다.

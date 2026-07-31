@@ -1479,7 +1479,7 @@ placeholder 엔진 출력 ≠ publishable.
 | O1 | Lambda vs ECS — Domain 비소유 |
 | O2 | wire 이름·optional 깊이; trips vs end 우선순위; hybrid flag 이름·스키마 |
 | O3 | adapter 공식 이름·범위 |
-| O5 | Phase C |
+| O5 | Phase C — **DONE** (`docs/README.md`) |
 | Depot 확대 | (2)(3) 추후 가능 |
 
 Architecture: module DAG, port, compute 후보, verifier 프로세스 격리 등 DEFERRED.
@@ -1521,7 +1521,7 @@ Architecture 배치; C-17 수치; multi-version 입력; 새 실험 수치; imple
 
 1. ~~Domain `REVIEW` 검수~~ → **`APPROVED`** (2026-07-31, deep-interview 반영)  
 2. ~~Architecture 검수~~ → **`APPROVED`** (`docs/architecture-design.md`, 2026-07-31)  
-3. **(선택) 다음:** Phase C — 구 문서 SUPERSEDED·링크  
+3. ~~Phase C (O5)~~ → **완료** — 권위 지도·SUPERSEDED·링크 remap (`docs/README.md`)  
 4. ~~Domain editorial restructure~~ → **v1.2** (규범 불변, 구조·중복 정리)  
 5. 구현은 별 세션 (implementation 문서 세트)
 

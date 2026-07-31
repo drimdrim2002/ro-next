@@ -9,6 +9,7 @@ reviewer_role: independent Phase 14 documentation reviewer
 target_document: docs/implementation/phases/phase-14-official-calibration-cutover.md
 target_document_version_after_safe_fixes: 1.4
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 document_verdict: CHANGES_REQUIRED
 phase_acceptance_verdict: BLOCKED_NOT_READY
 implementation_status_observed: GATED_NOT_STARTED
@@ -122,10 +123,10 @@ Java/POM/build/deployment, canonical source, implementation index/progress, Phas
 | Source | 대조 범위 | Phase 14 적용 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | 전체, 특히 §1~§4, §7~§8, §11~§17 | USER_LOCKED authority, integer travel, available initial candidates, ALNS/worker/comparator, RM-6/RM-8, rollback/cutover |
-| [Final Domain](../../2026-07-26-domain-design.md) | 전체 | Immutable domain/result, full evaluation, reproducibility, failure/evidence; stale `Q-INFRA-01` 상태는 최신 authority로 override |
-| [Final Architecture](../../2026-07-26-architecture-design.md) | 전체 | Java 25/Maven boundary, application/provider separation, identity/retry/CAS/security/evidence; stale provider 상태는 override |
-| [Integrated design](../../architecture-domain-implementation-design.md) | 전체, 특히 §12~§26 | Phase 08~14, no-DB, AWS mapping, provider substitution, hybrid optionality, official calibration/cutover |
-| [Question register](../../master-design-open-questions.md) | 전체 28개 항목 | `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1`; exact Q-BENCH/Q-INFRA/Q-VAR 상태 |
+| [Final Domain](../../deprecated/2026-07-26-domain-design.md) | 전체 | Immutable domain/result, full evaluation, reproducibility, failure/evidence; stale `Q-INFRA-01` 상태는 최신 authority로 override |
+| [Final Architecture](../../deprecated/2026-07-26-architecture-design.md) | 전체 | Java 25/Maven boundary, application/provider separation, identity/retry/CAS/security/evidence; stale provider 상태는 override |
+| [Integrated design](../../deprecated/architecture-domain-implementation-design.md) | 전체, 특히 §12~§26 | Phase 08~14, no-DB, AWS mapping, provider substitution, hybrid optionality, official calibration/cutover |
+| [Question register](../../deprecated/master-design-open-questions.md) | 전체 28개 항목 | `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1`; exact Q-BENCH/Q-INFRA/Q-VAR 상태 |
 | [Master Realization Plan](../master-realization-plan.md) | 전체 | Actual inventory, Phase DAG, entry/exit/evidence/DoD, rollback, security/observability/reproducibility |
 
 Authority는 사용자 선언으로 고정했다. Final Domain/Architecture의 과거
@@ -133,7 +134,7 @@ Authority는 사용자 선언으로 고정했다. Final Domain/Architecture의 �
 `Q-INFRA-01 RESOLVED`, `26/1/1`보다 낮은 stale 표현이다. AWS S3 + Step Functions +
 Lambda target/reference 선택만 적용하고 구현·배포·production authority로 확대하지 않았다.
 
-[2026-07-26 Master — SUPERSEDED](../../2026-07-26-master-design.md)와
+[2026-07-26 Master — SUPERSEDED](../../deprecated/2026-07-26-master-design.md)와
 `docs/codex/*`는 historical regression cross-check에만 사용했다. 숫자, provider default,
 phase 상태, evidence와 production authority를 가져오지 않았다.
 

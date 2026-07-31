@@ -15,6 +15,7 @@ review_document: ../reviews/phase-09-review.md
 entry_gate_status: BLOCKED_BY_UNACCEPTED_PHASE_08
 handoff_status: NOT_READY
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 direction_revision_status: ALNS_FIRST_GATE_OVERLAY_APPLIED_DOCUMENTATION_ONLY
 scheduler_task_id: TBD_NOT_SUPPLIED
@@ -48,15 +49,15 @@ source_sections:
 source_fingerprints_sha256:
   README.md: 22eff4f63607db29bd4049344986109c680aa970d0865a3b859598e6b3b96c06
   docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
-  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
-  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
-  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
-  docs/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
+  docs/deprecated/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/deprecated/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/deprecated/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
+  docs/deprecated/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
   docs/implementation/master-realization-plan.md: 940fe8c2156bf0472deafcd450e0ea49f0036ab6b304d6d051f0148a38cd0f5d
   docs/implementation/README.md: 6454238185af7b7c420f468adf42609a0ec045d6c70c16cc7601f0342fa74358
   docs/implementation/execution-progress-and-results.md: 37f1a8a0ffad1e9614bd54d2b2444739fb83d0951bff73f2a2465ab54a3e8895
 historical_cross_check:
-  file: docs/2026-07-26-master-design.md
+  file: docs/deprecated/2026-07-26-master-design.md
   status: SUPERSEDED_NOT_AUTHORITY
   sha256: 5da9fd05a027e748b642517d33c0edab86ec818645d5b78c2a0d573fa968419a
 neighbor_phase_documents:
@@ -91,13 +92,13 @@ fingerprint_cycle_policy:
 적용 순서는 다음과 같다.
 
 1. 사용자 선언과 [Canonical Master](../../master-design.md)
-2. [질문 등록부](../../master-design-open-questions.md)의 exact 상태
-3. [Final Domain Design](../../2026-07-26-domain-design.md)의 identity/result 의미
-4. [Final Architecture Design](../../2026-07-26-architecture-design.md)의 module/package/port 배치
-5. [Integrated implementation design](../../architecture-domain-implementation-design.md)의 Phase 09 no-DB 의미
+2. [질문 등록부](../../deprecated/master-design-open-questions.md)의 exact 상태
+3. [Final Domain Design](../../deprecated/2026-07-26-domain-design.md)의 identity/result 의미
+4. [Final Architecture Design](../../deprecated/2026-07-26-architecture-design.md)의 module/package/port 배치
+5. [Integrated implementation design](../../deprecated/architecture-domain-implementation-design.md)의 Phase 09 no-DB 의미
 6. [Master Realization Plan](../master-realization-plan.md)과 [구현 문서 지도](../README.md)
 
-[2026-07-26 Master Design — SUPERSEDED](../../2026-07-26-master-design.md)는 역사 cross-check에만 사용했다. `docs/codex/*`는 역사 자료이며 현재 contract, package 이름, 상태 또는 evidence로 사용하지 않는다.
+[2026-07-26 Master Design — SUPERSEDED](../../deprecated/2026-07-26-master-design.md)는 역사 cross-check에만 사용했다. `docs/codex/*`는 역사 자료이며 현재 contract, package 이름, 상태 또는 evidence로 사용하지 않는다.
 
 Final Domain/Architecture에 남은 `Q-INFRA-01 DEFERRED`, `25/1/2` 표현은 최신 Canonical Master와 질문 등록부의 `Q-INFRA-01 RESOLVED`, `26/1/1`로 해소한다. AWS S3 + Step Functions + Lambda가 target/reference로 선택되었어도 Phase 09는 AWS SDK, S3 adapter, 배포, IAM과 coordinator state machine을 구현하지 않는다. 그 책임은 Phase 11 이후의 명시적 gate에 남긴다.
 
@@ -106,10 +107,10 @@ Final Domain/Architecture에 남은 `Q-INFRA-01 DEFERRED`, `25/1/2` 표현은 �
 | Source | 직접 소비한 section | Phase 09에 고정하는 내용 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | §1~§4.6, §10.3, §13, §14, §15.10, §16~§17 | Immutable provenance, logical port, two-gate publication, idempotency/cancellation과 provider 격리 |
-| [Final Domain](../../2026-07-26-domain-design.md) | §1, §3, §7~§8, §15~§18 | Immutable semantic identities, final result authority, failure와 evidence ceiling |
-| [Final Architecture](../../2026-07-26-architecture-design.md) | §1.1~§1.5, §2.1~§2.7, §3.5~§3.6, §5~§6.5 | Application-owned port, artifact reference, CAS, identity, security, test와 ADR backlog |
-| [Integrated design](../../architecture-domain-implementation-design.md) | §1~§3, §12~§14, §19~§25, §26.2~§26.3, §27~§28 | Phase 08 input, no-DB exact-key/CAS, Phase 10 consumer, lifecycle/failure/anti-pattern |
-| [질문 등록부](../../master-design-open-questions.md) | `Q-BENCH-02`, `Q-INFRA-01`, `Q-VAR-01`, §3~§5 | Official 수치 open, AWS 선택과 구현 분리, deferred 범위 |
+| [Final Domain](../../deprecated/2026-07-26-domain-design.md) | §1, §3, §7~§8, §15~§18 | Immutable semantic identities, final result authority, failure와 evidence ceiling |
+| [Final Architecture](../../deprecated/2026-07-26-architecture-design.md) | §1.1~§1.5, §2.1~§2.7, §3.5~§3.6, §5~§6.5 | Application-owned port, artifact reference, CAS, identity, security, test와 ADR backlog |
+| [Integrated design](../../deprecated/architecture-domain-implementation-design.md) | §1~§3, §12~§14, §19~§25, §26.2~§26.3, §27~§28 | Phase 08 input, no-DB exact-key/CAS, Phase 10 consumer, lifecycle/failure/anti-pattern |
+| [질문 등록부](../../deprecated/master-design-open-questions.md) | `Q-BENCH-02`, `Q-INFRA-01`, `Q-VAR-01`, §3~§5 | Official 수치 open, AWS 선택과 구현 분리, deferred 범위 |
 | [Master Realization Plan](../master-realization-plan.md) | §2~§6, Phase 08~10, §8~§15 | Current inventory, Phase DAG, `REQ-NODB`, evidence/DoD/blocker/handoff |
 | [구현 문서 지도](../README.md) | §3~§7 | Authority, canonical filename, planned link, scheduler/review 규칙 |
 | [Execution tracker](../execution-progress-and-results.md) | §2, §5~§9 | Phase 09 `PLANNED`, task `TBD`, scheduler-only status와 current blockers |
@@ -127,7 +128,7 @@ Historical authoring snapshot에서는 Phase 08/10 상세가 shared checkout에 
 또는 section digest를 acceptance 조건으로 상호 기록하지 않는다. 위 stable named section과
 이후 accepted artifact/evidence identity로만 handoff를 trace한다.
 
-Phase 08 §16.2는 filesystem/S3 conditional operation을 Phase 09로 넘기고, [Master Realization Plan — Phase 09](../master-realization-plan.md#phase-09--db-없는-object-storage)와 [Integrated design §13.12](../../architecture-domain-implementation-design.md#1312-phase-9-gate)는 filesystem reference와 S3 backend가 같은 abstract suite를 통과하는 출력을 요구한다. 반면 이 문서 v1.0은 local/in-memory만 포함하고 S3를 Phase 11로 미뤘다. 어느 경계를 따를지는 Phase 08/09/11 owner와 scheduler의 외부 권위 결정이 필요하므로 독립 review가 임의로 확정하지 않는다. 그 결정과 source 문서 정합성 수정 전까지 Phase 09 exit는 `BLOCKED`다.
+Phase 08 §16.2는 filesystem/S3 conditional operation을 Phase 09로 넘기고, [Master Realization Plan — Phase 09](../master-realization-plan.md#phase-09--db-없는-object-storage)와 [Integrated design §13.12](../../deprecated/architecture-domain-implementation-design.md#1312-phase-9-gate)는 filesystem reference와 S3 backend가 같은 abstract suite를 통과하는 출력을 요구한다. 반면 이 문서 v1.0은 local/in-memory만 포함하고 S3를 Phase 11로 미뤘다. 어느 경계를 따를지는 Phase 08/09/11 owner와 scheduler의 외부 권위 결정이 필요하므로 독립 review가 임의로 확정하지 않는다. 그 결정과 source 문서 정합성 수정 전까지 Phase 09 exit는 `BLOCKED`다.
 
 ## 2. 목표, 범위와 비범위
 
@@ -1938,29 +1939,29 @@ Phase 10 §6.1~§7.4/§14.1과 이 §15.2를 함께 review한다. 서로의 whol
 
 | Requirement | Source | Phase 09 contract | Exact test | Planned evidence |
 |---|---|---|---|---|
-| `REQ-ARCH-DAG` provider isolation | [Final Architecture §2](../../2026-07-26-architecture-design.md#2-module과-package-경계), [Plan §4.2](../master-realization-plan.md#42-compileruntime-invariants) | §6/§8 dependency | `Phase09StorageArchitectureTest.*Dependency*` | All P09 keys + architecture report |
-| `REQ-NODB` no database/hidden index/lock | User constraint, [Integrated §13.1](../../architecture-domain-implementation-design.md#131-storage-전제), [Plan Phase 09](../master-realization-plan.md#phase-09--db-없는-object-storage) | §2.3/§3.2/§13.3 | No DB/list/lock architecture tests | `E-P09-STORAGE-CONTRACT` |
-| `REQ-KEY` typed tenant namespace/locator separation | [Integrated §13.2](../../architecture-domain-implementation-design.md#132-logical-key와-provider-locator) | §7.2/§8.2 | `CanonicalKeyCodec*` | `E-P09-STORAGE-CONTRACT`, `E-P09-TENANT` |
-| `REQ-IMMUTABLE` create-once artifact | [Final Architecture §5.2](../../2026-07-26-architecture-design.md#52-artifact-configuration과-provenance), [Integrated §13.5](../../architecture-domain-implementation-design.md#135-immutable-artifact와-mutable-pointer-분리) | §7.3~§7.4/§9.1 | `ArtifactStoreContract.*` | `E-P09-STORAGE-CONTRACT` |
-| `REQ-CHECKSUM` verify before deserialize | [Final Architecture §5.2](../../2026-07-26-architecture-design.md#52-artifact-configuration과-provenance), ADR backlog | §7.3/§8.3/§9.2 | Read/checksum/corruption contract | `E-P09-STORAGE-CONTRACT`, `E-P09-TENANT` |
-| `REQ-CAS` stale-detecting state/publication | [Integrated §13.3~§13.5](../../architecture-domain-implementation-design.md#133-application-level-storage-ports), [Plan §4.2](../master-realization-plan.md#42-compileruntime-invariants) | §8.5~§8.7/§9.3~§9.4 | State/publisher/concurrency contract | `E-P09-CAS` |
-| `REQ-PRECONDITION-IDENTITY` distinct pointer/fence tokens | [Phase 08 §7.3](phase-08-application-ports-local-runtime.md#73-artifactstorage-contracts-produced-for-phase-09), [Integrated §13.5](../../architecture-domain-implementation-design.md#135-immutable-artifact와-mutable-pointer-분리) | §3.2/§8.5~§8.6 | Distinct run-state/worker/publication precondition tests | `E-P09-CAS` |
-| `REQ-IDEMPOTENCY` duplicate exact convergence | [Final Architecture §3.6](../../2026-07-26-architecture-design.md#36-identity-idempotency-retry와-cancellation), [Integrated §13.8](../../architecture-domain-implementation-design.md#138-multi-object-transaction-금지) | §3.2/§9.1/§9.6 | Same/same, different, lost-response tests | `E-P09-CAS` |
-| `REQ-WORKER-COMMIT` exact committed outcome authority | [Integrated §13.5](../../architecture-domain-implementation-design.md#135-immutable-artifact와-mutable-pointer-분리), [Phase 10 §6.3](phase-10-provider-neutral-coordinator.md#63-lifecycle과-stateaction-commit) | §7.4~§7.6/§8.5 | `WorkerCommitContract.*` | `E-P09-CAS` + Phase 10 handoff |
-| `REQ-ORDERING` payload then one pointer | [Integrated §13.5~§13.8](../../architecture-domain-implementation-design.md#135-immutable-artifact와-mutable-pointer-분리) | §7.5/§9 | `ManifestOrderingContract.*` | `E-P09-STORAGE-CONTRACT`, `E-P09-CAS` |
-| `REQ-NOLIST` declared exact completeness | [Integrated §13.7](../../architecture-domain-implementation-design.md#137-listing-금지와-declared-completeness), [Plan §4.2](../master-realization-plan.md#42-compileruntime-invariants) | §7.6/§8.5 | List-noise/fault/architecture tests | `E-P09-STORAGE-CONTRACT` |
+| `REQ-ARCH-DAG` provider isolation | [Final Architecture §2](../../deprecated/2026-07-26-architecture-design.md#2-module과-package-경계), [Plan §4.2](../master-realization-plan.md#42-compileruntime-invariants) | §6/§8 dependency | `Phase09StorageArchitectureTest.*Dependency*` | All P09 keys + architecture report |
+| `REQ-NODB` no database/hidden index/lock | User constraint, [Integrated §13.1](../../deprecated/architecture-domain-implementation-design.md#131-storage-전제), [Plan Phase 09](../master-realization-plan.md#phase-09--db-없는-object-storage) | §2.3/§3.2/§13.3 | No DB/list/lock architecture tests | `E-P09-STORAGE-CONTRACT` |
+| `REQ-KEY` typed tenant namespace/locator separation | [Integrated §13.2](../../deprecated/architecture-domain-implementation-design.md#132-logical-key와-provider-locator) | §7.2/§8.2 | `CanonicalKeyCodec*` | `E-P09-STORAGE-CONTRACT`, `E-P09-TENANT` |
+| `REQ-IMMUTABLE` create-once artifact | [Final Architecture §5.2](../../deprecated/2026-07-26-architecture-design.md#52-artifact-configuration과-provenance), [Integrated §13.5](../../deprecated/architecture-domain-implementation-design.md#135-immutable-artifact와-mutable-pointer-분리) | §7.3~§7.4/§9.1 | `ArtifactStoreContract.*` | `E-P09-STORAGE-CONTRACT` |
+| `REQ-CHECKSUM` verify before deserialize | [Final Architecture §5.2](../../deprecated/2026-07-26-architecture-design.md#52-artifact-configuration과-provenance), ADR backlog | §7.3/§8.3/§9.2 | Read/checksum/corruption contract | `E-P09-STORAGE-CONTRACT`, `E-P09-TENANT` |
+| `REQ-CAS` stale-detecting state/publication | [Integrated §13.3~§13.5](../../deprecated/architecture-domain-implementation-design.md#133-application-level-storage-ports), [Plan §4.2](../master-realization-plan.md#42-compileruntime-invariants) | §8.5~§8.7/§9.3~§9.4 | State/publisher/concurrency contract | `E-P09-CAS` |
+| `REQ-PRECONDITION-IDENTITY` distinct pointer/fence tokens | [Phase 08 §7.3](phase-08-application-ports-local-runtime.md#73-artifactstorage-contracts-produced-for-phase-09), [Integrated §13.5](../../deprecated/architecture-domain-implementation-design.md#135-immutable-artifact와-mutable-pointer-분리) | §3.2/§8.5~§8.6 | Distinct run-state/worker/publication precondition tests | `E-P09-CAS` |
+| `REQ-IDEMPOTENCY` duplicate exact convergence | [Final Architecture §3.6](../../deprecated/2026-07-26-architecture-design.md#36-identity-idempotency-retry와-cancellation), [Integrated §13.8](../../deprecated/architecture-domain-implementation-design.md#138-multi-object-transaction-금지) | §3.2/§9.1/§9.6 | Same/same, different, lost-response tests | `E-P09-CAS` |
+| `REQ-WORKER-COMMIT` exact committed outcome authority | [Integrated §13.5](../../deprecated/architecture-domain-implementation-design.md#135-immutable-artifact와-mutable-pointer-분리), [Phase 10 §6.3](phase-10-provider-neutral-coordinator.md#63-lifecycle과-stateaction-commit) | §7.4~§7.6/§8.5 | `WorkerCommitContract.*` | `E-P09-CAS` + Phase 10 handoff |
+| `REQ-ORDERING` payload then one pointer | [Integrated §13.5~§13.8](../../deprecated/architecture-domain-implementation-design.md#135-immutable-artifact와-mutable-pointer-분리) | §7.5/§9 | `ManifestOrderingContract.*` | `E-P09-STORAGE-CONTRACT`, `E-P09-CAS` |
+| `REQ-NOLIST` declared exact completeness | [Integrated §13.7](../../deprecated/architecture-domain-implementation-design.md#137-listing-금지와-declared-completeness), [Plan §4.2](../master-realization-plan.md#42-compileruntime-invariants) | §7.6/§8.5 | List-noise/fault/architecture tests | `E-P09-STORAGE-CONTRACT` |
 | `REQ-AUTHORITY` result existence != publication | [Master §14.1](../../master-design.md#141-publication-gate), [Phase 07 §15.2](phase-07-independent-verification-final-result.md#152-next--actual-but-unaccepted-phase-08) | §7.1/§8.6/§9.4 | `ResultPublisherContract.*` | `E-P09-CAS` |
-| `REQ-PARTIAL` partial/visibility fail closed | [Final Architecture §5.3](../../2026-07-26-architecture-design.md#53-상태와-failure-계약), user Phase 09 requirement | §3.3/§7.5/§9.1 | Partial/delayed/stale fault tests | `E-P09-STORAGE-CONTRACT`, `E-P09-CAS` |
-| `REQ-CORRUPTION` tamper detection/quarantine | [Final Architecture §5.6](../../2026-07-26-architecture-design.md#56-test와-evidence), [Integrated §22.4](../../architecture-domain-implementation-design.md#224-independent-corruption-fixtures) | §7.3/§7.8/§10.7 | `StorageCorruptionContract.*` | All P09 keys |
-| `REQ-TENANT` isolation/security/redaction | [Final Architecture §5.5](../../2026-07-26-architecture-design.md#55-observability와-security), [Integrated §20](../../architecture-domain-implementation-design.md#20-security와-tenant-boundary) | §7.8/§8.3 | `StorageSecurityContract.*` | `E-P09-TENANT` |
-| `REQ-ACCESS-BINDING` explicit non-ambient authority | [Integrated §20](../../architecture-domain-implementation-design.md#20-security와-tenant-boundary), [Phase 08 §7.3](phase-08-application-ports-local-runtime.md#73-artifactstorage-contracts-produced-for-phase-09) | §3.1~§3.2/§7.8/§8.3 | Missing/mismatch/no-ambient authorization tests | `E-P09-TENANT` |
-| `REQ-FAILURE-CARRIER` lossless typed storage failure | [Final Architecture §5.3](../../2026-07-26-architecture-design.md#53-상태와-failure-계약), [Integrated §21](../../architecture-domain-implementation-design.md#21-failure와-retry-matrix) | §3.3/§8.4 | `StorageFailureSurfaceContract.*` | All P09 keys |
-| `REQ-PROFILE-CATALOG` exact immutable profile lookup | [Phase 08 §7.4](phase-08-application-ports-local-runtime.md#74-profile-dispatch-workflow-and-cancellation-ports), [Integrated §12.3/§13.4](../../architecture-domain-implementation-design.md#123-provider-neutral-outbound-ports) | §6/§8.5/§10.9 | `ProfileCatalogContract.*` | `E-P09-STORAGE-CONTRACT`, `E-P09-TENANT` |
-| `REQ-RETENTION` safe lifecycle | [Master §16.3](../../master-design.md#163-deferred-resume-criteria), [Integrated §13.5/§20/§26](../../architecture-domain-implementation-design.md#135-immutable-artifact와-mutable-pointer-분리) | §7.7/§10.10 | `StorageLifecycleContract.*` | `E-P09-TENANT` + retention report |
-| `REQ-LOCAL-PORT` local/memory reference contract | [Integrated §12.4~§13.4](../../architecture-domain-implementation-design.md#124-local-reference) | §6/§8.7~§8.8 | Backend abstract suite + local recovery | `E-P09-STORAGE-CONTRACT` |
-| `REQ-PROVIDER-BOUNDARY` filesystem/S3 same-suite ownership | [Integrated §13.12](../../architecture-domain-implementation-design.md#1312-phase-9-gate), [Plan Phase 09](../master-realization-plan.md#phase-09--db-없는-object-storage), [Phase 08 §16.2](phase-08-application-ports-local-runtime.md#162-next--actual-but-unaccepted-phase-09-storage-contract) | §1.1/§4/§14 | Approved boundary + required backend suite | Decision ref + `E-P09-STORAGE-CONTRACT` or approved Phase 11 evidence |
-| `REQ-HANDOFF-P08` consume application/storage contract | [Plan Phase 08](../master-realization-plan.md#phase-08--application-interface와-local-실행), [Integrated §12](../../architecture-domain-implementation-design.md#12-phase-8--application-ports와-local-reference-runtime) | §4/§15.1 | Contract receipt/compatibility tests | Entry receipt + all P09 keys |
-| `REQ-HANDOFF-P10` storage-only run/round repository | [Plan Phase 10](../master-realization-plan.md#phase-10--여러-round를-조정하는-coordinator), [Integrated §14](../../architecture-domain-implementation-design.md#14-phase-10--provider-neutral-logical-coordinator) | §8.5/§15.2 | Declared exact read/state CAS consumer tests | Phase 09 handoff manifest |
+| `REQ-PARTIAL` partial/visibility fail closed | [Final Architecture §5.3](../../deprecated/2026-07-26-architecture-design.md#53-상태와-failure-계약), user Phase 09 requirement | §3.3/§7.5/§9.1 | Partial/delayed/stale fault tests | `E-P09-STORAGE-CONTRACT`, `E-P09-CAS` |
+| `REQ-CORRUPTION` tamper detection/quarantine | [Final Architecture §5.6](../../deprecated/2026-07-26-architecture-design.md#56-test와-evidence), [Integrated §22.4](../../deprecated/architecture-domain-implementation-design.md#224-independent-corruption-fixtures) | §7.3/§7.8/§10.7 | `StorageCorruptionContract.*` | All P09 keys |
+| `REQ-TENANT` isolation/security/redaction | [Final Architecture §5.5](../../deprecated/2026-07-26-architecture-design.md#55-observability와-security), [Integrated §20](../../deprecated/architecture-domain-implementation-design.md#20-security와-tenant-boundary) | §7.8/§8.3 | `StorageSecurityContract.*` | `E-P09-TENANT` |
+| `REQ-ACCESS-BINDING` explicit non-ambient authority | [Integrated §20](../../deprecated/architecture-domain-implementation-design.md#20-security와-tenant-boundary), [Phase 08 §7.3](phase-08-application-ports-local-runtime.md#73-artifactstorage-contracts-produced-for-phase-09) | §3.1~§3.2/§7.8/§8.3 | Missing/mismatch/no-ambient authorization tests | `E-P09-TENANT` |
+| `REQ-FAILURE-CARRIER` lossless typed storage failure | [Final Architecture §5.3](../../deprecated/2026-07-26-architecture-design.md#53-상태와-failure-계약), [Integrated §21](../../deprecated/architecture-domain-implementation-design.md#21-failure와-retry-matrix) | §3.3/§8.4 | `StorageFailureSurfaceContract.*` | All P09 keys |
+| `REQ-PROFILE-CATALOG` exact immutable profile lookup | [Phase 08 §7.4](phase-08-application-ports-local-runtime.md#74-profile-dispatch-workflow-and-cancellation-ports), [Integrated §12.3/§13.4](../../deprecated/architecture-domain-implementation-design.md#123-provider-neutral-outbound-ports) | §6/§8.5/§10.9 | `ProfileCatalogContract.*` | `E-P09-STORAGE-CONTRACT`, `E-P09-TENANT` |
+| `REQ-RETENTION` safe lifecycle | [Master §16.3](../../master-design.md#163-deferred-resume-criteria), [Integrated §13.5/§20/§26](../../deprecated/architecture-domain-implementation-design.md#135-immutable-artifact와-mutable-pointer-분리) | §7.7/§10.10 | `StorageLifecycleContract.*` | `E-P09-TENANT` + retention report |
+| `REQ-LOCAL-PORT` local/memory reference contract | [Integrated §12.4~§13.4](../../deprecated/architecture-domain-implementation-design.md#124-local-reference) | §6/§8.7~§8.8 | Backend abstract suite + local recovery | `E-P09-STORAGE-CONTRACT` |
+| `REQ-PROVIDER-BOUNDARY` filesystem/S3 same-suite ownership | [Integrated §13.12](../../deprecated/architecture-domain-implementation-design.md#1312-phase-9-gate), [Plan Phase 09](../master-realization-plan.md#phase-09--db-없는-object-storage), [Phase 08 §16.2](phase-08-application-ports-local-runtime.md#162-next--actual-but-unaccepted-phase-09-storage-contract) | §1.1/§4/§14 | Approved boundary + required backend suite | Decision ref + `E-P09-STORAGE-CONTRACT` or approved Phase 11 evidence |
+| `REQ-HANDOFF-P08` consume application/storage contract | [Plan Phase 08](../master-realization-plan.md#phase-08--application-interface와-local-실행), [Integrated §12](../../deprecated/architecture-domain-implementation-design.md#12-phase-8--application-ports와-local-reference-runtime) | §4/§15.1 | Contract receipt/compatibility tests | Entry receipt + all P09 keys |
+| `REQ-HANDOFF-P10` storage-only run/round repository | [Plan Phase 10](../master-realization-plan.md#phase-10--여러-round를-조정하는-coordinator), [Integrated §14](../../deprecated/architecture-domain-implementation-design.md#14-phase-10--provider-neutral-logical-coordinator) | §8.5/§15.2 | Declared exact read/state CAS consumer tests | Phase 09 handoff manifest |
 | `REQ-NO-PULLFORWARD` no unapproved provider/coordinator scope | [Plan Phase 10~11](../master-realization-plan.md#phase-10--여러-round를-조정하는-coordinator) | §2.3/§13.3 | Approved-boundary architecture/diff scope tests | Review + all P09 keys |
 | `REQ-OPEN-GATE` no hidden official/default | `Q-BENCH-02`, `C-17`, `Q-VAR-01`, [Plan §14](../master-realization-plan.md#14-open-gated-deferred와-restart-condition) | §3.1/§14 | Config/source label scan | All P09 keys + known limitations |
 

@@ -67,7 +67,7 @@
 
 ## 최초 검토 당시 다음 단계
 
-아래 항목은 세션 01~18 작성 당시의 역사적 계획이다. 현재 상태와 다음 gate는 [질문 등록부](../master-design-open-questions.md), [세션 30](30-open-question-integration.md)과 [세션 31](31-domain-design-integration.md)을 따른다.
+아래 항목은 세션 01~18 작성 당시의 역사적 계획이다. 현재 상태와 다음 gate는 [질문 등록부](../deprecated/master-design-open-questions.md), [세션 30](30-open-question-integration.md)과 [세션 31](31-domain-design-integration.md)을 따른다.
 
 1. 각 문서의 `남은 질문`에 답변하거나 명시적으로 보류한다.
 2. 질문 답변을 해당 세션 문서에 반영해 `확정 사항`과 `잠정안`을 분리한다.

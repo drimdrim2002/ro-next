@@ -2,6 +2,13 @@
 
 CVRPTW 최적화 서비스의 Java 25/AWS 기반 구현 시작점입니다. 설계 문서는 `docs/`에, 실행 가능한 서버 및 워커 기본 구조는 `src/`에 있습니다.
 
+## 설계 문서
+
+- **진입점:** [`docs/README.md`](docs/README.md)
+- **정본 (APPROVED):** [`docs/master-design.md`](docs/master-design.md) · [`docs/domain-design.md`](docs/domain-design.md) · [`docs/architecture-design.md`](docs/architecture-design.md)
+- 구 설계·질문 등록부·Phase B 핸드오프는 [`docs/deprecated/`](docs/deprecated/) (`SUPERSEDED` / `ARCHIVED`)
+- 구현 phase 문서 세트: [`docs/implementation/README.md`](docs/implementation/README.md)
+
 ## 기술 기준
 
 - Java 25: AWS Corretto `25.0.3-amzn` 런타임 컨테이너

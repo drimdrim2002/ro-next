@@ -14,6 +14,7 @@ review_document: ../reviews/phase-08-review.md
 entry_gate_status: BLOCKED_BY_UNACCEPTED_PREDECESSORS
 handoff_status: NOT_READY
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 implementation_direction_decision: ALNS_FIRST_BENCHMARK_BEFORE_OPTIONAL_MIP
 direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 scheduler_task_id: TBD_NOT_SUPPLIED
@@ -52,13 +53,13 @@ source_sections:
   phase_09_actual: "§4~5.3, §7.1~8.8, §15.1"
 source_fingerprints_sha256:
   docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
-  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
-  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
-  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
-  docs/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
+  docs/deprecated/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/deprecated/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/deprecated/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
+  docs/deprecated/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
   docs/implementation/master-realization-plan.md: 940fe8c2156bf0472deafcd450e0ea49f0036ab6b304d6d051f0148a38cd0f5d
 historical_cross_check:
-  file: docs/2026-07-26-master-design.md
+  file: docs/deprecated/2026-07-26-master-design.md
   status: SUPERSEDED_NOT_AUTHORITY
 neighbor_phase_documents:
   phase_07: ACTUAL_REVIEW_COMPLETE_CHANGES_REQUIRED_BLOCKED_NOT_IMPLEMENTED_NOT_READY
@@ -92,13 +93,13 @@ fingerprint_cycle_policy:
 권위 적용 순서는 다음과 같다.
 
 1. 사용자 선언과 [Canonical Master](../../master-design.md)
-2. [질문 등록부](../../master-design-open-questions.md)의 exact `Q-*` 상태
-3. [Final Domain Design](../../2026-07-26-domain-design.md)의 canonicalization, termination, verification/result 의미
-4. [Final Architecture Design](../../2026-07-26-architecture-design.md)의 Java/Maven/runtime/port 경계
-5. [Integrated implementation design](../../architecture-domain-implementation-design.md)의 15 Phase, no-DB storage와 provider substitution 배치
+2. [질문 등록부](../../deprecated/master-design-open-questions.md)의 exact `Q-*` 상태
+3. [Final Domain Design](../../deprecated/2026-07-26-domain-design.md)의 canonicalization, termination, verification/result 의미
+4. [Final Architecture Design](../../deprecated/2026-07-26-architecture-design.md)의 Java/Maven/runtime/port 경계
+5. [Integrated implementation design](../../deprecated/architecture-domain-implementation-design.md)의 15 Phase, no-DB storage와 provider substitution 배치
 6. [Master Realization Plan](../master-realization-plan.md)과 [구현 문서 지도](../README.md)
 
-[2026-07-26 Master Design — SUPERSEDED](../../2026-07-26-master-design.md)는 누락·퇴행 cross-check에만 사용했다. `docs/codex/*`는 2026-07-24 역사 자료이며 현재 authority, API 이름 또는 완료 evidence로 사용하지 않는다.
+[2026-07-26 Master Design — SUPERSEDED](../../deprecated/2026-07-26-master-design.md)는 누락·퇴행 cross-check에만 사용했다. `docs/codex/*`는 2026-07-24 역사 자료이며 현재 authority, API 이름 또는 완료 evidence로 사용하지 않는다.
 
 Final Domain/Architecture의 옛 `Q-INFRA-01 DEFERRED`, `25/1/2` 표기는 최신 Canonical Master와 질문 등록부의 `Q-INFRA-01 RESOLVED`, `26/1/1`로 해소한다. 선택된 target/reference가 AWS S3 + Step Functions + Lambda라는 사실은 Phase 08에 AWS SDK, object storage, coordinator 또는 deployment를 넣으라는 뜻이 아니다. Phase 08은 provider-neutral semantics와 local reference까지만 만든다.
 
@@ -107,10 +108,10 @@ Final Domain/Architecture의 옛 `Q-INFRA-01 DEFERRED`, `25/1/2` 표기는 최�
 | Source | 직접 소비한 section | Phase 08에 고정하는 내용 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | §4.1~§4.7, §10, §13~§14.1, §15.10, §16~§17 | Submission→canonicalization→solve→both-gate publication, identity, termination, migration/rollback |
-| [Final Domain](../../2026-07-26-domain-design.md) | §15~§17, §18 | Phase 07 output 의미, pre-solve/domain failure와 정상/예외 termination 구분 |
-| [Final Architecture](../../2026-07-26-architecture-design.md) | §2, §3.1~§3.6, §5.1~§5.6, §6 | Java 25 module DAG, local reference, identities, retry/cancel, port/security/observability |
-| [Integrated design](../../architecture-domain-implementation-design.md) | §3, §12, §13.1~§13.4, §19~§25, §27~§28 | Phase 08 use case/ports/local runtime, Phase 09 storage seam, failure, anti-pattern |
-| [질문 등록부](../../master-design-open-questions.md) | `Q-OBJ-01`, `Q-BENCH-02`, `Q-INFRA-01`, `Q-VAR-01`, §3~§4 | Exact profile, explicit test-only values, AWS 선택과 구현 분리, deferred 보존 |
+| [Final Domain](../../deprecated/2026-07-26-domain-design.md) | §15~§17, §18 | Phase 07 output 의미, pre-solve/domain failure와 정상/예외 termination 구분 |
+| [Final Architecture](../../deprecated/2026-07-26-architecture-design.md) | §2, §3.1~§3.6, §5.1~§5.6, §6 | Java 25 module DAG, local reference, identities, retry/cancel, port/security/observability |
+| [Integrated design](../../deprecated/architecture-domain-implementation-design.md) | §3, §12, §13.1~§13.4, §19~§25, §27~§28 | Phase 08 use case/ports/local runtime, Phase 09 storage seam, failure, anti-pattern |
+| [질문 등록부](../../deprecated/master-design-open-questions.md) | `Q-OBJ-01`, `Q-BENCH-02`, `Q-INFRA-01`, `Q-VAR-01`, §3~§4 | Exact profile, explicit test-only values, AWS 선택과 구현 분리, deferred 보존 |
 | [Master Realization Plan](../master-realization-plan.md) | §2~§4, Phase 07~10, §8~§15 | Current inventory, Phase 08 exit evidence, DoD/blocker/handoff |
 | [구현 문서 지도](../README.md) | §3~§7 | Authority, canonical filename, planned link와 scheduler/review 규칙 |
 | [Root README](../../../README.md) | 기술 기준, 배포, placeholder 설명 | Java 25/Maven/GCP placeholder의 actual inventory와 target contract 분리 |
@@ -1748,10 +1749,10 @@ Green 순서를 맞추려고 Phase 07 fake를 full E2E로 이름 바꾸거나, f
   ```bash
   shasum -a 256 \
     docs/master-design.md \
-    docs/2026-07-26-domain-design.md \
-    docs/2026-07-26-architecture-design.md \
-    docs/architecture-domain-implementation-design.md \
-    docs/master-design-open-questions.md \
+    docs/deprecated/2026-07-26-domain-design.md \
+    docs/deprecated/2026-07-26-architecture-design.md \
+    docs/deprecated/architecture-domain-implementation-design.md \
+    docs/deprecated/master-design-open-questions.md \
     docs/implementation/master-realization-plan.md
 
   ./mvnw -B -ntp -Dstyle.color=never \

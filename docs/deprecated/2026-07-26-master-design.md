@@ -5,7 +5,7 @@ version: 4.0-review
 last_updated: 2026-07-26
 owner: RPDPTW 설계 책임 역할
 scope: 전체 목표, 완료 정의, 핵심 결정, 구현 흐름, ALNS-MIP 적용 개요, roadmap gate와 검증 evidence
-superseded_by: master-design.md
+superseded_by: docs/master-design.md
 related_documents:
   - 2026-07-26-domain-design.md
   - 2026-07-26-architecture-design.md
@@ -13,7 +13,13 @@ related_documents:
   - master-design-sessions/29-open-question-interview.md
   - master-design-sessions/30-open-question-integration.md
   - master-design-sessions/31-domain-design-integration.md
+phase_c: path-and-status-only
+
 ---
+
+<!-- phase-c-authority-banner -->
+> **SUPERSEDED (Phase C)** — current authority: [`docs/master-design.md`](../master-design.md). This file is historical only. Do not use as conflict authority.
+
 
 # RPDPTW 통합 솔버 Master Design
 

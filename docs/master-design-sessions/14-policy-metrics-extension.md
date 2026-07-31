@@ -1,6 +1,6 @@
 # 세션 14 — 고객사별 정책·측정 확장 구조
 
-> **세션 30 통합 상태 (2026-07-23):** 이 문서의 policy seam은 유지하지만 사용자 질문의 임시 기본 가정은 현재 결정이 아니다. 세션 29에서 고객사별 승인 preset, mandatory 최상위 사전식 objective, `DIRECT/LEASE` vehicle ownership과 고객사 선택적 외주 vehicle volume objective, solver의 two-state outcome과 final audit가 확정되었다. 충돌하는 finite-penalty·외주/이월 status 예시는 [Master §9~§10](../master-design.md) 및 [등록부](../master-design-open-questions.md)의 결정으로 대체한다.
+> **세션 30 통합 상태 (2026-07-23):** 이 문서의 policy seam은 유지하지만 사용자 질문의 임시 기본 가정은 현재 결정이 아니다. 세션 29에서 고객사별 승인 preset, mandatory 최상위 사전식 objective, `DIRECT/LEASE` vehicle ownership과 고객사 선택적 외주 vehicle volume objective, solver의 two-state outcome과 final audit가 확정되었다. 충돌하는 finite-penalty·외주/이월 status 예시는 [Master §9~§10](../master-design.md) 및 [등록부](../deprecated/master-design-open-questions.md)의 결정으로 대체한다.
 
 이 문서는 향후 구현 설계를 명확히 하기 위한 세션 산출물이다. 실제 코드와 `master-design.md`는 이 세션에서 변경하지 않는다.
 

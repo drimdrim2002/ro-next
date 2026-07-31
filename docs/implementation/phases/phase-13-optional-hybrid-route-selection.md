@@ -22,6 +22,7 @@ handoff_status: SKIP_CONTRACT_DEFINED_NO_ACTIVATED_HANDOFF
 signed_applicability_receipt_status: NOT_PRODUCED
 signing_trust_policy_status: OPEN_GATED_NOT_APPROVED
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 implementation_direction_decision: ALNS_FIRST_BENCHMARK_BEFORE_OPTIONAL_MIP
 direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 scheduler_task_id: TBD_NOT_SUPPLIED
@@ -80,7 +81,7 @@ source_sections:
   phase_14_actual: "v1.4 §0.1, §3.1~3.2 and §5.3 Phase 14A benchmark prerequisite plus Phase 14B applicability/handoff compatibility"
   root_readme_and_inventory: "README technology/deployment/placeholder plus actual POM/Java/test/GCP inventory"
 historical_cross_check:
-  file: docs/2026-07-26-master-design.md
+  file: docs/deprecated/2026-07-26-master-design.md
   status: SUPERSEDED_NOT_AUTHORITY
 neighbor_phase_documents:
   phase_06: ACTUAL_REVIEWED_NOT_STARTED_NOT_ACCEPTED
@@ -126,17 +127,17 @@ official hybrid 실행 또는 production activation이 시작·완료되었다�
 권위 적용 순서는 다음과 같다.
 
 1. 사용자 선언과 [Canonical Master](../../master-design.md)
-2. [질문 등록부](../../master-design-open-questions.md)의 exact `Q-*` 상태
-3. [Final Domain Design](../../2026-07-26-domain-design.md)의 immutable route,
+2. [질문 등록부](../../deprecated/master-design-open-questions.md)의 exact `Q-*` 상태
+3. [Final Domain Design](../../deprecated/2026-07-26-domain-design.md)의 immutable route,
    projection, materialization, verification 의미
-4. [Final Architecture Design](../../2026-07-26-architecture-design.md)의
+4. [Final Architecture Design](../../deprecated/2026-07-26-architecture-design.md)의
    module/package/OR-Tools/native/OSS-license lifecycle 경계
-5. [Integrated implementation design](../../architecture-domain-implementation-design.md)의
+5. [Integrated implementation design](../../deprecated/architecture-domain-implementation-design.md)의
    15 Phase와 Phase 12~14 배치
 6. [Master Realization Plan](../master-realization-plan.md),
    [구현 문서 지도](../README.md)와 actual predecessor handoff
 
-[2026-07-26 Master Design — SUPERSEDED](../../2026-07-26-master-design.md)는
+[2026-07-26 Master Design — SUPERSEDED](../../deprecated/2026-07-26-master-design.md)는
 누락·퇴행 cross-check에만 사용했다. `docs/codex/*`는 역사 자료이며 현재
 authority, API, backend, 승인 또는 evidence로 사용하지 않는다.
 
@@ -150,10 +151,10 @@ Final Domain §18과 Final Architecture §6 말미의 `Q-INFRA-01 DEFERRED`,
 | Source | 직접 소비한 section | Phase 13에 고정하는 내용 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | §1~§4, §10~§17, 특히 `C-17`, §11.7~§11.10, `RM-9A~C`, §16.3 | GATED target, immutable pool, exact projection, materialize/full-evaluate/strict adoption, two-gate authority, fallback와 별도 approval |
-| [Final Domain](../../2026-07-26-domain-design.md) | §7~§10, §12~§18 | Artifact/column identity 분리, exact partition, typed outcome, fresh materialization, hybrid state, acceptance evidence |
-| [Final Architecture](../../2026-07-26-architecture-design.md) | §2~§6 | OR-Tools-free default DAG, direct CP-SAT adapter boundary/native lifecycle, full evaluation, security와 AR-H1~H3 |
-| [Integrated design](../../architecture-domain-implementation-design.md) | §3, §10~§25, 특히 §16~§18 | Phase 12 독립 substitution branch, Phase 13 contract, Phase 14 conditional predecessor, provenance/failure/test/anti-pattern |
-| [질문 등록부](../../master-design-open-questions.md) | `Q-BENCH-02`, `Q-INFRA-01`, `Q-VAR-01`, §3~§4 | Official 수치 open, AWS target resolved, optional variant deferred; 어느 것도 hybrid hidden default를 만들지 않음 |
+| [Final Domain](../../deprecated/2026-07-26-domain-design.md) | §7~§10, §12~§18 | Artifact/column identity 분리, exact partition, typed outcome, fresh materialization, hybrid state, acceptance evidence |
+| [Final Architecture](../../deprecated/2026-07-26-architecture-design.md) | §2~§6 | OR-Tools-free default DAG, direct CP-SAT adapter boundary/native lifecycle, full evaluation, security와 AR-H1~H3 |
+| [Integrated design](../../deprecated/architecture-domain-implementation-design.md) | §3, §10~§25, 특히 §16~§18 | Phase 12 독립 substitution branch, Phase 13 contract, Phase 14 conditional predecessor, provenance/failure/test/anti-pattern |
+| [질문 등록부](../../deprecated/master-design-open-questions.md) | `Q-BENCH-02`, `Q-INFRA-01`, `Q-VAR-01`, §3~§4 | Official 수치 open, AWS target resolved, optional variant deferred; 어느 것도 hybrid hidden default를 만들지 않음 |
 | [Master Realization Plan](../master-realization-plan.md) | §2~§7 Phase 06/07/08/12/13/14A/14B, §8~§15 | Current inventory, ALNS benchmark predecessor, GATED status, evidence/DoD/rollback, conditional Phase 14B handoff |
 | [구현 문서 지도](../README.md) | §1~§7 | Canonical filename, status/review/scheduler 권한과 conditional branch |
 | [Execution Progress](../execution-progress-and-results.md) | §2, §5, §8~§9 | Phase 13 registry `GATED`, task ID 미지정, scheduler-only status/applicability |

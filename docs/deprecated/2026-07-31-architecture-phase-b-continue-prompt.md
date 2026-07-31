@@ -1,6 +1,6 @@
 ---
 title: Phase B Architecture 이어서 진행 세션 프롬프트
-status: READY
+status: ARCHIVED
 date: 2026-07-31
 purpose: >
   Architecture REVIEW 검수 재개용. 다음 우선 작업은 §4 Module DAG.
@@ -14,7 +14,13 @@ normative_inputs:
   - docs/2026-07-31-domain-design.md
 prerequisite: Master·Domain APPROVED; Architecture REVIEW v1.2
 resume_from: §4 Module DAG deep-interview
+phase_c: path-and-status-only
+
 ---
+
+<!-- phase-c-authority-banner -->
+> **ARCHIVED (Phase C)** — session handoff/prompt only. Not design authority. See [docs/README.md](../README.md).
+
 
 # Phase B Architecture — 이어서 진행
 

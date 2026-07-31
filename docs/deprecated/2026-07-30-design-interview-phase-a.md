@@ -16,7 +16,13 @@ out_of_scope_this_document:
   - master-design / domain-design / architecture-design 본문
   - 구현 코드·phase 실행
   - 구 문서 SUPERSEDED 일괄 정리 (Phase C)
+phase_c: normative-historical-input
+
 ---
+
+<!-- phase-c-authority-banner -->
+> **Normative historical input (Phase A)** — not current Master/Domain/Architecture body. Current design: [docs/README.md](../README.md).
+
 
 # RPDPTW 설계 권위 재확립 — Phase A 인터뷰 정리
 

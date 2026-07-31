@@ -1,6 +1,6 @@
 # 세션 11 - 기존 CVRPTW 입력 스키마와 시간 계약
 
-> **세션 30 통합 상태 (2026-07-23):** 이 문서는 legacy 조사 기록으로 보존한다. 본문의 `Q-TIME-01~04`, `Q-IN-01~02`, `Q-COMP-01`, `Q-BENCH-03` 관련 질문·권장안은 세션 29 사용자 결정으로 해결되었다. Timezone-less `yyyy-MM-dd HH:mm:ss`, `[planStart,planEnd)`, close 포함, `START_ONLY` 기본/profile override, 반복·overnight와 full-arc 출발 연기, `reqDate/dueDate` 완료기한 별칭, service-time 합산, oneway/rotation·wait/stop/drive 계약, `vehicleFeatureList`와 oneway 우선 의미는 [Master §5~§8](../master-design.md)과 [등록부](../master-design-open-questions.md)를 따른다. 과거 `남은 질문`은 현재 미결정 목록이 아니다.
+> **세션 30 통합 상태 (2026-07-23):** 이 문서는 legacy 조사 기록으로 보존한다. 본문의 `Q-TIME-01~04`, `Q-IN-01~02`, `Q-COMP-01`, `Q-BENCH-03` 관련 질문·권장안은 세션 29 사용자 결정으로 해결되었다. Timezone-less `yyyy-MM-dd HH:mm:ss`, `[planStart,planEnd)`, close 포함, `START_ONLY` 기본/profile override, 반복·overnight와 full-arc 출발 연기, `reqDate/dueDate` 완료기한 별칭, service-time 합산, oneway/rotation·wait/stop/drive 계약, `vehicleFeatureList`와 oneway 우선 의미는 [Master §5~§8](../master-design.md)과 [등록부](../deprecated/master-design-open-questions.md)를 따른다. 과거 `남은 질문`은 현재 미결정 목록이 아니다.
 
 이 문서는 기존 CVRPTW 입력 사례인 `data/ro_input_json_spec.pdf` 10쪽 전체를 렌더링 이미지와 텍스트 추출 결과로 함께 확인하고, `master-design.md`와 `domain-design.md`의 입력 및 시간 설계에 반영할 내용을 정리한 작업 기록이다. PDF는 과거 계약을 이해하기 위한 근거 자료이며, PDF 표와 예시가 서로 다른 부분은 임의로 하나를 사실로 확정하지 않는다.
 

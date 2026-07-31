@@ -12,6 +12,7 @@ target_document: docs/implementation/phases/phase-09-object-storage-no-database.
 target_document_version_after_safe_fixes: 1.3
 target_whole_file_hash: OMITTED_TO_AVOID_RECIPROCAL_DOCUMENT_HASH
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 document_verdict: CHANGES_REQUIRED
 phase_acceptance_verdict: BLOCKED_NOT_IMPLEMENTED
 implementation_status_observed: NOT_STARTED
@@ -75,10 +76,10 @@ module command는 실제로 exit 1이었다.
 | Source | 완전히 읽고 대조한 범위 | Review 적용 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | §1~§4.6, §10.3, §13~§17 | Immutable provenance, provider isolation, two-gate publication, logical state/pointer와 gate 보존 |
-| [Final Domain](../../2026-07-26-domain-design.md) | §1, §3, §7~§8, §15~§18 | Semantic identity, final result authority, failure/evidence ceiling |
-| [Final Architecture](../../2026-07-26-architecture-design.md) | §1~§3.6, §5~§6.5 | Java 25/Maven DAG, application-owned ports, CAS, security, test/ADR |
-| [Integrated design](../../architecture-domain-implementation-design.md) | §1~§3, §12~§14, §19~§28 | No-DB exact key/CAS, object profile, filesystem/S3 suite, Phase 08/10 boundary, failure/corruption |
-| [Question register](../../master-design-open-questions.md) | 전체 28개 항목과 §3~§5 | `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1`; `Q-INFRA-01`, `Q-BENCH-02`, `Q-VAR-01` |
+| [Final Domain](../../deprecated/2026-07-26-domain-design.md) | §1, §3, §7~§8, §15~§18 | Semantic identity, final result authority, failure/evidence ceiling |
+| [Final Architecture](../../deprecated/2026-07-26-architecture-design.md) | §1~§3.6, §5~§6.5 | Java 25/Maven DAG, application-owned ports, CAS, security, test/ADR |
+| [Integrated design](../../deprecated/architecture-domain-implementation-design.md) | §1~§3, §12~§14, §19~§28 | No-DB exact key/CAS, object profile, filesystem/S3 suite, Phase 08/10 boundary, failure/corruption |
+| [Question register](../../deprecated/master-design-open-questions.md) | 전체 28개 항목과 §3~§5 | `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1`; `Q-INFRA-01`, `Q-BENCH-02`, `Q-VAR-01` |
 | [Master Realization Plan](../master-realization-plan.md) | §2~§15, 특히 Phase 08~10 | Actual inventory, Phase DAG, Phase 09 filesystem/S3 output, evidence/DoD/rollback |
 | [Implementation map](../README.md) | §3~§7 | User-locked authority, canonical filename, review/status 규칙 |
 | [Execution tracker](../execution-progress-and-results.md) | §2, §5~§9 | Phase 09 `PLANNED`, task `TBD`, scheduler-only status |
@@ -97,7 +98,7 @@ implementation/cutover approval은 여전히 gated다. `Q-BENCH-02` official 실
 
 ### 2.2 Historical cross-check
 
-[2026-07-26 Master Design](../../2026-07-26-master-design.md)은
+[2026-07-26 Master Design](../../deprecated/2026-07-26-master-design.md)은
 `SUPERSEDED_NOT_AUTHORITY`로만 대조했다. 관찰 SHA-256은
 `5da9fd05a027e748b642517d33c0edab86ec818645d5b78c2a0d573fa968419a`다.
 `docs/codex/`는 역사 implementation/coordinator 초안의 존재와 drift만 확인했고 current
@@ -176,7 +177,7 @@ placeholder를 안전하다고 평가한다는 뜻이 아니다.
 - **Exact evidence:** 수정 전 target §1.1/§2.3/§3.1/§13은 Phase 09를 memory/local로 제한하고
   S3 adapter를 Phase 11로 미뤘다. 그러나 [Master Realization Plan — Phase 09](../master-realization-plan.md#phase-09--db-없는-object-storage)는
   “Filesystem/S3 backend contract”와 같은 abstract suite를 Phase 09 output/step으로 두고,
-  [Integrated §13.12](../../architecture-domain-implementation-design.md#1312-phase-9-gate)는
+  [Integrated §13.12](../../deprecated/architecture-domain-implementation-design.md#1312-phase-9-gate)는
   filesystem reference와 S3 backend가 같은 suite를 통과해야 한다고 명시한다.
   [Phase 08 §16.2](../phases/phase-08-application-ports-local-runtime.md#162-next--actual-but-unaccepted-phase-09-storage-contract)도
   filesystem/S3 conditional operations를 Phase 09에 넘긴다.
@@ -235,7 +236,7 @@ placeholder를 안전하다고 평가한다는 뜻이 아니다.
 
 - **Severity/status:** `HIGH — RESIDUAL CROSS-PHASE BLOCKER`
 - **Exact evidence:** Target §7.4~§7.6은 worker outcome payload/ref 뒤 `committed` pointer
-  CAS와 Phase 10 exact read를 요구한다. [Integrated §13.5](../../architecture-domain-implementation-design.md#135-immutable-artifact와-mutable-pointer-분리)도
+  CAS와 Phase 10 exact read를 요구한다. [Integrated §13.5](../../deprecated/architecture-domain-implementation-design.md#135-immutable-artifact와-mutable-pointer-분리)도
   worker committed outcome pointer를 제한된 mutable/CAS state로 분류한다.
   [Phase 10 §6.3](../phases/phase-10-provider-neutral-coordinator.md#63-lifecycle과-stateaction-commit)은
   `CommittedWorkerOutcomeRef`를 fan-in input으로 소비한다. 그러나 target §8.5의
@@ -290,7 +291,7 @@ placeholder를 안전하다고 평가한다는 뜻이 아니다.
 ### F-P09-007 — Exact immutable profile catalog의 구현·contract suite 책임이 빠졌다
 
 - **Severity/status:** `MEDIUM — APPLIED`
-- **Exact evidence:** [Integrated §12.3/§13.4](../../architecture-domain-implementation-design.md#123-provider-neutral-outbound-ports)는
+- **Exact evidence:** [Integrated §12.3/§13.4](../../deprecated/architecture-domain-implementation-design.md#123-provider-neutral-outbound-ports)는
   `ObjectProfileCatalog implements ProfileCatalogPort`를 common semantic implementation으로
   둔다. [Phase 08 §7.4](../phases/phase-08-application-ports-local-runtime.md#74-profile-dispatch-workflow-and-cancellation-ports)는
   tenant/profile/version/preset exact lookup signature를 정의한다. Target v1.0 tree에는

@@ -1,7 +1,7 @@
 # RPDPTW Architecture Design
 
 ```yaml
-status: REVIEW
+status: SUPERSEDED
 version: 1.4-review
 last_updated: 2026-07-28
 owner: RPDPTW Architecture·Application·Platform 설계 역할
@@ -14,7 +14,14 @@ related_documents:
   - master-design-sessions/29-open-question-interview.md
   - master-design-sessions/30-open-question-integration.md
   - master-design-sessions/31-domain-design-integration.md
+superseded_by: docs/architecture-design.md
+phase_c: path-and-status-only
+
 ```
+
+<!-- phase-c-authority-banner -->
+> **SUPERSEDED (Phase C)** — current authority: [`docs/architecture-design.md`](../architecture-design.md). This file is historical only. Do not use as conflict authority.
+
 
 ## 1. 문서 목적, 독자와 결정 표기
 

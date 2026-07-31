@@ -10,6 +10,7 @@ implementation_status: NOT_STARTED
 evidence_status: NOT_PRODUCED
 entry_gate_status: BLOCKED_BY_UNACCEPTED_PREDECESSORS
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 implementation_direction_decision: ALNS_FIRST_BENCHMARK_BEFORE_OPTIONAL_MIP
 direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 scheduler_task_id: TBD_NOT_SUPPLIED
@@ -32,10 +33,10 @@ planned_evidence:
   - E-P06-REPLAY
 source_fingerprints_sha256:
   docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
-  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
-  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
-  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
-  docs/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
+  docs/deprecated/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/deprecated/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/deprecated/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
+  docs/deprecated/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
   docs/implementation/master-realization-plan.md: 940fe8c2156bf0472deafcd450e0ea49f0036ab6b304d6d051f0148a38cd0f5d
   docs/implementation/README.md: 6454238185af7b7c420f468adf42609a0ec045d6c70c16cc7601f0342fa74358
   docs/README.md: 5ece2d41fe5a3c3f5f3d938c0440b4d91b0dcc0a9a055e5e76a739b7d29a8569
@@ -53,7 +54,7 @@ adjacent_phase_documents:
   phase_05: ACTUAL_DIRECTLY_READ_NOT_STARTED_NOT_ACCEPTED
   phase_07: ACTUAL_DIRECTLY_READ_NOT_STARTED_NOT_ACCEPTED
 historical_cross_check:
-  file: docs/2026-07-26-master-design.md
+  file: docs/deprecated/2026-07-26-master-design.md
   status: SUPERSEDED_NOT_AUTHORITY
   sha256: 5da9fd05a027e748b642517d33c0edab86ec818645d5b78c2a0d573fa968419a
 ```
@@ -65,23 +66,23 @@ historical_cross_check:
 적용 순서는 다음과 같다.
 
 1. 사용자 선언과 [Canonical Master](../../master-design.md)
-2. [질문 등록부](../../master-design-open-questions.md)의 exact `Q-*` 상태
-3. [Final Domain Design](../../2026-07-26-domain-design.md)의 stable state, COW와 ALNS 의미
-4. [Final Architecture Design](../../2026-07-26-architecture-design.md)의 Java 25/Maven/package/runtime 배치
-5. [Integrated implementation design](../../architecture-domain-implementation-design.md)의 15 Phase 순서
+2. [질문 등록부](../../deprecated/master-design-open-questions.md)의 exact `Q-*` 상태
+3. [Final Domain Design](../../deprecated/2026-07-26-domain-design.md)의 stable state, COW와 ALNS 의미
+4. [Final Architecture Design](../../deprecated/2026-07-26-architecture-design.md)의 Java 25/Maven/package/runtime 배치
+5. [Integrated implementation design](../../deprecated/architecture-domain-implementation-design.md)의 15 Phase 순서
 6. [Master Realization Plan](../master-realization-plan.md)과 [구현 문서 지도](../README.md)
 
-[2026-07-26 Master Design — SUPERSEDED](../../2026-07-26-master-design.md)는 historical cross-check에만 사용했다. `docs/codex/*`는 현재 권위 입력으로 사용하거나 복사하지 않았고 이 작업에서 수정하지 않는다. Final Domain/Architecture 안의 과거 `Q-INFRA-01 DEFERRED`, `25/1/2` 표기는 최신 Canonical Master와 질문 등록부의 `Q-INFRA-01 RESOLVED`, `26/1/1`로 해소한다. 이 drift는 Phase 06 solver 의미를 바꾸지 않는다.
+[2026-07-26 Master Design — SUPERSEDED](../../deprecated/2026-07-26-master-design.md)는 historical cross-check에만 사용했다. `docs/codex/*`는 현재 권위 입력으로 사용하거나 복사하지 않았고 이 작업에서 수정하지 않는다. Final Domain/Architecture 안의 과거 `Q-INFRA-01 DEFERRED`, `25/1/2` 표기는 최신 Canonical Master와 질문 등록부의 `Q-INFRA-01 RESOLVED`, `26/1/1`로 해소한다. 이 drift는 Phase 06 solver 의미를 바꾸지 않는다.
 
 ### 1.1 직접 소비한 source section
 
 | Source | 직접 소비한 section | Phase 06에 고정하는 내용 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | §4.1~§4.6, §9~§13, §15.5~§15.7, §16~§17 | Phase 05 portfolio 소비, ALNS step, destroy/repair/adaptive/acceptance, COW/cache, termination, strong reproducibility, `RM-4` gate |
-| [Final Domain](../../2026-07-26-domain-design.md) | §8, §10~§11, §16, §17.5~§17.6, §17.9, §18 | Stable route/bank partition, search type lifecycle, state/outcome, operator result, cache-free equality, fault와 replay evidence |
-| [Final Architecture](../../2026-07-26-architecture-design.md) | §2.1~§2.7, §3.1~§3.6, §5.2~§5.6, §6 | `rpdptw-solver` package, core-only dependency, `WorkerRun`/`AlnsRun`, completed-step budget, retry/seed identity, build/evidence |
-| [Integrated design](../../architecture-domain-implementation-design.md) | §2~§3, §9~§10, §19~§25 | Phase 05→06→07 순서, COW ALNS gate, configuration/provenance, fault/test/anti-pattern |
-| [질문 등록부](../../master-design-open-questions.md) | `Q-ALG-01`, `Q-ALG-02`, `Q-BENCH-02`, `Q-VAR-01` | 최대 8개 portfolio, `KEEP_COW`, 공식 execution 수치 calibration gate, optional variant deferred |
+| [Final Domain](../../deprecated/2026-07-26-domain-design.md) | §8, §10~§11, §16, §17.5~§17.6, §17.9, §18 | Stable route/bank partition, search type lifecycle, state/outcome, operator result, cache-free equality, fault와 replay evidence |
+| [Final Architecture](../../deprecated/2026-07-26-architecture-design.md) | §2.1~§2.7, §3.1~§3.6, §5.2~§5.6, §6 | `rpdptw-solver` package, core-only dependency, `WorkerRun`/`AlnsRun`, completed-step budget, retry/seed identity, build/evidence |
+| [Integrated design](../../deprecated/architecture-domain-implementation-design.md) | §2~§3, §9~§10, §19~§25 | Phase 05→06→07 순서, COW ALNS gate, configuration/provenance, fault/test/anti-pattern |
+| [질문 등록부](../../deprecated/master-design-open-questions.md) | `Q-ALG-01`, `Q-ALG-02`, `Q-BENCH-02`, `Q-VAR-01` | 최대 8개 portfolio, `KEEP_COW`, 공식 execution 수치 calibration gate, optional variant deferred |
 | [Master Realization Plan](../master-realization-plan.md) | §2~§6, Phase 03~07, §8~§15 | 입력 권위, actual inventory, Phase 06 entry/exit/evidence, test/DoD/blocker/handoff |
 | [구현 문서 지도](../README.md) | §1~§7 | Canonical filename, planned/actual link, status와 review 규칙 |
 | [Phase 03 actual 상세](phase-03-route-propagation-evaluation-kernel.md) | §7~§15 | Cache-free evaluator/comparator는 소비 계약이며 Phase 06이 재구현하지 않는다는 경계 |
@@ -1653,9 +1654,9 @@ Phase 07은 `rpdptw-solver`를 compile-depend하지 않고 core authority에서 
 | Requirement | Source | Phase 06 contract | Exact test | Planned evidence |
 |---|---|---|---|---|
 | `REQ-COW-ALNS` changed-route COW/independent bank | [Master §12](../../master-design.md#12-candidate-state-cache와-rollback), `Q-ALG-02` | §7.3/§8 first-write copy, discard, no alias | `CowTrialIsolationTest.*` | `E-P06-COW` |
-| `REQ-PAIR` request-level destroy/repair | [Master §11.4~§11.6](../../master-design.md#114-alns-step), [Final Domain §11](../../2026-07-26-domain-design.md#11-alns-state와-operator) | Proposal-only destroy, cross-phase-approved central pair edit, exact repair delegation | `DestroyOperatorContractTest.*`, `RepairPipelineContractTest.*` | `E-P06-ALNS` |
+| `REQ-PAIR` request-level destroy/repair | [Master §11.4~§11.6](../../master-design.md#114-alns-step), [Final Domain §11](../../deprecated/2026-07-26-domain-design.md#11-alns-state와-operator) | Proposal-only destroy, cross-phase-approved central pair edit, exact repair delegation | `DestroyOperatorContractTest.*`, `RepairPipelineContractTest.*` | `E-P06-ALNS` |
 | `REQ-EVAL` no duplicated evaluator/comparator | [Master §9](../../master-design.md#9-extensible-policy-evaluation과-profile-architecture), Phase 03 actual | Phase 03/04 injected authority, guard-before-acceptance | State/repair/integration + architecture methods | `E-P06-ALNS` |
-| `REQ-STEP` completed-step lifecycle | [Master §11.4](../../master-design.md#114-alns-step), [Final Architecture §3.4](../../2026-07-26-architecture-design.md#34-alns-step-budget-계약) | Single publication, rejected completed, invalid/interrupted non-advance | `AlnsStepStateMachineTest.*`, `TerminationFaultTest.*` | `E-P06-ALNS` |
+| `REQ-STEP` completed-step lifecycle | [Master §11.4](../../master-design.md#114-alns-step), [Final Architecture §3.4](../../deprecated/2026-07-26-architecture-design.md#34-alns-step-budget-계약) | Single publication, rejected completed, invalid/interrupted non-advance | `AlnsStepStateMachineTest.*`, `TerminationFaultTest.*` | `E-P06-ALNS` |
 | `REQ-ADAPTIVE` outcome/reward/probability | [Master §11.5](../../master-design.md#115-destroy-repair와-adaptive-selection) | Ordered finite-positive/sum-one immutable update | `AdaptiveOperatorSelectorTest.*` | `E-P06-ALNS` |
 | `REQ-ACCEPTANCE` guard/explicit SA or policy | [Master §11.4~§11.5](../../master-design.md#114-alns-step) | Explicit policy/config, completed-only temperature, no Big-M | `AcceptancePolicyTest.*` | `E-P06-ALNS` |
 | `REQ-PORTFOLIO` phase-1 4×2 screen | `Q-ALG-01`, [Master §11.2~§11.3](../../master-design.md#112-현재-범위의-initial-solution-portfolio) | Every available candidate exact screen + stable champion | `Phase1ScreenerTest.*` | `E-P06-ALNS`, `E-P06-REPLAY` |
@@ -1663,7 +1664,7 @@ Phase 07은 `rpdptw-solver`를 compile-depend하지 않고 core authority에서 
 | `REQ-REPRO` seeded strong replay | [Master §13.2~§13.3](../../master-design.md#132-strong-reproducibility-envelope), Final Domain §17.9 | Namespaced stateless streams, stable order, platform `AttemptId` 밖의 canonical manifest/trace | `SeedStreamOwnershipTest.*`, `ReplayDeterminismTest.*` | `E-P06-REPLAY` |
 | `REQ-REPLAY-INDEPENDENCE` independent oracle/corruption | Master §15.6/§16.1, realization plan §8 | Full-copy/separate seed/canonicalizer reference, one-field mismatch | `ReplayDeterminismTest.matchesIndependentThreeStepReferenceRowByRow()`, `ReplayCorruptionTest.*` | `E-P06-REPLAY` |
 | `REQ-NUMERIC-GATE` no hidden official value | `Q-BENCH-02`, realization plan §14 | Explicit test/experiment/legacy status; omission bind failure | Config omission methods across acceptance/operator/screen tests | All evidence manifests |
-| `REQ-ARCH-DAG` solver→core only | [Final Architecture §2](../../2026-07-26-architecture-design.md#2-module과-package-경계) | §7.6 dependency/owner/random rules | `Phase06SolverArchitectureTest.*` | All keys + architecture report |
+| `REQ-ARCH-DAG` solver→core only | [Final Architecture §2](../../deprecated/2026-07-26-architecture-design.md#2-module과-package-경계) | §7.6 dependency/owner/random rules | `Phase06SolverArchitectureTest.*` | All keys + architecture report |
 | `REQ-SECURITY` trace minimization | Integrated §20, realization plan §13 | Safe internal IDs/digests/version only, raw external ID/input/PII/secret absent; observation metadata 분리 | `SolverTraceRedactionTest.*` | `E-P06-REPLAY` + security report |
 | `REQ-PERFORMANCE` evidence before apply/undo | `Q-ALG-02`, Master §12.3/§15.9 | Exact copy/work counters, no wall-clock correctness | `CowCopyWorkAccountingTest.*` | `E-P06-COW`, `E-P06-ALNS` |
 | `REQ-HANDOFF` verifier responsibility not pulled forward | Master §14.1/§15.7, realization Phase 07 | Candidate/evidence/replay only | `AlnsWorkerRunIT.handsOffCandidateEvidenceAndReplayManifestOnly()` | Phase 06 review handoff record |

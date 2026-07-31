@@ -9,6 +9,7 @@ reviewer_role: independent Phase 01 reviewer
 target:
   - docs/implementation/phases/phase-01-canonical-input-normalization.md
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 document_verdict: ACCEPTED_WITH_APPLIED_CORRECTIONS
 phase_acceptance_verdict: BLOCKED_NOT_IMPLEMENTED
 phase_acceptance_status: NOT_ACCEPTED
@@ -42,14 +43,14 @@ Source 문서의 `REVIEW` metadata는 사용자 선언에 따라 이 문서 작�
 | Source | 직접 확인한 핵심 section | Review 사용 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | §1~§8, §15~§17 | Authority, completion, input/domain/time/travel, phase gate, risk/trace |
-| [Final Domain Design](../../2026-07-26-domain-design.md) | §1~§7, §16~§18, §20~§21 | Plan/request/vehicle, normalization, travel boundary, error/evidence/deferred |
-| [Final Architecture Design](../../2026-07-26-architecture-design.md) | §1~§3, §5~§6 | Java 25/Maven placement, port/dependency, security/test/evidence |
-| [Integrated implementation design](../../architecture-domain-implementation-design.md) | §1~§6, §19~§25, §27~§30 | 15 Phase split, exact Phase 01 output/gate, provenance/security/failure/test |
-| [Question register](../../master-design-open-questions.md) | §1~§5, exact 28 rows | `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1` |
+| [Final Domain Design](../../deprecated/2026-07-26-domain-design.md) | §1~§7, §16~§18, §20~§21 | Plan/request/vehicle, normalization, travel boundary, error/evidence/deferred |
+| [Final Architecture Design](../../deprecated/2026-07-26-architecture-design.md) | §1~§3, §5~§6 | Java 25/Maven placement, port/dependency, security/test/evidence |
+| [Integrated implementation design](../../deprecated/architecture-domain-implementation-design.md) | §1~§6, §19~§25, §27~§30 | 15 Phase split, exact Phase 01 output/gate, provenance/security/failure/test |
+| [Question register](../../deprecated/master-design-open-questions.md) | §1~§5, exact 28 rows | `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1` |
 | [Master Realization Plan](../master-realization-plan.md) | §1~§15, 특히 Phase 00~02/§8~§14 | Current inventory, DAG, test/evidence/DoD/rollback/blocker |
 | [Implementation map](../README.md) | §1~§7 | User-locked authority, canonical filename, workflow |
 
-Source fingerprint는 Phase 01 metadata에 기록된 7개 current authority file과 모두 일치했다. [SUPERSEDED Master](../../2026-07-26-master-design.md)는 historical cross-check에만 사용했고 `docs/codex/*`는 authority로 사용하지 않았다.
+Source fingerprint는 Phase 01 metadata에 기록된 7개 current authority file과 모두 일치했다. [SUPERSEDED Master](../../deprecated/2026-07-26-master-design.md)는 historical cross-check에만 사용했고 `docs/codex/*`는 authority로 사용하지 않았다.
 
 ### 2.2 인접 Phase와 실제 checkout
 

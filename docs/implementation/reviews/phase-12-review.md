@@ -18,6 +18,7 @@ historical_safe_fix_version: 1.2
 current_version_reason: ALNS_FIRST_C17_RESTART_GATE_AND_VERSION_REFERENCE_CORRECTION
 target_whole_file_hash: OMITTED_TO_AVOID_RECIPROCAL_DOCUMENT_HASH
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 document_verdict: CHANGES_REQUIRED
 phase_acceptance_verdict: BLOCKED_NOT_IMPLEMENTED
 implementation_status_observed: NOT_STARTED
@@ -99,16 +100,16 @@ Phase 13 `C-17` 권한을 만들지 않는다.
 | Source | 직접 대조한 범위 | Review 적용 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | 전체, 특히 §1~§4와 §13~§17 | C-20 provider boundary, lifecycle/identity/retry, both-gate publication, RM-8 substitution, RM-9 gate |
-| [Final Domain](../../2026-07-26-domain-design.md) | 전체, 특히 §3, §7~§10, §15~§18 | Provider-neutral problem/result authority, immutable provenance, failure/evidence와 source drift |
-| [Final Architecture](../../2026-07-26-architecture-design.md) | 전체, 특히 §2~§3, §5~§6 | Java 25/Maven module boundary, ports, state/identity/lifecycle/security/test |
-| [Integrated design](../../architecture-domain-implementation-design.md) | 전체, 특히 §16과 §19~§28 | Provider substitution, migration, failure/retry, conformance, invariant와 deferred boundary |
-| [Question register](../../master-design-open-questions.md) | 전체, exact 질문 상태 | `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1`; Q-INFRA 선택과 production authority 분리 |
+| [Final Domain](../../deprecated/2026-07-26-domain-design.md) | 전체, 특히 §3, §7~§10, §15~§18 | Provider-neutral problem/result authority, immutable provenance, failure/evidence와 source drift |
+| [Final Architecture](../../deprecated/2026-07-26-architecture-design.md) | 전체, 특히 §2~§3, §5~§6 | Java 25/Maven module boundary, ports, state/identity/lifecycle/security/test |
+| [Integrated design](../../deprecated/architecture-domain-implementation-design.md) | 전체, 특히 §16과 §19~§28 | Provider substitution, migration, failure/retry, conformance, invariant와 deferred boundary |
+| [Question register](../../deprecated/master-design-open-questions.md) | 전체, exact 질문 상태 | `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1`; Q-INFRA 선택과 production authority 분리 |
 | [Master Realization Plan](../master-realization-plan.md) | 전체, 특히 §2~§6, Phase 11~13과 §8~§15 | Entry/exit, artifact ownership, evidence, rollback, independent review |
 | [Implementation map](../README.md) | 전체 | 사용자 고정 authority와 planned/actual/review 경계 |
 | [Target Phase 12](../phases/phase-12-provider-substitution.md) | 전체 | 계약, WP, test/evidence/rollback/handoff의 실행 가능성 |
 
 Authority는 사용자 선언으로 고정했다. Superseded
-[2026-07-26 Master](../../2026-07-26-master-design.md)와 `docs/codex/*`는 historical
+[2026-07-26 Master](../../deprecated/2026-07-26-master-design.md)와 `docs/codex/*`는 historical
 cross-check로만 확인했고 현재 contract 또는 provider 선택 근거로 쓰지 않았다.
 `Q-BENCH-02`, `Q-VAR-01`, `C-17`과 production authority를 임의로 닫지 않았다.
 

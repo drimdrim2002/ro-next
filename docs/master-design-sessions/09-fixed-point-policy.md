@@ -1,6 +1,6 @@
 # 세션 09 - 고정소수점·단위 변환 정책
 
-> **세션 30 통합 상태 (2026-07-23):** 이 문서는 역사적 review input이다. 본문의 미확정 `n`·rounding·합산 순서는 세션 29의 `Q-NUM-01~03` 사용자 결정으로 대체되었다: 무게·부피 `n=3/FLOOR`, 비용·거리·시간 정수 입력, item-first 정규화 후 `qty` 곱. 현재 계약은 [Master §7.2](../master-design.md#72-fixed-point와-checked-arithmetic), 질문별 evidence/gate는 [등록부](../master-design-open-questions.md), 반영 범위는 [세션 30](30-open-question-integration.md)을 따른다. `D/U`와 누락값 생성은 세션 29의 `Q-MTX-01~03` 및 Master §8이 본문의 과거 추정보다 우선한다.
+> **세션 30 통합 상태 (2026-07-23):** 이 문서는 역사적 review input이다. 본문의 미확정 `n`·rounding·합산 순서는 세션 29의 `Q-NUM-01~03` 사용자 결정으로 대체되었다: 무게·부피 `n=3/FLOOR`, 비용·거리·시간 정수 입력, item-first 정규화 후 `qty` 곱. 현재 계약은 [Master §7.2](../master-design.md#72-fixed-point와-checked-arithmetic), 질문별 evidence/gate는 [등록부](../deprecated/master-design-open-questions.md), 반영 범위는 [세션 30](30-open-question-integration.md)을 따른다. `D/U`와 누락값 생성은 세션 29의 `Q-MTX-01~03` 및 Master §8이 본문의 과거 추정보다 우선한다.
 
 이 문서는 `master-design.md` 개정 시 반영할 수치 정규화 계약을 정리한다. 구현 코드를 정의하는 문서가 아니라, 앞으로 구현할 변환 계층과 솔버 코어 사이의 계약을 확정하기 위한 작업 문서다.
 

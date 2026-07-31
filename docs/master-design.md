@@ -19,18 +19,20 @@ related_designs:
 domain_status: APPROVED
 architecture_status: APPROVED
 supersedes_claim: >
-  기존 dated master 초안·루트 master 부재 상태와 병존할 수 있다.
-  SUPERSEDED 일괄 정리는 Phase C(선택) 범위이며 본 문서 작성만으로 구 문서를
-  폐기 처리하지 않는다.
+  Phase C(O5)에서 구 설계 문서를 docs/deprecated/ 로 두고 SUPERSEDED/ARCHIVED 표기,
+  진입 README·깨진 링크 경로를 정합했다. 구 문서 본문은 삭제하지 않았다.
+  implementation 문서 세트의 Phase B 의미 rebase는 Phase C 범위 밖이다.
+phase_c_status: COMPLETE
 out_of_scope:
   - Architecture 본문 재작성 (Architecture는 별도 문서, status APPROVED)
-  - implementation phases 재작성
+  - implementation phases 재작성 (의미 rebase 포함)
   - 구현 코드·production cutover
   - C-17 활성화·실험 수치 확정
 reorganization_note: >
   v1.1: 내용 보존 재정비. 중복 절 통합, 절 번호 재배치, 메타(상태·관련 문서·다음 액션) 정합.
   규범 의미·결정 ID(A*/D*/O*) 변경 없음.
   2026-07-31: Architecture 검수 완료 → architecture_status APPROVED.
+  Phase C: docs/README.md, SUPERSEDED banners, implementation path remap, O5 닫음.
 ---
 
 # RPDPTW Master Design
@@ -230,7 +232,7 @@ Phase A에서 다시 열지 않은 기존 `C-*` / `P-*` / `Q-*` / `RM-*` 등은 
 | **O2** | 단일 고정 계약 필드·optional 규칙 깊이 | OPEN | Domain |
 | **O3** | 레거시 Win JSON adapter 공식 이름·범위 | OPEN | “adapter 하나”만 고정 |
 | **O4** | 기존 C-*/Q-* 전부 재승인? | 재승인 안 함 | 충돌 시 D* 승격만 |
-| **O5** | Phase C(구 문서 SUPERSEDED·깨진 링크 정리) 여부·시점 | OPEN | 본 문서 범위 밖 |
+| **O5** | Phase C(구 문서 SUPERSEDED·깨진 링크 정리) 여부·시점 | **DONE** | `docs/README.md` · `docs/deprecated/` SUPERSEDED · implementation path remap |
 | **O6** | 상세 수식·module tree 축약 깊이 | OPEN | Domain/Architecture 세션 |
 
 실험 수치(`Q-BENCH-02` 등), MIP budget, production sizing: **확정하지 않음**.
@@ -342,7 +344,7 @@ Master는 MIP 모델·budget·pool 정책을 **확정하지 않는다**.
 |---|---|---|---|
 | **A** | 합의·의도 교정 | `docs/deprecated/2026-07-30-design-interview-phase-a.md` | **완료** |
 | **B** | 설계 재작성 | Master → Domain → Architecture, **각각 사용자 검수** | **완료** — Master·Domain·Architecture **APPROVED** (2026-07-31) |
-| **C (선택)** | 구 문서 SUPERSEDED·깨진 링크·README 정합 | O5 | **OPEN** |
+| **C** | 구 문서 SUPERSEDED·깨진 링크·README 정합 | O5 | **완료** |
 
 Phase B 순서: **Master 단독 → 검수 → Domain → 검수 → Architecture**.  
 한 세션에 3종을 동시에 쓰지 않는다.
@@ -426,9 +428,9 @@ Phase B 순서: **Master 단독 → 검수 → Domain → 검수 → Architectur
 1. ~~Master `REVIEW`~~ → **APPROVED** (2026-07-31)
 2. ~~Domain `REVIEW`~~ → **APPROVED** (`docs/domain-design.md`, 2026-07-31)
 3. ~~Architecture 검수~~ → **APPROVED** (`docs/architecture-design.md`, 2026-07-31)
-4. **(선택) 다음:** Phase C — 구 문서 권위·링크 정리 (O5)
-5. 구현은 별 세션 (implementation 문서 세트)
+4. ~~Phase C (O5)~~ → **완료** — `docs/README.md`, SUPERSEDED/ARCHIVED, implementation path remap
+5. 구현은 별 세션 (implementation 문서 세트; Phase B 의미 rebase는 선택 후속)
 
 ---
 
-*문서 끝. Master Design `APPROVED` (v1.1 내용 보존 재정비). 규범 입력: `docs/deprecated/2026-07-30-design-interview-phase-a.md`.*
+*문서 끝. Master Design `APPROVED` (v1.1). Phase C(O5) 완료. 규범 입력: `docs/deprecated/2026-07-30-design-interview-phase-a.md`.*

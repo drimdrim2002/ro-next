@@ -13,6 +13,7 @@ review_document: ../reviews/phase-10-review.md
 entry_gate_status: BLOCKED_BY_UNACCEPTED_PREDECESSORS
 handoff_status: NOT_READY
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 direction_revision_status: ALNS_FIRST_GATE_OVERLAY_APPLIED_DOCUMENTATION_ONLY
 scheduler_task_id: TBD_NOT_SUPPLIED
@@ -57,10 +58,10 @@ source_fingerprints_sha256:
   README.md: 22eff4f63607db29bd4049344986109c680aa970d0865a3b859598e6b3b96c06
   docs/README.md: 5ece2d41fe5a3c3f5f3d938c0440b4d91b0dcc0a9a055e5e76a739b7d29a8569
   docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
-  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
-  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
-  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
-  docs/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
+  docs/deprecated/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/deprecated/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/deprecated/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
+  docs/deprecated/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
   docs/implementation/master-realization-plan.md: 940fe8c2156bf0472deafcd450e0ea49f0036ab6b304d6d051f0148a38cd0f5d
   docs/implementation/README.md: 6454238185af7b7c420f468adf42609a0ec045d6c70c16cc7601f0342fa74358
   docs/implementation/execution-progress-and-results.md: 37f1a8a0ffad1e9614bd54d2b2444739fb83d0951bff73f2a2465ab54a3e8895
@@ -72,7 +73,7 @@ neighbor_validation_policy:
   method: cited-section semantic comparison plus accepted artifact/evidence identity at entry
 historical_cross_check:
   superseded_master:
-    file: docs/2026-07-26-master-design.md
+    file: docs/deprecated/2026-07-26-master-design.md
     status: SUPERSEDED_NOT_AUTHORITY
     sha256: 5da9fd05a027e748b642517d33c0edab86ec818645d5b78c2a0d573fa968419a
   codex_phase:
@@ -101,23 +102,23 @@ historical_cross_check:
 적용 순서는 다음과 같다.
 
 1. 사용자 선언과 [Canonical Master](../../master-design.md)
-2. [질문 등록부](../../master-design-open-questions.md)의 exact `Q-*` 상태
-3. [Final Domain Design](../../2026-07-26-domain-design.md)의 multi-round, verification/result와 termination 의미
-4. [Final Architecture Design](../../2026-07-26-architecture-design.md)의 module, port, distributed state와 identity 배치
-5. [Integrated implementation design](../../architecture-domain-implementation-design.md)의 15 Phase, no-DB storage와 provider boundary
+2. [질문 등록부](../../deprecated/master-design-open-questions.md)의 exact `Q-*` 상태
+3. [Final Domain Design](../../deprecated/2026-07-26-domain-design.md)의 multi-round, verification/result와 termination 의미
+4. [Final Architecture Design](../../deprecated/2026-07-26-architecture-design.md)의 module, port, distributed state와 identity 배치
+5. [Integrated implementation design](../../deprecated/architecture-domain-implementation-design.md)의 15 Phase, no-DB storage와 provider boundary
 6. [Master Realization Plan](../master-realization-plan.md), [구현 문서 지도](../README.md), [progress registry](../execution-progress-and-results.md)
 
-[2026-07-26 Master Design — SUPERSEDED](../../2026-07-26-master-design.md)는 누락·퇴행 cross-check에만 사용했다. [historical logical coordinator](../../codex/phases/phase-07-logical-multi-round-coordinator.md)를 포함한 `docs/codex/*`는 2026-07-24 역사 자료이며 current API, 상태, 질문 또는 evidence authority로 사용하지 않는다. Historical 문서의 `Q-INFRA-01 DEFERRED`, 과거 phase 번호와 source hash는 최신 등록부의 `Q-INFRA-01 RESOLVED`, canonical Phase 10 map으로 덮어쓴다. Historical 문서에서 current canonical sources가 독립적으로 확정하지 않은 이름·수치·경로는 이 문서로 복사하지 않는다.
+[2026-07-26 Master Design — SUPERSEDED](../../deprecated/2026-07-26-master-design.md)는 누락·퇴행 cross-check에만 사용했다. historical logical coordinator (`docs/codex/phases/phase-07-logical-multi-round-coordinator.md`, repo 미존재 가능)를 포함한 `docs/codex/*`는 2026-07-24 역사 자료이며 current API, 상태, 질문 또는 evidence authority로 사용하지 않는다. Historical 문서의 `Q-INFRA-01 DEFERRED`, 과거 phase 번호와 source hash는 최신 등록부의 `Q-INFRA-01 RESOLVED`, canonical Phase 10 map으로 덮어쓴다. Historical 문서에서 current canonical sources가 독립적으로 확정하지 않은 이름·수치·경로는 이 문서로 복사하지 않는다.
 
 ### 1.1 직접 소비한 source section
 
 | Source | 직접 소비한 section | Phase 10에 고정하는 내용 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | §4.1~§4.6, §11.3, §11.9~§11.10, §13, §14.1, §14.4, §15.10, §16~§17 | Complete worker fan-in, stable champion, normal/exceptional termination, both-gate publication, provider-neutrality |
-| [Final Domain](../../2026-07-26-domain-design.md) | §14~§17 | Round/worker lineage, all-declared completeness, finalization/result authority, `INCOMPLETE`와 정상 종료 분리 |
-| [Final Architecture](../../2026-07-26-architecture-design.md) | §2.4~§2.5, §3.1~§3.6, §5.1~§5.6, §6 | Application-owned state, logical identities, retry/cancel, port/dependency와 failure 계약 |
-| [Integrated design](../../architecture-domain-implementation-design.md) | §12~§15, §19~§25 | Phase 08 port, Phase 09 immutable artifact/CAS, Phase 10 action/state, Phase 11 thin mapping, test/anti-pattern |
-| [질문 등록부](../../master-design-open-questions.md) | `Q-BENCH-02`, `Q-INFRA-01`, `Q-VAR-01`, 상태 요약과 남은 gate | 공식 실행 수치 open, AWS target resolved, optional variant deferred |
+| [Final Domain](../../deprecated/2026-07-26-domain-design.md) | §14~§17 | Round/worker lineage, all-declared completeness, finalization/result authority, `INCOMPLETE`와 정상 종료 분리 |
+| [Final Architecture](../../deprecated/2026-07-26-architecture-design.md) | §2.4~§2.5, §3.1~§3.6, §5.1~§5.6, §6 | Application-owned state, logical identities, retry/cancel, port/dependency와 failure 계약 |
+| [Integrated design](../../deprecated/architecture-domain-implementation-design.md) | §12~§15, §19~§25 | Phase 08 port, Phase 09 immutable artifact/CAS, Phase 10 action/state, Phase 11 thin mapping, test/anti-pattern |
+| [질문 등록부](../../deprecated/master-design-open-questions.md) | `Q-BENCH-02`, `Q-INFRA-01`, `Q-VAR-01`, 상태 요약과 남은 gate | 공식 실행 수치 open, AWS target resolved, optional variant deferred |
 | [Master Realization Plan](../master-realization-plan.md) | §2~§6, Phase 06~12, §8~§15 | Current inventory, Phase 10 entry/exit/evidence, DoD, blocker와 handoff |
 | [구현 문서 지도](../README.md) | §1~§7 | Canonical filename, source authority, planned/actual와 review 규칙 |
 | [Progress registry](../execution-progress-and-results.md) | §1~§5, §8~§9 | Scheduler task `TBD`, Phase 10 `PLANNED`, status 갱신 권한과 blockers |

@@ -1,7 +1,7 @@
 # RPDPTW 구현 중심 아키텍처 및 도메인 설계
 
 ```yaml
-status: REVIEW
+status: SUPERSEDED
 version: 1.4-review
 last_updated: 2026-07-28
 owner: RPDPTW Domain·Architecture·Application·Platform 설계 역할
@@ -28,7 +28,14 @@ future_substitution_targets:
     - Google Cloud Run
     - Kubernetes Job
 supersedes: null
+superseded_by: docs/implementation/README.md
+phase_c: path-and-status-only
+
 ```
+
+<!-- phase-c-authority-banner -->
+> **SUPERSEDED (Phase C)** — current authority: [`docs/implementation/README.md`](../implementation/README.md). This file is historical only. Do not use as conflict authority.
+
 
 ## 1. 목적, 지위와 읽는 법
 

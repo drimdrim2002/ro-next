@@ -10,6 +10,7 @@ target_document: docs/implementation/phases/phase-06-cow-alns-reproducibility.md
 target_document_version_after_safe_fixes: 1.2
 target_whole_file_hash: OMITTED_TO_AVOID_RECIPROCAL_DOCUMENT_HASH
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 document_verdict: CHANGES_REQUIRED
 implementation_entry_verdict: BLOCKED
 implementation_status_observed: NOT_STARTED
@@ -46,10 +47,10 @@ Implementation entry도 별개로 `BLOCKED`다. Phase 00~05 accepted artifact/ev
 | Source | 검토 범위 | 적용 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | §4.1~§4.6, §9~§13, §15.5~§15.7, §16~§17 | Stable state, ALNS step, guard/best, COW, termination, replay와 `RM-4` |
-| [Final Domain](../../2026-07-26-domain-design.md) | §8, §10~§11, §16, §17.5~§17.6, §17.9, §18 | Route/bank partition, no-alias state, operator/result, fault와 replay |
-| [Final Architecture](../../2026-07-26-architecture-design.md) | §2.1~§2.7, §3.1~§3.6, §5.2~§5.6, §6 | Java 25/Maven module DAG, completed-step, retry identity, verifier 분리와 evidence |
-| [Integrated implementation design](../../architecture-domain-implementation-design.md) | §2~§3, §9~§10, §19~§25 | 15 Phase 배치, Phase 05/06 ownership, provenance/security/failure/test/anti-pattern |
-| [Open-question register](../../master-design-open-questions.md) | Exact 28개 `Q-*` 행과 상태 요약 | `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1` 보존 |
+| [Final Domain](../../deprecated/2026-07-26-domain-design.md) | §8, §10~§11, §16, §17.5~§17.6, §17.9, §18 | Route/bank partition, no-alias state, operator/result, fault와 replay |
+| [Final Architecture](../../deprecated/2026-07-26-architecture-design.md) | §2.1~§2.7, §3.1~§3.6, §5.2~§5.6, §6 | Java 25/Maven module DAG, completed-step, retry identity, verifier 분리와 evidence |
+| [Integrated implementation design](../../deprecated/architecture-domain-implementation-design.md) | §2~§3, §9~§10, §19~§25 | 15 Phase 배치, Phase 05/06 ownership, provenance/security/failure/test/anti-pattern |
+| [Open-question register](../../deprecated/master-design-open-questions.md) | Exact 28개 `Q-*` 행과 상태 요약 | `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1` 보존 |
 | [Master Realization Plan](../master-realization-plan.md) | §2~§15, 특히 Phase 03~07 | Current inventory, Phase gate, test/evidence, rollback/restart와 traceability |
 
 `REVIEW` metadata는 사용자 고정 source authority 아래 provenance로 보존했으며 리뷰를 중단하지 않았다. `Q-BENCH-02` 공식 수치, current Win decimal `D/U`, `C-17`, `Q-VAR-01`, multi-trip/rotation과 public schema를 임의 해소하거나 hidden default로 채우지 않았다. Final Domain/Architecture의 오래된 `Q-INFRA-01 DEFERRED`, `25/1/2`는 current authority로 사용하지 않았다.
@@ -102,7 +103,7 @@ Actual checkout 관찰은 다음과 같다.
 ### F-P06-003 — 중앙 pair-removal editor의 Phase owner가 권위 문서 사이에서 충돌한다
 
 - **Severity/status:** `HIGH — RESIDUAL CROSS-PHASE BLOCKER`
-- **Exact evidence:** [Master Realization Phase 05](../master-realization-plan.md#phase-05--pickup-delivery-pair-삽입과-초기-후보군)는 중앙 atomic editor를 Phase 05 산출물로 요구하고 [Integrated §9.7](../../architecture-domain-implementation-design.md#97-destroy-contract)도 Phase 5 gate에 둔다. 반면 actual [Phase 05 §2.3/§15.2](../phases/phase-05-pair-insertion-initial-portfolio.md#152-next--actual-but-unaccepted-phase-06)는 construction-only transition만 소유하고 central removal/COW를 Phase 06에 넘긴다. Target v1.0은 이를 `FIXED` Phase 06 owner로 단정했다.
+- **Exact evidence:** [Master Realization Phase 05](../master-realization-plan.md#phase-05--pickup-delivery-pair-삽입과-초기-후보군)는 중앙 atomic editor를 Phase 05 산출물로 요구하고 [Integrated §9.7](../../deprecated/architecture-domain-implementation-design.md#97-destroy-contract)도 Phase 5 gate에 둔다. 반면 actual [Phase 05 §2.3/§15.2](../phases/phase-05-pair-insertion-initial-portfolio.md#152-next--actual-but-unaccepted-phase-06)는 construction-only transition만 소유하고 central removal/COW를 Phase 06에 넘긴다. Target v1.0은 이를 `FIXED` Phase 06 owner로 단정했다.
 - **Correction required:** Phase 05/06/Architecture reviewers가 central editor의 module/API, construction transition과의 차이, compile direction, contract test와 `E-P05-PAIR`/`E-P06-*` evidence owner를 하나로 승인해야 한다. 중복 editor와 owner 공백을 모두 금지해야 한다.
 - **Applied:** [Phase 06 §2~§6, WP-06.2, §14~§17](../phases/phase-06-cow-alns-reproducibility.md)에 의미는 고정하되 implementation owner를 `CROSS-PHASE OWNER CONFLICT — BLOCKED`로 바꾸고 conditional tree/task를 기록했다.
 - **Residual/owner/last safe/restart:** Owner는 Phase 05/06 Pair/Algorithm + Architecture다. Last safe point는 ordered proposal + central pair edit semantics와 no duplicate implementation이다. 공동 owner/API/evidence review 승인 뒤 WP-06.2를 재개한다.
@@ -134,7 +135,7 @@ Actual checkout 관찰은 다음과 같다.
 ### F-P06-007 — Platform `AttemptId`가 canonical trace에 들어갈 여지가 있었다
 
 - **Severity/status:** `MEDIUM — APPLIED`
-- **Exact evidence:** Target은 seed derivation에서 `AttemptId`를 금지했지만 `DecisionTrace` identity를 “attempt/completed-step 경계”, oracle row를 “attempt/completedStep ordinal”로 표현했다. [Final Architecture §3.6](../../2026-07-26-architecture-design.md#36-identity-idempotency-retry와-cancellation)은 retry가 `AttemptId`만 바꾸고 logical worker seed/config/warm start를 보존한다고 규정한다.
+- **Exact evidence:** Target은 seed derivation에서 `AttemptId`를 금지했지만 `DecisionTrace` identity를 “attempt/completed-step 경계”, oracle row를 “attempt/completedStep ordinal”로 표현했다. [Final Architecture §3.6](../../deprecated/2026-07-26-architecture-design.md#36-identity-idempotency-retry와-cancellation)은 retry가 `AttemptId`만 바꾸고 logical worker seed/config/warm start를 보존한다고 규정한다.
 - **Correction:** Canonical trace/candidate는 logical run/step/completed-step만 포함한다. Platform attempt/thread/elapsed/provider execution은 별도 observation에 두고 retry 전후 trace/candidate exact equality를 검사한다.
 - **Applied:** [Phase 06 §7.1, §7.5, §10.3, §11.1과 §17](../phases/phase-06-cow-alns-reproducibility.md)에 separation rule과 `retryAttemptIdDoesNotChangeCanonicalTraceOrCandidate()`를 추가했다.
 - **Residual:** Seed mixing/canonical encoding version은 계속 proposed review gate다.
@@ -142,7 +143,7 @@ Actual checkout 관찰은 다음과 같다.
 ### F-P06-008 — Trace의 `IDs`가 raw external identifier를 허용할 수 있었다
 
 - **Severity/status:** `MEDIUM — APPLIED`
-- **Exact evidence:** Target v1.0은 trace에 “IDs/digests/version”을 허용하면서 raw address/input/secret만 금지했다. [Integrated §20](../../architecture-domain-implementation-design.md#20-security와-tenant-boundary)은 raw PII/full input 배제를 요구하고, raw external request/vehicle/customer ID가 tenant/PII일 수 있는 경우를 구분하지 않았다. 또한 semantic trace와 운영 correlation/attempt metadata의 경계가 한 곳에 정리돼 있지 않았다.
+- **Exact evidence:** Target v1.0은 trace에 “IDs/digests/version”을 허용하면서 raw address/input/secret만 금지했다. [Integrated §20](../../deprecated/architecture-domain-implementation-design.md#20-security와-tenant-boundary)은 raw PII/full input 배제를 요구하고, raw external request/vehicle/customer ID가 tenant/PII일 수 있는 경우를 구분하지 않았다. 또한 semantic trace와 운영 correlation/attempt metadata의 경계가 한 곳에 정리돼 있지 않았다.
 - **Correction:** Canonical trace identifier를 dense/internal safe ID, logical ordinal, version/digest로 제한한다. Raw external identifiers와 arbitrary exception payload를 배제하고 typed observation metadata를 semantic fingerprint 밖에 둔다.
 - **Applied:** [Phase 06 §11.1~§11.2와 §17](../phases/phase-06-cow-alns-reproducibility.md#11-exact-test-plan)에 trace allowlist/observation rule과 redaction test를 추가했다.
 - **Residual:** Tenant authorization, encryption과 provider IAM은 Phase 08/11/14 책임이며 solver가 구현하지 않는다.
@@ -158,7 +159,7 @@ Actual checkout 관찰은 다음과 같다.
 ### F-P06-010 — Global-best candidate가 세 solution slot의 같은 top-level handle로 alias될 수 있었다
 
 - **Severity/status:** `HIGH — APPLIED`
-- **Exact evidence:** Target v1.0과 첫 정정 pseudocode는 한 `candidateSnapshot`을 `nextCurrent`에 넣고 `strictlyBest`가 같은 object를 `nextStageBest`/`nextSolveBest`로 반환할 수 있었다. 문서 §3과 [Final Domain §11](../../2026-07-26-domain-design.md#11-alns-state와-operator)은 세 top-level snapshot이 서로 alias되지 않아야 한다. Constructor의 “distinct handles” comment만으로 이미 같은 reference를 받은 세 변수를 분리할 수 없다.
+- **Exact evidence:** Target v1.0과 첫 정정 pseudocode는 한 `candidateSnapshot`을 `nextCurrent`에 넣고 `strictlyBest`가 같은 object를 `nextStageBest`/`nextSolveBest`로 반환할 수 있었다. 문서 §3과 [Final Domain §11](../../deprecated/2026-07-26-domain-design.md#11-alns-state와-operator)은 세 top-level snapshot이 서로 alias되지 않아야 한다. Constructor의 “distinct handles” comment만으로 이미 같은 reference를 받은 세 변수를 분리할 수 없다.
 - **Correction:** 비교는 immutable content를 선택하고, 같은 candidate content가 여러 slot을 이겨도 `CURRENT`/`STAGE_BEST`/`SOLVE_BEST`별 pairwise-distinct immutable handle을 만든 뒤 next state를 구성한다.
 - **Applied:** [Phase 06 §8.2와 §11.1](../phases/phase-06-cow-alns-reproducibility.md#82-canonical-alns-step-pseudocode)에 `strictlyBestContent`, slot별 `distinctSlotRef`, pairwise assertion과 `globalBestImprovementPublishesDistinctSlotHandlesForSameContent()`를 추가했다.
 - **Residual:** Actual Java record constructor/handle factory와 identity probe evidence는 아직 없다.

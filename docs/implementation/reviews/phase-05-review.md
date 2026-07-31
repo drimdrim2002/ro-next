@@ -10,6 +10,7 @@ reviewer_role: independent Phase 05 reviewer
 target_document: docs/implementation/phases/phase-05-pair-insertion-initial-portfolio.md
 target_document_version_after_safe_fixes: 1.3
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 source_drift_policy: SOURCE_COMMIT_PLUS_EXACT_CITED_SECTION_STATUS_AND_REQUIREMENT_IMPACT_REVIEW
 whole_file_reciprocal_hashes: NOT_USED
 document_verdict: CHANGES_REQUIRED
@@ -50,10 +51,10 @@ Implementation entry는 별개로 `BLOCKED`다. Phase 00~04 accepted artifact/ev
 | Source | 검토 범위 | 적용 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | §4.1~§4.7, §6, §9~§13, §15.4~§15.6, §16~§17 | Pair/portfolio/evaluation owner, stable state, COW 경계, RM-3 gate와 hidden-default 금지 |
-| [Final Domain Design](../../2026-07-26-domain-design.md) | §2~§3, §6~§11, §17.5~§17.6, §18 | Real/delivery-only pair, route-bank XOR, prepared travel, full evaluation, insertion/portfolio와 acceptance evidence |
-| [Final Architecture Design](../../2026-07-26-architecture-design.md) | §2, §5.5~§5.6, §6 | Java 25/Maven module/package DAG, test-fixture leakage, security/observability/test evidence |
-| [Integrated implementation design](../../architecture-domain-implementation-design.md) | §3, §6~§10, §19~§25 | 15 Phase placement, Phase 05 owner, configuration/provenance/security/failure/test/corruption/anti-pattern |
-| [Open-question register](../../master-design-open-questions.md) | Exact 28개 `Q-*` 행과 §3~§4 | `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1` 보존 |
+| [Final Domain Design](../../deprecated/2026-07-26-domain-design.md) | §2~§3, §6~§11, §17.5~§17.6, §18 | Real/delivery-only pair, route-bank XOR, prepared travel, full evaluation, insertion/portfolio와 acceptance evidence |
+| [Final Architecture Design](../../deprecated/2026-07-26-architecture-design.md) | §2, §5.5~§5.6, §6 | Java 25/Maven module/package DAG, test-fixture leakage, security/observability/test evidence |
+| [Integrated implementation design](../../deprecated/architecture-domain-implementation-design.md) | §3, §6~§10, §19~§25 | 15 Phase placement, Phase 05 owner, configuration/provenance/security/failure/test/corruption/anti-pattern |
+| [Open-question register](../../deprecated/master-design-open-questions.md) | Exact 28개 `Q-*` 행과 §3~§4 | `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1` 보존 |
 | [Master Realization Plan](../master-realization-plan.md) | §2~§15, 특히 Phase 03~06과 §8~§13 | Current inventory, entry/exit, test/evidence/DoD, rollback/security/observability/restart |
 | [Implementation README](../README.md) | §1~§7 | 사용자 고정 authority, `REVIEW` 비중단, historical/current/status 규칙 |
 
@@ -71,7 +72,7 @@ Final Domain §18의 오래된 `Q-INFRA-01 DEFERRED`, `RESOLVED 25 / DEFERRED 2`
 - 두 Phase 모두 implementation `NOT_STARTED`, evidence `NOT_PRODUCED`, acceptance `NOT_ACCEPTED`이며 accepted handoff가 아니다.
 - 인접 문서를 수정하거나 reciprocal whole-file hash를 추가하지 않았다.
 
-[2026-07-26 Master — SUPERSEDED](../../2026-07-26-master-design.md)는 regression cross-check에만 사용했다. `docs/codex/*`, `master-design-sessions/*`, `arranged/*`, `orgin/*`와 legacy GCP source는 historical/reference/current-placeholder evidence일 뿐 current target authority로 사용하지 않았다.
+[2026-07-26 Master — SUPERSEDED](../../deprecated/2026-07-26-master-design.md)는 regression cross-check에만 사용했다. `docs/codex/*`, `master-design-sessions/*`, `arranged/*`, `orgin/*`와 legacy GCP source는 historical/reference/current-placeholder evidence일 뿐 current target authority로 사용하지 않았다.
 
 ### 2.3 Actual Java 25/Maven inventory
 
@@ -157,7 +158,7 @@ Target `./mvnw`, `rpdptw/core`, `rpdptw/solver`, `build/test-fixtures`, `build/a
 ### F-P05-008 — Phase-local security/observability/redaction contract가 없었다
 
 - **Severity/status:** `MEDIUM — APPLIED`
-- **Exact evidence:** Target v1.0은 fingerprint에서 elapsed/provider locator를 제외했지만 safe telemetry field, raw input/PII/secret 금지, failure evidence와 elapsed/completion-order 비의미성을 Phase-local로 정하지 않았다. [Integrated §19~§21](../../architecture-domain-implementation-design.md#19-configuration-provenance와-observability)과 [Plan §13](../master-realization-plan.md#13-위험-보안-운영-관측과-재현성)은 이를 요구한다.
+- **Exact evidence:** Target v1.0은 fingerprint에서 elapsed/provider locator를 제외했지만 safe telemetry field, raw input/PII/secret 금지, failure evidence와 elapsed/completion-order 비의미성을 Phase-local로 정하지 않았다. [Integrated §19~§21](../../deprecated/architecture-domain-implementation-design.md#19-configuration-provenance와-observability)과 [Plan §13](../master-realization-plan.md#13-위험-보안-운영-관측과-재현성)은 이를 요구한다.
 - **Correction:** Core/solver는 logger/env/clock/provider를 의미 입력으로 읽지 않는다. Typed safe aggregates만 evidence adapter에 넘기고 raw input/address/coordinate/secret/provider locator/exception payload를 log/trace에서 제외한다.
 - **Applied:** Target §12.2~§12.4와 exit gate에 safe fields, redaction, failure record와 test-only repeat config를 추가했다.
 - **Residual:** Adapter authorization, tenant storage와 telemetry backend는 Phase 08 이후 evidence다. Phase 05는 provider를 호출하지 않는다.

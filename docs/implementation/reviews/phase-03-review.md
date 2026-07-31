@@ -11,6 +11,7 @@ target_document_version_after_safe_fixes: 1.2
 target_document_status_after_review: REVIEWED_CHANGES_REQUIRED
 target_whole_file_hash: OMITTED_TO_AVOID_RECIPROCAL_DOCUMENT_HASH
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 document_verdict: CHANGES_REQUIRED
 implementation_entry_verdict: BLOCKED
 implementation_status_observed: NOT_STARTED
@@ -45,10 +46,10 @@ Phase 03 상세 문서는 route propagation, physical hard feasibility, neutral 
 | Source | 검토 범위 | 적용 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | §4.1~§4.6, §6~§9, §12~§17 | 최상위 system meaning, propagation/evaluation 순서, cache/reproducibility, `RM-2`와 gate |
-| [Final Domain](../../2026-07-26-domain-design.md) | §5~§7, §9~§10, §17.5~§18 | Time/load/full-arc/resource/evaluation 상세. §18의 오래된 `Q-INFRA-01` 상태는 사용하지 않음 |
-| [Final Architecture](../../2026-07-26-architecture-design.md) | §2, §5.6, §6 | Java 25/Maven module/package DAG, core/verifier/provider 격리와 test evidence |
-| [Integrated implementation design](../../architecture-domain-implementation-design.md) | §3, §6~§8, §19~§25, §28 | 15 Phase placement, Phase 02/03/04 contract, typed facet, security/observability/test/anti-pattern |
-| [Open-question register](../../master-design-open-questions.md) | Exact 28개 `Q-*` 행과 상태 요약 | `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1` 보존 |
+| [Final Domain](../../deprecated/2026-07-26-domain-design.md) | §5~§7, §9~§10, §17.5~§18 | Time/load/full-arc/resource/evaluation 상세. §18의 오래된 `Q-INFRA-01` 상태는 사용하지 않음 |
+| [Final Architecture](../../deprecated/2026-07-26-architecture-design.md) | §2, §5.6, §6 | Java 25/Maven module/package DAG, core/verifier/provider 격리와 test evidence |
+| [Integrated implementation design](../../deprecated/architecture-domain-implementation-design.md) | §3, §6~§8, §19~§25, §28 | 15 Phase placement, Phase 02/03/04 contract, typed facet, security/observability/test/anti-pattern |
+| [Open-question register](../../deprecated/master-design-open-questions.md) | Exact 28개 `Q-*` 행과 상태 요약 | `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1` 보존 |
 | [Master Realization Plan](../master-realization-plan.md) | §2~§15, 특히 Phase 02~05 | Current inventory, DAG, entry/exit/evidence/rollback/restart와 traceability |
 
 `REVIEW` metadata는 사용자 고정 source authority 아래 provenance로 보존했으며 리뷰를 중단하지 않았다. `Q-BENCH-02`, `C-17`, `Q-VAR-01`, multi-trip/rotation, public API/schema와 official production 값은 임의 해소하지 않았다.
@@ -84,7 +85,7 @@ Actual checkout 관찰은 다음과 같다.
 ### F-P03-001 — Neutral metric과 composed hard constraint 순서가 canonical source와 반대였다
 
 - **Severity/status:** `HIGH — APPLIED`
-- **Exact evidence:** Target v1.0의 `HardConstraint.check(problem, route, facts)`와 pseudocode는 composed hard를 실행한 뒤 `contributeNeutralMetrics(facts)`를 호출했다. 그러나 [Master §9.1](../../master-design.md#91-단방향-평가-구조)과 [Final Domain §10](../../2026-07-26-domain-design.md#10-evaluation-profile과-objective)은 propagation/static gate → neutral facts/metrics → composed hard → score → objective 순서를 요구한다.
+- **Exact evidence:** Target v1.0의 `HardConstraint.check(problem, route, facts)`와 pseudocode는 composed hard를 실행한 뒤 `contributeNeutralMetrics(facts)`를 호출했다. 그러나 [Master §9.1](../../master-design.md#91-단방향-평가-구조)과 [Final Domain §10](../../deprecated/2026-07-26-domain-design.md#10-evaluation-profile과-objective)은 propagation/static gate → neutral facts/metrics → composed hard → score → objective 순서를 요구한다.
 - **Correction:** Physical/structural rejection 뒤에는 evaluation call 0을 유지하되, completed facts에서는 neutral metric을 먼저 만들고 composed hard가 facts와 `MetricSnapshot`을 읽게 해야 한다. Composed hard rejection 뒤 score/objective만 0이어야 한다.
 - **Applied:** [Phase 03 §2.1, §7.2, §8.2, §9.3, WP-03.3, §12/§15](../phases/phase-03-route-propagation-evaluation-kernel.md)에 순서, signature, `Invalid` branch와 분리된 call-count test를 반영했다.
 - **Residual:** Exact Java 이름/visibility는 여전히 proposed이며 Phase 03/04 contract review가 필요하다. 의미 순서는 더 이상 open이 아니다.
@@ -140,7 +141,7 @@ Actual checkout 관찰은 다음과 같다.
 ### F-P03-008 — Security/observability/redaction boundary가 Phase-local contract에 없었다
 
 - **Severity/status:** `MEDIUM — APPLIED`
-- **Exact evidence:** Source는 [Integrated §19~§20](../../architecture-domain-implementation-design.md#19-configuration-provenance와-observability)과 [Plan §13](../master-realization-plan.md#13-위험-보안-운영-관측과-재현성)에서 fingerprints/correlation, PII/secret redaction과 elapsed 비의미성을 요구하지만 target v1.0에는 Phase-local safe field/redaction/telemetry ownership이 없었다.
+- **Exact evidence:** Source는 [Integrated §19~§20](../../deprecated/architecture-domain-implementation-design.md#19-configuration-provenance와-observability)과 [Plan §13](../master-realization-plan.md#13-위험-보안-운영-관측과-재현성)에서 fingerprints/correlation, PII/secret redaction과 elapsed 비의미성을 요구하지만 target v1.0에는 Phase-local safe field/redaction/telemetry ownership이 없었다.
 - **Correction:** Core는 logger/tracer/clock/env/raw input을 의미 입력으로 읽지 않는다. Typed result/evidence만 외부 telemetry 입력이 되며 raw address/input/external IDs/secret/locator/exception payload를 노출하지 않는다. Elapsed/thread/cache order는 identity/objective에 들어가지 않는다.
 - **Applied:** [Phase 03 §11.3, §12, §15](../phases/phase-03-route-propagation-evaluation-kernel.md)에 safe fields, 금지 fields, evidence와 traceability를 추가했다.
 - **Residual:** 실제 adapter redaction/authorization은 Phase 07/08 이후 evidence 대상이다.

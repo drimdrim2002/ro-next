@@ -1,7 +1,7 @@
 # Master Design question register
 
 ```yaml
-status: REVIEW
+status: SUPERSEDED
 version: 2.2-review
 last_updated: 2026-07-24
 owner: 질문별 owner boundary
@@ -15,7 +15,14 @@ approval_records:
 source:
   - master-design-sessions/19-integration-plan.md
   - master-design-sessions/29-open-question-interview.md
+superseded_by: docs/master-design.md#44-아직-open-의도적으로
+phase_c: path-and-status-only
+
 ```
+
+<!-- phase-c-authority-banner -->
+> **SUPERSEDED (Phase C)** — current authority: [`docs/master-design.md#44-아직-open-의도적으로`](../master-design.md#44-아직-open-의도적으로). This file is historical only. Do not use as conflict authority.
+
 
 ## 1. 사용 규칙
 

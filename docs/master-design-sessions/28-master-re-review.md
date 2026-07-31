@@ -25,7 +25,7 @@ related_decisions: [C-02, C-15, C-21]
 다음 primary input을 끝까지 읽고 현재 line 기준으로 대조했다.
 
 - [수정된 Master Design](../master-design.md)
-- [수정된 Master Design open questions](../master-design-open-questions.md)
+- [수정된 Master Design open questions](../deprecated/master-design-open-questions.md)
 - [수정된 문서 인덱스](../README.md)
 - [세션 26 review](26-master-review.md)
 - [세션 27 correction record](27-review-corrections.md)

@@ -11,6 +11,7 @@ target_document: docs/implementation/phases/phase-08-application-ports-local-run
 target_document_version_after_safe_fixes: 1.3
 target_whole_file_hash: OMITTED_TO_AVOID_RECIPROCAL_DOCUMENT_HASH
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 document_verdict: CHANGES_REQUIRED
 phase_acceptance_verdict: BLOCKED_NOT_IMPLEMENTED
 implementation_status_observed: NOT_STARTED
@@ -70,10 +71,10 @@ reactor/module/port/local adapter/Phase 08 test가 없고 `E-P08-*`도 없다. R
 | Source | 읽은 범위 | Review 적용 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | 전체 | Submission→solve→both-gate publication, identity, reproducibility, failure, migration/rollback |
-| [Final Domain](../../2026-07-26-domain-design.md) | 전체 | Immutable domain/result identity, termination, verification ceiling와 safe failure |
-| [Final Architecture](../../2026-07-26-architecture-design.md) | 전체 | Java 25/Maven DAG, application-owned ports, local reference, CAS, security/evidence |
-| [Integrated design](../../architecture-domain-implementation-design.md) | 전체 | Phase 08 application/local runtime, Phase 09 storage, failure/corruption/observability boundary |
-| [Question register](../../master-design-open-questions.md) | 전체 | `Q-INFRA-01 RESOLVED`, `Q-BENCH-02 OPEN — EXPERIMENT_REQUIRED`, `Q-VAR-01 DEFERRED`, gated `C-17` |
+| [Final Domain](../../deprecated/2026-07-26-domain-design.md) | 전체 | Immutable domain/result identity, termination, verification ceiling와 safe failure |
+| [Final Architecture](../../deprecated/2026-07-26-architecture-design.md) | 전체 | Java 25/Maven DAG, application-owned ports, local reference, CAS, security/evidence |
+| [Integrated design](../../deprecated/architecture-domain-implementation-design.md) | 전체 | Phase 08 application/local runtime, Phase 09 storage, failure/corruption/observability boundary |
+| [Question register](../../deprecated/master-design-open-questions.md) | 전체 | `Q-INFRA-01 RESOLVED`, `Q-BENCH-02 OPEN — EXPERIMENT_REQUIRED`, `Q-VAR-01 DEFERRED`, gated `C-17` |
 | [Master Realization Plan](../master-realization-plan.md) | 전체 | Actual inventory, Phase DAG, entry/exit, work/evidence/blocker/handoff |
 | [Phase 07](../phases/phase-07-independent-verification-final-result.md)와 [review](phase-07-review.md) | 전체 | Exact `Publishable`, `VerificationRejected`, `GateIncomplete`; unaccepted upstream gate |
 | [Phase 09](../phases/phase-09-object-storage-no-database.md)와 [review](phase-09-review.md) | 최신 계약/review 전체 대조 | Access/failure/publication/worker/provider handoff의 해소·잔존 판정 |
@@ -84,9 +85,9 @@ reactor/module/port/local adapter/Phase 08 test가 없고 `E-P08-*`도 없다. R
 Phase 문서의 Java pseudo-signature, future test/command와 planned evidence key는 실제
 implementation/evidence가 아니다.
 
-[2026-07-26 Master Design](../../2026-07-26-master-design.md)은
+[2026-07-26 Master Design](../../deprecated/2026-07-26-master-design.md)은
 `SUPERSEDED_NOT_AUTHORITY` historical cross-check로만 읽었다.
-[`docs/codex/`](../../codex/)는 역사 초안의 drift 확인에만 사용했고 current contract,
+`docs/codex/`(repo 미존재 가능)는 역사 초안의 drift 확인에만 사용했고 current contract,
 package, status 또는 evidence로 복사하지 않았다.
 
 `concurrent review observed`: 같은 scheduler batch에서 인접 Phase/review가 동시에
@@ -404,10 +405,10 @@ revision의 master plan hash가 아님):
 
 ```text
 58554334b9f27586c93a685adc0facf0fbd7e79576c18890f0ac13891b2f803b  docs/master-design.md
-1870662f85a08cc9a1e48a1974b96278eccddfd1519721d71b356c56034ecaab  docs/2026-07-26-domain-design.md
-3d4dbbfc7e4cbdb2f3985378d84fd5f717db770b04131573c00ed354a9f41614  docs/2026-07-26-architecture-design.md
-ec513ac1b0bacd88149683bf48c36f7e6edcd53a9232498597e3b0d57c585875  docs/architecture-domain-implementation-design.md
-b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b  docs/master-design-open-questions.md
+1870662f85a08cc9a1e48a1974b96278eccddfd1519721d71b356c56034ecaab  docs/deprecated/2026-07-26-domain-design.md
+3d4dbbfc7e4cbdb2f3985378d84fd5f717db770b04131573c00ed354a9f41614  docs/deprecated/2026-07-26-architecture-design.md
+ec513ac1b0bacd88149683bf48c36f7e6edcd53a9232498597e3b0d57c585875  docs/deprecated/architecture-domain-implementation-design.md
+b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b  docs/deprecated/master-design-open-questions.md
 5921213ae419b9398bde8c91c3d6ada5aa64bf22a9b823e5b3889e1642085c05  docs/implementation/master-realization-plan.md
 ```
 

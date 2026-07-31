@@ -13,6 +13,7 @@ implementation_status_observed: NOT_STARTED
 phase_acceptance_status_observed: PLANNED
 implementation_evidence_status_observed: NOT_PRODUCED
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 finding_count:
   critical: 0
   high: 3
@@ -43,14 +44,14 @@ whole-file reciprocal fingerprint를 새로 만들지 않았다.
 | Source | 직접 대조한 범위 | Review에서 확인한 계약 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | §1.1~§1.5, §2.4, §3.2~§3.3, §4.1~§4.7, §13, §15.1~§15.3, §16~§17 | 설계/구현 상태 분리, dependency direction, lifecycle, RM-0/RM-1 gate, migration·reproducibility |
-| [Final Domain](../../2026-07-26-domain-design.md) | §1, §3, §7~§8, §17~§18 | Immutable authority, stable state/COW, acceptance evidence와 dated drift |
-| [Final Architecture](../../2026-07-26-architecture-design.md) | §1.2~§1.5, §2.1~§2.7, §5.5~§5.6, §6.1~§6.5 | Java 25/Maven module DAG, verifier/provider/vendor/customer 경계, build enforcement |
-| [Integrated implementation design](../../architecture-domain-implementation-design.md) | §1.1~§1.5, §2, §3.1~§3.6, §4, §19~§25, §26.4, §27~§28 | 15 Phase 구조, capability/profile module, Phase 0 gate, security/observability/evidence |
-| [Question register](../../master-design-open-questions.md) | §1~§4와 `Q-BENCH-02`, `Q-INFRA-01`, `Q-VAR-01` exact 행 | `26/1/1`, AWS target 선택과 구현 gate 분리, hidden official value 금지 |
+| [Final Domain](../../deprecated/2026-07-26-domain-design.md) | §1, §3, §7~§8, §17~§18 | Immutable authority, stable state/COW, acceptance evidence와 dated drift |
+| [Final Architecture](../../deprecated/2026-07-26-architecture-design.md) | §1.2~§1.5, §2.1~§2.7, §5.5~§5.6, §6.1~§6.5 | Java 25/Maven module DAG, verifier/provider/vendor/customer 경계, build enforcement |
+| [Integrated implementation design](../../deprecated/architecture-domain-implementation-design.md) | §1.1~§1.5, §2, §3.1~§3.6, §4, §19~§25, §26.4, §27~§28 | 15 Phase 구조, capability/profile module, Phase 0 gate, security/observability/evidence |
+| [Question register](../../deprecated/master-design-open-questions.md) | §1~§4와 `Q-BENCH-02`, `Q-INFRA-01`, `Q-VAR-01` exact 행 | `26/1/1`, AWS target 선택과 구현 gate 분리, hidden official value 금지 |
 | [Master Realization Plan](../master-realization-plan.md) | §1~§4, §6~§7 Phase 00/01, §8~§15 | Phase 00 artifact/evidence/DoD, failure test, status와 rollback |
 | [Phase 00](../phases/phase-00-build-architecture-skeleton.md) | 전체 | Review 대상 |
 | [Phase 01](../phases/phase-01-canonical-input-normalization.md) | 전체, 특히 metadata와 §1, §4~§5, §8~§15 | Entry evidence, adapter/core/test-fixture ownership과 stale inventory |
-| [SUPERSEDED dated Master](../../2026-07-26-master-design.md) | §1.3~§1.5, §4, §10~§12 | Historical regression cross-check only |
+| [SUPERSEDED dated Master](../../deprecated/2026-07-26-master-design.md) | §1.3~§1.5, §4, §10~§12 | Historical regression cross-check only |
 
 Phase 00 metadata에 기록된 여덟 source SHA-256은 2026-07-28 review checkout의 bytes와
 모두 일치했다. Dated Final Domain/Architecture의 과거 `Q-INFRA-01 DEFERRED`,

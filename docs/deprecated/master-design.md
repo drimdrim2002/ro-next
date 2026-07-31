@@ -1,7 +1,7 @@
 # RPDPTW 통합 솔버 Master Design
 
 ```yaml
-status: REVIEW
+status: SUPERSEDED
 version: 3.5-review
 last_updated: 2026-07-28
 owner: RPDPTW 설계 책임 역할
@@ -14,7 +14,14 @@ related_decisions:
 approval_records:
   - 2026-07-26 user-approved AWS S3 + Step Functions + Lambda target runtime (`Q-INFRA-01`)
   - 2026-07-28 user-selected Google OR-Tools CP-SAT as the only Phase 13 exact route-selection backend if `C-17` is later activated; this does not activate or accept Phase 13
+superseded_by: docs/master-design.md
+phase_c: path-and-status-only
+
 ```
+
+<!-- phase-c-authority-banner -->
+> **SUPERSEDED (Phase C)** — current authority: [`docs/master-design.md`](../master-design.md). This file is historical only. Do not use as conflict authority.
+
 
 ## 목차
 

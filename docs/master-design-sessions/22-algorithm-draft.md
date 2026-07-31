@@ -1,6 +1,6 @@
 # 세션 22 — 알고리즘 파이프라인 규범 초안
 
-> **세션 30 통합 상태 (2026-07-23):** Mixed delivery-only/real pickup route와 single roundtrip은 허용되고 multi-trip만 후속이다. `Q-ALG-02`는 `RESOLVED — KEEP_COW`; apply/undo는 기본 경로·필수 roadmap이 아니다. `Q-ALG-01`과 `Q-BENCH-02`는 protocol만 확정된 `OPEN — EXPERIMENT_REQUIRED`이므로 scorer, randomized starts, `K`, light-search budget, round/worker 수, `maxSteps`, watchdog 수치를 본문이나 코드 default로 만들 수 없다. 현재 의미는 [Master §11~§14](../master-design.md)과 [등록부](../master-design-open-questions.md)를 따른다.
+> **세션 30 통합 상태 (2026-07-23):** Mixed delivery-only/real pickup route와 single roundtrip은 허용되고 multi-trip만 후속이다. `Q-ALG-02`는 `RESOLVED — KEEP_COW`; apply/undo는 기본 경로·필수 roadmap이 아니다. `Q-ALG-01`과 `Q-BENCH-02`는 protocol만 확정된 `OPEN — EXPERIMENT_REQUIRED`이므로 scorer, randomized starts, `K`, light-search budget, round/worker 수, `maxSteps`, watchdog 수치를 본문이나 코드 default로 만들 수 없다. 현재 의미는 [Master §11~§14](../master-design.md)과 [등록부](../deprecated/master-design-open-questions.md)를 따른다.
 
 > 상태: `REVIEW INPUT`
 >

@@ -17,7 +17,7 @@ related_decisions: [C-02, C-15, C-21]
 수정 전에 다음 문서를 끝까지 읽었다.
 
 - [Master Design](../master-design.md)
-- [Master Design open questions](../master-design-open-questions.md)
+- [Master Design open questions](../deprecated/master-design-open-questions.md)
 - [문서 인덱스](../README.md)
 - [세션 26 review](26-master-review.md)
 - [세션 19 integration plan](19-integration-plan.md)

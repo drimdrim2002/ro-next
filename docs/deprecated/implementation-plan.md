@@ -1,7 +1,7 @@
 # RPDPTW 전체 구현 계획
 
 ```yaml
-status: REVIEW
+status: SUPERSEDED
 document_role: 현 상태에서 목표 Java 25/Maven multi-module RPDPTW 구현으로 이동하기 위한 상위 migration 계획
 last_updated: 2026-07-24
 source_baseline:
@@ -16,7 +16,14 @@ source_baseline:
     sha256: 3a98d34b4967900faa5c4f1ac93f0b9c2168bfa8d018efd362114e9e557f98e2
 active_phases: AR-0..AR-10
 deferred_follow_up: AR-11/RM-9
+superseded_by: docs/implementation/README.md
+phase_c: path-and-status-only
+
 ```
+
+<!-- phase-c-authority-banner -->
+> **SUPERSEDED (Phase C)** — current authority: [`docs/implementation/README.md`](../implementation/README.md). This file is historical only. Do not use as conflict authority.
+
 
 ## 1. 목적과 사용법
 

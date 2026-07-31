@@ -8,6 +8,7 @@ phase_name: prepared-travel-immutable-problem
 review_date: 2026-07-28
 reviewer_role: independent Phase 02 reviewer
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 reviewed_target: docs/implementation/phases/phase-02-prepared-travel-immutable-problem.md
 review_scope:
   allowed_changes:
@@ -39,15 +40,15 @@ Whole-file reciprocal hash는 만들지 않았다. Source commit과 아래 exact
 |---|---|---|
 | [Implementation README](../README.md) | §1~§7, 특히 §3·§7 | 사용자 고정 authority, `REVIEW` 비중단, planned/actual/status 규칙 |
 | [Canonical Master](../../master-design.md) | §1.5, §2.3~§2.4, §4.1~§4.6, §5~§8, §13, §14.1, §15.3~§15.4, §16~§17 | Travel/immutable authority, lifecycle, RM-1/2 boundary, rollback·risk·question status |
-| [Question register](../../master-design-open-questions.md) | §1~§4; `Q-NUM-01~03`, `Q-MTX-01~03`, `Q-BENCH-02`, `Q-INFRA-01`, `Q-VAR-01` | Exact resolved/open/deferred 상태와 hidden-default 금지 |
-| [Final Domain Design](../../2026-07-26-domain-design.md) | §3~§7, §16~§18 | Normalization→travel→immutable model, typed failure, acceptance evidence |
-| [Final Architecture Design](../../2026-07-26-architecture-design.md) | §2, §5.2~§5.6, §6 | Java 25/Maven boundary, immutable artifact, provider isolation, security/test |
-| [Integrated implementation design](../../architecture-domain-implementation-design.md) | §5~§7, §12, §19~§25, §27 | Phase 01/02/03/08 ownership, provenance, failure/retry, test/corruption/invariants |
+| [Question register](../../deprecated/master-design-open-questions.md) | §1~§4; `Q-NUM-01~03`, `Q-MTX-01~03`, `Q-BENCH-02`, `Q-INFRA-01`, `Q-VAR-01` | Exact resolved/open/deferred 상태와 hidden-default 금지 |
+| [Final Domain Design](../../deprecated/2026-07-26-domain-design.md) | §3~§7, §16~§18 | Normalization→travel→immutable model, typed failure, acceptance evidence |
+| [Final Architecture Design](../../deprecated/2026-07-26-architecture-design.md) | §2, §5.2~§5.6, §6 | Java 25/Maven boundary, immutable artifact, provider isolation, security/test |
+| [Integrated implementation design](../../deprecated/architecture-domain-implementation-design.md) | §5~§7, §12, §19~§25, §27 | Phase 01/02/03/08 ownership, provenance, failure/retry, test/corruption/invariants |
 | [Master Realization Plan](../master-realization-plan.md) | §2~§4, Phase 01~03, §8~§15 | Current inventory, gates, evidence/DoD, rollback, observability, traceability |
 | [Phase 01](../phases/phase-01-canonical-input-normalization.md) | §2.3, §5.1, §6.2, §11.3, §12 | `NormalizedInputArtifact` 단일 handoff와 Phase 02 소유 dense node/travel 경계 |
 | [Phase 03](../phases/phase-03-route-propagation-evaluation-kernel.md) | §3~§4, §7, §9, §14.1, §15 | Phase 02 artifact acceptance, no-fallback consumer, equality/corruption expectation |
 | Actual checkout | `.sdkmanrc`, root `pom.xml`, `src/main/java`, `src/test/java`, `data/` inventory | Java 25/Maven 3.9.14, 단일 project, main 6/test 1, GCP/Jackson root dependency, target artifact 부재 |
-| [SUPERSEDED Master](../../2026-07-26-master-design.md) | metadata와 travel/history 관련 절 | Historical regression cross-check only |
+| [SUPERSEDED Master](../../deprecated/2026-07-26-master-design.md) | metadata와 travel/history 관련 절 | Historical regression cross-check only |
 
 `docs/codex/*`는 historical only로 유지했으며 current authority나 수정 대상으로 사용하지 않았다.
 
@@ -77,7 +78,7 @@ Whole-file reciprocal hash는 만들지 않았다. Source commit과 아래 exact
 ### F-P02-01 — HIGH — Generic acceptance가 official travel authority에 잘못 종속됨
 
 - **Finding:** Target은 approved integer fixture 또는 official snapshot이 없으면 Phase 02 acceptance integration과 exit를 막았다. 이는 generic RM-1 계약 구현은 current decimal Win fixture 때문에 막히지 않는다는 canonical Master와 충돌했다.
-- **Evidence:** 수정 전 target §4.1, WP-02-6, §10.4, §11.1, §12; [Canonical Master §15.3](../../master-design.md#153-rm-1--versioned-input-immutable-domain과-prepared-travel)은 current Win fixture 비준수가 generic RM-1 구현을 막지 않고 official `RM-6` 사용만 막는다고 명시한다. [Question register §4](../../master-design-open-questions.md#4-남은-gate)도 compliant integer matrix를 official baseline gate로 둔다.
+- **Evidence:** 수정 전 target §4.1, WP-02-6, §10.4, §11.1, §12; [Canonical Master §15.3](../../master-design.md#153-rm-1--versioned-input-immutable-domain과-prepared-travel)은 current Win fixture 비준수가 generic RM-1 구현을 막지 않고 official `RM-6` 사용만 막는다고 명시한다. [Question register §4](../../deprecated/master-design-open-questions.md#4-남은-gate)도 compliant integer matrix를 official baseline gate로 둔다.
 - **Correction:** Generic Phase 02는 `TEST_ONLY_HAND_ORACLE`의 exact integer values와 독립 oracle로 검증하도록 바꾸고, approved fixture/official snapshot은 별도 제공된 경우에만 scope/digest를 기록하는 optional authority integration으로 분리한다.
 - **Applied:** **YES.** Target §4.1, WP-02-6, §10.4, §11.1, §11.2와 §12에 반영했다.
 - **Residual risk:** Test-only oracle은 official travel 또는 benchmark evidence가 아니다. Current Win decimal `D/U`의 canonical/official 사용은 계속 차단된다.
@@ -85,7 +86,7 @@ Whole-file reciprocal hash는 만들지 않았다. Source commit과 아래 exact
 ### F-P02-02 — HIGH — Phase 08 port pull-forward와 detached travel source가 이중 authority를 만듦
 
 - **Finding:** Target은 Phase 02에서 application-owned `TravelSnapshotSourcePort`, provider adapter contract와 detached `TravelSourceBatch`를 정의·시험하려 했다. 동시에 Phase 01 artifact를 유일한 입력이라고 선언해 source authority가 두 갈래였다. Phase 01이 넘기지 않는 solver `node`도 handoff 목록에 포함했다.
-- **Evidence:** 수정 전 target §5.2, §6.1, §7.1, §8, WP-02-2, §10.1, §13.1; [Phase 01 §6.2](../phases/phase-01-canonical-input-normalization.md#62-산출물)와 [§11.3](../phases/phase-01-canonical-input-normalization.md#113-phase-02-handoff)은 sparse travel declaration이 sealed된 `NormalizedInputArtifact` 하나를 넘기고 dense node는 Phase 02가 만든다고 정한다. [Integrated §6](../../architecture-domain-implementation-design.md#6-phase-2--travel-preparation과-immutable-probleminstance)은 pure preparation을, [§12](../../architecture-domain-implementation-design.md#12-phase-8--application-ports와-local-reference-runtime)은 application port를 Phase 08에 배치한다.
+- **Evidence:** 수정 전 target §5.2, §6.1, §7.1, §8, WP-02-2, §10.1, §13.1; [Phase 01 §6.2](../phases/phase-01-canonical-input-normalization.md#62-산출물)와 [§11.3](../phases/phase-01-canonical-input-normalization.md#113-phase-02-handoff)은 sparse travel declaration이 sealed된 `NormalizedInputArtifact` 하나를 넘기고 dense node는 Phase 02가 만든다고 정한다. [Integrated §6](../../deprecated/architecture-domain-implementation-design.md#6-phase-2--travel-preparation과-immutable-probleminstance)은 pure preparation을, [§12](../../deprecated/architecture-domain-implementation-design.md#12-phase-8--application-ports와-local-reference-runtime)은 application port를 Phase 08에 배치한다.
 - **Correction:** Detached batch와 application/provider tree/signature/contract test를 제거하고, accepted Phase 01 artifact 내부 travel declaration만 읽는 `TravelSourceHandoffTest`로 바꿨다. Handoff의 `nodes`를 `request/service declarations`로 고쳤다.
 - **Applied:** **YES.** Target §2.2~§2.3, §5.2, §6.1, §7.1, §8, WP-02-2, §10.1, §13.1, §14에 반영했다.
 - **Residual risk:** Phase 08 이후 실제 acquisition port를 설계할 때 upstream partial/unavailable과 canonical intentional `Absent`가 다시 섞이지 않도록 별도 adapter contract가 필요하다.
@@ -109,7 +110,7 @@ Whole-file reciprocal hash는 만들지 않았다. Source commit과 아래 exact
 ### F-P02-05 — MEDIUM — Traceability anchor가 실제 Domain heading을 가리키지 않음
 
 - **Finding:** Target §14의 Domain 링크가 `#travel`, `#immutable-model`을 사용해 실제 §6/§7 heading anchor와 일치하지 않았다.
-- **Evidence:** [Final Domain §6](../../2026-07-26-domain-design.md#6-travel-preparation), [Final Domain §7](../../2026-07-26-domain-design.md#7-immutable-solver-model); 수정 전 target §14.
+- **Evidence:** [Final Domain §6](../../deprecated/2026-07-26-domain-design.md#6-travel-preparation), [Final Domain §7](../../deprecated/2026-07-26-domain-design.md#7-immutable-solver-model); 수정 전 target §14.
 - **Correction:** Exact heading anchor로 교체하고 Phase 01 handoff/Phase boundary link를 추가했다.
 - **Applied:** **YES.** Target §14에 반영했다.
 - **Residual risk:** Markdown renderer별 비ASCII anchor 차이는 최종 local link/anchor check로 계속 검증해야 한다.
@@ -117,7 +118,7 @@ Whole-file reciprocal hash는 만들지 않았다. Source commit과 아래 exact
 ### F-P02-06 — MEDIUM — Phase-local observability contract가 report type 이름에만 머묾
 
 - **Finding:** Target API에는 `TravelPreparationReport`가 있었지만 어떤 safe aggregate가 필수인지, artifact coverage와 어떻게 대조하는지, 무엇을 log/fingerprint에서 제외하는지 정의하지 않았다.
-- **Evidence:** 수정 전 target §7~§8/§10; [Integrated §19.3](../../architecture-domain-implementation-design.md#193-correlation-fields)은 travel/problem fingerprint와 integrity 관측을, [§20](../../architecture-domain-implementation-design.md#20-security와-tenant-boundary)은 raw address/PII/secret 비노출을 요구한다.
+- **Evidence:** 수정 전 target §7~§8/§10; [Integrated §19.3](../../deprecated/architecture-domain-implementation-design.md#193-correlation-fields)은 travel/problem fingerprint와 integrity 관측을, [§20](../../deprecated/architecture-domain-implementation-design.md#20-security와-tenant-boundary)은 raw address/PII/secret 비노출을 요구한다.
 - **Correction:** Safe aggregate report의 identity/policy/count/failure fields, high-cardinality/PII 금지, semantic fingerprint 비영향과 independent count test를 추가했다.
 - **Applied:** **YES.** Target §7.6, file tree, WP-02-4, §10.1/§10.4, §11.2, §14에 반영했다.
 - **Residual risk:** Telemetry backend, duration와 platform attempt correlation은 Phase 08 이후 owner가 구현해야 한다. Core report는 backend를 호출하지 않는다.
@@ -137,7 +138,7 @@ Finding이 없는 검사축도 evidence와 residual risk를 명시한다.
 ### P-P02-02 — PASS — Artifact ownership, identity lifecycle, failure/corruption/rollback
 
 - **Finding:** 없음.
-- **Evidence:** Target §6.3~§6.5, §7.4~§7.6, §9, §10, §11~§13은 method-local draft 비노출, all-or-nothing freeze, defensive copy, same identity/different bytes rejection, fault/cancel discard, cache non-authority, corruption fixtures, last-safe-point와 restart를 명시한다. 이는 [Canonical Master §4.5~§4.6](../../master-design.md#45-상태와-산출물의-생명주기), [Integrated §21~§23](../../architecture-domain-implementation-design.md#21-failure와-retry-matrix)과 일치한다.
+- **Evidence:** Target §6.3~§6.5, §7.4~§7.6, §9, §10, §11~§13은 method-local draft 비노출, all-or-nothing freeze, defensive copy, same identity/different bytes rejection, fault/cancel discard, cache non-authority, corruption fixtures, last-safe-point와 restart를 명시한다. 이는 [Canonical Master §4.5~§4.6](../../master-design.md#45-상태와-산출물의-생명주기), [Integrated §21~§23](../../deprecated/architecture-domain-implementation-design.md#21-failure와-retry-matrix)과 일치한다.
 - **Correction:** 없음.
 - **Applied:** N/A.
 - **Residual risk:** 계획된 type/test가 아직 존재하지 않아 defect detection evidence는 0이다. `target/` 산출물이나 placeholder test를 evidence로 사용할 수 없다.

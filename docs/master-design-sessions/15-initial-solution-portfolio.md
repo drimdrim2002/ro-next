@@ -1,6 +1,6 @@
 # 세션 15 — 초기해 포트폴리오
 
-> **세션 30 통합 상태 (2026-07-23):** Comparator상 `best_initial_solution`은 항상 ALNS warm-start에 포함하고 diverse 후보는 추가 집합이라는 의미가 확정되었다. 그러나 scorer 공식, randomized start 수, diverse `K`, light-search budget의 본문 임시값은 승인된 default가 아니다. `Q-ALG-01`은 calibration/approval protocol만 확정된 `OPEN — EXPERIMENT_REQUIRED`이며 실제 수치 전에는 explicit experiment/test config만 허용한다. [Master §11.2](../master-design.md#112-현재-범위의-initial-solution-portfolio), [등록부](../master-design-open-questions.md), [세션 30](30-open-question-integration.md)을 따른다.
+> **세션 30 통합 상태 (2026-07-23):** Comparator상 `best_initial_solution`은 항상 ALNS warm-start에 포함하고 diverse 후보는 추가 집합이라는 의미가 확정되었다. 그러나 scorer 공식, randomized start 수, diverse `K`, light-search budget의 본문 임시값은 승인된 default가 아니다. `Q-ALG-01`은 calibration/approval protocol만 확정된 `OPEN — EXPERIMENT_REQUIRED`이며 실제 수치 전에는 explicit experiment/test config만 허용한다. [Master §11.2](../master-design.md#112-현재-범위의-initial-solution-portfolio), [등록부](../deprecated/master-design-open-questions.md), [세션 30](30-open-question-integration.md)을 따른다.
 
 이 문서는 `docs/arranged/02_initial_solution_heuristics.md`의 전체 내용을 기준으로, 현재 `master-design.md`의 단일 greedy 초기해 설계를 **RPDPTW 초기해 포트폴리오**로 교체하기 위한 설계안이다. 이 세션에서는 코드와 `master-design.md`를 변경하지 않는다.
 

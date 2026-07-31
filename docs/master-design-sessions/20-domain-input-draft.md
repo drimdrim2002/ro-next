@@ -1,6 +1,6 @@
 # 세션 20 — RPDPTW 도메인·입력 규범 초안
 
-> **세션 30 통합 상태 (2026-07-23):** 이 초안의 `Q-NUM/MTX/TIME/IN/COMP/REQ` TBD는 세션 29 사용자 결정으로 해결되었다. 숫자·matrix preparation·시간·legacy field·size/zone·mixed route·single roundtrip 의미는 [Master §5~§8](../master-design.md)과 [질문 등록부](../master-design-open-questions.md)가 현재 계약이다. 특히 본문의 no-fallback, mixed-route 금지, fixed terminal 일반화와 임의 wildcard 금지는 각각 preparation generation, mixed 허용, oneway/roundtrip terminal 정책과 exact `ALL` 규칙으로 대체된다. 이 문서는 역사적 integration input으로 보존하며 본문 TBD 표를 현재 질문 상태로 읽지 않는다.
+> **세션 30 통합 상태 (2026-07-23):** 이 초안의 `Q-NUM/MTX/TIME/IN/COMP/REQ` TBD는 세션 29 사용자 결정으로 해결되었다. 숫자·matrix preparation·시간·legacy field·size/zone·mixed route·single roundtrip 의미는 [Master §5~§8](../master-design.md)과 [질문 등록부](../deprecated/master-design-open-questions.md)가 현재 계약이다. 특히 본문의 no-fallback, mixed-route 금지, fixed terminal 일반화와 임의 wildcard 금지는 각각 preparation generation, mixed 허용, oneway/roundtrip terminal 정책과 exact `ALL` 규칙으로 대체된다. 이 문서는 역사적 integration input으로 보존하며 본문 TBD 표를 현재 질문 상태로 읽지 않는다.
 
 > 상태: `REVIEW INPUT`
 >

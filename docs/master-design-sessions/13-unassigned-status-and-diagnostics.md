@@ -1,6 +1,6 @@
 # 세션 13 — 미배정 탐색 상태와 최종 상태·진단 분리
 
-> **세션 30 통합 상태 (2026-07-23):** 세션 29의 `Q-OBJ-03`, `Q-RES-01~02` 결정이 본문의 외주·이월 대안과 audit 미결정을 대체한다. Solver outcome은 `ASSIGNED`/`UNASSIGNED`만 사용하고 `LEASE` vehicle 배정도 `ASSIGNED`다. 운영자의 후속 외주·이월은 solver status가 아니다. Static `PROVEN`을 제외한 모든 `UNASSIGNED`를 final-solution insertion audit하되 feasible insertion 발견 시 자동 수정/재탐색 없이 내부 record만 남긴다. 현재 계약은 [Master §10](../master-design.md#10-search-solution과-final-result)과 [등록부](../master-design-open-questions.md)를 따른다.
+> **세션 30 통합 상태 (2026-07-23):** 세션 29의 `Q-OBJ-03`, `Q-RES-01~02` 결정이 본문의 외주·이월 대안과 audit 미결정을 대체한다. Solver outcome은 `ASSIGNED`/`UNASSIGNED`만 사용하고 `LEASE` vehicle 배정도 `ASSIGNED`다. 운영자의 후속 외주·이월은 solver status가 아니다. Static `PROVEN`을 제외한 모든 `UNASSIGNED`를 final-solution insertion audit하되 feasible insertion 발견 시 자동 수정/재탐색 없이 내부 record만 남긴다. 현재 계약은 [Master §10](../master-design.md#10-search-solution과-final-result)과 [등록부](../deprecated/master-design-open-questions.md)를 따른다.
 
 ## 확정 구조
 

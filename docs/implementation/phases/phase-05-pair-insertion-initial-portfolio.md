@@ -12,6 +12,7 @@ review_status: INDEPENDENT_REVIEW_COMPLETED
 phase_acceptance_status: NOT_ACCEPTED
 entry_gate_status: BLOCKED_BY_UNACCEPTED_PREDECESSORS
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 implementation_direction_decision: ALNS_FIRST_BENCHMARK_BEFORE_OPTIONAL_MIP
 direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 scheduler_task_id: TBD_NOT_SUPPLIED
@@ -44,7 +45,7 @@ adjacent_document_status:
   phase_04_review: ACTUAL_COMPLETE_CHANGES_REQUIRED
   phase_06_review: ACTUAL_COMPLETE_CHANGES_REQUIRED
 historical_cross_check:
-  file: docs/2026-07-26-master-design.md
+  file: docs/deprecated/2026-07-26-master-design.md
   status: SUPERSEDED_NOT_AUTHORITY
 ```
 
@@ -57,14 +58,14 @@ historical_cross_check:
 적용 순서는 다음과 같다.
 
 1. 사용자 선언과 [Canonical Master](../../master-design.md)
-2. [질문 등록부](../../master-design-open-questions.md)의 exact `Q-*` 상태
-3. [Final Domain Design](../../2026-07-26-domain-design.md)의 pair/stable-state/evaluation 의미
-4. [Final Architecture Design](../../2026-07-26-architecture-design.md)의 module/package/DAG
-5. [Integrated implementation design](../../architecture-domain-implementation-design.md)의 15 Phase 배치
+2. [질문 등록부](../../deprecated/master-design-open-questions.md)의 exact `Q-*` 상태
+3. [Final Domain Design](../../deprecated/2026-07-26-domain-design.md)의 pair/stable-state/evaluation 의미
+4. [Final Architecture Design](../../deprecated/2026-07-26-architecture-design.md)의 module/package/DAG
+5. [Integrated implementation design](../../deprecated/architecture-domain-implementation-design.md)의 15 Phase 배치
 6. [Master Realization Plan](../master-realization-plan.md)과 [구현 문서 지도](../README.md)
 7. Actual predecessor인 [Phase 03 상세](phase-03-route-propagation-evaluation-kernel.md)의 planned handoff
 
-[2026-07-26 Master Design — SUPERSEDED](../../2026-07-26-master-design.md)는 누락·퇴행 cross-check에만 사용했다. `docs/codex/*`는 권위 입력으로 사용하거나 복사하지 않았고 이 작업에서 수정하지 않는다.
+[2026-07-26 Master Design — SUPERSEDED](../../deprecated/2026-07-26-master-design.md)는 누락·퇴행 cross-check에만 사용했다. `docs/codex/*`는 권위 입력으로 사용하거나 복사하지 않았고 이 작업에서 수정하지 않는다.
 
 이 문서의 독립 검토 결과와 남은 cross-Phase blocker는 [Phase 05 review](../reviews/phase-05-review.md)에 기록한다. Review는 canonical source 전체 hash를 서로 복제하지 않고 source commit, exact section, 상태와 requirement/test 영향으로 drift를 판정한다.
 
@@ -73,10 +74,10 @@ historical_cross_check:
 | Source | 직접 소비한 section | Phase 05에 고정하는 내용 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | §4.1~§4.6, §6, §9, §10.1, §11.1~§11.2, §12, §15.5~§15.6, §16~§17 | Pair evaluator 책임, stable partition, atomic mutation, 최대 8개 portfolio, full evaluation 권위, Phase 06 경계 |
-| [Final Domain](../../2026-07-26-domain-design.md) | §2.1~§2.4, §3, §5.3, §6~§11, §17.5~§17.6, §18 | Pair/service pattern, bank와 stable state, prepared travel, insertion option, portfolio와 acceptance evidence |
-| [Final Architecture](../../2026-07-26-architecture-design.md) | §2.1~§2.7, §5.6, §6 | `evaluation.insertion`, `solver.portfolio`, `solver.state`, module DAG, OR-Tools-free ALNS-only architecture gate |
-| [Integrated design](../../architecture-domain-implementation-design.md) | §3, §6~§10, §22~§25 | Upstream artifact, Phase 04 binding, Phase 05 stable/insertion/portfolio, Phase 06 COW 분리, test/corruption/anti-pattern |
-| [질문 등록부](../../master-design-open-questions.md) | `Q-REQ-01~02`, `Q-OBJ-01~03`, `Q-ALG-01~02`, `Q-BENCH-02`, `Q-VAR-01` | Mixed service pattern, objective binding, 4×2 portfolio, COW의 다음 Phase 소유, official 수치 open, variant deferred |
+| [Final Domain](../../deprecated/2026-07-26-domain-design.md) | §2.1~§2.4, §3, §5.3, §6~§11, §17.5~§17.6, §18 | Pair/service pattern, bank와 stable state, prepared travel, insertion option, portfolio와 acceptance evidence |
+| [Final Architecture](../../deprecated/2026-07-26-architecture-design.md) | §2.1~§2.7, §5.6, §6 | `evaluation.insertion`, `solver.portfolio`, `solver.state`, module DAG, OR-Tools-free ALNS-only architecture gate |
+| [Integrated design](../../deprecated/architecture-domain-implementation-design.md) | §3, §6~§10, §22~§25 | Upstream artifact, Phase 04 binding, Phase 05 stable/insertion/portfolio, Phase 06 COW 분리, test/corruption/anti-pattern |
+| [질문 등록부](../../deprecated/master-design-open-questions.md) | `Q-REQ-01~02`, `Q-OBJ-01~03`, `Q-ALG-01~02`, `Q-BENCH-02`, `Q-VAR-01` | Mixed service pattern, objective binding, 4×2 portfolio, COW의 다음 Phase 소유, official 수치 open, variant deferred |
 | [Master Realization Plan](../master-realization-plan.md) | §3~§4, Phase 03~06, §8~§15 | Current inventory, Phase 05 entry/exit, test/evidence/DoD, blocker와 traceability |
 | [Phase 03 상세](phase-03-route-propagation-evaluation-kernel.md) | §7, §9, §13~§15 | Pure kernel, typed `Feasible/Infeasible/Invalid`, comparator, exact identity, Phase 05 handoff와 금지 우회 |
 | [Actual Phase 04](phase-04-capabilities-customer-profiles.md) | §3~§4, §7~§8, §12~§15 | Immutable `BoundProfile`/snapshot, existing Phase 03 declarations, catalog 재조회 금지, Phase 05 consumer equality와 open facet/API gate |
@@ -1629,7 +1630,7 @@ Phase 06 handoff 전 실패하면 last accepted predecessor인 Phase 04 bound ar
 | Requirement | Source | Phase 05 contract | Exact future test | Planned evidence |
 |---|---|---|---|---|
 | `REQ-PAIR` same-vehicle/exactly-once/precedence/route-bank XOR | [Master §6](../../master-design.md#6-핵심-불변조건과-atomic-mutation), `C-06`, Domain §2.4/§8 | Stable validator, atomic complete option, bank-only request | `StableSolutionValidatorTest.*`, `ConstructionTransitionTest.*` | `E-P05-PAIR` |
-| `REQ-SERVICE-PATTERN` delivery-only + real pair | `Q-REQ-01`, [Domain §2.3](../../2026-07-26-domain-design.md#23-delivery-only와-real-pickup-delivery) | Logical initial-load ownership vs physical pickup position | `createsDeliveryOnlyInitialLoadOwnershipWithoutFakeVisit()`, delivery-only enumerator methods | `E-P05-PAIR`, `E-P05-INSERTION` |
+| `REQ-SERVICE-PATTERN` delivery-only + real pair | `Q-REQ-01`, [Domain §2.3](../../deprecated/2026-07-26-domain-design.md#23-delivery-only와-real-pickup-delivery) | Logical initial-load ownership vs physical pickup position | `createsDeliveryOnlyInitialLoadOwnershipWithoutFakeVisit()`, delivery-only enumerator methods | `E-P05-PAIR`, `E-P05-INSERTION` |
 | `REQ-INSERTION-POSITION` legal complete pair positions | [Master §11.1](../../master-design.md#111-공통-pair-evaluator), Domain §11 | Service-level `p<d`, exhaustive/explicit bounded receipt | `PairPositionEnumeratorTest.*`, hand six-option oracle | `E-P05-INSERTION` |
 | `REQ-DELEGATED-FEASIBILITY` compatibility/resource/time/capacity authority | [Master §4.3/§11.1](../../master-design.md#43-논리-컴포넌트와-책임), Phase 03 §14.3 | Single `BoundInsertionAuthority`, no formula duplication | `delegatesCompatibilityCapacityTimeAndResourceWithoutReimplementation()` | `E-P05-INSERTION` |
 | `REQ-FULL-SOLUTION-EVAL` route artifacts + ordered routes + bank의 objective authority | [Master §4.2/§9/§15.4~§15.5](../../master-design.md#42-단계별-데이터-계약), Phase 03 review F-P03-004 | Cross-Phase blocker; route delta/ad hoc aggregate 금지, approved cache-free solution evaluator 필요 | Contract 승인 뒤 reciprocal compile/full-equality/corruption test | `E-P05-INSERTION`, `E-P05-PORTFOLIO` |
@@ -1642,8 +1643,8 @@ Phase 06 handoff 전 실패하면 last accepted predecessor인 Phase 04 bound ar
 | `REQ-IMMUTABLE-IDENTITY` candidate/solution no-alias | Master §4.5~§4.6/§12, Domain §8 | Defensive immutable snapshot/member/portfolio fingerprints | `SearchSnapshotImmutabilityTest.*`, `InitialPortfolioIsolationTest.*` | `E-P05-PAIR`, `E-P05-PORTFOLIO` |
 | `REQ-ORACLE-CORRUPTION` independent small oracle and corruption | Integrated §22.2~§22.4, Plan §8 | Literal/permutation/BigInteger oracle, one-field corruption | Hand oracle, `PortfolioCorruptionTest.*` | All Phase 05 evidence |
 | `REQ-REPRO` stable order/identity | [Master §13](../../master-design.md#13-termination-reproducibility와-execution-provenance) | Repeat/parallel/input-permutation exact portfolio | Both reproducibility classes | `E-P05-PORTFOLIO` |
-| `REQ-SECURITY-OBS` safe aggregate/redaction/elapsed 비의미성 | [Integrated §19~§21](../../architecture-domain-implementation-design.md#19-configuration-provenance와-observability), Plan §13 | §12.4 safe fields, raw input/PII/secret/provider locator 금지 | Redaction, safe failure, reproducibility identity tests | All Phase 05 evidence |
-| `REQ-ARCH-DAG` core/solver/Phase responsibility | [Architecture §2](../../2026-07-26-architecture-design.md#2-module과-package-경계), Integrated §23~§24 | `evaluation.insertion` core, state/portfolio solver, Phase 06/07 exclusion | `Phase05ArchitectureTest.*` | All Phase 05 evidence + architecture report |
+| `REQ-SECURITY-OBS` safe aggregate/redaction/elapsed 비의미성 | [Integrated §19~§21](../../deprecated/architecture-domain-implementation-design.md#19-configuration-provenance와-observability), Plan §13 | §12.4 safe fields, raw input/PII/secret/provider locator 금지 | Redaction, safe failure, reproducibility identity tests | All Phase 05 evidence |
+| `REQ-ARCH-DAG` core/solver/Phase responsibility | [Architecture §2](../../deprecated/2026-07-26-architecture-design.md#2-module과-package-경계), Integrated §23~§24 | `evaluation.insertion` core, state/portfolio solver, Phase 06/07 exclusion | `Phase05ArchitectureTest.*` | All Phase 05 evidence + architecture report |
 | `REQ-HANDOFF-P06` seed only, no ALNS pull | Plan Phase 05~06, user-locked scope | `Phase05SeedPortfolioHandoff`, explicit excluded fields | `doesNotRunScreenChooseChampionOrCreateAlnsState()`, architecture test | Phase 05 review/handoff record |
 
 새 requirement, hard rule, ranking dimension, numeric default, public schema 또는 traversal 의미를 발견하면 source/owner/test/evidence를 연결하고 영향 authority/ADR/review를 같은 변경 단위에서 갱신한다. Phase 05 구현 편의를 위해 미확정 값을 hidden default로 채우지 않는다.

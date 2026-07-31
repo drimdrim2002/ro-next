@@ -23,10 +23,10 @@ finding_counts:
   low: 0
 canonical_source_fingerprints_sha256:
   docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
-  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
-  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
-  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
-  docs/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
+  docs/deprecated/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/deprecated/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/deprecated/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
+  docs/deprecated/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
   docs/implementation/master-realization-plan.md: 940fe8c2156bf0472deafcd450e0ea49f0036ab6b304d6d051f0148a38cd0f5d
 neighbor_validation_policy:
   rule: NO_ADJACENT_OR_RECIPROCAL_DIGEST_ACCEPTANCE
@@ -75,17 +75,17 @@ Java, Maven, deployment, canonical source, progress registry, Phase 09/11과 다
 다음 문서는 whole-file로 읽고 상호 대조했다.
 
 - [Canonical Master](../../master-design.md)
-- [Final Domain Design](../../2026-07-26-domain-design.md)
-- [Final Architecture Design](../../2026-07-26-architecture-design.md)
-- [Integrated architecture/domain implementation design](../../architecture-domain-implementation-design.md)
-- [Open questions registry](../../master-design-open-questions.md)
+- [Final Domain Design](../../deprecated/2026-07-26-domain-design.md)
+- [Final Architecture Design](../../deprecated/2026-07-26-architecture-design.md)
+- [Integrated architecture/domain implementation design](../../deprecated/architecture-domain-implementation-design.md)
+- [Open questions registry](../../deprecated/master-design-open-questions.md)
 - [Master Realization Plan](../master-realization-plan.md)
 - [Phase 09](../phases/phase-09-object-storage-no-database.md)
 - [Phase 10 target](../phases/phase-10-provider-neutral-coordinator.md)
 - [Phase 11](../phases/phase-11-aws-reference-distribution.md)
 - Review 시작 시 current 형식을 대조한 [Phase 07 review](phase-07-review.md)
 
-[2026-07-26 Master Design — SUPERSEDED](../../2026-07-26-master-design.md)와
+[2026-07-26 Master Design — SUPERSEDED](../../deprecated/2026-07-26-master-design.md)와
 `docs/codex/*`는 historical coordinator/status의 퇴행 여부만 cross-check했고 current
 authority, phase 번호, provider 결정, API 또는 evidence로 사용하지 않았다.
 

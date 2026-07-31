@@ -1,6 +1,6 @@
 ---
 title: RPDPTW Domain Design
-status: REVIEW
+status: SUPERSEDED
 version: 3.1-review
 last_updated: 2026-07-28
 owner: RPDPTW Domain·Input·Evaluation·Result 설계 역할
@@ -13,7 +13,14 @@ related_decisions:
   - master-design-sessions/29-open-question-interview.md
   - master-design-sessions/30-open-question-integration.md
   - master-design-sessions/31-domain-design-integration.md
+superseded_by: docs/domain-design.md
+phase_c: path-and-status-only
+
 ---
+
+<!-- phase-c-authority-banner -->
+> **SUPERSEDED (Phase C)** — current authority: [`docs/domain-design.md`](../domain-design.md). This file is historical only. Do not use as conflict authority.
+
 
 # RPDPTW Domain Design
 

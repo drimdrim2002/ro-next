@@ -1290,7 +1290,7 @@ Verifier PASS 전 placeholder 를 정상 발행으로 승격 금지.
 | O1 | Lambda vs ECS |
 | O2 | wire 필드 깊이 (Domain) |
 | O3 | adapter 이름 |
-| O5 | Phase C |
+| O5 | Phase C — **DONE** (`docs/README.md`) |
 | O6 | module 상세 깊이 |
 | — | S3 키·CAS·retention · LocalStack compose · workflow 엔진 |
 
@@ -1333,7 +1333,7 @@ Verifier PASS 전 placeholder 를 정상 발행으로 승격 금지.
 
 1. ~~사용자 검수~~ → **`APPROVED`** (2026-07-31)  
 2. ~~Master/Domain 다음 액션 링크 갱신~~ (동시 반영)  
-3. **(선택)** Phase C — 구 문서 SUPERSEDED·링크  
+3. ~~Phase C (O5)~~ → **완료** — 권위 지도·SUPERSEDED·링크 remap (`docs/README.md`)  
 4. 구현은 별 세션 (implementation 문서 세트)
 
 ---

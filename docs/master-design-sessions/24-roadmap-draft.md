@@ -1,6 +1,6 @@
 # 세션 24 — 구현 Roadmap·논리 시스템 경계 규범 초안
 
-> **세션 30 통합 상태 (2026-07-23):** 본문의 `OPEN 26 + DEFERRED 2` gate map은 현재 상태가 아니다. 세션 29 통합 후 `RESOLVED 24`, `OPEN — EXPERIMENT_REQUIRED 2`, `DEFERRED 2`다. `RM-1/2/5`는 해결된 exact 결정으로 진행하고, `RM-3/6`의 official configuration·baseline만 두 실험 항목이 막는다. `RM-7`은 COW 기본을 유지한 profiling/선택적 재제안이고 apply/undo 자동 전환 phase가 아니다. Physical topology와 variants는 계속 deferred다. 현재 roadmap은 [Master §15](../master-design.md#15-implementation-roadmap와-phase-gates), 상태는 [등록부](../master-design-open-questions.md)를 따른다.
+> **세션 30 통합 상태 (2026-07-23):** 본문의 `OPEN 26 + DEFERRED 2` gate map은 현재 상태가 아니다. 세션 29 통합 후 `RESOLVED 24`, `OPEN — EXPERIMENT_REQUIRED 2`, `DEFERRED 2`다. `RM-1/2/5`는 해결된 exact 결정으로 진행하고, `RM-3/6`의 official configuration·baseline만 두 실험 항목이 막는다. `RM-7`은 COW 기본을 유지한 profiling/선택적 재제안이고 apply/undo 자동 전환 phase가 아니다. Physical topology와 variants는 계속 deferred다. 현재 roadmap은 [Master §15](../master-design.md#15-implementation-roadmap와-phase-gates), 상태는 [등록부](../deprecated/master-design-open-questions.md)를 따른다.
 
 > 상태: `REVIEW INPUT`
 >

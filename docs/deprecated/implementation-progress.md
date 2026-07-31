@@ -1,6 +1,6 @@
 ---
 document_role: RPDPTW 구현 계획 문서 작성 현황과 실제 구현 phase 상태를 분리해 관리하는 authoritative progress tracker
-status: ACTIVE
+status: SUPERSEDED
 last_updated: 2026-07-24
 repository: /Users/brown/workspace/ro-next
 phase_status_vocabulary:
@@ -41,7 +41,14 @@ source_documents:
     sha256: 3a98d34b4967900faa5c4f1ac93f0b9c2168bfa8d018efd362114e9e557f98e2
   - path: docs/master-design-open-questions.md
     sha256: 3d6bc496b8df98a10534338828dd7e845b50ea967afa884642403405e613c088
+superseded_by: docs/implementation/execution-progress-and-results.md
+phase_c: path-and-status-only
+
 ---
+
+<!-- phase-c-authority-banner -->
+> **SUPERSEDED (Phase C)** — current authority: [`docs/implementation/execution-progress-and-results.md`](../implementation/execution-progress-and-results.md). This file is historical only. Do not use as conflict authority.
+
 
 # RPDPTW 구현 진행 현황
 

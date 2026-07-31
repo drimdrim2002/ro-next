@@ -1,6 +1,6 @@
 # 세션 23 — 결과·독립 검증·Win PoC 벤치마크 규범 초안
 
-> **세션 30 통합 상태 (2026-07-23):** 본문의 결과/benchmark `TBD`는 `Q-BENCH-02`를 제외하고 세션 29에서 해결되었다. Solver outcome은 `ASSIGNED/UNASSIGNED`, `LEASE` 배정도 `ASSIGNED`, static `PROVEN` 외 모든 미배정은 final-solution audit 대상이다. Matrix는 solver 전 preparation에서 누락값을 생성하며 core/verifier 내부 lazy fallback만 금지한다. Win 전체 시간은 운영시간 합이고 oneway는 rotation 값을 무시한다. Official 실행은 complete multi-round champion protocol이며 실제 round/worker/step/watchdog 수치는 미확정이다. [Master §8·§10·§14](../master-design.md)와 [등록부](../master-design-open-questions.md)가 우선한다.
+> **세션 30 통합 상태 (2026-07-23):** 본문의 결과/benchmark `TBD`는 `Q-BENCH-02`를 제외하고 세션 29에서 해결되었다. Solver outcome은 `ASSIGNED/UNASSIGNED`, `LEASE` 배정도 `ASSIGNED`, static `PROVEN` 외 모든 미배정은 final-solution audit 대상이다. Matrix는 solver 전 preparation에서 누락값을 생성하며 core/verifier 내부 lazy fallback만 금지한다. Win 전체 시간은 운영시간 합이고 oneway는 rotation 값을 무시한다. Official 실행은 complete multi-round champion protocol이며 실제 round/worker/step/watchdog 수치는 미확정이다. [Master §8·§10·§14](../master-design.md)와 [등록부](../deprecated/master-design-open-questions.md)가 우선한다.
 
 > 상태: `REVIEW INPUT`
 >

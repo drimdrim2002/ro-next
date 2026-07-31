@@ -1,7 +1,7 @@
 # RPDPTW 통합 솔버 Master Design — Revised Review Edition
 
 ```yaml
-status: REVIEW
+status: SUPERSEDED
 version: 4.0-review
 last_updated: 2026-07-24
 owner: RPDPTW 설계 책임 역할
@@ -11,7 +11,14 @@ related_decisions:
   - master-design-sessions/29-open-question-interview.md
   - master-design-sessions/30-open-question-integration.md
   - master-design-sessions/31-domain-design-integration.md
+superseded_by: docs/master-design.md
+phase_c: path-and-status-only
+
 ```
+
+<!-- phase-c-authority-banner -->
+> **SUPERSEDED (Phase C)** — current authority: [`docs/master-design.md`](../master-design.md). This file is historical only. Do not use as conflict authority.
+
 
 ## 목차
 

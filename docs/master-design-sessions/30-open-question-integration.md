@@ -103,7 +103,7 @@ related_decisions:
 | 문서 | 반영 |
 |---|---|
 | [Master Design](../master-design.md) | Version 2.1 review로 질문 결정의 의미, override, gate와 traceability 통합 |
-| [질문 등록부](../master-design-open-questions.md) | 28개 질문의 status, exact decision, evidence/owner, gate, Master link와 수량 갱신 |
+| [질문 등록부](../deprecated/master-design-open-questions.md) | 28개 질문의 status, exact decision, evidence/owner, gate, Master link와 수량 갱신 |
 | [문서 지도](../README.md) | 질문 등록부의 현재 역할과 세션 29→30 추적 경로 추가 |
 | [세션 인덱스](README.md) | 세션 19~30의 역할과 역사 문서 overlay 설명 추가 |
 

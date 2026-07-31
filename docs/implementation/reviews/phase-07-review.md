@@ -10,6 +10,7 @@ target_document: docs/implementation/phases/phase-07-independent-verification-fi
 target_document_version_after_safe_fixes: 1.2
 target_whole_file_hash: OMITTED_TO_AVOID_RECIPROCAL_DOCUMENT_HASH
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 document_verdict: CHANGES_REQUIRED
 phase_acceptance_verdict: BLOCKED_NOT_IMPLEMENTED
 implementation_status_observed: NOT_STARTED
@@ -60,10 +61,10 @@ type, test, `E-P07-*`, accepted Phase 00~06 artifact와 scheduler task가 없다
 | Source | 직접 대조한 범위 | Review 적용 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | §2.2~§2.4, §4~§6, §9~§10, §12~§14.1, §15.7, §16~§17 | Publication sequence, cache 비권위, final audit, outcome, 두 verifier와 fail/incomplete 차단 |
-| [Final Domain](../../2026-07-26-domain-design.md) | §7~§10, §15~§18 | Immutable problem/profile/travel, result/outcome/audit/error/evidence 상세 |
-| [Final Architecture](../../2026-07-26-architecture-design.md) | §2, §5.2~§5.6, §6 | Java 25/Maven DAG, verification→solver 금지, immutable artifact/security/test |
-| [Integrated implementation design](../../architecture-domain-implementation-design.md) | §3, §10~§12, §19~§25, §27~§28 | Phase 06→07→08 배치, provenance, failure, corruption fixture와 anti-pattern |
-| [Question register](../../master-design-open-questions.md) | Exact 28개 행, §3~§4 | `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1`; `Q-RES-01/02`, `Q-BENCH-02`, `Q-INFRA-01`, `Q-VAR-01` |
+| [Final Domain](../../deprecated/2026-07-26-domain-design.md) | §7~§10, §15~§18 | Immutable problem/profile/travel, result/outcome/audit/error/evidence 상세 |
+| [Final Architecture](../../deprecated/2026-07-26-architecture-design.md) | §2, §5.2~§5.6, §6 | Java 25/Maven DAG, verification→solver 금지, immutable artifact/security/test |
+| [Integrated implementation design](../../deprecated/architecture-domain-implementation-design.md) | §3, §10~§12, §19~§25, §27~§28 | Phase 06→07→08 배치, provenance, failure, corruption fixture와 anti-pattern |
+| [Question register](../../deprecated/master-design-open-questions.md) | Exact 28개 행, §3~§4 | `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1`; `Q-RES-01/02`, `Q-BENCH-02`, `Q-INFRA-01`, `Q-VAR-01` |
 | [Master Realization Plan](../master-realization-plan.md) | §2~§15, 특히 Phase 06~08 | Current inventory, entry/exit/evidence/DoD/rollback/security/obs/repro/trace |
 | [Implementation map](../README.md) | §3~§7 | User-locked authority, canonical filename, planned/actual, review/status 규칙 |
 

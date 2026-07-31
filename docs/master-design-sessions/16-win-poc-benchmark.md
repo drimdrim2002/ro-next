@@ -1,6 +1,6 @@
 # 세션 16 — WinCommerce PoC 기준 벤치마크
 
-> **세션 30 통합 상태 (2026-07-23):** 본문의 순수 주행시간 공식, 고정 seed `[1..5]`, `100,000` steps, `600초`, seed별 gate와 rotation/diagonal 권장안은 현재 계약이 아니다. 세션 29에서 전체 시간은 `drive + customer/depot wait + service + inter-work-window rest`, oneway는 `multiRotation`을 무시하고 마지막 고객에서 종료, official run은 fixed multi-round plan의 모든 worker가 정상 완료·검증된 final champion으로 확정되었다. Round/worker 수, `maxSteps`, watchdog은 `OPEN — EXPERIMENT_REQUIRED`이며 수치를 만들 수 없다. 현재 fixture의 소수 `D/U`는 정수 matrix 계약에 비준수라 official baseline에 사용할 수 없다. [Master §14](../master-design.md#14-independent-verification과-win-poc-benchmark)와 [등록부](../master-design-open-questions.md)를 따른다.
+> **세션 30 통합 상태 (2026-07-23):** 본문의 순수 주행시간 공식, 고정 seed `[1..5]`, `100,000` steps, `600초`, seed별 gate와 rotation/diagonal 권장안은 현재 계약이 아니다. 세션 29에서 전체 시간은 `drive + customer/depot wait + service + inter-work-window rest`, oneway는 `multiRotation`을 무시하고 마지막 고객에서 종료, official run은 fixed multi-round plan의 모든 worker가 정상 완료·검증된 final champion으로 확정되었다. Round/worker 수, `maxSteps`, watchdog은 `OPEN — EXPERIMENT_REQUIRED`이며 수치를 만들 수 없다. 현재 fixture의 소수 `D/U`는 정수 matrix 계약에 비준수라 official baseline에 사용할 수 없다. [Master §14](../master-design.md#14-independent-verification과-win-poc-benchmark)와 [등록부](../deprecated/master-design-open-questions.md)를 따른다.
 
 이 문서는 `data/win_poc_case.json`을 1차 품질 벤치마크 fixture로 사용하는 계약을 정의한다. 구현 코드를 작성하는 문서가 아니라, 이후 `master-design.md`의 벤치마크·완료 기준을 개정할 때 반영할 설계 결정과 미결 사항을 기록한다.
 

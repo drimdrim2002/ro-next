@@ -4,6 +4,7 @@
 document_set_status: DOCUMENTATION_COMPLETE_WITH_RESIDUAL_BLOCKERS
 baseline_date: 2026-07-28
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 phase_count: 15
 phase_documents: 15
 phase_reviews: 15
@@ -29,16 +30,28 @@ candidate verifier와 result-integrity verifier가 모두 `PASS`한 결과를 �
 
 ## 1. 읽기 순서
 
-1. [Canonical Master](../master-design.md)에서 시스템 의미, 확정 결정, 완료 정의와 gate를 읽는다.
-2. [Final Domain Design](../2026-07-26-domain-design.md)에서 normalization, travel, pair, propagation, evaluation과 result 계약을 읽는다.
-3. [Final Architecture Design](../2026-07-26-architecture-design.md)에서 Maven/module/package, port, verifier와 backend 경계를 읽는다.
-4. [Implementation integrated design](../architecture-domain-implementation-design.md)에서 15 Phase, capability/profile, no-DB object storage, AWS/reference와 provider substitution을 읽는다.
-5. [Master Design open questions](../master-design-open-questions.md)에서 `Q-*` exact 상태와 approval/restart 조건을 확인한다.
-6. [Master Realization Plan](master-realization-plan.md)에서 current inventory, DAG, Phase별 실행·검증과 DoD를 확인한다.
-7. [Execution Progress and Results](execution-progress-and-results.md)에서 총괄 스케줄러가 관리하는 task/status/evidence/result를 확인한다.
-8. 실제 작업 시 해당 Phase 상세 문서와 review 문서를 함께 읽는다. Phase 00~14 상세 문서와 독립 review는 모두 actual이다.
+### 1.1 Current design authority (Phase B APPROVED)
 
-[2026-07-26 Master Design — SUPERSEDED](../2026-07-26-master-design.md)는 역사 cross-check에만 사용한다. `docs/codex/*`는 2026-07-24 역사/참고 자료이며 이 문서 세트에서 복사·수정·삭제하거나 현재 authority로 사용하지 않는다.
+1. [문서 지도](../README.md)
+2. [Canonical Master](../master-design.md) (`APPROVED`) — 시스템 의미, 확정 결정, 완료 정의와 gate
+3. [Domain Design](../domain-design.md) (`APPROVED`) — 값·수식·정규화·travel·전파·평가·결과 의미
+4. [Architecture Design](../architecture-design.md) (`APPROVED`) — module/package/port/runtime 배치
+
+### 1.2 이 구현 문서 세트의 frozen inputs (2026-07-26 계열, SUPERSEDED)
+
+> **Phase C 주석:** 아래 문서는 이 세트 작성 당시 authority 스냅샷이다. 경로만 `docs/deprecated/` 로 옮겼다.  
+> Phase B APPROVED 와의 **의미 rebase는 하지 않았다.** content hash를 재계산하지 않았다.
+
+5. [Historical Final Domain (2026-07-26, SUPERSEDED)](../deprecated/2026-07-26-domain-design.md)
+6. [Historical Final Architecture (2026-07-26, SUPERSEDED)](../deprecated/2026-07-26-architecture-design.md)
+7. [Historical integrated implementation design (SUPERSEDED)](../deprecated/architecture-domain-implementation-design.md)
+8. [Historical open-questions registry (SUPERSEDED)](../deprecated/master-design-open-questions.md)
+9. [Master Realization Plan](master-realization-plan.md)
+10. [Execution Progress and Results](execution-progress-and-results.md)
+11. 해당 Phase 상세·review 문서
+
+[2026-07-26 Master Design — SUPERSEDED](../deprecated/2026-07-26-master-design.md)는 역사 cross-check에만 사용한다.  
+`docs/codex/*` 는 repo에 없거나 역사 전용이다. 현재 authority·API 이름·완료 evidence로 사용하지 않는다.
 
 ## 2. 문서 지도
 
@@ -58,13 +71,18 @@ candidate verifier와 result-integrity verifier가 모두 `PASS`한 결과를 �
 
 ```text
 사용자 선언
-→ canonical docs/master-design.md
-→ 질문 등록부의 exact Q-* 상태
-→ final domain meaning
-→ final architecture placement
-→ integrated design의 15 Phase/no-DB/AWS 구조
-→ superseded master의 historical cross-check
+→ current APPROVED: docs/master-design.md
+→ current APPROVED: docs/domain-design.md
+→ current APPROVED: docs/architecture-design.md
+→ (이 문서 세트 frozen snapshot) deprecated/master-design-open-questions.md 의 당시 Q-* 기록
+→ (frozen) deprecated/2026-07-26-domain-design.md
+→ (frozen) deprecated/2026-07-26-architecture-design.md
+→ integrated design의 15 Phase/no-DB/AWS 구조 (deprecated/)
+→ superseded 2026-07-26 master historical cross-check
 ```
+
+**current ≠ frozen:** 구현 phase 본문이 아직 Phase B APPROVED 의미로 재작성되지 않았다면,  
+**새 구현 착수 시 current APPROVED 3문서가 이긴다.** frozen 세트는 작성 당시 계약·evidence 추적용이다.
 
 중요한 최신 해소:
 

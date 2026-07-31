@@ -14,17 +14,18 @@ inventory_checkout:
   branch: codex/domain-design
   commit: 3424277
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 direction_revision_status: ALNS_FIRST_GATE_OVERLAY_APPLIED_DOCUMENTATION_ONLY
 source_fingerprints_sha256:
   docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
-  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
-  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
-  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
-  docs/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
+  docs/deprecated/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/deprecated/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/deprecated/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
+  docs/deprecated/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
   docs/implementation/master-realization-plan.md: 940fe8c2156bf0472deafcd450e0ea49f0036ab6b304d6d051f0148a38cd0f5d
   docs/implementation/README.md: 6454238185af7b7c420f468adf42609a0ec045d6c70c16cc7601f0342fa74358
-  docs/2026-07-26-master-design.md: 5da9fd05a027e748b642517d33c0edab86ec818645d5b78c2a0d573fa968419a
+  docs/deprecated/2026-07-26-master-design.md: 5da9fd05a027e748b642517d33c0edab86ec818645d5b78c2a0d573fa968419a
 source_sections:
   canonical_master: "§1.1~§1.5, §2.4, §3.2~§3.3, §4.3~§4.7, §15.1~§15.3, §16, §17"
   final_domain: "§1, §3, §7~§8, §17~§18"
@@ -71,7 +72,7 @@ contract review만 끝났다는 뜻이며 Phase 00 구현, exit evidence 또는 
 3. Domain 의미는 canonical Master 불변조건을 유지하면서 Final Domain의 상세로 해석한다.
 4. Java/Maven 배치는 의미를 바꾸지 않는 범위에서 Final Architecture를 따른다.
 5. 15 Phase, no-DB, capability/profile, AWS reference와 provider substitution 구조는 구현 중심 통합 설계를 따른다.
-6. [2026-07-26 Master Design — SUPERSEDED](../../2026-07-26-master-design.md)는 누락·퇴행 cross-check에만 사용한다.
+6. [2026-07-26 Master Design — SUPERSEDED](../../deprecated/2026-07-26-master-design.md)는 누락·퇴행 cross-check에만 사용한다.
 7. `docs/codex/*`는 역사/참고 자료이며 이 Phase에서 복사·수정·삭제하거나 현재 authority로 사용하지 않는다.
 
 Final Domain §18과 Final Architecture §6 일부의 `Q-INFRA-01 DEFERRED`, `25/1/2` 표기는 최신 canonical Master와 질문 등록부에 의해 대체되었다. 현재 적용 상태는 `Q-INFRA-01 RESOLVED`, 질문 집계 `26/1/1`이며 target/reference는 AWS S3 + Step Functions + Lambda다. 다만 실제 AWS adapter, 배포, parity와 cutover는 Phase 11/14 gate다. Phase 00은 AWS SDK나 배포 skeleton을 만들지 않는다.
@@ -83,13 +84,13 @@ Fingerprint는 이 문서 작성 시 읽은 bytes의 SHA-256이다. 원문이 �
 | 역할 | 입력과 SHA-256 | Phase 00에서 직접 적용하는 section |
 |---|---|---|
 | Canonical Master | [Master Design](../../master-design.md), `e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd` | §1.1~§1.5, §2.4, §3.2~§3.3, §4.3~§4.7, §15.1~§15.3, §16, §17 |
-| Final Domain | [2026-07-26 Domain Design](../../2026-07-26-domain-design.md), `1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac` | §1, §3의 Maven/package mapping, §7~§8의 immutable/COW 경계, §17~§18의 evidence와 drift 확인 |
-| Final Architecture | [2026-07-26 Architecture Design](../../2026-07-26-architecture-design.md), `1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed` | §1.2~§1.5, §2.1~§2.7, §5.6, §6.1~§6.5 |
-| 구현 중심 통합 설계 | [Architecture-domain implementation design](../../architecture-domain-implementation-design.md), `883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571` | §1.1~§1.5, §2, §3.1~§3.6, §4, §22~§25, §27~§28 |
-| 질문 등록부 | [Master Design open questions](../../master-design-open-questions.md), `b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b` | §1~§4 전체, 특히 `Q-BENCH-02`, `Q-INFRA-01`, `Q-VAR-01` exact 행 |
+| Final Domain | [2026-07-26 Domain Design](../../deprecated/2026-07-26-domain-design.md), `1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac` | §1, §3의 Maven/package mapping, §7~§8의 immutable/COW 경계, §17~§18의 evidence와 drift 확인 |
+| Final Architecture | [2026-07-26 Architecture Design](../../deprecated/2026-07-26-architecture-design.md), `1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed` | §1.2~§1.5, §2.1~§2.7, §5.6, §6.1~§6.5 |
+| 구현 중심 통합 설계 | [Architecture-domain implementation design](../../deprecated/architecture-domain-implementation-design.md), `883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571` | §1.1~§1.5, §2, §3.1~§3.6, §4, §22~§25, §27~§28 |
+| 질문 등록부 | [Master Design open questions](../../deprecated/master-design-open-questions.md), `b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b` | §1~§4 전체, 특히 `Q-BENCH-02`, `Q-INFRA-01`, `Q-VAR-01` exact 행 |
 | 총괄 실행 계획 | [Master Realization Plan](../master-realization-plan.md), `993979f67e8c07cf80a27c3aa3bd5bc379b12bc27657c4520ff44b093fda99be` | §1~§4, §6~§7의 Phase 00, §8~§15 |
 | 구현 문서 지도 | [Implementation README](../README.md), `ad7534e51a967528efebe045926edca2c800d85437eda87e4bac6f29365a97cb` | §1~§7 전체 |
-| Historical cross-check only | [2026-07-26 Master Design — SUPERSEDED](../../2026-07-26-master-design.md), `5da9fd05a027e748b642517d33c0edab86ec818645d5b78c2a0d573fa968419a` | §1.3~§1.5, §4, §10~§12를 현재 결정의 누락·퇴행 확인에만 사용 |
+| Historical cross-check only | [2026-07-26 Master Design — SUPERSEDED](../../deprecated/2026-07-26-master-design.md), `5da9fd05a027e748b642517d33c0edab86ec818645d5b78c2a0d573fa968419a` | §1.3~§1.5, §4, §10~§12를 현재 결정의 누락·퇴행 확인에만 사용 |
 
 ### 1.2 규범 표기
 

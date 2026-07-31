@@ -1,3 +1,13 @@
+---
+status: SUPERSEDED
+superseded_by: docs/master-design.md
+phase_c: path-and-status-only
+---
+
+<!-- phase-c-authority-banner -->
+> **SUPERSEDED (Phase C)** — current authority: [`docs/master-design.md`](../master-design.md). This file is historical only. Do not use as conflict authority.
+
+
 # RPDPTW 통합 솔버 Master Design: 입문자용 안내서
 
 > 대상 독자: Java 7 개발 경험이 있고 CVRPTW와 메타휴리스틱의 기본 개념은 알지만, RPDPTW·ALNS·Simulated Annealing(SA)·검증 결과 모델은 아직 익숙하지 않은 사람

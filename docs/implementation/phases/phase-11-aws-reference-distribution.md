@@ -17,6 +17,7 @@ review_document: ../reviews/phase-11-review.md
 entry_gate_status: BLOCKED_BY_UNACCEPTED_PREDECESSORS_AND_AWS_INTEGRATION_GATE
 handoff_status: NOT_READY
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 direction_revision_status: ALNS_FIRST_GATE_OVERLAY_APPLIED_DOCUMENTATION_ONLY
 scheduler_task_id: TBD_NOT_SUPPLIED
@@ -62,9 +63,9 @@ source_sections:
   root_readme_and_inventory: "README technology/deployment/placeholder; tracked GCP/Docker/Java files; ignored generated serverless inventory"
 canonical_source_fingerprints_sha256:
   docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
-  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
-  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
-  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
+  docs/deprecated/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/deprecated/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/deprecated/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
 inventory_fingerprints_sha256:
   README.md: 22eff4f63607db29bd4049344986109c680aa970d0865a3b859598e6b3b96c06
   pom.xml: f61cab65190c44c5aba08b8c413397d5fe8ba8835f57de1d79deb6b705454cd6
@@ -79,7 +80,7 @@ inventory_fingerprints_sha256:
   ignored_.serverless/serverless-state.json: 571994fe5967ab483318dd8dfc9fcaef67676769890f1b49c51339658df0400e
   ignored_.serverless/cloudformation-template-update-stack.json: c48e056dcf45b3c7e0cabfc7cec7d491c24ec190c94f567709ee55bbf749811a
 historical_cross_check:
-  file: docs/2026-07-26-master-design.md
+  file: docs/deprecated/2026-07-26-master-design.md
   status: SUPERSEDED_NOT_AUTHORITY
 authoring_time_neighbor_snapshot:
   snapshot_status: HISTORICAL_SNAPSHOT_NOT_LIVE_STATUS
@@ -126,13 +127,13 @@ authority가 생겼다는 뜻이 아니다.
 권위 적용 순서는 다음과 같다.
 
 1. 사용자 선언과 [Canonical Master](../../master-design.md)
-2. [질문 등록부](../../master-design-open-questions.md)의 exact `Q-*` 상태
-3. [Final Domain Design](../../2026-07-26-domain-design.md)의 의미와 불변조건
-4. [Final Architecture Design](../../2026-07-26-architecture-design.md)의 module/DAG/port 배치
-5. [Integrated implementation design](../../architecture-domain-implementation-design.md)의 15 Phase, no-DB와 AWS mapping
+2. [질문 등록부](../../deprecated/master-design-open-questions.md)의 exact `Q-*` 상태
+3. [Final Domain Design](../../deprecated/2026-07-26-domain-design.md)의 의미와 불변조건
+4. [Final Architecture Design](../../deprecated/2026-07-26-architecture-design.md)의 module/DAG/port 배치
+5. [Integrated implementation design](../../deprecated/architecture-domain-implementation-design.md)의 15 Phase, no-DB와 AWS mapping
 6. [Master Realization Plan](../master-realization-plan.md)과 [구현 문서 지도](../README.md)
 
-[2026-07-26 Master Design — SUPERSEDED](../../2026-07-26-master-design.md)는
+[2026-07-26 Master Design — SUPERSEDED](../../deprecated/2026-07-26-master-design.md)는
 누락·퇴행 cross-check에만 사용했다. `docs/codex/*`는 역사 자료일 뿐 현재
 authority, AWS topology 또는 evidence로 사용하지 않는다. Final Architecture
 Final Domain §18과 Final Architecture §6 말미에 남은 `Q-INFRA-01 DEFERRED`,
@@ -146,10 +147,10 @@ owner의 잔여 정합화 항목이며 Phase 11이 그 두 파일을 수정하�
 | Source | 직접 소비한 section | Phase 11에 고정하는 내용 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | §1~4, §13~17 | AWS 선택과 구현/cutover 분리, logical port, artifact/identity, replay, RM-8, migration/rollback |
-| [Final Domain](../../2026-07-26-domain-design.md) | §7~10, §15~18 | Problem/travel/profile/result의 provider-neutral semantic identity와 verifier gate |
-| [Final Architecture](../../2026-07-26-architecture-design.md) | §2~3, §5~6 | Java 25/Maven DAG, port owner, distributed state, retry/cancel, security/telemetry/test |
-| [Integrated design](../../architecture-domain-implementation-design.md) | §12~16, §19~25 | Phase 08~12 contract, S3/Step Functions/Lambda mapping, no-DB, failure/test/anti-pattern |
-| [질문 등록부](../../master-design-open-questions.md) | `Q-BENCH-02`, `Q-INFRA-01`, `Q-VAR-01`, §3~4 | AWS target resolved, 공식 실행 수치 open, optional variant deferred, cutover 별도 gate |
+| [Final Domain](../../deprecated/2026-07-26-domain-design.md) | §7~10, §15~18 | Problem/travel/profile/result의 provider-neutral semantic identity와 verifier gate |
+| [Final Architecture](../../deprecated/2026-07-26-architecture-design.md) | §2~3, §5~6 | Java 25/Maven DAG, port owner, distributed state, retry/cancel, security/telemetry/test |
+| [Integrated design](../../deprecated/architecture-domain-implementation-design.md) | §12~16, §19~25 | Phase 08~12 contract, S3/Step Functions/Lambda mapping, no-DB, failure/test/anti-pattern |
+| [질문 등록부](../../deprecated/master-design-open-questions.md) | `Q-BENCH-02`, `Q-INFRA-01`, `Q-VAR-01`, §3~4 | AWS target resolved, 공식 실행 수치 open, optional variant deferred, cutover 별도 gate |
 | [Master Realization Plan](../master-realization-plan.md) | §2~4, Phase 08~12/14, §8~15 | Current inventory, Phase 11 entry/exit/evidence/DoD, production blocker와 handoff |
 | [구현 문서 지도](../README.md) | §1~7 | Canonical filename, planned/actual, scheduler/review 권한 |
 | [Actual Phase 08](phase-08-application-ports-local-runtime.md) | v1.3 §7.3~§7.5, §9.1~§9.3, §16.2~§16.4 | `REVIEWED_WITH_CORRECTIONS`/`CHANGES_REQUIRED`/`NOT_STARTED`/`NOT_READY`; application port, idempotency/deadline와 local rollback handoff |

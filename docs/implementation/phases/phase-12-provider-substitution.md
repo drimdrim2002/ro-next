@@ -21,6 +21,7 @@ review_document: ../reviews/phase-12-review.md
 entry_gate_status: GATED_BY_UNACCEPTED_PREDECESSORS_AND_PROVIDER_ADOPTION
 handoff_status: NOT_READY
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 direction_revision_status: ALNS_FIRST_GATE_OVERLAY_APPLIED_DOCUMENTATION_ONLY
 scheduler_task_id: TBD_NOT_SUPPLIED
@@ -69,9 +70,9 @@ source_sections:
   root_readme_and_inventory: "README, pom.xml, Dockerfile, tracked Java/GCP source and tests"
 canonical_source_fingerprints_sha256:
   docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
-  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
-  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
-  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
+  docs/deprecated/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/deprecated/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/deprecated/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
 inventory_fingerprints_sha256:
   README.md: 22eff4f63607db29bd4049344986109c680aa970d0865a3b859598e6b3b96c06
   pom.xml: f61cab65190c44c5aba08b8c413397d5fe8ba8835f57de1d79deb6b705454cd6
@@ -84,7 +85,7 @@ inventory_fingerprints_sha256:
   OptimizationWorkerController.java: 846e64f1ad76386ac4da847d6e2b9585ed5d909841266c06c38915aed06afe3c
   AlnsBatchEngineTest.java: 947cf04529ffb45f8049b5b3cf64a06e00680e1657393d50ef7ca8e627a3f829
 historical_cross_check:
-  file: docs/2026-07-26-master-design.md
+  file: docs/deprecated/2026-07-26-master-design.md
   status: SUPERSEDED_NOT_AUTHORITY
 docs_codex_status: HISTORICAL_NOT_AUTHORITY_NOT_MODIFIED
 neighbor_phase_documents:
@@ -131,10 +132,10 @@ cutover authority가 생겼다는 뜻이 아니다.
 권위 적용 순서는 다음과 같다.
 
 1. 사용자 선언과 [Canonical Master](../../master-design.md)
-2. [질문 등록부](../../master-design-open-questions.md)의 exact `Q-*` 상태
-3. [Final Domain Design](../../2026-07-26-domain-design.md)의 domain/result 의미
-4. [Final Architecture Design](../../2026-07-26-architecture-design.md)의 module/DAG/port 배치
-5. [Integrated implementation design](../../architecture-domain-implementation-design.md)의 Phase 12 substitution 계약
+2. [질문 등록부](../../deprecated/master-design-open-questions.md)의 exact `Q-*` 상태
+3. [Final Domain Design](../../deprecated/2026-07-26-domain-design.md)의 domain/result 의미
+4. [Final Architecture Design](../../deprecated/2026-07-26-architecture-design.md)의 module/DAG/port 배치
+5. [Integrated implementation design](../../deprecated/architecture-domain-implementation-design.md)의 Phase 12 substitution 계약
 6. [Master Realization Plan](../master-realization-plan.md)과 [구현 문서 지도](../README.md)
 7. [Actual Phase 11](phase-11-aws-reference-distribution.md)의 v1.3 §6.1~§6.3,
    §14.1~§14.2, §17과 §18.2 predecessor contract/blocker
@@ -146,7 +147,7 @@ consumer이며 이 문서의 authority 순서를 바꾸지 않는다. 현재 v1.
 “작성 중 파일이 나타남”과 당시 `READY_FOR_REVIEW` 관찰은 historical authoring
 snapshot일 뿐 live status가 아니다.
 
-[2026-07-26 Master Design — SUPERSEDED](../../2026-07-26-master-design.md)는
+[2026-07-26 Master Design — SUPERSEDED](../../deprecated/2026-07-26-master-design.md)는
 역사적 누락 cross-check에만 사용했다. `docs/codex/*`와 legacy GCP 자료는 현재
 authority가 아니다. Final Architecture의 과거 `Q-INFRA-01 DEFERRED` 표기는 최신
 Canonical Master/질문 등록부의 `RESOLVED`, AWS reference 선택으로 해소한다.
@@ -156,9 +157,9 @@ Canonical Master/질문 등록부의 `RESOLVED`, AWS reference 선택으로 해�
 ```bash
 shasum -a 256 \
   docs/master-design.md \
-  docs/2026-07-26-domain-design.md \
-  docs/2026-07-26-architecture-design.md \
-  docs/architecture-domain-implementation-design.md
+  docs/deprecated/2026-07-26-domain-design.md \
+  docs/deprecated/2026-07-26-architecture-design.md \
+  docs/deprecated/architecture-domain-implementation-design.md
 ```
 
 Metadata fingerprint는 사용자 지정 canonical 네 문서의 provenance/drift 확인에만

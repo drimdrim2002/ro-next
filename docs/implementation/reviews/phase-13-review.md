@@ -10,6 +10,7 @@ reviewer_role: independent Phase 13 documentation reviewer
 target_document: docs/implementation/phases/phase-13-optional-hybrid-route-selection.md
 target_document_version_after_safe_fixes: 1.5
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 document_verdict: PASS_WITH_RESIDUAL_BLOCKERS
 phase_acceptance_verdict: GATED_NOT_STARTED_NOT_ACCEPTED
 activation_status_observed: C17_GATE_CLOSED
@@ -105,10 +106,10 @@ accepted predecessor/evidence, signing/trust 승인 또는 실제 signed receipt
 | Source | 직접 대조한 범위 | Phase 13 판정 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | 전체, 특히 §1~§4, §11.7~§11.10, §13~§17과 `C-17`/`RM-9A~C` | Optional/gated branch, exact pool/projection/materialization/full evaluation/strict adoption, 별도 scope 승인 |
-| [Final Domain](../../2026-07-26-domain-design.md) | 전체, 특히 §7~§10, §12~§18 | Immutable route artifact, exact selection, typed fallback, independent acceptance |
-| [Final Architecture](../../2026-07-26-architecture-design.md) | 전체, 특히 §2~§6 | OR-Tools-free ALNS-only dependency, direct CP-SAT/native lifecycle, verifier isolation |
-| [Integrated design](../../architecture-domain-implementation-design.md) | 전체, 특히 §3, §10~§25, §27~§28 | Phase DAG, independent Phase 12 branch, Phase 13 optional branch와 Phase 14 conditional handoff |
-| [Question register](../../master-design-open-questions.md) | 전체 28개 항목 | `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1`; `C-17` 별도 gated |
+| [Final Domain](../../deprecated/2026-07-26-domain-design.md) | 전체, 특히 §7~§10, §12~§18 | Immutable route artifact, exact selection, typed fallback, independent acceptance |
+| [Final Architecture](../../deprecated/2026-07-26-architecture-design.md) | 전체, 특히 §2~§6 | OR-Tools-free ALNS-only dependency, direct CP-SAT/native lifecycle, verifier isolation |
+| [Integrated design](../../deprecated/architecture-domain-implementation-design.md) | 전체, 특히 §3, §10~§25, §27~§28 | Phase DAG, independent Phase 12 branch, Phase 13 optional branch와 Phase 14 conditional handoff |
+| [Question register](../../deprecated/master-design-open-questions.md) | 전체 28개 항목 | `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1`; `C-17` 별도 gated |
 | [Master Realization Plan](../master-realization-plan.md) | 전체, 특히 §2~§7 Phase 06/07/08/12/13/14와 §8~§15 | Phase 06→07→08→14A acceptance 뒤 optional Phase 13, Phase 10→12 독립 branch, Phase 14B의 conditional hybrid |
 | [Phase 12](../phases/phase-12-provider-substitution.md) | 전체, 특히 §3, §14~§18.3 | `INFRASTRUCTURE_DECISION_INPUT_ONLY`; C-17/OR-Tools activation/hybrid/production authority를 부여하지 않음 |
 | [Phase 14](../phases/phase-14-official-calibration-cutover.md) | 전체, 특히 §3.1, §5.3, §9.1~§9.2와 §14~§18 | Gate-closed ALNS-only skip, signed applicability/trust/revocation/action-time verification, gate-open accepted Phase 13와 자체 official/production gates |
@@ -122,8 +123,8 @@ AWS target 선택은 Phase 13 OR-Tools activation 또는 production authority가
 compatibility를 판정한 뒤 반복 hash/status 추적을 중단했다. 인접 document/section digest를
 entry, acceptance 또는 handoff evidence로 사용하지 않았다.
 
-[SUPERSEDED Master](../../2026-07-26-master-design.md)와
-[`docs/codex`](../../codex/)는 historical regression cross-check에만 사용했다.
+[SUPERSEDED Master](../../deprecated/2026-07-26-master-design.md)와
+`docs/codex`(repo 미존재 가능)는 historical regression cross-check에만 사용했다.
 Historical master도 C-17을 절대 gate로 두며 verified ALNS/both-verifier baseline,
 RM-9A~C와 scope/OR-Tools config/native/OSS-license/SBOM/security/operations/compute-cost/admission/fallback/rollback 승인 전 default path/backend dependency
 활성화를 금지한다. Historical codex plan은 route pool/MIP를 당시 deferred 후속으로

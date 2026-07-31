@@ -1,6 +1,6 @@
 ---
 title: Phase B Architecture §4 검수 핸드오프
-status: READY
+status: ARCHIVED
 date: 2026-07-31
 purpose: >
   새 세션에서 Architecture §4 (Module / package DAG · dependency 금지선)
@@ -14,7 +14,13 @@ normative_inputs:
 inheritance_candidate: docs/2026-07-26-architecture-design.md
 resume_from: "§4 Module / package DAG · dependency 금지선"
 do_not_restart: architecture full draft rewrite
+phase_c: path-and-status-only
+
 ---
+
+<!-- phase-c-authority-banner -->
+> **ARCHIVED (Phase C)** — session handoff/prompt only. Not design authority. See [docs/README.md](../README.md).
+
 
 # Phase B Architecture — §4 검수 핸드오프 (새 세션용)
 

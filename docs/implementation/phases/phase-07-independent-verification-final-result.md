@@ -15,6 +15,7 @@ review_document: ../reviews/phase-07-review.md
 entry_gate_status: BLOCKED_BY_UNACCEPTED_PREDECESSORS
 handoff_status: NOT_READY
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 implementation_direction_decision: ALNS_FIRST_BENCHMARK_BEFORE_OPTIONAL_MIP
 direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 scheduler_task_id: TBD_NOT_SUPPLIED
@@ -53,17 +54,17 @@ source_sections:
 source_fingerprints_sha256:
   README.md: 22eff4f63607db29bd4049344986109c680aa970d0865a3b859598e6b3b96c06
   docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
-  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
-  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
-  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
-  docs/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
+  docs/deprecated/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/deprecated/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/deprecated/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
+  docs/deprecated/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
   docs/implementation/master-realization-plan.md: 940fe8c2156bf0472deafcd450e0ea49f0036ab6b304d6d051f0148a38cd0f5d
   docs/implementation/README.md: 6454238185af7b7c420f468adf42609a0ec045d6c70c16cc7601f0342fa74358
 neighbor_validation_policy:
   rule: ADJACENT_PHASE_AND_REVIEW_DIGESTS_NOT_PERSISTED_OR_USED_FOR_ACCEPTANCE
   method: cited-section semantic comparison plus accepted artifact/evidence identity at entry
 historical_cross_check:
-  file: docs/2026-07-26-master-design.md
+  file: docs/deprecated/2026-07-26-master-design.md
   status: SUPERSEDED_NOT_AUTHORITY
   sha256: 5da9fd05a027e748b642517d33c0edab86ec818645d5b78c2a0d573fa968419a
 neighbor_phase_documents:
@@ -91,13 +92,13 @@ neighbor_phase_documents:
 적용 순서는 다음과 같다.
 
 1. 사용자 선언과 [Canonical Master](../../master-design.md)
-2. [질문 등록부](../../master-design-open-questions.md)의 exact `Q-*` 상태
-3. [Final Domain Design](../../2026-07-26-domain-design.md)의 verification/result 의미
-4. [Final Architecture Design](../../2026-07-26-architecture-design.md)의 module/package/DAG
-5. [Integrated implementation design](../../architecture-domain-implementation-design.md)의 15 Phase 배치
+2. [질문 등록부](../../deprecated/master-design-open-questions.md)의 exact `Q-*` 상태
+3. [Final Domain Design](../../deprecated/2026-07-26-domain-design.md)의 verification/result 의미
+4. [Final Architecture Design](../../deprecated/2026-07-26-architecture-design.md)의 module/package/DAG
+5. [Integrated implementation design](../../deprecated/architecture-domain-implementation-design.md)의 15 Phase 배치
 6. [Master Realization Plan](../master-realization-plan.md)과 [구현 문서 지도](../README.md)
 
-[2026-07-26 Master Design — SUPERSEDED](../../2026-07-26-master-design.md)는 누락·퇴행 cross-check에만 사용했다. `docs/codex/*`는 역사 자료로만 취급하며 현재 authority, API 이름 또는 evidence로 사용하지 않는다.
+[2026-07-26 Master Design — SUPERSEDED](../../deprecated/2026-07-26-master-design.md)는 누락·퇴행 cross-check에만 사용했다. `docs/codex/*`는 역사 자료로만 취급하며 현재 authority, API 이름 또는 evidence로 사용하지 않는다.
 
 Final Domain/Architecture에 남은 `Q-INFRA-01 DEFERRED`, `25/1/2` 표기는 최신 Canonical Master와 질문 등록부의 `Q-INFRA-01 RESOLVED`, `26/1/1`로 해소한다. 이는 Phase 07에 AWS 코드를 추가하거나 구현·배포·cutover를 완료했다고 주장하는 근거가 아니다.
 
@@ -106,10 +107,10 @@ Final Domain/Architecture에 남은 `Q-INFRA-01 DEFERRED`, `25/1/2` 표기는 �
 | Source | 직접 소비한 section | Phase 07에 고정하는 내용 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | §2.2~§2.4, §4.1~§4.6, §6, §10, §12~§14.1, §15.7, §16~§17 | 두 verifier, route/bank와 result 분리, final audit, cache 비권위, provenance, `RM-5` gate |
-| [Final Domain](../../2026-07-26-domain-design.md) | §7~§10, §15~§17.5, §17.9, §18 | Immutable authority, stable state, propagation/evaluation 의미, outcome/audit/error/evidence |
-| [Final Architecture](../../2026-07-26-architecture-design.md) | §2.1~§2.7, §5.2~§5.6, §6 | `rpdptw-verification`, solver dependency 금지, immutable artifact, publication/test 경계 |
-| [Integrated design](../../architecture-domain-implementation-design.md) | §3, §10~§12, §19, §21~§25, §27~§28 | Phase 06 input, Phase 07 sequence, Phase 08 output, provenance, corruption, anti-pattern |
-| [질문 등록부](../../master-design-open-questions.md) | `Q-MTX-01~03`, `Q-OBJ-01~03`, `Q-RES-01~02`, `Q-BENCH-01~03`, `Q-INFRA-01`, `Q-VAR-01` | Prepared travel, objective, two-state outcome, audit, official/open/deferred 경계 |
+| [Final Domain](../../deprecated/2026-07-26-domain-design.md) | §7~§10, §15~§17.5, §17.9, §18 | Immutable authority, stable state, propagation/evaluation 의미, outcome/audit/error/evidence |
+| [Final Architecture](../../deprecated/2026-07-26-architecture-design.md) | §2.1~§2.7, §5.2~§5.6, §6 | `rpdptw-verification`, solver dependency 금지, immutable artifact, publication/test 경계 |
+| [Integrated design](../../deprecated/architecture-domain-implementation-design.md) | §3, §10~§12, §19, §21~§25, §27~§28 | Phase 06 input, Phase 07 sequence, Phase 08 output, provenance, corruption, anti-pattern |
+| [질문 등록부](../../deprecated/master-design-open-questions.md) | `Q-MTX-01~03`, `Q-OBJ-01~03`, `Q-RES-01~02`, `Q-BENCH-01~03`, `Q-INFRA-01`, `Q-VAR-01` | Prepared travel, objective, two-state outcome, audit, official/open/deferred 경계 |
 | [Master Realization Plan](../master-realization-plan.md) | §2~§4, Phase 06~08, §8~§15 | Current inventory, phase gate/evidence/DoD/blocker/handoff/traceability |
 | [구현 문서 지도](../README.md) | §3~§7 | Authority, canonical filename, planned link와 scheduler/review 규칙 |
 | [Root README](../../../README.md) | 기술 기준, 배포, placeholder 설명 | Java 25/Maven/GCP placeholder의 actual inventory와 target evidence 분리 |
@@ -1644,23 +1645,23 @@ Phase 07은 `ArtifactStore`, `RunStateRepository`, `ResultPublisher`, local file
 
 | Requirement | Source | Phase 07 contract | Exact test | Planned evidence |
 |---|---|---|---|---|
-| `REQ-ARCH-DAG` verification independent of solver/search/cache/provider | [Final Architecture §2](../../2026-07-26-architecture-design.md#2-module과-package-경계), [Plan §4.2](../master-realization-plan.md#42-compileruntime-invariants) | §6/§8.5 dependency | `Phase07VerificationArchitectureTest.*` | All P07 keys + architecture report |
+| `REQ-ARCH-DAG` verification independent of solver/search/cache/provider | [Final Architecture §2](../../deprecated/2026-07-26-architecture-design.md#2-module과-package-경계), [Plan §4.2](../master-realization-plan.md#42-compileruntime-invariants) | §6/§8.5 dependency | `Phase07VerificationArchitectureTest.*` | All P07 keys + architecture report |
 | `REQ-TRAVEL` same complete prepared authority | [Master §4.2](../../master-design.md#42-단계별-데이터-계약), [Phase 02 §13.3](phase-02-prepared-travel-immutable-problem.md#133-이후-consumer) | §4/§7.2 authority equality | `CandidateVerifierAuthorityTest.*PreparedTravel*` | `E-P07-CANDIDATE-VERIFY` |
 | `REQ-EVALUATION-AUTHORITY` exact bound declaration/SolvePlan projection | [Phase 04 §7.4](phase-04-capabilities-customer-profiles.md#74-proposed-java-25-contract), [Actual Phase 06 §16.2](phase-06-cow-alns-reproducibility.md#162-next--actual-but-unaccepted-phase-07) | §4/§7.3/§8.1 five-way authority projection | `CandidateVerifierAuthorityTest.*EvaluationDeclarationOrSolvePlan*`, projection coverage | `E-P07-CANDIDATE-VERIFY` |
 | `REQ-PAIR` complete pair/same vehicle/precedence/route-bank XOR | [Master §6](../../master-design.md#6-핵심-불변조건과-atomic-mutation), `C-06` | §3.2/§9.1 partition | `CandidatePartitionCorruptionTest.*` | `E-P07-CANDIDATE-VERIFY` |
 | `REQ-CACHE` cache-free recomputation | [Master §12](../../master-design.md#12-candidate-state-cache와-rollback), [Master §14.1](../../master-design.md#141-publication-gate) | Search claims non-authoritative | `CandidateVerifierIndependenceTest.*`, claim tamper tests | `E-P07-CANDIDATE-VERIFY` |
-| `REQ-FAILURE` infeasible/invalid/corrupt fail-closed | [Final Domain §16](../../2026-07-26-domain-design.md#16-오류와-종료-모델), [Integrated §11.7](../../architecture-domain-implementation-design.md#117-error-categories) | §3.3 disposition | Route/partition/overflow/claim test matrices | `E-P07-CANDIDATE-VERIFY` |
+| `REQ-FAILURE` infeasible/invalid/corrupt fail-closed | [Final Domain §16](../../deprecated/2026-07-26-domain-design.md#16-오류와-종료-모델), [Integrated §11.7](../../deprecated/architecture-domain-implementation-design.md#117-error-categories) | §3.3 disposition | Route/partition/overflow/claim test matrices | `E-P07-CANDIDATE-VERIFY` |
 | `REQ-RESULT` search bank/outcome separation | `C-15`, [Master §10](../../master-design.md#10-search-solution과-final-result), `Q-RES-01` | Two-state final outcome | `FinalOutcomeTest.*` | `E-P07-AUDIT` |
 | `REQ-AUDIT` static proven + required final audit | `Q-RES-02`, [Master §10.2](../../master-design.md#102-finalization과-result) | §7.5/§9.2 exhaustive contract | `FinalInsertionAuditTest.*`, completeness property | `E-P07-AUDIT` |
-| `REQ-DIAGNOSTIC` evidence-bounded confidence | [Master §10.2](../../master-design.md#102-finalization과-result), [Final Domain §15](../../2026-07-26-domain-design.md#15-verification-finalization과-result) | Source/scope/confidence matrix | Audit/diagnostic confidence tests | `E-P07-AUDIT`, `E-P07-RESULT-VERIFY` |
+| `REQ-DIAGNOSTIC` evidence-bounded confidence | [Master §10.2](../../master-design.md#102-finalization과-result), [Final Domain §15](../../deprecated/2026-07-26-domain-design.md#15-verification-finalization과-result) | Source/scope/confidence matrix | Audit/diagnostic confidence tests | `E-P07-AUDIT`, `E-P07-RESULT-VERIFY` |
 | `REQ-VERIFY` two independent verifier gates | `C-21`, [Master §14.1](../../master-design.md#141-publication-gate) | Candidate/result PASS separation | `BothGatePublicationTest.*` | `E-P07-CANDIDATE-VERIFY`, `E-P07-RESULT-VERIFY` |
 | `REQ-INCOMPLETE` gate fail와 incomplete 분리 | [Master §10.2](../../master-design.md#102-finalization과-result), [Master §14.1](../../master-design.md#141-publication-gate) | `VerificationRejected` 대 `GateIncomplete`; 둘 다 normal payload 0 | `BothGatePublicationTest.*GateIncomplete*` | `E-P07-RESULT-VERIFY` |
-| `REQ-SUMMARY` outcome/route-derived metric | `Q-BENCH-01`, [Final Domain §10/§15](../../2026-07-26-domain-design.md#15-verification-finalization과-result) | Checked derived summary | Tampered summary and result oracle tests | `E-P07-RESULT-VERIFY` |
-| `REQ-PROVENANCE` input→replay→both-gate lineage | [Master §10.3](../../master-design.md#103-result-provenance), [Integrated §19](../../architecture-domain-implementation-design.md#19-configuration-provenance와-observability) | §7.3/§7.6 manifest | `Phase07ReplayReproducibilityTest.*` | All P07 keys |
+| `REQ-SUMMARY` outcome/route-derived metric | `Q-BENCH-01`, [Final Domain §10/§15](../../deprecated/2026-07-26-domain-design.md#15-verification-finalization과-result) | Checked derived summary | Tampered summary and result oracle tests | `E-P07-RESULT-VERIFY` |
+| `REQ-PROVENANCE` input→replay→both-gate lineage | [Master §10.3](../../master-design.md#103-result-provenance), [Integrated §19](../../deprecated/architecture-domain-implementation-design.md#19-configuration-provenance와-observability) | §7.3/§7.6 manifest | `Phase07ReplayReproducibilityTest.*` | All P07 keys |
 | `REQ-REPRO` canonical result determinism | `C-22`, [Master §13.2](../../master-design.md#132-strong-reproducibility-envelope) | Stable semantic/payload identity | `CanonicalResultEncodingTest.*` | `E-P07-RESULT-VERIFY` |
-| `REQ-CORRUPTION` independent malicious/tamper fixtures | [Final Architecture §5.6](../../2026-07-26-architecture-design.md#56-test와-evidence), [Integrated §22.4](../../architecture-domain-implementation-design.md#224-independent-corruption-fixtures) | §10 one-field corruption | Candidate/result corruption matrices | All P07 keys |
-| `REQ-HANDOFF-P06` consume committed candidate/replay only | [Actual Phase 06 §16.2](phase-06-cow-alns-reproducibility.md#162-next--actual-but-unaccepted-phase-07), [Integrated §10~§11](../../architecture-domain-implementation-design.md#10-phase-6--cow-alns와-reproducibility), [Plan Phase 06~07](../master-realization-plan.md#phase-07--독립-검증과-최종-결과) | §7.3/§15.1 | Authority receipt/replay tests | Phase 06 receipt + `E-P07-CANDIDATE-VERIFY` |
-| `REQ-HANDOFF-P08` output final result contract only | [Integrated §12](../../architecture-domain-implementation-design.md#12-phase-8--application-ports와-local-reference-runtime), [Plan Phase 08](../master-realization-plan.md#phase-08--application-interface와-local-실행) | §15.2 | Both-gate output + architecture tests | `E-P07-RESULT-VERIFY`, handoff manifest |
+| `REQ-CORRUPTION` independent malicious/tamper fixtures | [Final Architecture §5.6](../../deprecated/2026-07-26-architecture-design.md#56-test와-evidence), [Integrated §22.4](../../deprecated/architecture-domain-implementation-design.md#224-independent-corruption-fixtures) | §10 one-field corruption | Candidate/result corruption matrices | All P07 keys |
+| `REQ-HANDOFF-P06` consume committed candidate/replay only | [Actual Phase 06 §16.2](phase-06-cow-alns-reproducibility.md#162-next--actual-but-unaccepted-phase-07), [Integrated §10~§11](../../deprecated/architecture-domain-implementation-design.md#10-phase-6--cow-alns와-reproducibility), [Plan Phase 06~07](../master-realization-plan.md#phase-07--독립-검증과-최종-결과) | §7.3/§15.1 | Authority receipt/replay tests | Phase 06 receipt + `E-P07-CANDIDATE-VERIFY` |
+| `REQ-HANDOFF-P08` output final result contract only | [Integrated §12](../../deprecated/architecture-domain-implementation-design.md#12-phase-8--application-ports와-local-reference-runtime), [Plan Phase 08](../master-realization-plan.md#phase-08--application-interface와-local-실행) | §15.2 | Both-gate output + architecture tests | `E-P07-RESULT-VERIFY`, handoff manifest |
 | `REQ-OPEN-GATE` no hidden official/default/gated scope | `Q-BENCH-02`, `C-17`, `Q-VAR-01`, [Plan §14](../master-realization-plan.md#14-open-gated-deferred와-restart-condition) | §14 blocker table | Config/source label/architecture inspection | All P07 keys + known limitations |
 
 새 result field, diagnostic confidence, verifier shortcut, serialization rule 또는 public schema 요구가 발견되면 이 표에 source/owner/test/evidence를 연결하고 관련 authority/ADR/Phase 06·08 compatibility와 review를 같은 변경 단위에서 갱신한다. 구현 편의를 위해 search claim을 권위화하거나 미확정 값을 hidden default로 채우지 않는다.

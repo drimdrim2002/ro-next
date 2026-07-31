@@ -1,6 +1,6 @@
 ---
 title: Phase B Architecture 세션 프롬프트
-status: READY
+status: ARCHIVED
 date: 2026-07-31
 purpose: >
   새 세션에서 Architecture 설계 초안 작성 후 deep-interview 검수를
@@ -11,7 +11,13 @@ normative_inputs:
   - docs/2026-07-31-domain-design.md
 prerequisite: Master·Domain APPROVED (2026-07-31)
 next: docs/YYYY-MM-DD-architecture-design.md
+phase_c: path-and-status-only
+
 ---
+
+<!-- phase-c-authority-banner -->
+> **ARCHIVED (Phase C)** — session handoff/prompt only. Not design authority. See [docs/README.md](../README.md).
+
 
 # Phase B Architecture 세션 프롬프트
 

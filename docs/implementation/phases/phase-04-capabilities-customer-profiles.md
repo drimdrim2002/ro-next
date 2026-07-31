@@ -16,6 +16,7 @@ phase_acceptance_status: NOT_ACCEPTED
 evidence_status: NOT_PRODUCED
 entry_gate_status: BLOCKED_BY_UNACCEPTED_PREDECESSORS
 source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
+phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
 direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 direction_revision_status: ALNS_FIRST_GATE_OVERLAY_APPLIED_DOCUMENTATION_ONLY
 public_api_status: PROPOSED_NOT_APPROVED
@@ -47,14 +48,14 @@ planned_evidence:
   - E-P04-FACET
 source_fingerprints_sha256:
   docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
-  docs/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
-  docs/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
-  docs/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
-  docs/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
+  docs/deprecated/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
+  docs/deprecated/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
+  docs/deprecated/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
+  docs/deprecated/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
   docs/implementation/master-realization-plan.md: 940fe8c2156bf0472deafcd450e0ea49f0036ab6b304d6d051f0148a38cd0f5d
   docs/implementation/README.md: 6454238185af7b7c420f468adf42609a0ec045d6c70c16cc7601f0342fa74358
 historical_cross_check:
-  file: docs/2026-07-26-master-design.md
+  file: docs/deprecated/2026-07-26-master-design.md
   status: SUPERSEDED_NOT_AUTHORITY
 adjacent_context:
   phase_03:
@@ -73,15 +74,15 @@ adjacent_context:
 적용 순서는 다음과 같다.
 
 1. 사용자 선언과 [Canonical Master](../../master-design.md)
-2. [질문 등록부](../../master-design-open-questions.md)의 exact `Q-*` 상태
-3. [Final Domain Design](../../2026-07-26-domain-design.md)의 compatibility/evaluation/profile 의미
-4. [Final Architecture Design](../../2026-07-26-architecture-design.md)의 Maven/module/package/DAG
-5. [Integrated implementation design](../../architecture-domain-implementation-design.md)의 capability/profile과 15 Phase 배치
+2. [질문 등록부](../../deprecated/master-design-open-questions.md)의 exact `Q-*` 상태
+3. [Final Domain Design](../../deprecated/2026-07-26-domain-design.md)의 compatibility/evaluation/profile 의미
+4. [Final Architecture Design](../../deprecated/2026-07-26-architecture-design.md)의 Maven/module/package/DAG
+5. [Integrated implementation design](../../deprecated/architecture-domain-implementation-design.md)의 capability/profile과 15 Phase 배치
 6. [Master Realization Plan](../master-realization-plan.md)과 [구현 문서 지도](../README.md)
 7. Actual [Phase 03](phase-03-route-propagation-evaluation-kernel.md)의 accepted될 internal handoff contract
 8. Actual [Phase 05](phase-05-pair-insertion-initial-portfolio.md)의 proposed downstream consumer contract
 
-[2026-07-26 Master Design — SUPERSEDED](../../2026-07-26-master-design.md)는 누락·퇴행 cross-check에만 사용했다. `docs/codex/*`는 현재 authority로 사용하거나 복사하지 않았고 이 작업에서 수정하지 않는다.
+[2026-07-26 Master Design — SUPERSEDED](../../deprecated/2026-07-26-master-design.md)는 누락·퇴행 cross-check에만 사용했다. `docs/codex/*`는 현재 authority로 사용하거나 복사하지 않았고 이 작업에서 수정하지 않는다.
 
 문서 상태와 구현 상태는 독립이다.
 
@@ -99,10 +100,10 @@ adjacent_context:
 | Source | 직접 소비한 section | Phase 04에 고정하는 내용 |
 |---|---|---|
 | [Canonical Master](../../master-design.md) | §2.4, §3.1~§3.3, §4.2~§4.6, §5.3, §7.5, §9, §13.2~§13.3, §15.1/§15.4, §16~§17 | 고객 정책 격리, capability 축 분리, exact binding/lifecycle/fingerprint, no fallback/default, `RM-2`, reproducibility와 gate |
-| [Final Domain](../../2026-07-26-domain-design.md) | §3, §5.3, §7, §9~§10, §15~§18, §20~§21 | Compatibility/service/trip/resource 사실, profile/objective 의미, verifier closure, 새 고객의 가장 좁은 seam |
-| [Final Architecture](../../2026-07-26-architecture-design.md) | §2.1~§2.7, §5.2/§5.6, §6 | Core/capability/profile module DAG, registry identity, architecture enforcement와 evidence |
-| [Integrated design](../../architecture-domain-implementation-design.md) | §1.4, §3, §7~§9, §19, §22~§25, §28~§30 | Capability code 대 profile data, descriptor/catalog/binder, Phase 03/05 경계, provenance, test와 anti-pattern |
-| [질문 등록부](../../master-design-open-questions.md) | `Q-TIME-03`, `Q-COMP-01~02`, `Q-REQ-01~02`, `Q-OBJ-01~03`, `Q-RES-01`, `Q-BENCH-02`, `Q-INFRA-01`, `Q-VAR-01` | Explicit service policy, compatibility, single-trip, preset/default/mandatory/ownership, OPEN/GATED/deferred 상태 |
+| [Final Domain](../../deprecated/2026-07-26-domain-design.md) | §3, §5.3, §7, §9~§10, §15~§18, §20~§21 | Compatibility/service/trip/resource 사실, profile/objective 의미, verifier closure, 새 고객의 가장 좁은 seam |
+| [Final Architecture](../../deprecated/2026-07-26-architecture-design.md) | §2.1~§2.7, §5.2/§5.6, §6 | Core/capability/profile module DAG, registry identity, architecture enforcement와 evidence |
+| [Integrated design](../../deprecated/architecture-domain-implementation-design.md) | §1.4, §3, §7~§9, §19, §22~§25, §28~§30 | Capability code 대 profile data, descriptor/catalog/binder, Phase 03/05 경계, provenance, test와 anti-pattern |
+| [질문 등록부](../../deprecated/master-design-open-questions.md) | `Q-TIME-03`, `Q-COMP-01~02`, `Q-REQ-01~02`, `Q-OBJ-01~03`, `Q-RES-01`, `Q-BENCH-02`, `Q-INFRA-01`, `Q-VAR-01` | Explicit service policy, compatibility, single-trip, preset/default/mandatory/ownership, OPEN/GATED/deferred 상태 |
 | [Master Realization Plan](../master-realization-plan.md) | §2~§4, Phase 03~05, §8~§15 | Current inventory, Phase 04 entry/exit, evidence/DoD, blockers와 traceability |
 | [구현 문서 지도](../README.md) | §3~§7 | Authority, canonical filename, status/review/link 규칙 |
 | [Actual Phase 03](phase-03-route-propagation-evaluation-kernel.md) | §3~§7, §9~§15 | 변경하지 않을 evaluation SPI, `PropagationDeclaration`/`EvaluationPlan`, typed facet gate, Phase 04/05 handoff |
@@ -1313,18 +1314,18 @@ Verifier는 capability code의 same approved implementation contract를 사용�
 | Requirement | Source | Phase 04 contract | Exact test | Planned evidence |
 |---|---|---|---|---|
 | `REQ-PROFILE-IDENTITY` exact customer/profile/version/preset/default | [Master §9.3](../../master-design.md#93-profile-binding과-lifecycle), `Q-OBJ-01` | Exact coordinates, declared default only, no latest/cross fallback | `ProfileIdentityResolutionTest.*` | `E-P04-BINDING` |
-| `REQ-CAPABILITY-SEPARATION` vehicle qualification/core rule/reusable code/profile data 분리 | [Master §3.1/§5.3](../../master-design.md#53-vehicle-size와-capability), [Integrated §8.1~§8.3](../../architecture-domain-implementation-design.md#81-customer는-module이-아니라-descriptor) | §3.1 ownership and explicit provider registry | `CapabilityRegistryContractTest.*`, architecture tests | `E-P04-BINDING`, `E-P04-ISOLATION` |
+| `REQ-CAPABILITY-SEPARATION` vehicle qualification/core rule/reusable code/profile data 분리 | [Master §3.1/§5.3](../../master-design.md#53-vehicle-size와-capability), [Integrated §8.1~§8.3](../../deprecated/architecture-domain-implementation-design.md#81-customer는-module이-아니라-descriptor) | §3.1 ownership and explicit provider registry | `CapabilityRegistryContractTest.*`, architecture tests | `E-P04-BINDING`, `E-P04-ISOLATION` |
 | `REQ-EVAL` hard/metric/score/objective/plan separation | [Master §9](../../master-design.md#9-extensible-policy-evaluation과-profile-architecture), `C-04` | Existing Phase 03 declarations only, typed closure | `ProfileBinderContractTest.*`, Phase03 equivalence | `E-P04-BINDING` |
-| `REQ-COMPAT` size/qualification/zone and no reinterpretation | [Domain §5.3](../../2026-07-26-domain-design.md#53-size-capability와-zone), `Q-COMP-01~02` | Core rule non-disable, zero-eligible allowed | Combination oracle exact rows | `E-P04-BINDING` |
+| `REQ-COMPAT` size/qualification/zone and no reinterpretation | [Domain §5.3](../../deprecated/2026-07-26-domain-design.md#53-size-capability와-zone), `Q-COMP-01~02` | Core rule non-disable, zero-eligible allowed | Combination oracle exact rows | `E-P04-BINDING` |
 | `REQ-SERVICE-TRIP` mixed service, explicit window rule, single-trip | [Master §5.2/§7.3](../../master-design.md#73-planning-period와-time), `Q-TIME-03`, `Q-REQ-01~02` | Explicit Phase 03 enum, oneway/roundtrip gate, rotation reject | Combination service/trip methods | `E-P04-BINDING` |
 | `REQ-RESOURCE` normalized stop/drive limits remain hard | [Master §6.2](../../master-design.md#62-route와-feasibility), `Q-IN-02` | Profile cannot disable; missing fact has no sentinel/default | `rejectsProfileAttemptToDisableCanonicalCompatibilityOrResourceRule()` | `E-P04-BINDING` |
 | `REQ-OBJECTIVE` mandatory and ownership ordering | [Master §9.3](../../master-design.md#93-profile-binding과-lifecycle), `Q-OBJ-02~03` | Lexicographic mandatory, LEASE dimension contract, no Big-M | `ProfileObjectivePolicyTest.*` | `E-P04-BINDING` |
-| `REQ-FINGERPRINT` solve-bound exact closure/version identity | [Master §2.4/§9.3](../../master-design.md#93-profile-binding과-lifecycle), [Integrated §8.2/§8.4](../../architecture-domain-implementation-design.md#82-profile-identity) | Descriptor/registry/problem/travel/Phase03/build lifecycle | Lifecycle/corruption/reproducibility tests | `E-P04-ISOLATION` |
+| `REQ-FINGERPRINT` solve-bound exact closure/version identity | [Master §2.4/§9.3](../../master-design.md#93-profile-binding과-lifecycle), [Integrated §8.2/§8.4](../../deprecated/architecture-domain-implementation-design.md#82-profile-identity) | Descriptor/registry/problem/travel/Phase03/build lifecycle | Lifecycle/corruption/reproducibility tests | `E-P04-ISOLATION` |
 | `REQ-ISOLATION` same problem multi-profile and customer branch 0 | [Master §2.4](../../master-design.md#24-구현-완료의-의미), `C-03` | No shared state/customer visibility; unrelated profile regression | `BoundProfileIsolationTest.*`, architecture tests | `E-P04-ISOLATION` |
-| `REQ-FACET` new physical state only via approved typed seam | [Integrated §8.6](../../architecture-domain-implementation-design.md#86-typed-domain-facet), `ADR-004` | Empty/unapproved gate; approved facet needs verifier parity | `FacetBindingGateTest.*` | `E-P04-FACET` |
+| `REQ-FACET` new physical state only via approved typed seam | [Integrated §8.6](../../deprecated/architecture-domain-implementation-design.md#86-typed-domain-facet), `ADR-004` | Empty/unapproved gate; approved facet needs verifier parity | `FacetBindingGateTest.*` | `E-P04-FACET` |
 | `REQ-REPRO` stable binding independent of order/backend/thread | [Master §13.2](../../master-design.md#132-strong-reproducibility-envelope) | Pure binder, stable graph/canonical identity | `BoundProfileReproducibilityTest.*` | `E-P04-ISOLATION` |
-| `REQ-SECURITY-OBS` pre-read authorization, non-enumeration과 redaction | [Integrated §20](../../architecture-domain-implementation-design.md#20-security와-tenant-boundary), [Master §2.4](../../master-design.md#24-구현-완료의-의미) | Requested scope preauthorization + exact descriptor/preset authorization; safe allowlist telemetry | `ProfileAuthorizationSecurityTest.*`, `ProfileBindingSecurityObservabilityTest.*` | `E-P04-ISOLATION` |
-| `REQ-ARCH-DAG` core/capability/profile/solver/verifier/provider isolation | [Final Architecture §2](../../2026-07-26-architecture-design.md#2-module과-package-경계), [Integrated §3.5~§3.6](../../architecture-domain-implementation-design.md#35-compile-dependency-dag) | §7.5 dependency direction | `Phase04ProfileArchitectureTest.*` | All `E-P04-*` + architecture report |
+| `REQ-SECURITY-OBS` pre-read authorization, non-enumeration과 redaction | [Integrated §20](../../deprecated/architecture-domain-implementation-design.md#20-security와-tenant-boundary), [Master §2.4](../../master-design.md#24-구현-완료의-의미) | Requested scope preauthorization + exact descriptor/preset authorization; safe allowlist telemetry | `ProfileAuthorizationSecurityTest.*`, `ProfileBindingSecurityObservabilityTest.*` | `E-P04-ISOLATION` |
+| `REQ-ARCH-DAG` core/capability/profile/solver/verifier/provider isolation | [Final Architecture §2](../../deprecated/2026-07-26-architecture-design.md#2-module과-package-경계), [Integrated §3.5~§3.6](../../deprecated/architecture-domain-implementation-design.md#35-compile-dependency-dag) | §7.5 dependency direction | `Phase04ProfileArchitectureTest.*` | All `E-P04-*` + architecture report |
 | `REQ-HANDOFF` bound artifact only; full-solution/tie boundary; no insertion/ALNS/runtime pull | [Realization Plan Phase 04~05](../master-realization-plan.md#phase-04--재사용-기능과-고객-profile), [Actual Phase 03 §14](phase-03-route-propagation-evaluation-kernel.md#14-previousnext-handoff), [Actual Phase 05 §7/§15](phase-05-pair-insertion-initial-portfolio.md#15-previousnext-handoff) | Core-only bound runtime/snapshot, exact profile/declaration identity, separate evaluation/operator key spaces; route artifacts are not full-solution authority | `BoundProfilePhase03ContractTest.*`; blocker 해제 뒤 `FullSolutionEvaluationHandoffContractTest`, `ComparatorTieBoundaryContractTest` | Phase 04 review blocker record + 승인 뒤 Phase 03~05 reciprocal compile/full-equality/corruption result |
 | `REQ-PORTFOLIO-POLICY-HANDOFF` traversal/`CLOCK`/utilization policy는 explicit typed authority 뒤 bind | [Phase 05 review F-P05-011](../reviews/phase-05-review.md#f-p05-011--portfolio-traversal과-coordinateutilization-policy는-deterministic-implementation을-freeze하기에-아직-authority가-부족하다) | Hidden input order/coordinate/zero fallback 0; missing `CLOCK`은 `UNAVAILABLE`; Phase 04는 reference만 bind | 승인 뒤 `PortfolioPolicyHandoffContractTest` | Phase 04/05 joint policy manifest + golden traversal/reference-vector result |
 
