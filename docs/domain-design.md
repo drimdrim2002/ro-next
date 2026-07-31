@@ -69,7 +69,7 @@ out_of_scope:
 | 항목 | 내용 |
 |---|---|
 | **지위** | Domain — 값·수식·normalization·travel·propagation·evaluation·**solution/search**·**verification/result** 의 **정확한 의미**와 acceptance 방향 |
-| **status** | **`APPROVED`** (2026-07-31). 다음: Architecture |
+| **status** | **`APPROVED`** (2026-07-31). Architecture 도 **APPROVED** |
 | **version** | **1.2** (editorial restructure; 규범 불변) |
 | **규범 입력 (MUST)** | `docs/2026-07-30-design-interview-phase-a.md` |
 | **상위 설계** | `docs/2026-07-30-master-design.md` (`APPROVED`) |
@@ -1520,9 +1520,10 @@ Architecture 배치; C-17 수치; multi-version 입력; 새 실험 수치; imple
 ## 19. 다음 액션
 
 1. ~~Domain `REVIEW` 검수~~ → **`APPROVED`** (2026-07-31, deep-interview 반영)  
-2. **다음:** `docs/YYYY-MM-DD-architecture-design.md` (Domain·Master 규범) — 현재 `docs/2026-07-31-architecture-design.md` (`REVIEW`)  
-3. (선택) Phase C — 구 문서 SUPERSEDED·링크  
-4. ~~Domain editorial restructure~~ → **v1.2** (규범 불변, 구조·중복 정리)
+2. ~~Architecture 검수~~ → **`APPROVED`** (`docs/2026-07-31-architecture-design.md`, 2026-07-31)  
+3. **(선택) 다음:** Phase C — 구 문서 SUPERSEDED·링크  
+4. ~~Domain editorial restructure~~ → **v1.2** (규범 불변, 구조·중복 정리)  
+5. 구현은 별 세션 (implementation 문서 세트)
 
 ---
 
