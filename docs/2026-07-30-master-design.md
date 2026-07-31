@@ -1,9 +1,10 @@
 ---
 title: RPDPTW Master Design
 status: APPROVED
-version: 1.0
+version: 1.1
 date: 2026-07-30
 approved_date: 2026-07-31
+reorganized_date: 2026-07-31
 owner: design
 normative_input: docs/2026-07-30-design-interview-phase-a.md
 authority: >
@@ -14,31 +15,39 @@ language: ko
 identifiers: en
 related_designs:
   - docs/2026-07-31-domain-design.md
+  - docs/2026-07-31-architecture-design.md
 domain_status: APPROVED
+architecture_status: REVIEW
 supersedes_claim: >
   기존 dated master 초안·루트 master 부재 상태와 병존할 수 있다.
   SUPERSEDED 일괄 정리는 Phase C(선택) 범위이며 본 문서 작성만으로 구 문서를
   폐기 처리하지 않는다.
 out_of_scope:
-  - Architecture 본문 (Domain APPROVED — 다음 세션)
+  - Architecture 본문 재작성 (Architecture는 별도 문서, status REVIEW)
   - implementation phases 재작성
   - 구현 코드·production cutover
   - C-17 활성화·실험 수치 확정
+reorganization_note: >
+  v1.1: 내용 보존 재정비. 중복 절 통합, 절 번호 재배치, 메타(상태·관련 문서·다음 액션) 정합.
+  규범 의미·결정 ID(A*/D*/O*) 변경 없음.
 ---
 
 # RPDPTW Master Design
 
-## 1. 문서 지위·권위·규범 입력
+## 1. 문서 지위·권위·규약
+
+### 1.1 지위·권위·규범 입력
 
 | 항목 | 내용 |
 |---|---|
 | **지위** | Master — 목표·범위·완료·핵심 결정·e2e·roadmap/gate·검증 개요 |
-| **status** | `APPROVED` (2026-07-31). Domain: `docs/2026-07-31-domain-design.md` (**APPROVED**) |
+| **status** | `APPROVED` (2026-07-31) |
+| **관련 설계** | Domain: `docs/2026-07-31-domain-design.md` (**APPROVED**). Architecture: `docs/2026-07-31-architecture-design.md` (**REVIEW**) |
 | **규범 입력 (MUST)** | `docs/2026-07-30-design-interview-phase-a.md` |
 | **비권위 참고** | 기존 Domain/Architecture 상세, explainer, implementation/* — 상속 후보 또는 지형 참고일 뿐 |
 | **충돌 규칙** | 인터뷰 정리 §3·§4(A1–A12, D1·D2) 우선. 에이전트 신규 설계 결정 금지 |
 
-### 1.1 문서 경계 (A6)
+### 1.2 문서 경계 (A6)
 
 | 문서 | 소유 (MUST) |
 |---|---|
@@ -48,7 +57,35 @@ out_of_scope:
 
 한 문서가 다른 문서의 의미를 단독으로 바꾸지 않는다.
 
-### 1.2 용어 표기 규약
+#### Domain에 위임 (상세 의미)
+
+- `Request`/pair, delivery-only, bank, propagation, evaluation, result의 **정확한 의미**
+- **단일 고정 입력 계약** 필드·단위·정규화 (multi-version track 제거/비범위)
+- travel·시간창·용량 등 수식·acceptance (상속 후보 재구성, D1 충돌 문장 교정)
+- verifier acceptance 방향
+- O2 필드 목록·optional 확장 규칙 문서화 깊이
+
+#### Architecture에 위임 (배치·경계)
+
+- module/package DAG, dependency 금지선
+- port/adapter, profile 확장 seam
+- local / worker / distributed 논리 runtime
+- compute: **Lambda | ECS 미결정** (후보 병기)
+- verifier 격리, optional MIP backend 격리
+- AWS 등은 reference/후보, production 승인 아님
+
+#### Master가 소유하지 않는 것
+
+- 구체 수식, acceptance 표 전문
+- Maven 좌표·package 트리
+- phase별 구현 체크리스트 본문
+- benchmark 수치 확정
+- C-17 상세 모델·활성화 조건 수치
+- compute를 Lambda(또는 ECS)로 **확정**하는 문장
+- multi-version 입력 운영 체계
+- 새 실험 수치·제품 확정
+
+### 1.3 용어 표기 규약
 
 - 본문: 한국어
 - 식별자·고정 용어: 영어 유지 (`Request`, `SearchRequestBank`, `C-17`, `RM-*`, `SolvePlan` 등)
@@ -60,7 +97,7 @@ out_of_scope:
 
 ---
 
-## 2. 목표·범위·비범위·완료(gate)
+## 2. 목표·범위·완료
 
 ### 2.1 한 문장 목표 (A1)
 
@@ -78,7 +115,7 @@ out_of_scope:
 - 고객 차이의 **profile ± optional** 격리
 - delivery-only(CVRPTW형)를 동일 RPDPTW core에서 처리
 - current vs target 분리, gate+evidence 기반 완료 정의
-- Hybrid(route pool + MIP)는 **C-17 GATED TARGET** 개요만
+- Hybrid(route pool + MIP)는 **C-17 GATED TARGET** 개요만 (§6.2)
 
 ### 2.3 비범위 (out of scope / MUST NOT as completion claim)
 
@@ -88,7 +125,7 @@ out_of_scope:
 - placeholder·orchestration demo·문서 작성 완료를 **솔버 완료 evidence**로 승격
 - production cutover 승인 주장
 - implementation `phases/*` 재작성 및 본 세션의 코드 구현
-- Domain 수식 상세·Architecture module tree 본문 (후속 문서)
+- Domain 수식 상세·Architecture module tree 본문 (해당 문서 소유, §1.2)
 
 ### 2.4 완료 정의 (A7)
 
@@ -96,7 +133,7 @@ out_of_scope:
 
 완료 = **gate + evidence**의 **AND**.
 
-목적별 gate는 서로 다르다. 예:
+목적별 gate는 서로 다르다 (종류 목록은 §8.3). 예:
 
 | 목적 | 성격 (개요) |
 |---|---|
@@ -105,7 +142,8 @@ out_of_scope:
 | application cutover | cutover 전용 승인·회귀·운영 evidence |
 | hybrid 활성화 | C-17 승인 + hybrid 전용 evidence (GATED) |
 
-세부 acceptance·측정 항목은 Domain / 검증 문서·implementation plan에 위임. Master는 **완료가 gate+evidence AND**라는 원칙만 고정한다.
+세부 acceptance·측정 항목은 Domain / 검증 문서·implementation plan에 위임.  
+Master는 **완료가 gate+evidence AND**라는 원칙만 고정한다.
 
 ---
 
@@ -162,16 +200,18 @@ out_of_scope:
 
 ### 4.2 의미 합의 (유지)
 
-| ID | 결정 |
-|---|---|
-| **A1** | §2.1 한 문장 목표 |
-| **A3–A5** | pair / delivery-only / e2e 파이프라인 |
-| **A6** | Master / Domain / Architecture 경계 |
-| **A7** | 완료 = gate + evidence AND |
-| **A8** | ALNS-first; route pool/MIP = C-17 GATED |
-| **A9** | current ≠ target; placeholder ≠ 완료 evidence |
-| **A10** | object storage + durable orchestration + worker compute **논리 역할 분리** 유지 가능. 클라우드 선택 ≠ 알고리즘 완료 ≠ production cutover. provider SDK는 adapter/deployment 경계에만 |
-| **A11** | profile 격리 |
+| ID | 결정 | 본문 |
+|---|---|---|
+| **A1** | 한 문장 목표 | §2.1 |
+| **A3** | pair 불변조건 | §3.2 |
+| **A4** | delivery-only | §3.3 |
+| **A5** | e2e 파이프라인 | §5 |
+| **A6** | Master / Domain / Architecture 경계 | §1.2 |
+| **A7** | 완료 = gate + evidence AND | §2.4, §7, §8.3 |
+| **A8** | ALNS-first; route pool/MIP = C-17 GATED | §6 |
+| **A9** | current ≠ target; placeholder ≠ 완료 evidence | §8.4 |
+| **A10** | object storage + durable orchestration + worker compute **논리 역할 분리** 유지 가능. 클라우드 선택 ≠ 알고리즘 완료 ≠ production cutover. provider SDK는 adapter/deployment 경계에만 | §5.3 |
+| **A11** | profile 격리 | §3.5 |
 
 ### 4.3 상속 결정 — 기존 유지(미재심)
 
@@ -181,21 +221,24 @@ Phase A에서 다시 열지 않은 기존 `C-*` / `P-*` / `Q-*` / `RM-*` 등은 
 - **D1·D2와 충돌하는 문장만 교정**. 그 외는 “기존 유지(미재심)”로 명시 가능.
 - 본 Master는 상속 ID 목록을 전개하지 않는다. 필요 시 Domain/Architecture 및 기존 등록부 링크.
 
-### 4.4 명시적 비결정 (OPEN — 확정 서술 금지)
+### 4.4 열린 질문 (OPEN — 확정 서술 금지)
 
-| ID | 내용 |
-|---|---|
-| **O1** | compute = Lambda vs ECS (D2) |
-| **O2** | 단일 고정 계약의 구체 필드 목록·optional 확장 규칙 문서화 깊이 → Domain |
-| **O3** | 레거시 Win JSON adapter의 공식 이름·범위 (“adapter 하나” 원칙만 확정) |
-| **O5** | Phase C(구 문서 SUPERSEDED·깨진 링크 정리) 수행 여부·시점 |
-| **O6** | 기존 상세 수식·module tree의 Phase B 축약 깊이 |
+| ID | 질문 | 상태 | Master 처리 |
+|---|---|---|---|
+| **O1** | Worker/API compute: Lambda vs ECS | OPEN | 후보만 (§5.3, D2) |
+| **O2** | 단일 고정 계약 필드·optional 규칙 깊이 | OPEN | Domain |
+| **O3** | 레거시 Win JSON adapter 공식 이름·범위 | OPEN | “adapter 하나”만 고정 |
+| **O4** | 기존 C-*/Q-* 전부 재승인? | 재승인 안 함 | 충돌 시 D* 승격만 |
+| **O5** | Phase C(구 문서 SUPERSEDED·깨진 링크 정리) 여부·시점 | OPEN | 본 문서 범위 밖 |
+| **O6** | 상세 수식·module tree 축약 깊이 | OPEN | Domain/Architecture 세션 |
 
 실험 수치(`Q-BENCH-02` 등), MIP budget, production sizing: **확정하지 않음**.
 
 ---
 
 ## 5. end-to-end 구현 흐름 (A5)
+
+### 5.1 파이프라인
 
 ```text
 외부 입력
@@ -214,7 +257,7 @@ Phase A에서 다시 열지 않은 기존 `C-*` / `P-*` / `Q-*` / `RM-*` 등은 
   → publishable result
 ```
 
-### 5.1 단계 의미 (Master 수준)
+### 5.2 단계 의미 (Master 수준)
 
 | 단계 | 규범 요지 |
 |---|---|
@@ -224,13 +267,13 @@ Phase A에서 다시 열지 않은 기존 `C-*` / `P-*` / `Q-*` / `RM-*` 등은 
 | initial portfolio (≤8) | 초기 해 집합 상한 개념. 구체 operator·시드는 Domain/구현 계획 (수치 실험 확정 아님) |
 | phase-1 screen ALNS | 스크리닝 성격 ALNS |
 | phase-2 ALNS | 본 탐색 ALNS — **기본 구현·benchmark 경로** |
-| HybridPhase | **C-17 GATED**. 별도 승인·evidence 전 구현 착수·production 기본 활성화 금지 |
+| HybridPhase | **C-17 GATED** (§6.2). 별도 승인·evidence 전 구현 착수·production 기본 활성화 금지 |
 | candidate solution verifier | 해 구조·pair·hard constraint 등 독립 재검사 |
 | finalization / audit | 발행 직전 정리·감사 정보 |
 | result-integrity verifier | 발행 payload 무결성 독립 재검사 |
 | publishable result | `ASSIGNED` / `UNASSIGNED` partition + provenance. verifier PASS 전 발행 권위 없음 |
 
-### 5.2 논리 runtime 역할 (A10, D2)
+### 5.3 논리 runtime 역할 (A10, D2)
 
 | 역할 | 요지 |
 |---|---|
@@ -243,43 +286,15 @@ provider SDK는 **adapter / deployment 경계**에만 둔다 (Architecture에서
 
 ---
 
-## 6. Domain / Architecture에 넘기는 경계
+## 6. ALNS baseline + C-17 gated hybrid (A8)
 
-### 6.1 → Domain (DEFERRED, Master 검수 후)
-
-- `Request`/pair, delivery-only, bank, propagation, evaluation, result의 **정확한 의미**
-- **단일 고정 입력 계약** 필드·단위·정규화 (multi-version track 제거/비범위)
-- travel·시간창·용량 등 수식·acceptance (상속 후보 재구성, D1 충돌 문장 교정)
-- verifier acceptance 방향
-- O2 필드 목록·optional 확장 규칙 문서화 깊이
-
-### 6.2 → Architecture (DEFERRED, Domain 검수 후)
-
-- module/package DAG, dependency 금지선
-- port/adapter, profile 확장 seam
-- local / worker / distributed 논리 runtime
-- compute: **Lambda | ECS 미결정** (후보 병기)
-- verifier 격리, optional MIP backend 격리
-- AWS 등은 reference/후보, production 승인 아님
-
-### 6.3 Master가 소유하지 않는 것
-
-- 구체 수식, acceptance 표 전문
-- Maven 좌표·package 트리
-- phase별 구현 체크리스트 본문
-- benchmark 수치 확정
-
----
-
-## 7. ALNS baseline + C-17 gated hybrid 개요 (A8)
-
-### 7.1 ALNS-first — MUST
+### 6.1 ALNS-first — MUST
 
 - **기본 구현 경로** = ALNS (initial portfolio → phase-1 screen → phase-2).
 - **기본 benchmark 경로** = 동일 ALNS 경로.
 - 솔버 “동작·품질”의 1차 evidence는 ALNS 경로의 gate+evidence로 쌓는다.
 
-### 7.2 C-17 Hybrid — GATED TARGET
+### 6.2 C-17 Hybrid — GATED TARGET
 
 | 항목 | 규범 |
 |---|---|
@@ -293,9 +308,9 @@ Master는 MIP 모델·budget·pool 정책을 **확정하지 않는다**.
 
 ---
 
-## 8. 검증·publication·benchmark 개요
+## 7. 검증·publication·benchmark
 
-### 8.1 검증 계층
+### 7.1 검증 계층
 
 | 계층 | 역할 |
 |---|---|
@@ -304,54 +319,50 @@ Master는 MIP 모델·budget·pool 정책을 **확정하지 않는다**.
 | result-integrity verifier | 독립. 발행 payload·partition·provenance |
 | gate+evidence | 목적별 완료 판정 (A7) |
 
-### 8.2 publication
+### 7.2 publication
 
 - publishable result만 외부 발행 권위.
 - `ASSIGNED` / `UNASSIGNED` partition과 provenance.
 - `SearchRequestBank` 내용을 최종 UNASSIGNED로 **직접 승격하지 않음** (A3).
 
-### 8.3 benchmark
+### 7.3 benchmark
 
-- 기본 경로: ALNS-first.
+- 기본 경로: ALNS-first (§6.1).
 - official Win 비교 등은 **별도 gate** (일반 발행 gate와 동일시하지 않음).
 - 실험 수치·워커 수·step 한도 등은 **OPEN / 구현 계획 영역**. Master에서 확정하지 않음.
 
 ---
 
-## 9. roadmap / gate 개요
+## 8. roadmap · gate · migration · 위험
 
-### 9.1 설계 권위 로드맵
+### 8.1 설계 권위 로드맵
 
-| Phase | 목표 | 산출 |
-|---|---|---|
-| **A (완료)** | 합의·의도 교정 | `docs/2026-07-30-design-interview-phase-a.md` |
-| **B (진행)** | 설계 재작성 | Master(본 문서) → Domain → Architecture, **각각 사용자 검수** |
-| **C (선택, OPEN)** | 구 문서 SUPERSEDED·깨진 링크·README 정합 | O5 |
+| Phase | 목표 | 산출 | 상태 |
+|---|---|---|---|
+| **A** | 합의·의도 교정 | `docs/2026-07-30-design-interview-phase-a.md` | **완료** |
+| **B** | 설계 재작성 | Master → Domain → Architecture, **각각 사용자 검수** | Master·Domain **APPROVED**. Architecture **REVIEW** |
+| **C (선택)** | 구 문서 SUPERSEDED·깨진 링크·README 정합 | O5 | **OPEN** |
 
 Phase B 순서: **Master 단독 → 검수 → Domain → 검수 → Architecture**.  
 한 세션에 3종을 동시에 쓰지 않는다.
 
-### 9.2 구현 roadmap
+### 8.2 구현 roadmap
 
 - 세부 phase 계획·realization plan은 **implementation 문서 세트**에 위임.
 - 본 Master는 구현 phase 본문을 재작성하지 않는다.
 - 구현 진행률 서술 시: **accepted evidence**와 **문서 작성 완료**를 분리 (A9).
 
-### 9.3 gate 종류 (개요만)
+### 8.3 gate 종류 (개요만)
 
-1. 설계 문서 gate — 본 Master/Domain/Architecture `REVIEW` → 승인
+1. 설계 문서 gate — Master/Domain/Architecture `REVIEW` → 승인
 2. ALNS 기능·품질 gate — baseline 경로 evidence
 3. 발행 gate — verifier 2단 + 발행 계약
 4. 비교/cutover gate — 목적별 추가
 5. hybrid gate — C-17 전용 (GATED)
 
-세부 체크리스트·측정식은 Domain 및 implementation에 링크.
+세부 체크리스트·측정식은 Domain 및 implementation에 링크. 완료 원칙은 §2.4.
 
----
-
-## 10. migration / current vs target / 위험
-
-### 10.1 current ≠ target (A9) — MUST
+### 8.4 current ≠ target (A9) — MUST
 
 | current (예시 성격) | target |
 |---|---|
@@ -363,18 +374,20 @@ Phase B 순서: **Master 단독 → 검수 → Domain → 검수 → Architectur
 용어·문서·진행률에서 둘을 섞지 않는다.  
 **placeholder / 현재 코드를 목표 솔버 완료 evidence로 서술하지 않는다.**
 
-### 10.2 입력 migration (D1)
+### 8.5 입력·compute migration
+
+**입력 (D1)**
 
 - 목표: 모든 지원 입력이 **단일 고정 canonical 계약**으로 정규화.
 - 레거시: **adapter 하나** (이름·범위 O3 OPEN).
 - multi-version 스키마를 장기 운영 전제로 두지 않음.
 
-### 10.3 compute migration (D2)
+**compute (D2)**
 
-- 논리 3역할(storage / orchestration / compute)은 유지 가능.
+- 논리 3역할(storage / orchestration / compute)은 유지 가능 (§5.3).
 - compute 구현체(Lambda | ECS)는 **OPEN**. 전환 계획이 있어도 Master에서 하나를 확정하지 않음.
 
-### 10.4 위험 (Master 수준)
+### 8.6 위험 (Master 수준)
 
 | 위험 | 완화 방향 |
 |---|---|
@@ -388,55 +401,32 @@ Phase B 순서: **Master 단독 → 검수 → Domain → 검수 → Architectur
 
 ---
 
-## 11. 열린 질문·traceability
+## 9. traceability · 다음 액션
 
-### 11.1 열린 질문
-
-| ID | 질문 | 상태 | Master 처리 |
-|---|---|---|---|
-| **O1** | Worker/API compute: Lambda vs ECS | OPEN | 후보만 (§5.2, D2) |
-| **O2** | 단일 고정 계약 필드·optional 규칙 깊이 | OPEN | Domain |
-| **O3** | 레거시 Win JSON adapter 공식 이름·범위 | OPEN | “adapter 하나”만 고정 |
-| **O4** | 기존 C-*/Q-* 전부 재승인? | 재승인 안 함 | 충돌 시 D* 승격만 |
-| **O5** | Phase C 여부·시점 | OPEN | 본 문서 범위 밖 |
-| **O6** | 상세 수식·module tree 축약 깊이 | OPEN | Domain/Arch 세션에서 |
-
-### 11.2 Phase A → Master traceability
+### 9.1 Phase A → Master traceability
 
 | Phase A | Master 절 |
 |---|---|
 | A1 | §2.1 |
-| A2 / D1 | §4.1, §5, §10.2 |
+| A2 / D1 | §4.1, §5, §8.5 |
 | A3 | §3.2 |
 | A4 | §3.3 |
 | A5 | §5 |
-| A6 | §1.1, §6 |
-| A7 | §2.4, §8, §9.3 |
-| A8 | §7 |
-| A9 | §10.1 |
-| A10 / D2 | §4.1, §5.2, §10.3 |
+| A6 | §1.2 |
+| A7 | §2.4, §7, §8.3 |
+| A8 | §6 |
+| A9 | §8.4 |
+| A10 / D2 | §4.1, §5.3, §8.5 |
 | A11 | §3.5 |
-| O1–O6 | §4.4, §11.1 |
+| O1–O6 | §4.4 |
 
-### 11.3 의도적으로 Master에 넣지 않은 것
-
-- Domain 수식·필드 표 전문
-- Architecture module/package 트리
-- implementation phase 본문 재작성
-- C-17 상세 모델·활성화 조건 수치
-- compute를 Lambda(또는 ECS)로 **확정**하는 문장
-- multi-version 입력 운영 체계
-- 새 실험 수치·제품 확정
-
----
-
-## 12. 다음 액션
+### 9.2 다음 액션
 
 1. ~~Master `REVIEW`~~ → **APPROVED** (2026-07-31)
 2. ~~Domain `REVIEW`~~ → **APPROVED** (`docs/2026-07-31-domain-design.md`, 2026-07-31)
-3. **다음:** Architecture (`docs/YYYY-MM-DD-architecture-design.md`)
-4. **(선택)** Phase C — 구 문서 권위·링크 정리
+3. **다음:** Architecture 검수 (`docs/2026-07-31-architecture-design.md`, status **REVIEW**)
+4. **(선택)** Phase C — 구 문서 권위·링크 정리 (O5)
 
 ---
 
-*문서 끝. Phase B Master 초안. 규범 입력: `docs/2026-07-30-design-interview-phase-a.md`.*
+*문서 끝. Master Design `APPROVED` (v1.1 내용 보존 재정비). 규범 입력: `docs/2026-07-30-design-interview-phase-a.md`.*

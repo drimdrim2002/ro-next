@@ -1,7 +1,7 @@
 ---
 title: RPDPTW Domain Design
 status: APPROVED
-version: 1.1
+version: 1.2
 date: 2026-07-31
 approved_date: 2026-07-31
 owner: design
@@ -22,6 +22,10 @@ inheritance:
   policy: >
     pair·정규화·travel·전파·평가·결과 등 상세 의미는 상속 후보에서 재구성.
     multi-version 입력 스키마 전제·compute=Lambda 단정은 배제(D1·D2).
+editorial:
+  v1.2: >
+    2026-07-31 이후 수시 갱신으로 쌓인 중복·교차 서술을 정리.
+    규범(MUST/GATED/OPEN)과 사실 내용 변경 없음. 권위 위치 일원화 + 교차참조.
 out_of_scope:
   - Architecture module/package/runtime 본문
   - implementation phases 재작성·코드 구현
@@ -32,17 +36,46 @@ out_of_scope:
 
 # RPDPTW Domain Design
 
+## 목차
+
+| Part | 절 | 내용 |
+|---|---|---|
+| **A. 거버넌스** | [§1](#1-문서-지위권위경계) | 지위·경계·용어 규칙·목표 한 줄 |
+| **B. 핵심 계약** | [§2](#2-핵심-용어invariant-불변조건) · [§3](#3-처리-흐름-domain-관점) | 용어집·invariant·전체 파이프라인 |
+| **C. 입력·문제** | [§4](#4-fixed-input-contract-고정-입력-계약-d1) – [§7](#7-immutable-solver-model--snapshot-풀이-모델문제-고정본) | 정본 입력·정규화·travel·snapshot |
+| **D. 해·물리·평가** | [§8](#8-solution-state--bank--mutation-해-상태바구니변경) – [§10](#10-evaluation--profile--objective-평가설정목표-a11) | 해 상태·전파·profile/score |
+| **E. 탐색** | [§11](#11-alns-baseline-기본-탐색-domain) · [§12](#12-hybrid--route-pool--mip--c-17-gated) | ALNS · C-17 GATED hybrid |
+| **F. 발행** | [§13](#13-verification--finalization--result-검증마무리결과-domain) | verifier 2단 · publishable result |
+| **G. 부록** | [§14](#14-오류종료-개요) – [§19](#19-다음-액션) | 오류·acceptance·OPEN·추적·요약 |
+
+**중복 읽기 안내.** 같은 규칙이 여러 절에 보이면 **아래 권위 위치**를 본다. 다른 절은 적용 맥락·예시만 둔다.
+
+| 개념 | 권위 위치 (정의·MUST) | 적용·예시 |
+|---|---|---|
+| pair / route–bank XOR / `servicePattern` / load 부호 | **§2.2–2.4** | §8.1–8.2, §9.2, §11.2 |
+| snapshot 이후 불변 | **§2.5 + §7.2** | §8 머리말 |
+| 정식 점수·cache·근사·verifier 경계 | **§2.6** | §8.3, §10.6, §11.4, §13 |
+| `reqDate` | **§4.3** | §5.2, §9.1–9.2 |
+| `adapter` / D1 정본 | **§4.1, §4.6** | §3 파이프라인 |
+| TrialDraft / SearchSnapshot 이름 | **§8.4–8.5** | §11.3 |
+| C-17 · hybrid config | **§12** | §3, §16 |
+
+---
+
+# Part A — 거버넌스
+
 ## 1. 문서 지위·권위·경계
 
 | 항목 | 내용 |
 |---|---|
 | **지위** | Domain — 값·수식·normalization·travel·propagation·evaluation·**solution/search**·**verification/result** 의 **정확한 의미**와 acceptance 방향 |
 | **status** | **`APPROVED`** (2026-07-31). 다음: Architecture |
+| **version** | **1.2** (editorial restructure; 규범 불변) |
 | **규범 입력 (MUST)** | `docs/2026-07-30-design-interview-phase-a.md` |
 | **상위 설계** | `docs/2026-07-30-master-design.md` (`APPROVED`) |
 | **비권위 상속 후보** | `docs/2026-07-26-domain-design.md` 등 |
 
-### 1.0 Domain 이 다루는 범위 (의도 명시)
+### 1.1 Domain 범위 · 문서 경계 (A6)
 
 **이 문서는 input domain 만 다루는 문서가 아니다.** (Master A6·Phase A)
 
@@ -55,23 +88,20 @@ out_of_scope:
 | hybrid 개념·GATED 경계 (C-17) | MIP 제품 라이선스·production ON |
 | verifier·발행 result 의미 | wire JSON 최종 schema 승인(O2) |
 
-인터뷰 초반에 §4 입력·§7–10 을 깊게 보강하다 보니 §11–13 이 상대적으로 짧아 보였을 수 있다.  
-**의도상 공백이 아니라 서술 밀도 차이**이며, §11–13 도 solution/search/result domain 으로 **동등하게 의미를 적는다.**
-
-### 1.1 용어 표기 규칙 (인터뷰 확정)
-
-- 주요 개념: **`English term (쉬운 한국어)`**  
-  예: `immutable solve snapshot (풀이용 문제 고정본)`
-- 식별자·enum·필드명: 영어 유지 (`Request`, `C-17`, `reqDate`)
-- 같은 용어를 문서 전체에서 이 규칙을 따른다.
-
-### 1.2 문서 경계 (A6)
-
 | 문서 | 역할 |
 |---|---|
 | **Master** | 목표·gate (관문)·e2e 개요·결정 등록부 |
 | **Domain (본 문서)** | 의미·단위·invariant (불변조건)·acceptance 방향 |
 | **Architecture** | module/package/port/runtime 배치. Domain 의미를 바꾸지 않음 |
+
+서술 밀도는 절마다 다를 수 있다. §11–13 도 solution/search/result domain 으로 **동등하게 의미를 적는다** (의도적 공백이 아님).
+
+### 1.2 용어 표기 규칙
+
+- 주요 개념: **`English term (쉬운 한국어)`**  
+  예: `immutable solve snapshot (풀이용 문제 고정본)`
+- 식별자·enum·필드명: 영어 유지 (`Request`, `C-17`, `reqDate`)
+- 문서 전체에서 동일 규칙.
 
 ### 1.3 규범어
 
@@ -99,7 +129,11 @@ out_of_scope:
 
 ---
 
+# Part B — 핵심 계약
+
 ## 2. 핵심 용어·invariant (불변조건)
+
+> 이 절은 **전 문서의 불변조건 권위 위치**다. 이후 절은 여기 규칙을 재정의하지 않고 적용한다.
 
 ### 2.1 용어집
 
@@ -123,7 +157,7 @@ out_of_scope:
 | **`adapter`** (형식 변환기) | 외부/운영 스펙 → 정본 | 두 번째 공식 스펙 |
 | **hard constraint** (필수 제약) | 깨지면 불가 | soft / penalty |
 | **authoritative evaluation** (정식 평가) | 수락·비교에 쓰는 정답 계산 | approximate ranking |
-| **metric** (중립 지표) | 해/route 에서 잰 **측정값** (좋/나쁨 해석 전). §10.3.1 | score / 근사 순위 |
+| **metric** (중립 지표) | 해/route 에서 잰 **측정값** (좋/나쁨 해석 전). §10.3 | score / 근사 순위 |
 | **score** (점수 성분) | profile 이 순위에 쓰는 항 | metric 자체 |
 | **approximate ranking** (근사 순위) | 후보 줄이기용 힌트 점수 | 정식 점수·metric |
 | **cache** (캐시·증분 결과) | 빠른 재사용 값 | 근사 힌트와 다름 |
@@ -183,9 +217,9 @@ PICKUP_DELIVERY delivery visit   → load 감소
 - 탐색은 **solution candidate (해 후보)** — route, bank, 배정 — 만 변경.
 - 문제 정의·`prepared travel`·`bound profile` 의미를 탐색이 고치지 않음.
 
-상세·혼동 방지: **§7.2**.
+상세·혼동 방지·생명주기: **§7.2**.
 
-### 2.6 정식 점수·cache·근사·검증 (인터뷰 확정) — MUST
+### 2.6 정식 점수·cache·근사·검증 — MUST
 
 | 구분 | 규칙 |
 |---|---|
@@ -208,7 +242,8 @@ result-integrity verifier (결과 묶음 검증)
 publishable result
 ```
 
-규모 참고: route ~30 × 방문 ~20+ 에서 끝 1~2회 전체 검증은 보통 **병목 아님** (병목은 탐색).
+규모 참고: route ~30 × 방문 ~20+ 에서 끝 1~2회 전체 검증은 보통 **병목 아님** (병목은 탐색).  
+verifier 상세: **§13**.
 
 ---
 
@@ -245,6 +280,8 @@ publishable result
 Architecture 배치: DEFERRED.
 
 ---
+
+# Part C — 입력·문제 쪽
 
 ## 4. fixed input contract (고정 입력 계약) (D1)
 
@@ -289,11 +326,12 @@ objective preset (목표 프리셋; 생략 시 profile 기본)
 | **추후 가능** | (2) plan depot 목록 선택 · (3) 본격 multi-depot |
 | **추후** | 현재 필수 아님 |
 
-wire 이름·optional 깊이: **O2 OPEN**. 본 절은 의미 목록 (공개 JSON schema 승인 아님).
+wire 이름·optional 깊이: **O2 OPEN**. 본 절은 의미 목록 (공개 JSON schema 승인 아님).  
+차량 필드 상세: **§4.4**. 차고·trip 규칙: **§4.5**.
 
 ### 4.3 `Request` / item
 
-**`servicePattern` only** (`kind` 없음).
+**`servicePattern` only** (`kind` 없음). 패턴 정의: **§2.4**.
 
 | `servicePattern` | route 방문 | 시간 입력 |
 |---|---|---|
@@ -330,7 +368,7 @@ serviceStartTime <= reqDate
 // serviceEndTime 은 이 조건에 넣지 않음 (인터뷰 정정)
 ```
 
-**`reqDate` (고객 요청 시각) — 인터뷰 교정**
+**`reqDate` (고객 요청 시각) — 권위 정의**
 
 | 항목 | 규범 |
 |---|---|
@@ -373,8 +411,7 @@ startDepot (출발 차고)
 ### 4.5 Depot · trip · terminal (차고·운행 형태)
 
 - depot 여러 개 가능.
-- **start depot** 있음. **endDepot optional** (start ≠ end 허용).
-- end 없음 → 마지막 고객 종료 등.
+- **start depot** 있음. **endDepot optional** (start ≠ end 허용). end 없음 → 마지막 고객 종료 등.
 - multi-trip: 현재 비범위. `multiRotation != 0` (non-oneway) → `UNSUPPORTED_INPUT` (기존 유지·미재심).
 - `depot.taskTime` → 시간 전파 미적용. 회차 간은 `depot.duration` (최초 출발·마지막 복귀 미적용).
 - trips 와 end 동시 지정 우선순위: **O2 OPEN**.
@@ -425,8 +462,8 @@ normalizedTime = origin 기준 초
 - Plan `[planStart, planEnd)`. window open/close inclusive.
 - `serviceStartTime = max(arrival, openTime)` 등 (기존 유지·미재심).  
   `serviceEndTime = serviceStartTime + serviceTime` (동일 방문).
-- `reqDate` 제약: 방문마다 **`serviceStartTime <= reqDate`** 만 (§4.3). `serviceEndTime` 미사용.  
-  `PICKUP_DELIVERY` 는 **pickup·delivery 양쪽** 각각. 고객 요청 시각은 service start 의도.
+- `reqDate` 제약: **§4.3** (`serviceStartTime <= reqDate` 만; `serviceEndTime` 미사용).  
+  `PICKUP_DELIVERY` 는 pickup·delivery 양쪽 각각.
 - `waitInDepot` N/Y (기존 유지·미재심).
 
 ### 5.3 size · capability · zone
@@ -496,7 +533,7 @@ Key = **`LocationId` (장소 ID)** (`NodeId` 아님 — 거리표는 장소 기�
 
 ### 7.2 `immutable solve snapshot` (풀이용 문제 고정본) — MUST
 
-#### 7.2.1 한 줄 정의 (강조)
+#### 7.2.1 한 줄 정의
 
 > **`immutable solve snapshot` = 풀이 시작 직후에 *변경되지 않는* 문제 쪽 domain 들의 묶음(freeze bundle).**  
 > 해가 아니다. 탐색이 만지는 route / bank / 배정이 아니다.
@@ -571,13 +608,13 @@ MUST:
 
 ---
 
+# Part D — 해·물리·평가
+
 ## 8. solution state · bank · mutation (해 상태·바구니·변경)
 
-> §7 `immutable solve snapshot` = **안 바뀌는 문제 묶음** (일감 정의·거리표·profile…).  
-> §8 = **바뀌는 해 상태** (누가 어떤 순서로 다니고, 뭐가 아직 안 넣었는지).  
-> 둘 다 “snapshot”이 들어가도 **다른 것**이다.
-
----
+> §7 `immutable solve snapshot` = **안 바뀌는 문제 묶음**.  
+> §8 = **바뀌는 해 상태**. 둘 다 “snapshot”이 들어가도 **다른 것**이다.  
+> pair / XOR / `servicePattern` 정의는 **§2.2–2.4**.
 
 ### 8.0 한 장 그림 + 구체 예
 
@@ -613,8 +650,6 @@ SearchRequestBank = { R1 }   // R1 만 바구니에
 
 ALNS 한 스텝 = “이런 해 상태를 **조금 바꿔** 더 좋은 해를 찾아보기”.
 
----
-
 ### 8.1 한 route 가 “괜찮다”는 것 — stable route invariant — MUST
 
 **Route (한 대 경로)** = 특정 `VehicleId` 하나에 묶인 **방문 순서**.
@@ -623,9 +658,9 @@ ALNS 한 스텝 = “이런 해 상태를 **조금 바꿔** 더 좋은 해를 �
 |---|---|
 | 차량 정확히 하나 | 이 목록은 V1 것. V1+V2 섞인 한 route 없음 |
 | start / optional end | V1 은 차고A에서 출발. endDepot 있으면 마지막에 그 차고 |
-| `servicePattern` | R1 은 배송 방문만 경로에 있음 (픽업 가짜 방문 없음) |
-| pair 완전·같은 차 | R2 픽업·배송이 **둘 다 V1** 에 있고, **픽업이 배송보다 앞** |
-| load | 모든 구간에서 0 ≤ load ≤ capacity. DELIVERY_ONLY 는 출발 시 initial load 에 포함 |
+| `servicePattern` | R1 은 배송 방문만 경로에 있음 (픽업 가짜 방문 없음) — **§2.4** |
+| pair 완전·같은 차 | R2 픽업·배송이 **둘 다 V1** 에 있고, **픽업이 배송보다 앞** — **§2.2** |
+| load | 모든 구간에서 0 ≤ load ≤ capacity. DELIVERY_ONLY 는 출발 시 initial load 에 포함 — **§2.4** |
 | 이동 | `prepared travel` 만 사용 (좌표 즉석 계산 금지) |
 | 시간·자원 hard | 시간창·근무시간·maxStop 등 깨면 이 경로는 불가 |
 | 중간 차고 재방문 | 지금 범위에서 금지 |
@@ -636,10 +671,8 @@ ALNS 한 스텝 = “이런 해 상태를 **조금 바꿔** 더 좋은 해를 �
 나쁜 예 1: R2 pickup 은 V1, R2 delivery 는 V2     → cross-vehicle pair
 나쁜 예 2: 경로에 R2 delivery 만 있고 pickup 없음 → partial pair
 나쁜 예 3: R2 배송이 픽업보다 앞                 → precedence 위반
-나쁜 예 4: R1 이 V1 경로에도 있고 bank 에도 있음 → route–bank XOR 위반
+나쁜 예 4: R1 이 V1 경로에도 있고 bank 에도 있음 → route–bank XOR 위반 (§2.3)
 ```
-
----
 
 ### 8.2 `SearchRequestBank` (탐색 중 미배정 바구니) — MUST
 
@@ -649,7 +682,7 @@ ALNS 한 스텝 = “이런 해 상태를 **조금 바꿔** 더 좋은 해를 �
 | **저장하는 것** | ID 만 (들어 있나 / 없나) |
 | **저장하지 않는 것** | 실패 사유, 마지막 삽입 에러 메시지, 최종 고객용 UNASSIGNED 코드, 비용 |
 
-**XOR 규칙 (같은 순간)**
+XOR 정의: **§2.3**. 적용 요약:
 
 ```text
 R 가 어떤 route 소유  →  bank 에 없음
@@ -657,10 +690,10 @@ R 가 bank 에 있음     →  어떤 route 도 소유하지 않음
 둘 다 또는 둘 다 아님 → defect
 ```
 
-**구체**
+**시점 예**
 
 ```text
-시점 A:  bank = { R1, R2 }     // 둘 다 미배정, 경로 비움 가능
+시점 A:  bank = { R1, R2 }     // 둘 다 미배정
 시점 B:  V1 이 R2 만 운행      // bank = { R1 }
 시점 C:  V1 이 R1·R2 모두      // bank = { }
 ```
@@ -673,15 +706,11 @@ SearchRequestBank     = 탐색 중 “아직 안 넣음”
 ```
 
 bank 내용을 그대로 고객 결과의 UNASSIGNED 로 복사하는 것은 **금지**.  
-(탐색 끝 bank → finalization·verifier 를 거쳐야 함.)
-
----
+(탐색 끝 bank → finalization·verifier 를 거쳐야 함 — **§13**.)
 
 ### 8.3 source of truth vs derived (진실 vs 파생) — MUST
 
-해 상태를 두 층으로 나눈다.
-
-#### Source of truth (SoT, 진실 — 이게 바뀌면 해가 바뀐 것)
+#### Source of truth (SoT — 이게 바뀌면 해가 바뀐 것)
 
 | SoT | 구체 예 |
 |---|---|
@@ -701,17 +730,15 @@ bank 내용을 그대로 고객 결과의 UNASSIGNED 로 복사하는 것은 **�
 
 **규칙**
 
-1. SoT 를 바꾸면 (예: R1 을 경로에서 빼 bank 로) → 관련 derived **무효화** 후 다시 계산.  
-2. **같은 SoT** 인데 cache 점수 ≠ 처음부터 다시 계산한 점수 → **bug**.  
-3. approximate ranking (근사 순위) 은 derived 정식 점수가 **아님** (후보 줄이기용).
+1. SoT 를 바꾸면 → 관련 derived **무효화** 후 다시 계산.  
+2. **같은 SoT** 인데 cache 점수 ≠ 처음부터 다시 계산한 점수 → **bug** (**§2.6**).  
+3. approximate ranking 은 derived 정식 점수가 **아님**.
 
 ```text
 예: V1 경로에서 R1 제거
   SoT:  순서에서 R1배 삭제, bank 에 R1 추가
   Derived:  옛 “총거리 50” cache 를 그대로 쓰면 안 됨 → 재계산
 ```
-
----
 
 ### 8.4 mutation 과 COW trial (변경·복사 후 시도) — 기존 유지·미재심
 
@@ -743,12 +770,10 @@ bank 내용을 그대로 고객 결과의 UNASSIGNED 로 복사하는 것은 **�
 | **`TrialDraft`** | 시도 중 임시 해 | 아니오 | current 를 직접 덮지 않음 |
 | **`CompletedTrial`** | 평가까지 끝난 시도 | 아직 | accept/reject 대기 |
 | **`SearchSnapshot`** | 탐색에서 확정된 해 | **예** | routes+bank+평가 지문 등 |
-| **`VerifiedSolution`** | 독립 검증 통과 해 | **예** | 발행 직전 단계 (§13) |
+| **`VerifiedSolution`** | 독립 검증 통과 해 | **예** | 발행 직전 단계 (**§13**) |
 
 - `current` / `stageBest` / `solveBest` 는 **서로 다른** 확정 해 스냅샷일 수 있음. 한 객체를 공유 alias 하지 않음.  
 - apply/undo 로 한 경로를 뜯어고치는 방식은 **기본 경로 아님** (COW 가 기본, 기존 유지·미재심).
-
----
 
 ### 8.5 상태 이름 정리 (한눈에)
 
@@ -764,8 +789,6 @@ VerifiedSolution             검증된 해
         │ result-integrity PASS
 publishable result           고객/연동에 내보내는 결과
 ```
-
----
 
 ### 8.6 §8 체크리스트 (구현·리뷰용)
 
@@ -795,8 +818,6 @@ publishable result           고객/연동에 내보내는 결과
 
 §8 의 **derived** 를 채우는 대표 엔진이 propagation 이다.
 
----
-
 ### 9.1 한 방문에서 하는 일 (루프)
 
 각 고객 방문(및 end depot 이 있으면 마지막 복귀)마다 대략:
@@ -805,8 +826,8 @@ publishable result           고객/연동에 내보내는 결과
 1. 이전 출발 시각 + prepared travel → 이번 장소 arrival (도착)
 2. openTime 전이면 대기 → serviceStartTime = max(arrival, openTime)
 3. serviceEndTime = serviceStartTime + serviceTime
-4. (있으면) reqDate: **serviceStartTime ≤ reqDate** (`serviceEndTime` 조건 없음)
-5. load 갱신 (픽업 +, 배송 −)
+4. (있으면) reqDate: serviceStartTime ≤ reqDate   // §4.3; serviceEndTime 조건 없음
+5. load 갱신 (픽업 +, 배송 −)                     // 부호 규칙 §2.4
 6. 용량·시간창·근무시간 등 hard 검사
 7. 다음 구간으로 departure = serviceEndTime (정책에 따라)
 ```
@@ -814,8 +835,6 @@ publishable result           고객/연동에 내보내는 결과
 **전체 route:** start depot 상태 → 방문1 → 방문2 → … → (optional end depot).
 
 중간에 “내일 이어서 운전” 식 pause/resume 분할은 금지 (work window 는 arc 전체가 한 window 에 들어가야 함 — §5.2).
-
----
 
 ### 9.2 구체 숫자 예
 
@@ -845,23 +864,11 @@ travel: 차고→픽 40분, 픽→R1배 50분, R1배→R2배 20분
 | 서비스 14분 | serviceEnd 13:14 | 배송 후 **10** |
 | reqDate 15:00 | **13:00 ≤ 15:00** → **통과** (`serviceEnd` 는 조건 아님) | |
 
-실패 예 (같은 규칙): serviceStart 가 **16:00** 이고 reqDate 가 **15:00** 이면  
-`16:00 ≤ 15:00` 이 거짓 → **실패** (서비스 시작이 고객 요청 시각보다 늦음).
+실패 예: serviceStart 가 **16:00** 이고 reqDate 가 **15:00** 이면  
+`16:00 ≤ 15:00` 이 거짓 → **실패**.
 
-propagation 은 “이 순서면 통과/실패”를 **사실로 알려 줄 뿐**, 점수로 덮지 않는다.
-
-**load 규칙 요약**
-
-```text
-출발 initialLoad = Σ (경로에 배정된 DELIVERY_ONLY demand)
-PICKUP_DELIVERY pickup visit   → +demand
-PICKUP_DELIVERY delivery visit → −demand
-DELIVERY_ONLY delivery visit   → −demand
-모든 prefix: 0 ≤ load ≤ capacity
-최종 load = 0
-```
-
----
+propagation 은 “이 순서면 통과/실패”를 **사실로 알려 줄 뿐**, 점수로 덮지 않는다.  
+load 부호·final load=0: **§2.4**. 모든 prefix: `0 ≤ load ≤ capacity`.
 
 ### 9.3 기록하는 값 (policy-neutral facts)
 
@@ -878,7 +885,7 @@ DELIVERY_ONLY delivery visit   → −demand
 | `serviceTime` | 작업 시간 |
 | `interWorkWindowRestTime` | 근무창 사이 휴식 |
 | `routeOperationalTime` | 운행 관련 시간 합 |
-| `stopCount` | 정차 횟수 (규칙 아래) |
+| `stopCount` | 정차 횟수 (§9.4) |
 
 ```text
 routeOperationalTime
@@ -888,8 +895,6 @@ routeOperationalTime
 ```
 
 Verifier 가 같은 공식으로 **다시 합산**할 수 있어야 한다.
-
----
 
 ### 9.4 stopCount (정차 수)
 
@@ -902,8 +907,6 @@ Verifier 가 같은 공식으로 **다시 합산**할 수 있어야 한다.
 - 같은 장소 연속 방문이면 첫 진입만 증가하는 식 (기존 유지·미재심).  
 - vehicle `maxStopCnt` 와 전역 한도가 둘 다 있으면 `min`.
 
----
-
 ### 9.5 drive (주행)
 
 ```text
@@ -913,8 +916,6 @@ driveTime = Σ 실제 지난 U (second, vehicle-resolved)
 
 포함: depot→첫 고객, 고객→고객, end depot 있으면 마지막→depot.  
 제외: waiting, service, inter-work-window rest.
-
----
 
 ### 9.6 propagation 이 아닌 것
 
@@ -926,8 +927,6 @@ driveTime = Σ 실제 지난 U (second, vehicle-resolved)
 | “거의 괜찮으니 감점만” hard 통과 | 금지 |
 
 hard 위반 시: 이 순서의 route 는 **infeasible**. 점수로 상쇄하지 않음.
-
----
 
 ### 9.7 §8·§9·§10 연결
 
@@ -953,9 +952,7 @@ SoT: 방문 순서 (§8)
 | 도착·load·가능/불가 재료 | metric·constraint·score·비교 |
 | 고객 이름 없음 | 고객 차이는 **`profile`** 로만 |
 
----
-
-### 10.1 층 분리 — MUST (구체)
+### 10.1 층 분리 — MUST
 
 아래 층을 **섞지 않는다**.
 
@@ -990,8 +987,6 @@ profile 이 “미배정 수가 최우선(적을수록 좋음)” 이면
 hard 로 미배정을 막지 않는 한, B 도 “가능 해” 일 수 있음
 ```
 
----
-
 ### 10.2 `profile` (고객별 규칙·점수 묶음) — MUST (A11)
 
 | 구분 | 쉬운 말 |
@@ -1023,8 +1018,6 @@ profile 쪽
   ✅ 고객A preset / 고객B preset
 ```
 
----
-
 ### 10.3 metric · constraint · score · comparator
 
 | 용어 | 쉬운 말 | 예 |
@@ -1035,13 +1028,8 @@ profile 쪽
 | **comparator** | 두 해 순위 | 사전식(lexicographic): 1순위 같으면 2순위… |
 | **objective** | 무엇을 최적화할지 스키마 | 위 성분 순서·정의 |
 
-#### 10.3.1 metric 이 여기서 의미하는 것 (보강)
-
-**metric = 해(또는 route)에서 재 수 있는 숫자(측정값)** 이지,  
-아직 **점수·승패가 아니다.**
-
 ```text
-metric  = 측정값 (사실·집계)     예: “미배정 2건”, “총거리 85km”
+metric  = 측정값 (사실·집계)       예: “미배정 2건”, “총거리 85km”
 score   = profile 이 순위에 쓰는 값  예: “미배정 2라서 이 해가 더 나쁨”
 ```
 
@@ -1055,7 +1043,7 @@ score   = profile 이 순위에 쓰는 값  예: “미배정 2라서 이 해가
 
 - metric 에 “용차 싫음”, “VIP 고객” 같은 **선호**를 넣지 않음 → score / profile 쪽.
 - 같은 metric 목록을 두고 profile 마다 **무엇을 score 로 쓸지** 만 달라질 수 있음.
-- approximate ranking (shortlist 힌트) 은 metric/정식 score 가 **아님**.
+- approximate ranking (shortlist 힌트) 은 metric/정식 score 가 **아님** (**§2.6**).
 
 **metric 예 (이름 예시)**
 
@@ -1076,7 +1064,7 @@ score   = profile 이 순위에 쓰는 값  예: “미배정 2라서 이 해가
 | shortlist 근사 점수 | approximate ranking |
 | reqDate·시간창 raw 입력 | snapshot 입력 사실 (metric 재료일 수는 있음) |
 
-**비유:** propagation = 경기 기록 → metric = 통계(점유율·슈팅) → score/comparator = 리그 승점 규칙(profile 마다 다름).
+**비유:** propagation = 경기 기록 → metric = 통계 → score/comparator = 리그 승점 규칙(profile 마다 다름).
 
 ```text
 예: 동일 metric
@@ -1099,20 +1087,12 @@ profile “거리만”         → 다른 승패 가능
 ```
 
 ```text
-해 A: (0, 0, …)
-해 B: (0, 1, …)
-→ 2순위에서 A 승
-
-해 C: (1, 0, …)
-해 A: (0, 5, …)
-→ 1순위에서 A 승 (C 는 필수 미배정 있음)
+해 A: (0, 0, …)   vs  해 B: (0, 1, …)  → 2순위에서 A 승
+해 C: (1, 0, …)   vs  해 A: (0, 5, …)  → 1순위에서 A 승
 ```
 
-고정 `1:100` 가중치나 Big-M 으로 순위를 **한 숫자로 뭉개지 않음** (기존 방향·미재심).
-
+고정 `1:100` 가중치나 Big-M 으로 순위를 **한 숫자로 뭉개지 않음** (기존 방향·미재심).  
 **소유 optional:** `vhclOwnTyp` 없는 차량·profile 이면 LEASE/DIRECT 비용 dimension 을 **안 씀**.
-
----
 
 ### 10.4 Win PoC comparator (예시 — 풀이 objective 와 별개)
 
@@ -1127,16 +1107,13 @@ unassigned request count
 
 고객 일상 solve objective 와 **동일하다고 가정하지 않음**.
 
----
-
 ### 10.5 initial portfolio (초기 해 묶음)
 
 **지위: 예시 / OPEN — 구현 MUST 아님** (인터뷰 정정)
 
 - 파이프라인에 “여러 초기 해를 만든 뒤 ALNS 로 이어 간다”는 **단계 개념**만 유지.
-- 아래에 적힌 개수·growth 이름·vehicle order 조합은 **설명용 예**일 뿐,  
-  **반드시 그렇게 구현한다는 뜻이 아니다.**
-- 구체 개수, 생성 휴리스틱, phase-1/2 step 수, worker 수 등은 **확정하지 않음** (OPEN).  
+- 개수·growth 이름·vehicle order 조합은 **설명용 예**일 뿐 구현 MUST 아님.
+- 구체 개수, 생성 휴리스틱, phase-1/2 step 수, worker 수 등은 **OPEN**.  
   hidden official default 로 문서가 채우지 않음.
 
 **예시로만 보는 과거 서술 (비규범)**
@@ -1151,17 +1128,15 @@ unassigned request count
 - 초기 해든 ALNS 든 **pair 단위**·hard·bound comparator 정합.
 - approximate ranking 으로 최종 승자·발행 결정 금지.
 
----
-
 ### 10.6 approximate ranking 과 §10
+
+정식/근사 경계: **§2.6**. 요약:
 
 | | shortlist 근사 | §10 정식 |
 |---|---|---|
 | 목적 | 후보 줄이기 | 수락·비교·발행 |
 | hard 통과 보장 | 없음 | hard 깨면 불가 |
 | cache = full | 해당 없음 (다른 식) | 같아야 함 |
-
----
 
 ### 10.7 §10 체크리스트
 
@@ -1175,10 +1150,12 @@ unassigned request count
 
 ---
 
+# Part E — 탐색
+
 ## 11. ALNS baseline (기본 탐색 domain)
 
 > **Search / operator domain.** 입력이 아님.  
-> §7 문제 고정본 위에서 §8 해를 반복 변형하는 **의미**를 적는다.  
+> §7 문제 고정본 위에서 §8 해를 반복 변형하는 **의미**.  
 > operator 목록·step 수치·난수 시드는 **OPEN/예시** 가능 (확정 MUST 아님).
 
 ### 11.0 한 줄
@@ -1214,10 +1191,10 @@ ALNS = **빼고(destroy) · 넣고(repair) · 받을지 말지(acceptance)** 를
 | | 의미 | MUST |
 |---|---|---|
 | **Destroy** | 어떤 `RequestId` 들을 경로에서 빼 **제안** | **pair 단위**. pickup 만 빼기 금지 |
-| **적용 후** | 해당 Request 는 모든 route 에서 사라지고 `SearchRequestBank` 에 **정확히 한 번** | XOR |
+| **적용 후** | 해당 Request 는 모든 route 에서 사라지고 `SearchRequestBank` 에 **정확히 한 번** | XOR (§2.3) |
 | **Repair** | bank 의 request 를 다시 경로에 넣기 | pair 삽입 (PICKUP_DELIVERY 는 두 위치, 픽업 선행) |
 | **`NEW_ROUTE`** | 새 경로 시작 | 실제 미사용 `VehicleId` 소비 (가짜 type count 금지) |
-| **`DELIVERY_ONLY`** | 삽입 시 배송 위치만 route 방문 | 가짜 픽업 visit 금지 |
+| **`DELIVERY_ONLY`** | 삽입 시 배송 위치만 route 방문 | 가짜 픽업 visit 금지 (§2.4) |
 
 **Repair 결과 구분 (의미)**
 
@@ -1230,19 +1207,21 @@ ALNS = **빼고(destroy) · 넣고(repair) · 받을지 말지(acceptance)** 를
 
 ### 11.3 안정 해 vs 임시
 
+상태 이름·COW 규칙: **§8.4–8.5**. 요약:
+
 | 이름 | domain 역할 |
 |---|---|
 | `TrialDraft` | step 안 임시 해. current 를 덮지 않음 |
 | `CompletedTrial` | 구조+정식 평가 끝. 수락 대기 |
-| `SearchSnapshot` | 탐색 **확정** 해 (routes+bank+평가 지문) |
+| `SearchSnapshot` | 탐색 **확정** 해 |
 | `current` / `stageBest` / `solveBest` | 서로 **다른** snapshot 가능. alias 공유 금지 |
 
 비교: raw cost 한 줄이 아니라 **bound comparator** (§10).
 
-### 11.4 approximate ranking (다시)
+### 11.4 approximate ranking
 
-- shortlist 전용. hard·수락·발행 권위 없음.  
-- 놓친 좋은 삽입 = 탐색 품질 이슈. pair 구조 결함 아님.
+**§2.6 · §10.6.** shortlist 전용. hard·수락·발행 권위 없음.  
+놓친 좋은 삽입 = 탐색 품질 이슈. pair 구조 결함 아님.
 
 ### 11.5 ALNS 가 Domain 에서 안 박는 것
 
@@ -1364,10 +1343,13 @@ ALNS 를 없애고 MIP 만 쓰는 것이 **기본이 아님**.
 
 ---
 
+# Part F — 발행
+
 ## 13. verification · finalization · result (검증·마무리·결과 domain)
 
 > **Publication domain.** 입력이 아님.  
-> “탐색이 끝난 후보”를 **믿어도 되는 발행 결과**로 바꾸는 의미.
+> “탐색이 끝난 후보”를 **믿어도 되는 발행 결과**로 바꾸는 의미.  
+> 정식/cache/근사 경계의 일반 규칙: **§2.6**.
 
 ### 13.0 왜 탐색과 분리하나
 
@@ -1377,7 +1359,7 @@ ALNS 를 없애고 MIP 만 쓰는 것이 **기본이 아님**.
 | 수백만 trial | 후보 해 **소수** (보통 최종 1개 경로) |
 | “더 좋은 draft” | “밖에 내보낼 권위” |
 
-매 trial independent verifier 가 **아님** (§2.6).
+매 trial independent verifier 가 **아님**.
 
 ### 13.1 independent verifier 2단 — MUST
 
@@ -1436,7 +1418,7 @@ provenance
 
 placeholder 엔진 출력 ≠ publishable.
 
-### 13.4 규모·속도 (재확인)
+### 13.4 규모·속도
 
 - route ~30 × 방문 20+ 에서 ① 1회 전체 재검증은 보통 **병목 아님**.  
 - 병목은 ALNS trial 쪽.
@@ -1452,6 +1434,8 @@ placeholder 엔진 출력 ≠ publishable.
 | 5 | cache 점수와 ① 재계산 불일치? | bug · FAIL |
 
 ---
+
+# Part G — 부록
 
 ## 14. 오류·종료 (개요)
 
@@ -1493,7 +1477,7 @@ placeholder 엔진 출력 ≠ publishable.
 | ID | 내용 |
 |---|---|
 | O1 | Lambda vs ECS — Domain 비소유 |
-| O2 | wire 이름·optional 깊이; trips vs end 우선순위 |
+| O2 | wire 이름·optional 깊이; trips vs end 우선순위; hybrid flag 이름·스키마 |
 | O3 | adapter 공식 이름·범위 |
 | O5 | Phase C |
 | Depot 확대 | (2)(3) 추후 가능 |
@@ -1507,13 +1491,13 @@ Architecture: module DAG, port, compute 후보, verifier 프로세스 격리 등
 | 출처 | Domain |
 |---|---|
 | A1 | §1.5, §13 |
-| A3–A5 | §2–3 |
+| A3–A5 | §2–3, §7–8 |
 | A8 C-17 | §12 |
 | A9 | §1.4 |
 | A11 | §10 |
 | D1 | §4–5 |
 | D2 | §16 (비소유) |
-| 인터뷰 2026-07-31 | …; reqDate serviceStart≤reqDate; hybrid **config on/off·default off·C-17 우회 금지**; … |
+| 인터뷰 2026-07-31 | reqDate `serviceStart≤reqDate`; hybrid **config on/off·default off·C-17 우회 금지**; 용어 English-first; … |
 
 ### 의도적 미포함
 
@@ -1528,7 +1512,7 @@ Architecture 배치; C-17 수치; multi-version 입력; 새 실험 수치; imple
 3. **`immutable solve snapshot`** = **이후 변경 없는 문제 쪽 domain 묶음**. 해(`SearchSnapshot` 등)와 혼동 금지. 봉인 후 해만 변경.  
 4. **동일 해 정식 점수:** cache 유무 무관하게 동일 (아니면 bug). 근사 순위는 shortlist only.  
 5. **verifier:** 발행 전 해 전체 + payload.  
-6. **ALNS baseline; C-17 GATED.**  
+6. **ALNS baseline; C-17 GATED** (config on/off 가능, default off, 승인 우회 금지).  
 7. **용어:** `English (쉬운 한국어)` 전 문서.
 
 ---
@@ -1536,9 +1520,10 @@ Architecture 배치; C-17 수치; multi-version 입력; 새 실험 수치; imple
 ## 19. 다음 액션
 
 1. ~~Domain `REVIEW` 검수~~ → **`APPROVED`** (2026-07-31, deep-interview 반영)  
-2. **다음:** `docs/YYYY-MM-DD-architecture-design.md` (Domain·Master 규범)  
+2. **다음:** `docs/YYYY-MM-DD-architecture-design.md` (Domain·Master 규범) — 현재 `docs/2026-07-31-architecture-design.md` (`REVIEW`)  
 3. (선택) Phase C — 구 문서 SUPERSEDED·링크  
+4. ~~Domain editorial restructure~~ → **v1.2** (규범 불변, 구조·중복 정리)
 
 ---
 
-*Phase B Domain **APPROVED**. 규범: Phase A + APPROVED Master + 2026-07-31 인터뷰 교정. 용어 스타일 v1.1.*
+*Phase B Domain **APPROVED** v1.2. 규범: Phase A + APPROVED Master + 2026-07-31 인터뷰 교정. 용어 스타일 English-first. editorial: 권위 위치 일원화.*
