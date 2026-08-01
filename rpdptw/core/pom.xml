@@ -5,19 +5,15 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.ronext</groupId>
-        <artifactId>ro-next</artifactId>
+        <groupId>com.ronext.rpdptw</groupId>
+        <artifactId>rpdptw</artifactId>
         <version>0.1.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <groupId>com.ronext.build</groupId>
-    <artifactId>build</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
-    <name>build</name>
-    <description>Parent pom for build helper modules</description>
-    <modules>
-        <module>test-fixtures</module>
-    </modules>
+    <artifactId>rpdptw-core</artifactId>
+    <packaging>jar</packaging>
+    <name>rpdptw-core</name>
+    <description>RPDPTW Core Module</description>
+
 </project>
