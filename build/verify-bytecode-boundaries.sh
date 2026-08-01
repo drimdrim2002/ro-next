@@ -24,6 +24,7 @@ fi
 FORBIDDEN_PACKAGES=(
     "com/google/cloud"
     "software/amazon/awssdk"
+    "com/azure"
     "com/google/ortools"
     "com/ronext/optimizer"
 )
@@ -41,7 +42,7 @@ for jar in $JAR_FILES; do
 
     if command -v jdeps &> /dev/null; then
         JDEPS_OUTPUT=$(jdeps -verbose:class -s "$jar" 2>/dev/null || true)
-        if echo "$JDEPS_OUTPUT" | grep -E "com\.google\.cloud|software\.amazon\.awssdk|com\.google\.ortools|com\.ronext\.optimizer" >/dev/null; then
+        if echo "$JDEPS_OUTPUT" | grep -E "com\.google\.cloud|software\.amazon|com\.azure|com\.google\.ortools|com\.ronext\.optimizer" >/dev/null; then
             echo "ERROR: Forbidden import found in $jar via jdeps"
             VIOLATIONS=$((VIOLATIONS + 1))
         fi

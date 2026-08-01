@@ -14,14 +14,20 @@ import java.util.stream.Stream;
 
 public class CorePuritySourceScanTest {
 
-    private Path getCoreSourceDir() {
+    private boolean isNegativeArchActive() {
+        return getClass().getClassLoader().getResource("com/ronext/rpdptw/core/negative/NegativeCorePurityTestFixture.class") != null;
+    }
+
+    private List<Path> getCoreSourceDirs() {
         Path cwd = Path.of(System.getProperty("user.dir")).toAbsolutePath();
         Path current = cwd;
         Path rpdptwCoreSrc = null;
+        Path buildArchRulesDir = null;
         while (current != null) {
             Path candidate = current.resolve("rpdptw").resolve("core").resolve("src").resolve("main").resolve("java");
             if (Files.exists(candidate) && Files.isDirectory(candidate)) {
                 rpdptwCoreSrc = candidate;
+                buildArchRulesDir = current.resolve("build").resolve("architecture-rules");
                 break;
             }
             current = current.getParent();
@@ -29,7 +35,15 @@ public class CorePuritySourceScanTest {
         if (rpdptwCoreSrc == null) {
             throw new IllegalStateException("Could not find rpdptw/core/src/main/java starting from " + cwd);
         }
-        return rpdptwCoreSrc;
+        List<Path> dirs = new ArrayList<>();
+        dirs.add(rpdptwCoreSrc);
+        if (isNegativeArchActive() && buildArchRulesDir != null) {
+            Path negativeFixturesSrc = buildArchRulesDir.resolve("src").resolve("negative-fixtures").resolve("java");
+            if (Files.exists(negativeFixturesSrc)) {
+                dirs.add(negativeFixturesSrc);
+            }
+        }
+        return dirs;
     }
 
     private String stripCommentsAndStrings(String code) {
@@ -110,7 +124,7 @@ public class CorePuritySourceScanTest {
 
     @Test
     void coreContainsNoProhibitedImpurePatterns() throws IOException {
-        Path coreSrcDir = getCoreSourceDir();
+        List<Path> coreSrcDirs = getCoreSourceDirs();
         List<String> violations = new ArrayList<>();
 
         Pattern nonFinalStaticPattern = Pattern.compile("^\\s*(?:@[A-Za-z0-9_]+(?:\\([^)]*\\))?\\s+)*(?:public|protected|private|package)?\\s*static\\s+(?!final\\b|class\\b|interface\\b|enum\\b|record\\b)[A-Za-z0-9_<>,\\[\\]\\s]+\\s+[A-Za-z0-9_]+\\s*(=|;)");
@@ -119,7 +133,8 @@ public class CorePuritySourceScanTest {
         Pattern clockSystemPattern = Pattern.compile("\\bClock\\s*\\.\\s*system[A-Za-z0-9_]*\\s*\\(");
         Pattern unseededRandomPattern = Pattern.compile("\\bnew\\s+(?:java\\.util\\.)?Random\\s*\\(\\s*\\)");
 
-        try (Stream<Path> stream = Files.walk(coreSrcDir)) {
+        for (Path coreSrcDir : coreSrcDirs) {
+            try (Stream<Path> stream = Files.walk(coreSrcDir)) {
             stream.filter(Files::isRegularFile)
                     .filter(p -> p.toString().endsWith(".java"))
                     .forEach(p -> {
@@ -169,6 +184,7 @@ public class CorePuritySourceScanTest {
                             throw new RuntimeException(e);
                         }
                     });
+            }
         }
 
         if (!violations.isEmpty()) {

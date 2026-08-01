@@ -36,16 +36,27 @@ public class RouteSelectionAbsenceTest {
         Assertions.assertFalse(Files.exists(rpdptwBackendsDir), "backends directory should not exist under rpdptw: " + rpdptwBackendsDir);
     }
 
+    private boolean isNegativeArchActive() {
+        return getClass().getClassLoader().getResource("com/ronext/rpdptw/architecture/negative/RouteSelectionOrtoolsCpsatBackend.class") != null;
+    }
+
     @Test
     void routeSelectionAndOrToolsNotReferencedInTargetModulesOrPoms() throws IOException {
         Path rootDir = getRootDir();
         List<String> violations = new ArrayList<>();
 
-        List<Path> pathsToScan = List.of(
+        List<Path> pathsToScan = new ArrayList<>(List.of(
                 rootDir.resolve("rpdptw"),
                 rootDir.resolve("pom.xml"),
                 rootDir.resolve("build").resolve("architecture-rules").resolve("pom.xml")
-        );
+        ));
+
+        if (isNegativeArchActive()) {
+            Path negativeFixturesDir = rootDir.resolve("build").resolve("architecture-rules").resolve("src").resolve("negative-fixtures");
+            if (Files.exists(negativeFixturesDir)) {
+                pathsToScan.add(negativeFixturesDir);
+            }
+        }
 
         List<String> forbiddenTokens = List.of(
                 "route-selection-ortools-cpsat",
@@ -63,6 +74,9 @@ public class RouteSelectionAbsenceTest {
                 try (Stream<Path> stream = Files.walk(target)) {
                     stream.filter(Files::isRegularFile)
                             .filter(p -> {
+                                if (p.toString().contains("/target/") || p.toString().contains("\\target\\")) {
+                                    return false;
+                                }
                                 String name = p.getFileName().toString();
                                 return name.endsWith(".java") || name.equals("pom.xml") || name.endsWith(".xml");
                             })

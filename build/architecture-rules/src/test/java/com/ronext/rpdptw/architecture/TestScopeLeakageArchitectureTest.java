@@ -29,21 +29,41 @@ public class TestScopeLeakageArchitectureTest {
         throw new IllegalStateException("Could not find rpdptw directory starting from " + cwd);
     }
 
+    private boolean isNegativeArchActive() {
+        return getClass().getClassLoader().getResource("com/ronext/rpdptw/architecture/negative/NegativeTestScopeLeakageTestFixture.class") != null;
+    }
+
     @Test
     void productionModulesDoNotDependOnTestFixturesInCompileOrRuntimeScope() throws Exception {
         Path rpdptwDir = getRpdptwDir();
         List<String> modules = List.of("core", "solver", "verification", "application");
+        List<Path> pomFiles = new ArrayList<>();
+        for (String module : modules) {
+            Path pomFile = rpdptwDir.resolve(module).resolve("pom.xml");
+            if (Files.exists(pomFile)) {
+                pomFiles.add(pomFile);
+            }
+        }
+
+        if (isNegativeArchActive()) {
+            Path cwd = Path.of(System.getProperty("user.dir")).toAbsolutePath();
+            Path current = cwd;
+            while (current != null) {
+                Path negativePom = current.resolve("build").resolve("architecture-rules").resolve("src").resolve("negative-fixtures").resolve("java").resolve("com").resolve("ronext").resolve("rpdptw").resolve("architecture").resolve("negative").resolve("pom-leakage-fixture.xml");
+                if (Files.exists(negativePom)) {
+                    pomFiles.add(negativePom);
+                    break;
+                }
+                current = current.getParent();
+            }
+        }
+
         List<String> violations = new ArrayList<>();
 
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(false);
 
-        for (String module : modules) {
-            Path pomFile = rpdptwDir.resolve(module).resolve("pom.xml");
-            if (!Files.exists(pomFile)) {
-                continue;
-            }
-
+        for (Path pomFile : pomFiles) {
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.parse(pomFile.toFile());
 
@@ -63,7 +83,7 @@ public class TestScopeLeakageArchitectureTest {
                 if ("rpdptw-test-fixtures".equals(artifactId)) {
                     String scope = getDirectChildText(depElement, "scope");
                     if (!"test".equals(scope) && !"provided".equals(scope)) {
-                        violations.add("Module 'rpdptw-" + module + "' includes rpdptw-test-fixtures in non-test scope ('" + (scope.isEmpty() ? "compile" : scope) + "'): " + pomFile);
+                        violations.add("POM file '" + pomFile.getFileName() + "' includes rpdptw-test-fixtures in non-test scope ('" + (scope.isEmpty() ? "compile" : scope) + "'): " + pomFile);
                     }
                 }
             }

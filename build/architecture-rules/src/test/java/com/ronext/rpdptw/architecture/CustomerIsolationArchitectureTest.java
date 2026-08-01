@@ -40,14 +40,20 @@ public class CustomerIsolationArchitectureTest {
         return tokens;
     }
 
+    private boolean isNegativeArchActive() {
+        return getClass().getClassLoader().getResource("com/ronext/rpdptw/core/negative/NegativeCustomerIsolationTestFixture.class") != null;
+    }
+
     private List<Path> getGenericModuleSourceDirs() {
         Path cwd = Path.of(System.getProperty("user.dir")).toAbsolutePath();
         Path current = cwd;
         Path rpdptwDir = null;
+        Path buildArchRulesDir = null;
         while (current != null) {
             Path candidate = current.resolve("rpdptw");
             if (Files.exists(candidate) && Files.isDirectory(candidate)) {
                 rpdptwDir = candidate;
+                buildArchRulesDir = current.resolve("build").resolve("architecture-rules");
                 break;
             }
             current = current.getParent();
@@ -62,6 +68,12 @@ public class CustomerIsolationArchitectureTest {
             Path srcMainJava = rpdptwDir.resolve(module).resolve("src").resolve("main").resolve("java");
             if (Files.exists(srcMainJava)) {
                 sourceDirs.add(srcMainJava);
+            }
+        }
+        if (isNegativeArchActive() && buildArchRulesDir != null) {
+            Path negativeFixturesSrc = buildArchRulesDir.resolve("src").resolve("negative-fixtures").resolve("java");
+            if (Files.exists(negativeFixturesSrc)) {
+                sourceDirs.add(negativeFixturesSrc);
             }
         }
         return sourceDirs;
