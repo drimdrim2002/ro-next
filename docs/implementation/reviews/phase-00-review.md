@@ -1,19 +1,22 @@
 # Phase 00 독립 리뷰 — Build와 architecture 뼈대
 
 ```yaml
-review_status: COMPLETE
+review_status: REBASE_PENDING_REREVIEW
 review_type: DOCUMENT_CONTRACT_AND_REPOSITORY_INVENTORY
 phase: "00"
 reviewed_document: ../phases/phase-00-build-architecture-skeleton.md
 review_date: 2026-07-28
 review_timezone: Asia/Seoul
-verdict: PASS_WITH_RESIDUAL_BLOCKERS
+verdict: REBASE_PENDING_REREVIEW
+prior_verdict: PASS_WITH_RESIDUAL_BLOCKERS
+prior_verdict_note: historical document-contract review (2026-07-28); does not certify post-APPROVED semantic rebase
 implementation_authorized: false
 implementation_status_observed: NOT_STARTED
 phase_acceptance_status_observed: PLANNED
 implementation_evidence_status_observed: NOT_PRODUCED
-source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
-phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
+source_authority: APPROVED_MASTER_DOMAIN_ARCHITECTURE_PLUS_USER_PHASE_MAP
+phase_c_note: path remap to docs/deprecated/*; 2026-08-01 phase body semantic rebase pending independent re-review
+semantic_rebase_date: 2026-08-01
 finding_count:
   critical: 0
   high: 3
@@ -23,6 +26,21 @@ finding_count:
 direct_correction_count: 6
 residual_blocker_count: 3
 ```
+
+## 0. Semantic rebase note (2026-08-01)
+
+Phase 00 상세 본문이 APPROVED Master/Domain/Architecture + plan §4.1 / Phase 00 overlay에
+**의미 rebase**되었다. 본 review 파일의 2026-07-28 finding 본문은 **대규모 재작성하지 않았다.**
+
+| 항목 | 상태 |
+|---|---|
+| `prior_verdict` | `PASS_WITH_RESIDUAL_BLOCKERS` — historical only |
+| 현재 verdict | **`REBASE_PENDING_REREVIEW`** |
+| 구현 authorization | **false** (변경 없음) |
+| 구현 / acceptance / evidence | `NOT_STARTED` / `PLANNED` / `NOT_PRODUCED` |
+| 독립 re-review 필요 축 | 권위(Final→APPROVED), module tree(`profiles/*`), compute O1 OPEN, §4.6 forbid, C-17 proposed-only |
+
+이 노트는 옛 PASS를 새 본문에 승격하지 않는다. `E-P00-*`·ACCEPTED·win_poc 주장 금지.
 
 ## 1. Scope와 review 원칙
 
@@ -53,10 +71,11 @@ whole-file reciprocal fingerprint를 새로 만들지 않았다.
 | [Phase 01](../phases/phase-01-canonical-input-normalization.md) | 전체, 특히 metadata와 §1, §4~§5, §8~§15 | Entry evidence, adapter/core/test-fixture ownership과 stale inventory |
 | [SUPERSEDED dated Master](../../deprecated/2026-07-26-master-design.md) | §1.3~§1.5, §4, §10~§12 | Historical regression cross-check only |
 
-Phase 00 metadata에 기록된 여덟 source SHA-256은 2026-07-28 review checkout의 bytes와
-모두 일치했다. Dated Final Domain/Architecture의 과거 `Q-INFRA-01 DEFERRED`,
-`25/1/2` 표기는 canonical Master/register의 `RESOLVED`, `26/1/1`로 대체하는 Phase 00
-conflict rule이 맞다. `docs/codex/*`는 authority로 사용하지 않았다.
+Phase 00 metadata SHA-256은 2026-07-28 review 당시 checkout과 일치했다 (historical).
+2026-08-01 semantic rebase 이후 live authority는 APPROVED Master/Domain/Architecture이며,
+Master에 없는 `Q-INFRA-01 RESOLVED` / Lambda-only 단정은 **폐기**한다 (D2/O1 OPEN).
+아래 §2 표의 Final Domain/Architecture·question register 대조는 **prior review 기록**이며
+재리뷰 시 current APPROVED 절로 다시 대조해야 한다. `docs/codex/*`는 authority로 사용하지 않았다.
 
 ## 3. 실제 repository inventory
 
