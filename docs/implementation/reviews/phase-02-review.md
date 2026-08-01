@@ -1,14 +1,19 @@
 # Phase 02 independent review
 
 ```yaml
-document_status: FINAL
+document_status: REBASE_PENDING_REREVIEW
+review_status: REBASE_PENDING_REREVIEW
 review_type: INDEPENDENT_PHASE_DOCUMENT_REVIEW
 phase: "02"
 phase_name: prepared-travel-immutable-problem
+display_term: immutable solve snapshot
+filename_policy: KEEP_DISPLAY_SEPARATION
 review_date: 2026-07-28
 reviewer_role: independent Phase 02 reviewer
-source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
-phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
+source_authority: APPROVED_MASTER_DOMAIN_ARCHITECTURE_PLUS_USER_PHASE_MAP
+phase_c_note: path remap to docs/deprecated/*; 2026-08-01 phase body semantic rebase pending independent re-review
+semantic_rebase_date: 2026-08-01
+semantic_rebase_step_d_confirmed: 2026-08-01
 reviewed_target: docs/implementation/phases/phase-02-prepared-travel-immutable-problem.md
 review_scope:
   allowed_changes:
@@ -17,22 +22,48 @@ review_scope:
   adjacent_phases: READ_ONLY
   java_maven_inventory: READ_ONLY
 baseline_commit: 3424277c9c74f8151a83be056a07dd4659331beb
-document_verdict: PASS_AFTER_APPLIED_CORRECTIONS
+document_verdict: REBASE_PENDING_REREVIEW
+prior_verdict: PASS_AFTER_APPLIED_CORRECTIONS
+prior_verdict_note: historical document-contract review (2026-07-28); does not certify post-APPROVED semantic rebase
 phase_acceptance_verdict: BLOCKED_NOT_IMPLEMENTED
 implementation_evidence_verdict: NOT_AVAILABLE
+implementation_authorized: false
 scheduler_status_change: NOT_AUTHORIZED
 whole_file_reciprocal_hashes: NOT_USED
-verification_status: PASS
-severity_summary:
+verification_status: HISTORICAL_PASS_PRE_REBASE
+finding_summary:
   HIGH: 3
   MEDIUM: 3
   LOW: 0
   PASS: 4
 ```
 
-이 review의 `PASS_AFTER_APPLIED_CORRECTIONS`는 Phase 02 상세 문서가 현재 authority와 phase boundary에 맞는 실행 계획이 되었다는 뜻이다. 실제 Java 구현, test, evidence bundle과 accepted predecessor가 없으므로 Phase 02 자체는 `ACCEPTED`, `READY` 또는 `IN_PROGRESS`가 아니며 현재 verdict는 `BLOCKED_NOT_IMPLEMENTED`다.
+## 0. Semantic rebase note (2026-08-01)
+
+Phase 02 상세 본문이 APPROVED Master/Domain/Architecture + plan Phase 02 overlay +
+**2026-08-01 QnA decisions S-02-01..10**에 **의미 rebase**되었다.
+본 review 파일의 2026-07-28 finding 본문은 **대규모 재작성하지 않았다.**
+
+| 항목 | 상태 |
+|---|---|
+| `prior_verdict` | `PASS_AFTER_APPLIED_CORRECTIONS` — historical only |
+| 현재 verdict | **`REBASE_PENDING_REREVIEW`** |
+| 구현 authorization | **false** (변경 없음) |
+| 구현 / acceptance / evidence | `NOT_STARTED` / `BLOCKED_NOT_IMPLEMENTED` / `NOT_AVAILABLE` |
+| 독립 re-review 필요 축 | live authority only (S-02-01 B); Q-INFRA 제거 (S-02-02); display term `immutable solve snapshot` + ProblemInstance ≠ full freeze (S-02-03/06); live M/D/A links (S-02-04); Domain `NodeId`/`LocationId` display (S-02-05); missing-only 45 wording (S-02-09); no-lazy 보존 (S-02-10); filename KEEP |
+
+이 노트는 옛 문서 계약 PASS를 새 본문에 승격하지 않는다. `E-P02-*`·ACCEPTED·win_poc 주장 금지.
+
+**2026-07-28 당시** verdict는 **`PASS_AFTER_APPLIED_CORRECTIONS`**였다 (아래 finding 본문 보존).
+**2026-08-01 semantic rebase 이후** 현재 document/review verdict는 **`REBASE_PENDING_REREVIEW`**다.
+실제 Java 구현, test, evidence bundle과 accepted predecessor가 없으므로 Phase 02 자체는 `ACCEPTED`, `READY` 또는 `IN_PROGRESS`가 아니며 phase acceptance verdict는 **`BLOCKED_NOT_IMPLEMENTED`**를 유지한다.
 
 ## 1. Sources reviewed
+
+> **Historical note (2026-07-28 review):** 아래 source 표·finding 본문은 **rebase 전** 문서 계약 검토 기록이다.
+> 2026-08-01 이후 live 권위는 target Phase 02 §1 (APPROVED M/D/A only)을 따른다.
+> 이 절의 Final Domain/Architecture·question register·integrated design 인용은 **historical provenance**이며
+> 새 본문을 재승인하지 않는다.
 
 Whole-file reciprocal hash는 만들지 않았다. Source commit과 아래 exact section/path를 대조했다.
 

@@ -38,11 +38,11 @@ current_design:
 
 문서가 작성되었다고 코드 Phase가 완료된 것은 아니며, 코드나 test 파일이 존재한다고 Phase exit gate가 승인된 것도 아니다. Authority alignment도 구현 acceptance를 승격하지 않는다.
 
-**Live design authority (2026-07-31):**  
+**Live design authority (2026-07-31):**
 [Master v1.1](../master-design.md) · [Domain v1.2](../domain-design.md) ·
-[Architecture v3.4](../architecture-design.md) — 모두 `APPROVED`.  
-규범 입력: [Phase A](../deprecated/2026-07-30-design-interview-phase-a.md).  
-`phases/*` 본문 의미 rebase: **Phase 00·01 적용** (2026-08-01); 02–14 미실시 —
+[Architecture v3.4](../architecture-design.md) — 모두 `APPROVED`.
+규범 입력: [Phase A](../deprecated/2026-07-30-design-interview-phase-a.md).
+`phases/*` 본문 의미 rebase: **Phase 00·01·02 적용** (2026-08-01); 03–14 미실시 —
 충돌 시 APPROVED 우선 ([README §3](README.md#3-source-authority)).
 
 2026-07-28 사용자 결정으로 `distanceMatrix.D`는 meter, `distanceMatrix.U`는 second
@@ -167,7 +167,7 @@ Phase 12/13처럼 조건부 branch의 applicability가 총괄 스케줄러에 �
 |---:|---|---|---|---|---|
 | 00 | [actual](phases/phase-00-build-architecture-skeleton.md) | `019fa5d9-6162-7a81-9d47-fefabdb5b0c9` | `019fa63a-c730-72e1-bc94-44e62b9c6f58` | prior `PASS_WITH_RESIDUAL_BLOCKERS` → **`REBASE_PENDING_REREVIEW`** (2026-08-01 body rebase) | `NOT_STARTED / NOT_ACCEPTED` |
 | 01 | [actual](phases/phase-01-canonical-input-normalization.md) | `019fa5d9-aacd-7633-8226-5d1d524d7bb0` | `019fa63b-03b8-71a2-ac1a-cbe0889c1870` | prior `ACCEPTED_WITH_APPLIED_CORRECTIONS` → **`REBASE_PENDING_REREVIEW`** (2026-08-01 body rebase) | `NOT_STARTED / NOT_ACCEPTED` |
-| 02 | [actual](phases/phase-02-prepared-travel-immutable-problem.md) | `019fa5d9-e82e-7231-a51e-1329ac4bb3b3` | `019fa63b-3acb-7fd1-a652-c0ed2f63c671` | `PASS_AFTER_APPLIED_CORRECTIONS` | `BLOCKED_BY_ENTRY_GATES / NOT_ACCEPTED` |
+| 02 | [actual](phases/phase-02-prepared-travel-immutable-problem.md) | `019fa5d9-e82e-7231-a51e-1329ac4bb3b3` | `019fa63b-3acb-7fd1-a652-c0ed2f63c671` | prior `PASS_AFTER_APPLIED_CORRECTIONS` → **`REBASE_PENDING_REREVIEW`** (2026-08-01 body rebase) | `NOT_STARTED / BLOCKED_BY_ENTRY_GATES / NOT_ACCEPTED` |
 | 03 | [actual](phases/phase-03-route-propagation-evaluation-kernel.md) | `019fa5da-2584-7d52-b2d1-024c59f24bc0` | `019fa63b-6d96-70a2-b153-26c7d140aa5a` | `CHANGES_REQUIRED` | `BLOCKED / NOT_ACCEPTED` |
 | 04 | [actual](phases/phase-04-capabilities-customer-profiles.md) | `019fa5ec-6aa7-75f2-b131-5f6813b7201b` | `019fa655-1511-7023-aa44-41d343b36945` | `CHANGES_REQUIRED` | `NOT_STARTED / NOT_ACCEPTED` |
 | 05 | [actual](phases/phase-05-pair-insertion-initial-portfolio.md) | `019fa5ec-b8bb-78e1-9f97-b1c9ec7bf69f` | `019fa655-4d4d-7120-8909-74b55e5c83db` | `CHANGES_REQUIRED` | `BLOCKED / NOT_ACCEPTED` |
@@ -228,8 +228,8 @@ Phase B APPROVED (Master v1.1 / Domain v1.2 / Architecture v3.4) 및 Phase C 완
 | Traceability §15 | 깨진 Master anchors / deprecated | current Domain/Architecture 절 |
 | C-17 backend | Master 확정처럼 읽힘 | implementation proposed only |
 
-`phases/*` · `reviews/*` 본문 rebase: **Phase 00·01** 2026-08-01 semantic rebase 적용
-(implementation status / win_poc / ACCEPTED 승격 없음). Phase 02–14 본문은 미실시 — residual
+`phases/*` · `reviews/*` 본문 rebase: **Phase 00·01·02** 2026-08-01 semantic rebase 적용
+(implementation status / win_poc / ACCEPTED 승격 없음). Phase 03–14 본문은 미실시 — residual
 blocker (§8).
 
 2026-08-01 core 3 residual phrasing pass (registry/status 불변):
@@ -243,7 +243,7 @@ blocker (§8).
    slug `…-immutable-problem` 유지; 표시/계약 용어 = `immutable solve snapshot`.
    rename은 phase 본문 rebase와 같은 변경 단위에서만 예외 허용.
 6. 2026-08-01 **platform reframe:** target = AWS S3 + Step Functions + Lambda\|ECS;
-   tracked GCP path = legacy only (core docs + plan §3; phases 02–14 body rebase 미실시).
+   tracked GCP path = legacy only (core docs + plan §3; phase body rebase: 00–02 적용, 03–14 미실시).
 7. **2026-08-01 Phase 00 body rebase (interview-decided):** Q-INFRA/Lambda-only 제거;
    tree→`profiles/*` §4.2; authority→APPROVED M/D/A; review `REBASE_PENDING_REREVIEW`;
    구현 `NOT_STARTED` / win_poc `NOT_RUN` / `0/15 ACCEPTED` 유지.
@@ -251,6 +251,12 @@ blocker (§8).
    `adapters/input`; reqDate 요청 시각; servicePattern only; ownership absence;
    multi-zone; speed 45 policy at travel prep; review `REBASE_PENDING_REREVIEW`;
    구현 `NOT_STARTED` / win_poc `NOT_RUN` / ACCEPTED 승격 없음.
+9. **2026-08-01 Phase 02 body rebase (QnA S-02-01..10):** live authority only; Q-INFRA 제거;
+   display = `immutable solve snapshot` (slug KEEP); ProblemInstance ≠ full freeze;
+   Domain `NodeId`/`LocationId` display; profile seal ≠ Phase 02 alone; live M/D/A links;
+   missing-only 45; no-lazy preserved; review `REBASE_PENDING_REREVIEW`;
+   구현 `NOT_STARTED` / win_poc `NOT_RUN` / ACCEPTED 승격 없음.
+   **Step D 사용자 확정** (의미 rebase 문서 단위; 독립 re-review·구현 acceptance 아님).
 
 ### 6.2 Review 수정 요약
 

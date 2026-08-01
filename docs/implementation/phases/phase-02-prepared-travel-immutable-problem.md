@@ -1,22 +1,33 @@
-# Phase 02 — 이동 자료 준비와 immutable problem
+# Phase 02 — Prepared travel + immutable solve snapshot
 
 ```yaml
-document_status: REVIEWED_WITH_CORRECTIONS
-document_workflow_status: INDEPENDENT_REVIEWED_WITH_CORRECTIONS
+document_status: REBASE_APPLIED_PENDING_REREVIEW
+document_workflow_status: SEMANTIC_REBASE_APPLIED_PENDING_REREVIEW
 phase: "02"
 phase_name: prepared-travel-immutable-problem
+filename_policy: KEEP_DISPLAY_SEPARATION
+display_term: immutable solve snapshot
+canonical_path: docs/implementation/phases/phase-02-prepared-travel-immutable-problem.md
 phase_registry_status_observed: PLANNED
 phase_readiness_assessment: BLOCKED_BY_ENTRY_GATES
 implementation_status: NOT_STARTED
 implementation_completion_claim: NONE
-canonical_path: docs/implementation/phases/phase-02-prepared-travel-immutable-problem.md
+implementation_evidence_status: NOT_PRODUCED
+phase_acceptance_status: NOT_ACCEPTED
 baseline_date: 2026-07-28
 baseline_commit: 3424277c9c74f8151a83be056a07dd4659331beb
-scheduler_task_id: TBD
-source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
-phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
+semantic_rebase_date: 2026-08-01
+semantic_rebase_confirmed: 2026-08-01
+semantic_rebase_note: >
+  APPROVED Master/Domain/Architecture + plan Phase 02 overlay.
+  Decisions S-02-01..10 (user 2026-08-01 QnA). Step D user confirmed.
+  implementation status·win_poc·ACCEPTED 승격 없음. filename KEEP. display term = immutable solve snapshot.
+source_authority: APPROVED_MASTER_DOMAIN_ARCHITECTURE_PLUS_USER_PHASE_MAP
+phase_c_note: path remap to docs/deprecated/*; semantic rebase uses live authority only (no historical authority table)
 direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 direction_revision_status: ALNS_FIRST_GATE_OVERLAY_APPLIED_DOCUMENTATION_ONLY
+scheduler_task_id: TBD
+public_api_status: PROPOSED_NOT_APPROVED
 prerequisites:
   - Phase 00 ACCEPTED build/module/architecture skeleton
   - Phase 01 ACCEPTED canonical input and normalization artifacts
@@ -36,75 +47,128 @@ required_evidence:
   - E-P02-TRAVEL
   - E-P02-DENSE-ID
   - E-P02-PROBLEM
-historical_cross_check_only:
-  - docs/deprecated/2026-07-26-master-design.md
+source_fingerprints_sha256:
+  docs/deprecated/2026-07-30-design-interview-phase-a.md: cec96defaa6a3617a7504ea0aeb57e0a111c77dc44a7af9981096c70261868e5
+  docs/master-design.md: 765641c215cd512ca78eb5dfc943503bc8bdb278102a3c3103cf4935ff7f38be
+  docs/domain-design.md: 0d2509fd7d90cb460a6eeef1e8105fcf1154a8afae383b34bc4886088a8cd044
+  docs/architecture-design.md: 8f588a11a9f0648b58f94cb3ed8cf6e20819fd50fd09fcabaec3e794b7729818
+  docs/implementation/master-realization-plan.md: a864ecfb95306c94eb50f27aae43f43152e9167315b9fa8cfdad4e9cfa65a306
+  docs/implementation/README.md: 63bc51f42e025d7aee7c81c2d28fec7cb016f781a924727b4c0fb8993e221518
+source_sections:
+  phase_a_interview:
+    - "A1–A12, D1·D2, O1"
+  master:
+    - "§3.1 immutable solve snapshot, §3.4 snapshot·탐색·verifier, §5 pipeline"
+  domain:
+    - "§6 travel preparation, §7.1 NodeId/LocationId, §7.2 immutable solve snapshot"
+  architecture:
+    - "core travel placement; provider SDK not in core"
+  realization_plan:
+    - "Phase 02 overlay, KEEP_DISPLAY_SEPARATION, missing-speed 45"
+  implementation_readme:
+    - "§5.1 KEEP_DISPLAY_SEPARATION"
+review:
+  document: ../reviews/phase-02-review.md
+  verdict: REBASE_PENDING_REREVIEW
+  prior_verdict: PASS_AFTER_APPLIED_CORRECTIONS
+  implementation_authorized: false
 ```
 
-이 문서는 **Phase 02 구현을 실행하기 위한 상세 계약**이지 구현 완료 보고가 아니다. 위 `document_status`와 `phase_registry_status_observed` 및 `implementation_status`는 서로 다른 상태다. `REVIEWED_WITH_CORRECTIONS`는 상세 문서 review 결과일 뿐 Phase 02가 `READY`, `IN_PROGRESS` 또는 `ACCEPTED`라는 뜻이 아니다.
+## 1. 문서 지위와 사용 규칙
 
-이 구현 문서 세트의 입력 권위는 **사용자 선언으로 고정**되었다. 원문 metadata의 `REVIEW`는 provenance로 보존하지만 문서 작성을 중단시키지 않는다. 반대로 Phase 02의 실제 entry/exit evidence와 독립 review도 생략하지 않는다. `OPEN — EXPERIMENT_REQUIRED`, `GATED`, `DEFERRED`와 아직 승인되지 않은 수치/API는 본문에서 명시적으로 보존한다.
+이 문서는 **Phase 02 구현을 위한 상세 계약**이지 구현 완료 보고가 아니다.
+`document_status` / workflow 상태와 `implementation_status` / `phase_acceptance_status` /
+`implementation_evidence_status`를 섞지 않는다.
 
-## 1. 권위 입력과 해석 기준
+이 문서 세트의 **live 권위**는 사용자 선언(15 Phase map · 2026-08-01 Phase 02 QnA S-02-01..10 포함),
+[Phase A 인터뷰](../../deprecated/2026-07-30-design-interview-phase-a.md),
+[Master](../../master-design.md) / [Domain](../../domain-design.md) / [Architecture](../../architecture-design.md) **APPROVED**,
+그리고 이미 정렬된 implementation core 3([plan](../master-realization-plan.md), [README](../README.md), progress)이다.
 
-### 1.1 직접 대조한 source와 적용 section
+`document_status: REBASE_APPLIED_PENDING_REREVIEW`는 **의미 rebase 반영 + 독립 re-review 대기**이며
+Phase 02 구현, exit evidence, acceptance, win_poc 성공을 뜻하지 않는다.
+prior document-contract verdict `PASS_AFTER_APPLIED_CORRECTIONS`(2026-07-28)는 historical이며
+새 본문을 자동 승인하지 않는다.
 
-| Source | 이 Phase가 소비한 section | 적용 |
+**Filename policy (`KEEP_DISPLAY_SEPARATION`, [README §5.1](../README.md#51-filename-slug-vs-domain-공식-용어-정책--keep--표시-분리)):**
+path slug `phase-02-prepared-travel-immutable-problem.md` 는 **안정 식별자**다.
+**표시·계약 용어**는 Domain 공식 **`immutable solve snapshot` (풀이용 문제 고정본)** 이다.
+slug의 `immutable-problem` 이 Domain 의미를 정의하지 않는다.
+
+다음 충돌 규칙을 적용한다.
+
+1. 사용자 선언과 APPROVED Master(A1–A12, D1·D2, O1 등)가 우선한다.
+2. travel·snapshot 의미는 [Domain](../../domain-design.md) APPROVED **§6 · §7**을 따른다.
+3. core에 provider/cloud SDK를 두지 않는 배치는 [Architecture](../../architecture-design.md) core 경계와 plan Phase 02를 따른다.
+4. 2026-07-26 Final Domain/Architecture/Master, deprecated open-questions·integrated design,
+   `docs/codex/*` 는 **live 권위가 아니다.** 본 문서 authority 표에 올리지 않는다.
+5. Master에 없는 `Q-INFRA-01 RESOLVED` / “compute = Lambda only” 귀속을 현 상태로 승격하지 않는다.
+   Phase 02 core에는 provider SDK를 넣지 않는다. worker/API compute(**Lambda | ECS**)는 **O1 OPEN**이며
+   이 Phase 비범위다 (단정 금지).
+6. `OPEN — EXPERIMENT_REQUIRED`, `GATED`, `DEFERRED`와 미승인 수치/public API는 본문에서 보존한다.
+
+### 1.1 권위 source baseline (live only)
+
+Fingerprint는 **2026-08-01 semantic rebase** 시 읽은 live authority bytes의 SHA-256이다.
+원문이 바뀌면 구현 착수 전에 이 표를 다시 계산하고 영향 section을 review한다.
+
+| 역할 | 입력과 SHA-256 | Phase 02에서 직접 적용하는 section |
 |---|---|---|
-| [Canonical Master](../../master-design.md) | §1.5, §2.3~§2.4, §3.2~§3.3, §4.1~§4.6, §5~§8, §14.1, §15.3, §16~§17 | 권위·비범위·`C-06`, `C-10~C-14`, `P-03`, travel/immutable problem/verification gate |
-| [Final Domain Design](../../deprecated/2026-07-26-domain-design.md) | §1, §3~§7, §16~§18 | 정확한 입력 단위, travel 준비, immutable model, 오류·acceptance와 drift 확인 |
-| [Final Architecture Design](../../deprecated/2026-07-26-architecture-design.md) | §1~§2, §5.2~§5.6, §6 | Java 25/Maven module·package·artifact·검증 경계 |
-| [Integrated implementation design](../../deprecated/architecture-domain-implementation-design.md) | §1~§3, §5~§7, §19~§25, §27 | 15 Phase 배치, Phase 01/02/03 경계, provider SDK 격리, test/evidence |
-| [Question register](../../deprecated/master-design-open-questions.md) | §1~§4, 특히 `Q-MTX-01~03`, `Q-NUM-01~03`, `Q-INFRA-01`, `Q-BENCH-02`, `Q-VAR-01` | exact decision/status/owner/gate |
-| [Master Realization Plan](../master-realization-plan.md) | §1~§8, §9~§15, 특히 Phase 01~03 | current inventory, canonical Phase contract, evidence/DoD/traceability |
-| [Implementation README](../README.md) | §1~§7 | 사용자 고정 authority, filename, status와 planned-link 규칙 |
-| [SUPERSEDED Master](../../deprecated/2026-07-26-master-design.md) | metadata, §1, §6.1~§6.2, §10 | 누락·퇴행 여부만 historical cross-check |
-
-`docs/codex/*`는 역사 자료이므로 읽기 권위, 문장 복사 원본 또는 수정 대상으로 사용하지 않는다.
+| Phase A 인터뷰 | [design-interview-phase-a](../../deprecated/2026-07-30-design-interview-phase-a.md), `cec96defaa6a3617a7504ea0aeb57e0a111c77dc44a7af9981096c70261868e5` | A1–A12, D1·D2, O1 |
+| Canonical Master | [Master Design](../../master-design.md), `765641c215cd512ca78eb5dfc943503bc8bdb278102a3c3103cf4935ff7f38be` | §3.1 snapshot 용어, §3.4, §5 pipeline |
+| Approved Domain | [Domain Design](../../domain-design.md), `0d2509fd7d90cb460a6eeef1e8105fcf1154a8afae383b34bc4886088a8cd044` | §6 travel, §7.1 ID, §7.2 snapshot |
+| Approved Architecture | [Architecture Design](../../architecture-design.md), `8f588a11a9f0648b58f94cb3ed8cf6e20819fd50fd09fcabaec3e794b7729818` | core travel; no provider SDK in core |
+| 총괄 실행 계획 | [Master Realization Plan](../master-realization-plan.md), `a864ecfb95306c94eb50f27aae43f43152e9167315b9fa8cfdad4e9cfa65a306` | [Phase 02 overlay](../master-realization-plan.md#phase-02--prepared-travel--immutable-solve-snapshot) |
+| 구현 문서 지도 | [Implementation README](../README.md), `63bc51f42e025d7aee7c81c2d28fec7cb016f781a924727b4c0fb8993e221518` | §5.1 KEEP_DISPLAY_SEPARATION |
 
 ### 1.2 충돌과 drift 해소
 
 | Drift | Phase 02 판단 |
 |---|---|
-| Final Domain/Architecture 일부가 `Q-INFRA-01 DEFERRED`, 질문 상태 `25/1/2`로 남아 있음 | 최신 Canonical Master와 질문 등록부의 `Q-INFRA-01 RESOLVED`, `26/1/1`을 적용한다. Phase 02 core에는 여전히 provider SDK를 넣지 않는다. |
-| `PreparedTravel` 내부 표현과 구체 Java API는 `P-03`으로 미확정 | 본 문서의 type/file/signature는 **proposed internal candidate**다. 의미·검증 기준만 고정하며 public API로 승인하지 않는다. |
-| Great Circle 사용은 확정됐으나 Earth model, 함수 ID, library와 version은 미기재 | 값을 만들지 않는다. 승인된 `GreatCirclePolicyId/functionVersion`이 entry evidence로 제출될 때까지 missing-`D` 경로와 Phase acceptance를 막는다. |
-| Raw Win fixture에는 decimal `D/U`가 존재 | 원본은 non-compliant provenance/negative fixture로 유지한다. 사용자 승인 migration으로 생성된 `win_poc_case_floor.json`은 이 계획의 integer 실행 fixture이며 별도 digest/source identity로 소비한다. |
-| Registry는 Phase 02를 `PLANNED`로 기록 | 본 문서가 entry blocker를 상세화해도 authoritative registry를 직접 변경하지 않는다. 총괄 스케줄러만 상태를 전이한다. |
+| path slug `…-immutable-problem` vs Domain `immutable solve snapshot` | **KEEP** slug. 표시·계약 = snapshot. `ProblemInstance` = snapshot **구성 요소(문제 본체)** proposed 이름이며 freeze 묶음 전체가 아니다 ([Domain §7.2](../../domain-design.md#72-immutable-solve-snapshot-풀이용-문제-고정본-must)). |
+| bound profile 봉인 시점 | Domain snapshot 묶음에 profile 포함. **Phase 02**는 prepared travel + 문제 본체 쪽 freeze. **bound profile 최종 봉인**은 Phase 04와 정합 ([plan Phase 02](../master-realization-plan.md#phase-02--prepared-travel--immutable-solve-snapshot)). Phase 02 exit ≠ full snapshot seal 단독 완료. |
+| `PreparedTravel` 내부 표현·구체 Java API | **proposed internal candidate**. 의미·검증 기준만 고정. public API 승인 아님. |
+| Domain 공식 ID `NodeId` / `LocationId` vs 긴 proposed 타입명 | **표시·계약** = Domain `NodeId` / `LocationId` (접두어 Solver/Physical 쓰지 않음). 구현 타입 이름은 proposed이며 Domain 이름과 동의로 취급. |
+| Great Circle Earth model/function/version 미기재 | 값을 만들지 않음. 승인 record 전 missing-`D` green·Phase acceptance 차단. |
+| Raw Win fixture decimal `D/U` | non-compliant provenance/negative. `win_poc_case_floor.json` integer fixture는 plan-final local execution용이며 official production label 아님. |
+| Registry `PLANNED` | 본 문서가 entry blocker를 상세화해도 authoritative registry를 직접 변경하지 않음. |
 
-### 1.3 2026-07-28 실행 fixture authority
+### 1.3 실행 fixture authority (plan-final local)
 
-[win_poc_case_floor.json](../../../data/win_poc_case_floor.json)은 205,209개 directed
-matrix cell의 provided `D/U`가 모두 integer meter/second인 사용자 승인 실행
-fixture다. Phase 02는 raw decimal 값을 다시 읽거나 절삭하지 않고 이 파일의 exact
-bytes와 migration provenance를 Phase 01 handoff에 결합한다. Self arc `0/0`
-normalization, `M²` coverage, directed identity, duplicate/reference와 fingerprint
-검증은 그대로 적용한다.
+[win_poc_case_floor.json](../../../data/win_poc_case_floor.json)은 provided `D/U`가 integer meter/second인 사용자 승인 **plan-final local** fixture다.
+Phase 02는 raw decimal을 다시 읽거나 절삭하지 않는다. Self `0/0`, `M²` coverage, directed identity,
+duplicate/reference·fingerprint 검증은 그대로 적용한다.
 
-이 fixture의 존재는 이 계획의 최종 local execution input blocker를 해소하지만,
-Great Circle missing-`D` policy, `Q-BENCH-02` 수치 또는 AWS production authority를
-해소하지 않는다.
+이 fixture는 Great Circle missing-`D` 승인, official benchmark 수치, AWS production authority를 해소하지 않는다.
 
 ## 2. 목표, 범위와 비범위
 
 ### 2.1 목표
 
-Phase 01의 immutable `NormalizedInputArtifact`를 받아 다음 두 authority를 한 번의 실패 원자적 preparation으로 만든다.
+Phase 01의 immutable `NormalizedInputArtifact`를 받아, solve 전에 다음을 **한 번의 실패 원자적 preparation**으로 만든다.
 
-1. 모든 physical location directed pair와 모든 사용 vehicle의 travel time이 solve 전에 해소된 immutable `PreparedTravel`.
-2. Dense ID bijection, request/node/location/vehicle reference, Phase 01 normalized facts와 `PreparedTravel` identity를 결합한 immutable `ProblemInstance`.
+1. 모든 `LocationId` directed pair와 모든 사용 vehicle의 travel time이 해소된 immutable **`PreparedTravel`** (Domain §6).
+2. Dense ID bijection, request / `NodeId` / `LocationId` / vehicle reference, Phase 01 normalized facts와
+   `PreparedTravel` identity를 결합한 문제 **본체** 쪽 freeze — proposed 이름 **`ProblemInstance`**
+   ([Domain §7.2](../../domain-design.md#72-immutable-solve-snapshot-풀이용-문제-고정본-must): 본체 후보 ≠ **`immutable solve snapshot` 묶음 전체**).
 
-Phase 03의 route propagation은 raw `D/U`, coordinate, speed, provider response 또는 “비슷한 arc”를 보지 않고 이 두 artifact만으로 순수 계산을 시작할 수 있어야 한다.
+**전체 `immutable solve snapshot`** 은 문제 본체 + prepared travel + **(이후) bound profile** 등을 한 번에 봉인하는 논리 단위다.
+Phase 02는 그중 **travel 완성 + 문제 본체 쪽**을 담당한다. profile 최종 봉인은 Phase 04.
+Phase 02 exit만으로 “snapshot 전 항목 봉인 완료”를 주장하지 않는다.
+
+Phase 03 route propagation은 raw `D/U`, coordinate, speed, provider response 또는 “비슷한 arc”를 보지 않고
+`PreparedTravel` + 문제 본체 authority만으로 순수 계산을 시작할 수 있어야 한다 (lazy/reverse/symmetric fallback **금지**, Domain §6).
 
 ### 2.2 포함 범위
 
 - Phase 01 artifact의 schema/fingerprint/reference 검증
-- `RequestId`, `VehicleId`, `SolverNodeId`, `PhysicalLocationId`의 분리와 dense bijection
+- `RequestId`, `VehicleId`, `NodeId`, `LocationId` 분리와 dense bijection (Domain §7.1)
 - provided directed integer `D/U`의 typed 수용과 source provenance
 - self arc `0 meter/0 second` normalization
 - explicit policy에 따른 missing `D`/`U` 생성
 - 모든 `M²` directed distance와 모든 사용 vehicle의 resolved time coverage
 - deterministic canonical ordering, checked index/range/arithmetic
-- immutable `PreparedTravel` 및 `ProblemInstance` 생성
+- immutable `PreparedTravel` 및 문제 본체(`ProblemInstance` proposed) 생성
 - Phase 01의 단일 `NormalizedInputArtifact` source와 pure core preparation의 경계
 - whole-artifact cache의 허용 범위와 corruption 처리
 - semantic fingerprint, artifact digest, provenance와 lineage
@@ -113,21 +177,22 @@ Phase 03의 route propagation은 raw `D/U`, coordinate, speed, provider response
 ### 2.3 명시적 비범위
 
 - Route sequence의 load/time/window/rest/stop/resource propagation: [Phase 03](phase-03-route-propagation-evaluation-kernel.md)
-- Hard constraint, metric, score, objective, comparator 또는 customer profile binding
+- Hard constraint, metric, score, objective, comparator 또는 customer **profile binding** (Phase 04; full snapshot seal의 profile 축)
 - Insertion, initial portfolio, ALNS, cache/incremental route evaluation
 - Candidate/result verifier 구현. 다만 두 verifier가 소비할 authority contract와 corruption fixture 요구는 정의한다.
 - Application port/adapter, network/provider SDK client, credential, retry, rate limit, cloud distribution과 production provider 채택
 - Dynamic traffic, time-dependent matrix, geocoding, address 정제와 live refresh
-- Reverse arc 복사, 대칭 평균, 임의 provider fallback 또는 search 중 lazy generation
-- Official Win benchmark, `Q-BENCH-02` 수치와 production cutover
+- Reverse arc 복사, 대칭 평균, 임의 provider fallback 또는 search 중 **lazy** generation (**보존 MUST**, Domain §6)
+- Official Win benchmark, Phase 14 수치와 production cutover
 - Multi-trip/rotation, optional variants와 `C-17` route pool/MIP
 - Public wire schema와 public Java API 확정
+- worker/API compute 제품 선택(Lambda vs ECS; **O1 OPEN**)
 
 ## 3. Phase 결정과 불변조건
 
 ### 3.1 이 문서가 고정하는 의미
 
-1. Travel key는 solver node가 아니라 physical location identity다.
+1. Travel key는 `NodeId`가 아니라 **`LocationId`** 다 (Domain §6·§7.1).
 2. `A→B`와 `B→A`는 독립된 directed cell이다.
 3. Provided `D`는 directed integer meter, provided `U`는 vehicle-independent directed integer second다.
 4. Decimal `D/U`를 rounding/절삭해 수용하지 않는다.
@@ -135,9 +200,12 @@ Phase 03의 route propagation은 raw `D/U`, coordinate, speed, provider response
 6. 모든 self cell은 raw value와 무관하게 `0m/0s`다. 원래 값이 달랐다면 override 사실을 provenance에 남긴다.
 7. Missing `D`만 approved Great Circle 함수로 만들고 fractional meter에 `HALF_UP`을 한 번 적용한다.
 8. Missing `U`만 vehicle별 `CEILING(D_meter × 3.6 ÷ speed_km_h)`로 만든다.
-9. Speed가 **missing**일 때만 정확히 `45 km/h`를 사용한다. Present-invalid speed는 validation error다.
+9. Speed가 **missing**일 때만 정확히 `45 km/h`를 사용한다 (Domain §6 기존 유지; **전 차량 official default 아님**).
+   Present-valid speed는 그대로 쓴다. Present-invalid speed는 validation error이며 **45로 대체 금지**.
+   Phase 01은 absent speed에 45를 채우지 않는다 (정책 ref handoff만; 적용은 Phase 02+).
 10. Provided common `U`와 vehicle-resolved generated `U`는 source와 표현에서 구분한다.
 11. Solver, Phase 03, Phase 05와 Phase 07 verifier는 동일 prepared fingerprint를 소비한다.
+12. 공식 freeze 묶음 이름 = **`immutable solve snapshot`**. `ProblemInstance`는 문제 본체 쪽 proposed 이름이다 묶음 전체가 아니다.
 
 ### 3.2 불변조건
 
@@ -146,7 +214,7 @@ Phase 03의 route propagation은 raw `D/U`, coordinate, speed, provider response
 | `INV-P02-01` | Physical location 수가 `M`이면 directed distance cell은 정확히 `M²`개다. |
 | `INV-P02-02` | 사용 vehicle 수가 `V`이면 모든 `(vehicle, from, to)`가 하나의 resolved time을 갖는다. |
 | `INV-P02-03` | 모든 dense ID는 `0..N-1`의 hole 없는 범위이고 external↔dense round-trip이 bijection이다. |
-| `INV-P02-04` | Pickup, delivery와 terminal node가 같은 location을 가리켜도 `SolverNodeId` identity를 합치지 않는다. |
+| `INV-P02-04` | Pickup, delivery와 terminal이 같은 `LocationId`를 가리켜도 `NodeId` identity를 합치지 않는다 (Domain §7.1). |
 | `INV-P02-05` | 모든 request는 정확히 한 pickup node와 한 delivery node를 참조하고 dangling/cross-kind reference가 없다. |
 | `INV-P02-06` | Construction input, returned view와 artifact 사이에 mutable array/list/map alias가 없다. |
 | `INV-P02-07` | Invalid/incomplete Phase 01 source handoff, duplicate-conflict, unknown reference, overflow 또는 corruption이면 stable artifact를 한 개도 발행하지 않는다. |
@@ -154,7 +222,7 @@ Phase 03의 route propagation은 raw `D/U`, coordinate, speed, provider response
 | `INV-P02-09` | Source kind/policy/version 또는 resolved value가 다르면 relevant fingerprint가 달라진다. |
 | `INV-P02-10` | Runtime lookup은 total이다. Missing, reverse, symmetric, provider 또는 coordinate fallback branch가 없다. |
 | `INV-P02-11` | Artifact cache는 complete artifact의 성능 최적화일 뿐 authority가 아니며 cache hit/miss가 bytes/fingerprint를 바꾸지 않는다. |
-| `INV-P02-12` | `ProblemInstance`는 `PreparedTravelFingerprint`를 값으로 bind하고 mismatched object/reference를 거부한다. |
+| `INV-P02-12` | 문제 본체(`ProblemInstance` proposed)는 `PreparedTravelFingerprint`를 값으로 bind하고 mismatched object/reference를 거부한다. |
 
 ## 4. Entry gate와 사전 evidence 확인
 
@@ -162,8 +230,8 @@ Phase 03의 route propagation은 raw `D/U`, coordinate, speed, provider response
 
 | Gate | 필요한 evidence | 현재 확인 | 판정 |
 |---|---|---|---|
-| Phase 00 accepted | `E-P00-BUILD`, `E-P00-ARCH`, accepted review | 현재 checkout은 root 단일 POM이며 accepted evidence 없음 | `BLOCKED` |
-| Phase 01 accepted | `E-P01-NUMERIC`, `E-P01-TIME`, `E-P01-COMPAT`, `E-P01-ERROR`, accepted review | [Phase 01 상세](phase-01-canonical-input-normalization.md)은 actual document지만 registry `PLANNED`/implementation `NOT_STARTED`이고 artifact/evidence 없음 | `BLOCKED` |
+| Phase 00 accepted | `E-P00-BUILD`, `E-P00-ARCH`, accepted review | [Phase 00](phase-00-build-architecture-skeleton.md) document/review **`REBASE_PENDING_REREVIEW`**; implementation `NOT_STARTED`, evidence 없음 | `BLOCKED` |
+| Phase 01 accepted | `E-P01-*`, accepted review | [Phase 01](phase-01-canonical-input-normalization.md) document/review **`REBASE_PENDING_REREVIEW`**; implementation `NOT_STARTED`, artifact/evidence 없음 | `BLOCKED` |
 | Great Circle approval | 함수 ID/version, Earth model/constant, coordinate validation, deterministic precision, reference vectors, approval record | Authority 문서는 “approved function/version”만 요구하고 구체값은 제공하지 않음 | `BLOCKED` |
 | Typed source policy | allowed source kinds, provided/generated priority, declared sparse-input meaning, source identity와 no-fallback rule review | 본 문서가 proposed contract를 제공하지만 승인 record 없음 | `BLOCKED` |
 | Integer travel evidence scope | Plan-final execution fixture와 official production fixture authority를 분리 | `win_poc_case_floor.json` bytes/digest/FLOOR provenance 검증 완료; official production label은 별도 gate | Plan execution input `READY`; official/production benchmark는 별도 `BLOCKED` |
@@ -208,7 +276,7 @@ Read-only 확인 기준은 commit `3424277c9c74f8151a83be056a07dd4659331beb`이�
 |---|---|---|
 | Toolchain | Corretto/OpenJDK `25.0.3`, Maven `3.9.14`, `.sdkmanrc`와 root Enforcer가 Java `[25,26)`, Maven `3.9.14+` 요구 | Target Java 25와 일치하나 Phase 02 build evidence는 아님 |
 | Maven | `com.ronext:ro-next:0.1.0-SNAPSHOT` root 단일 project | Proposed `rpdptw-core`, fixtures, architecture-rules module은 아직 없음 |
-| Main Java | `com.ronext.optimizer` 아래 6개 파일 | Canonical input, travel, immutable problem 구현 없음 |
+| Main Java | `com.ronext.optimizer` 아래 6개 파일 | Canonical input, travel, immutable solve snapshot 구성 구현 없음 |
 | Solver placeholder | `AlnsBatchEngine`이 seed/iterations로 synthetic `objective` map 생성 | RPDPTW/travel/feasibility evidence가 아님 |
 | Test | `AlnsBatchEngineTest` 1개 | Phase 02 test/evidence 없음 |
 | Dependencies | GCP Workflow/Storage, Jackson, JUnit가 root에 직접 존재 | Core/provider 격리 미구현 |
@@ -226,10 +294,10 @@ rpdptw/core/
 ├── src/main/java/com/ronext/rpdptw/domain/
 │   ├── RequestId.java
 │   ├── VehicleId.java
-│   ├── SolverNodeId.java
-│   ├── PhysicalLocationId.java
+│   ├── NodeId.java                 # Domain 공식; proposed alias 허용
+│   ├── LocationId.java             # Domain 공식; travel key
 │   ├── DenseIdBijection.java
-│   ├── ProblemInstance.java
+│   ├── ProblemInstance.java        # 문제 본체 proposed; ≠ full snapshot
 │   └── ProblemFingerprint.java
 ├── src/main/java/com/ronext/rpdptw/travel/
 │   ├── PreparedTravel.java
@@ -281,8 +349,8 @@ Phase 02가 직접 수정할 production owner는 `rpdptw-core`의 domain/travel�
 |---|---|---|---|
 | Phase 01 → Phase 02 | Immutable `NormalizedInputArtifact` 안의 sparse typed travel와 policy provenance | `TravelPreparationInput` | Fingerprint/reference/source rejection |
 | Travel preparation | Locations, vehicles, provided cells, approved generation policy | Complete immutable `PreparedTravel` | No stable partial artifact |
-| Problem freeze | Normalized facts, dense mappings, exact travel fingerprint/reference | Immutable `ProblemInstance` | No partially frozen problem |
-| Phase 02 → Phase 03 | `ProblemInstance`, `PreparedTravel` and equality proof | Read-only lookup and IDs | Fingerprint mismatch blocks propagation |
+| Problem-body freeze | Normalized facts, dense mappings, exact travel fingerprint/reference | Immutable problem body (`ProblemInstance` proposed); **not** full snapshot alone | No partial publish |
+| Phase 02 → Phase 03 | Problem body + `PreparedTravel` + equality proof | Read-only lookup and IDs | Fingerprint mismatch blocks propagation |
 
 ### 6.2 Source class를 혼동하지 않는 규칙
 
@@ -425,7 +493,7 @@ Invalid
 | Provided `D` | exact integer meter | 그대로 사용 |
 | Provided `U` | exact integer second | 모든 vehicle에 common authority |
 | Generated `D` | approved Great Circle output in meter | 최종 meter boundary에서 정확히 한 번 `HALF_UP` |
-| Vehicle speed | exact positive decimal km/h 또는 missing | missing만 exact `45 km/h` |
+| Vehicle speed | exact positive decimal km/h 또는 missing | **missing만** exact `45 km/h` (전 차량 default 아님; present-invalid→45 금지) |
 | Generated `U` | integer second | exact decimal/rational 계산 뒤 한 번 `CEILING` |
 
 Generated time의 의미식:
@@ -528,6 +596,7 @@ Pure core는 telemetry backend를 호출하지 않고 성공/실패 결과에 im
 ## 8. Proposed Java type와 method signature
 
 아래 API는 public/wire 확정안이 아니다. 이름보다 불변조건, direction과 failure가 우선이다.
+**표시·계약 ID** = Domain `NodeId` / `LocationId`. 아래 Java 식별자는 **proposed internal candidate**다.
 
 ```java
 record DistanceMeters(long value) {}
@@ -588,26 +657,27 @@ interface TravelPreparer {
 }
 
 interface PreparedTravel {
-    int physicalLocationCount();
+    int locationCount();
     int vehicleCount();
-    DistanceMeters distance(PhysicalLocationId from, PhysicalLocationId to);
+    DistanceMeters distance(LocationId from, LocationId to);
     TravelTimeSeconds travelTime(
         VehicleId vehicle,
-        PhysicalLocationId from,
-        PhysicalLocationId to
+        LocationId from,
+        LocationId to
     );
     TravelCellProvenance distanceProvenance(
-        PhysicalLocationId from,
-        PhysicalLocationId to
+        LocationId from,
+        LocationId to
     );
     TravelCellProvenance timeProvenance(
         VehicleId vehicle,
-        PhysicalLocationId from,
-        PhysicalLocationId to
+        LocationId from,
+        LocationId to
     );
     PreparedTravelFingerprint fingerprint();
 }
 
+// ProblemInstance = 문제 본체 proposed; full immutable solve snapshot ≠ this type alone
 sealed interface ProblemFreezeResult
         permits ProblemFreezeSucceeded, ProblemFreezeRejected {}
 
@@ -895,7 +965,7 @@ mvn -pl rpdptw/core -am \
 - Corrupt cache/object는 integrity incident로 격리하고 재사용하지 않는다.
 - Encoding 변경이 필요하면 schema/version을 올리고 old identity에 overwrite하지 않는다.
 
-### WP-02-5 — Immutable `ProblemInstance` freeze
+### WP-02-5 — Problem-body freeze (`ProblemInstance` proposed; ≠ full snapshot)
 
 **사전조건**
 
@@ -904,17 +974,18 @@ mvn -pl rpdptw/core -am \
 
 **수정 대상**
 
-- `ProblemInstance`, factory/fingerprint
+- 문제 본체 type/factory/fingerprint (`ProblemInstance` proposed 이름)
 - `ProblemInstanceTest`, corruption/reference tests
 
 **구체 작업**
 
 1. Dense ID array length, bijection과 typed reference를 재검증한다.
-2. Request pickup/delivery, solver node→location, vehicle→terminal/travel view를 검증한다.
+2. Request pickup/delivery, `NodeId`→`LocationId`, vehicle→terminal/travel view를 검증한다.
 3. Pair-level static compatibility facts와 explicit absence를 보존한다.
-4. Exact prepared fingerprint를 problem에 bind한다.
+4. Exact prepared fingerprint를 문제 본체에 bind한다.
 5. No-compatible-vehicle request를 structural error로 바꾸지 않는다.
 6. Constructor input과 returned view alias를 차단한다.
+7. 이 freeze를 **전체 `immutable solve snapshot` 단독 완료**로 문서·evidence에 주장하지 않는다 (profile = Phase 04).
 
 **검증 command/test**
 
@@ -1129,13 +1200,14 @@ Phase 02는 다음을 모두 만족하고 총괄 스케줄러가 registry를 전
 
 ### 11.4 Anti-pattern
 
-- `Map<String,Object>` 또는 raw JSON/provider DTO를 `ProblemInstance`에 보관
-- Node ID를 travel matrix key로 사용
+- `Map<String,Object>` 또는 raw JSON/provider DTO를 문제 본체/`ProblemInstance`에 보관
+- `NodeId`를 travel matrix key로 사용 (`LocationId`만)
 - Missing arc에서 reverse, symmetric average, nearest ID 또는 0 사용
 - Provider unavailable/partial을 intentional missing으로 바꾸고 Great Circle 실행
 - Test fixture를 provider failure fallback으로 사용
 - Decimal `D/U`를 `longValue`, cast, `Math.round`로 수용
-- 모든 speed 오류에 45 적용
+- 모든 speed 오류에 45 적용 (present-invalid 포함; missing-only 정책 위반)
+- 45 km/h를 “전 차량 official default speed”로 문서·config에 승격
 - `double` 누적 후 우연한 epsilon/tolerance로 rounding
 - Diagonal raw `9999/0`을 보존
 - Common `U`와 generated vehicle time을 같은 source label로 저장
@@ -1176,9 +1248,9 @@ Source: [Phase 01 — canonical input normalization](phase-01-canonical-input-no
 Phase 02가 소비:
 
 - `NormalizedInputArtifact` schema/identity, raw/semantic/envelope fingerprints
-- Immutable request/service declarations, physical locations, vehicles
+- Immutable request/service declarations, locations (`LocationId`), vehicles
 - Exact normalized units/time/service/compatibility facts
-- Typed coordinates and speed absence/validity
+- Typed coordinates and speed absence/validity (absent → 01이 45를 채우지 않음)
 - Typed sparse directed `D/U` absence/presence
 - Alias/coercion/default/source policy provenance
 - Terminal/trip/resource declarations and missing-limit typed absence
@@ -1190,10 +1262,10 @@ Phase 02는 raw external bytes를 다시 parsing하거나 Phase 01 numeric/time/
 
 Consumer: [Phase 03 — route propagation/evaluation kernel](phase-03-route-propagation-evaluation-kernel.md) (**actual document; entry is blocked until Phase 02 acceptance**).
 
-Handoff bundle:
+Handoff bundle (문제 본체 + prepared travel; **full snapshot seal 주장 아님**):
 
 ```text
-ProblemInstanceRef
+ProblemBodyRef   # ProblemInstance proposed; snapshot component
   schemaVersion
   problemFingerprint
   canonicalInputFingerprint
@@ -1225,38 +1297,43 @@ Phase 03가 받을 수 있는 것은 immutable lookup, identity와 provenance뿐
 - Route evaluation, cache, objective, profile 또는 ALNS config
 - Test-only/approved fixture를 official이라고 바꾸는 label
 
-Phase 03 entry test는 `ProblemInstance.preparedTravelFingerprint == PreparedTravel.fingerprint`를 확인하고 다르면 propagation을 시작하지 않는다.
+Phase 03 entry test는 문제 본체 bound `preparedTravelFingerprint == PreparedTravel.fingerprint`를 확인하고 다르면 propagation을 시작하지 않는다.
 
 ### 13.3 이후 consumer
 
-- Phase 05는 Phase 03/04를 거쳐 immutable problem/travel만 소비한다.
-- Phase 07 candidate/result verifier는 solver cache가 아니라 같은 `PreparedTravel` authority와 problem declaration을 소비한다.
+- Phase 04가 bound profile을 결합해 Domain §7.2 **`immutable solve snapshot`** 봉인을 완성하는 축과 정합한다.
+- Phase 05는 Phase 03/04를 거쳐 snapshot 문제 쪽 + travel을 소비한다.
+- Phase 07 candidate/result verifier는 solver cache가 아니라 같은 `PreparedTravel` authority와 문제 선언을 소비한다.
 - Phase 14 official manifest는 별도로 승인된 compliant integer fixture와 모든 fingerprint를 요구한다. Phase 02 test-only artifact는 자동 승격되지 않는다.
 
 ## 14. Source → requirement → test traceability
 
+권위 링크는 **live** Master / Domain / Architecture / plan / README 만 사용한다.
+
 | Requirement ID | Requirement | Source | Exact tests | Evidence |
 |---|---|---|---|---|
-| `REQ-P02-AUTH` | User-locked authority; REVIEW는 중단 아님, open/gated/deferred 보존 | [README §3](../README.md#3-source-authority), [Plan §2](../master-realization-plan.md#2-입력-권위와-충돌-규칙) | Document citation/link/version/status self-check | Bundle metadata |
-| `REQ-P02-TRAVEL-KEY` | Physical location directed key, node/location identity 분리 | [Master §5.1](../../master-design.md#51-핵심-개념), [Master §8](../../master-design.md#8-directed-distancetime-matrix-계약) | `roundTripsEveryExternalAndDenseId`, `preservesAsymmetricDirectedArcs` | `E-P02-DENSE-ID`, `E-P02-TRAVEL` |
-| `REQ-P02-INTEGER` | Provided `D/U` integer meter/second, decimal reject, `C` non-authoritative | `Q-MTX-01~02`, [Domain §6](../../deprecated/2026-07-26-domain-design.md#6-travel-preparation) | `rejectsDecimalProvidedDistanceOrTimeWithoutRounding`, `usesProvidedDirectedIntegerDistanceAndCommonTimeFirst` | `E-P02-TRAVEL` |
-| `REQ-P02-SELF` | Self `0/0` regardless raw | `Q-MTX-02`, [Master §8](../../master-design.md#8-directed-distancetime-matrix-계약) | `normalizesEverySelfArcToZeroAndRecordsOverride` | `E-P02-TRAVEL` |
-| `REQ-P02-D-GEN` | Missing D approved Great Circle + meter HALF_UP, coordinate required | `Q-MTX-03`, [Domain §6](../../deprecated/2026-07-26-domain-design.md#6-travel-preparation) | `generatesOnlyMissingDistanceWithApprovedFunctionAndHalfUp`, `rejectsMissingDistanceWhenCoordinateIsAbsent` | `E-P02-TRAVEL` |
-| `REQ-P02-U-GEN` | Missing U vehicle-specific CEILING, missing speed 45 only | `Q-MTX-02~03`, [Integrated §6.2](../../deprecated/architecture-domain-implementation-design.md#62-complete-preparation) | `generatesVehicleSpecificMissingTimeWithCeiling`, `usesFortyFiveOnlyWhenSpeedIsMissing`, `rejectsPresentInvalidSpeedInsteadOfDefaulting` | `E-P02-TRAVEL` |
-| `REQ-P02-COVERAGE` | Complete `M²` and every used-vehicle time before solve | `C-13`, [Plan Phase 02](../master-realization-plan.md#phase-02--이동-자료-준비와-immutable-problem) | `resolvesExactlyAllMByMDirectedDistanceCells`, `resolvesEveryUsedVehicleTimeCell` | `E-P02-TRAVEL` |
-| `REQ-P02-NO-FALLBACK` | No lazy/reverse/symmetric/provider fallback | [Master §8](../../master-design.md#8-directed-distancetime-matrix-계약), [Integrated §6.3](../../deprecated/architecture-domain-implementation-design.md#63-runtime-prohibition와-provenance) | `upstreamFailureMarkerNeverFallsBackToFixtureCacheReverseOrGenerator`, `doesNotPerformRuntimeOrPostFreezeSourceCalls`, architecture tests | `E-P02-TRAVEL` |
-| `REQ-P02-SOURCE` | Approved fixture/official/provided/generated source 구분과 provenance | [Domain §6](../../deprecated/2026-07-26-domain-design.md#6-travel-preparation), [Integrated §19](../../deprecated/architecture-domain-implementation-design.md#19-configuration-provenance와-observability) | `preservesApprovedFixtureAndOfficialSnapshotDistinction`, `differentSourcePolicyOrValueChangesFingerprint` | `E-P02-TRAVEL` |
-| `REQ-P02-BOUNDARY` | Phase 01 artifact is the only source input; application/provider scope is not pulled forward; core SDK 0 | [Phase 01 §6.2](phase-01-canonical-input-normalization.md#62-산출물), [Architecture §2.2~2.5](../../deprecated/2026-07-26-architecture-design.md#2-module과-package-경계) | `acceptsOnlyTravelSealedInThePhase01Artifact`, `coreHasNoProviderCloudHttpSdkDependency` | `E-P02-TRAVEL`, architecture report |
-| `REQ-P02-ABSENCE` | Only typed absent generates; invalid/incomplete handoff never absent | [Master §4.2](../../master-design.md#42-단계별-데이터-계약), [Plan Phase 02](../master-realization-plan.md#phase-02--이동-자료-준비와-immutable-problem) | `invalidSourceHandoffFailsBeforeGeneration`, invalid/duplicate/reference tests | `E-P02-TRAVEL` |
-| `REQ-P02-DENSE` | External↔dense bijection, checked range, separate identity kinds | [Domain §7](../../deprecated/2026-07-26-domain-design.md#7-immutable-solver-model), [Integrated §6.4](../../deprecated/architecture-domain-implementation-design.md#64-dense-identity와-immutable-problem) | `shuffledEquivalentEntitiesProduceCanonicalMapping`, `checkedCellIndexNeverWraps` | `E-P02-DENSE-ID` |
-| `REQ-P02-PROBLEM` | Immutable ProblemInstance, pair/reference checks, exact travel bind | [Domain §7](../../deprecated/2026-07-26-domain-design.md#7-immutable-solver-model), `C-06` | `freezesValidPairNodeLocationVehicleReferences`, all `ProblemInstanceCorruptionTest` | `E-P02-PROBLEM` |
-| `REQ-P02-IMMUTABLE` | No constructor/accessor/cross-artifact alias | [Master §4.5~4.6](../../master-design.md#45-상태와-산출물의-생명주기), [Plan §4.2](../master-realization-plan.md#42-compileruntime-invariants) | All `PreparedTravelImmutabilityTest` methods | `E-P02-PROBLEM` |
-| `REQ-P02-FINGERPRINT` | Stable canonical fingerprint/provenance; solver/verifier equality | `C-13`, [Domain §17.4](../../deprecated/2026-07-26-domain-design.md#174-travel) | `repeatPreparationProducesIdenticalCanonicalBytes`, mismatch/corruption tests | `E-P02-TRAVEL`, `E-P02-PROBLEM` |
-| `REQ-P02-FAULT` | Partial/fault/cancel/overflow publishes no partial artifact | [Plan §8](../master-realization-plan.md#8-공통-테스트-전략), [Integrated §21~22](../../deprecated/architecture-domain-implementation-design.md#21-failure와-retry-matrix) | All `TravelPreparationFaultInjectionTest` methods | `E-P02-TRAVEL` |
-| `REQ-P02-CORRUPTION` | Value/source/coverage/mapping/digest corruption rejection | [Integrated §22.4](../../deprecated/architecture-domain-implementation-design.md#224-independent-corruption-fixtures) | `PreparedTravelCorruptionTest`, `ProblemInstanceCorruptionTest` | `E-P02-TRAVEL`, `E-P02-PROBLEM` |
-| `REQ-P02-REPRO` | Ordering/cache/provider metadata cannot change semantic result | [Master §13.2](../../master-design.md#132-strong-reproducibility-envelope), [Plan §13](../master-realization-plan.md#13-위험-보안-운영-관측과-재현성) | Property permutation and all `TravelFingerprintReproducibilityTest` | All three keys |
-| `REQ-P02-SECURITY` | No credential/PII/raw input leak; provider locator not domain identity | [Integrated §20](../../deprecated/architecture-domain-implementation-design.md#20-security와-tenant-boundary) | All `TravelProvenanceSecurityTest` methods | Security report |
-| `REQ-P02-OBS` | Safe aggregate report is coverage-consistent and never semantic authority | [Integrated §19.3](../../deprecated/architecture-domain-implementation-design.md#193-correlation-fields), [Plan §13](../master-realization-plan.md#13-위험-보안-운영-관측과-재현성) | All `TravelPreparationReportTest` methods | `E-P02-TRAVEL` safe report |
-| `REQ-P02-HANDOFF` | Phase 03 gets immutable problem/travel only; no propagation/ALNS pull-forward | [Plan Phase 02~03](../master-realization-plan.md#phase-02--이동-자료-준비와-immutable-problem) | Fingerprint equality consumer contract future-red | `E-P02-PROBLEM`, Phase 03 receipt |
+| `REQ-P02-AUTH` | Live APPROVED authority; open/gated/deferred 보존; status 허위 승격 금지 | [README](../README.md), [Plan §2](../master-realization-plan.md#2-입력-권위와-충돌-규칙) | Document citation/link/version/status self-check | Bundle metadata |
+| `REQ-P02-TRAVEL-KEY` | Travel key = `LocationId`; `NodeId` ≠ location | [Domain §6](../../domain-design.md#6-travel-preparation-이동-준비), [Domain §7.1](../../domain-design.md#71-identity-식별자) | `roundTripsEveryExternalAndDenseId`, `preservesAsymmetricDirectedArcs` | `E-P02-DENSE-ID`, `E-P02-TRAVEL` |
+| `REQ-P02-INTEGER` | Provided `D/U` integer meter/second, decimal reject, `C` non-authoritative | [Domain §6](../../domain-design.md#6-travel-preparation-이동-준비) | `rejectsDecimalProvidedDistanceOrTimeWithoutRounding`, `usesProvidedDirectedIntegerDistanceAndCommonTimeFirst` | `E-P02-TRAVEL` |
+| `REQ-P02-SELF` | Self `0/0` regardless raw | [Domain §6](../../domain-design.md#6-travel-preparation-이동-준비) | `normalizesEverySelfArcToZeroAndRecordsOverride` | `E-P02-TRAVEL` |
+| `REQ-P02-D-GEN` | Missing D approved Great Circle + meter HALF_UP, coordinate required | [Domain §6](../../domain-design.md#6-travel-preparation-이동-준비) | `generatesOnlyMissingDistanceWithApprovedFunctionAndHalfUp`, `rejectsMissingDistanceWhenCoordinateIsAbsent` | `E-P02-TRAVEL` |
+| `REQ-P02-U-GEN` | Missing U vehicle-specific CEILING; **missing speed only** 45; present-invalid reject | [Domain §6](../../domain-design.md#6-travel-preparation-이동-준비), [Plan Phase 02](../master-realization-plan.md#phase-02--prepared-travel--immutable-solve-snapshot) | `generatesVehicleSpecificMissingTimeWithCeiling`, `usesFortyFiveOnlyWhenSpeedIsMissing`, `rejectsPresentInvalidSpeedInsteadOfDefaulting` | `E-P02-TRAVEL` |
+| `REQ-P02-COVERAGE` | Complete `M²` and every used-vehicle time before solve | [Domain §6](../../domain-design.md#6-travel-preparation-이동-준비), [Plan Phase 02](../master-realization-plan.md#phase-02--prepared-travel--immutable-solve-snapshot) | `resolvesExactlyAllMByMDirectedDistanceCells`, `resolvesEveryUsedVehicleTimeCell` | `E-P02-TRAVEL` |
+| `REQ-P02-NO-FALLBACK` | No lazy/reverse/symmetric/provider fallback | [Domain §6](../../domain-design.md#6-travel-preparation-이동-준비), [Plan §4.2](../master-realization-plan.md#42-compileruntime-invariants) | `upstreamFailureMarkerNeverFallsBackToFixtureCacheReverseOrGenerator`, `doesNotPerformRuntimeOrPostFreezeSourceCalls`, architecture tests | `E-P02-TRAVEL` |
+| `REQ-P02-SOURCE` | Approved fixture/official/provided/generated source 구분과 provenance | [Domain §6](../../domain-design.md#6-travel-preparation-이동-준비), [Plan §13](../master-realization-plan.md#13-위험-보안-운영-관측과-재현성) | `preservesApprovedFixtureAndOfficialSnapshotDistinction`, `differentSourcePolicyOrValueChangesFingerprint` | `E-P02-TRAVEL` |
+| `REQ-P02-BOUNDARY` | Phase 01 artifact only source input; no provider SDK in core; app ports not pulled forward | [Phase 01 handoff](phase-01-canonical-input-normalization.md), [Architecture core](../../architecture-design.md) | `acceptsOnlyTravelSealedInThePhase01Artifact`, `coreHasNoProviderCloudHttpSdkDependency` | `E-P02-TRAVEL`, architecture report |
+| `REQ-P02-ABSENCE` | Only typed absent generates; invalid handoff never absent | [Plan Phase 02](../master-realization-plan.md#phase-02--prepared-travel--immutable-solve-snapshot) | `invalidSourceHandoffFailsBeforeGeneration`, invalid/duplicate/reference tests | `E-P02-TRAVEL` |
+| `REQ-P02-DENSE` | External↔dense bijection; `NodeId`/`LocationId` separate | [Domain §7.1](../../domain-design.md#71-identity-식별자) | `shuffledEquivalentEntitiesProduceCanonicalMapping`, `checkedCellIndexNeverWraps` | `E-P02-DENSE-ID` |
+| `REQ-P02-SNAPSHOT` | Official term `immutable solve snapshot`; ProblemInstance ≠ full freeze bundle; Phase 02 ≠ profile seal | [Domain §7.2](../../domain-design.md#72-immutable-solve-snapshot-풀이용-문제-고정본-must), [Master §3.1·§3.4·§5](../../master-design.md), [Plan Phase 02](../master-realization-plan.md#phase-02--prepared-travel--immutable-solve-snapshot) | Document contract + handoff boundary checks | `E-P02-PROBLEM` |
+| `REQ-P02-PROBLEM` | Immutable problem body, pair/reference checks, exact travel bind | [Domain §7](../../domain-design.md#7-immutable-solver-model--snapshot-풀이-모델문제-고정본) | `freezesValidPairNodeLocationVehicleReferences`, all `ProblemInstanceCorruptionTest` | `E-P02-PROBLEM` |
+| `REQ-P02-IMMUTABLE` | No constructor/accessor/cross-artifact alias | [Master §3.4](../../master-design.md), [Plan §4.2](../master-realization-plan.md#42-compileruntime-invariants) | All `PreparedTravelImmutabilityTest` methods | `E-P02-PROBLEM` |
+| `REQ-P02-FINGERPRINT` | Stable canonical fingerprint/provenance; solver/verifier equality | [Domain §7.2](../../domain-design.md#72-immutable-solve-snapshot-풀이용-문제-고정본-must), [Plan Phase 02](../master-realization-plan.md#phase-02--prepared-travel--immutable-solve-snapshot) | `repeatPreparationProducesIdenticalCanonicalBytes`, mismatch/corruption tests | `E-P02-TRAVEL`, `E-P02-PROBLEM` |
+| `REQ-P02-FAULT` | Partial/fault/cancel/overflow publishes no partial artifact | [Plan §8](../master-realization-plan.md#8-공통-테스트-전략) | All `TravelPreparationFaultInjectionTest` methods | `E-P02-TRAVEL` |
+| `REQ-P02-CORRUPTION` | Value/source/coverage/mapping/digest corruption rejection | [Plan §8](../master-realization-plan.md#8-공통-테스트-전략) | `PreparedTravelCorruptionTest`, `ProblemInstanceCorruptionTest` | `E-P02-TRAVEL`, `E-P02-PROBLEM` |
+| `REQ-P02-REPRO` | Ordering/cache/provider metadata cannot change semantic result | [Plan §13](../master-realization-plan.md#13-위험-보안-운영-관측과-재현성) | Property permutation and all `TravelFingerprintReproducibilityTest` | All three keys |
+| `REQ-P02-SECURITY` | No credential/PII/raw input leak; provider locator not domain identity | [Plan §13](../master-realization-plan.md#13-위험-보안-운영-관측과-재현성) | All `TravelProvenanceSecurityTest` methods | Security report |
+| `REQ-P02-OBS` | Safe aggregate report is coverage-consistent and never semantic authority | [Plan §13](../master-realization-plan.md#13-위험-보안-운영-관측과-재현성) | All `TravelPreparationReportTest` methods | `E-P02-TRAVEL` safe report |
+| `REQ-P02-HANDOFF` | Phase 03 gets problem body + travel only; no propagation/ALNS/profile pull-forward | [Plan Phase 02](../master-realization-plan.md#phase-02--prepared-travel--immutable-solve-snapshot) | Fingerprint equality consumer contract future-red | `E-P02-PROBLEM`, Phase 03 receipt |
+| `REQ-P02-FILENAME` | path slug KEEP; display term = immutable solve snapshot | [README §5.1](../README.md#51-filename-slug-vs-domain-공식-용어-정책--keep--표시-분리) | Filename self-check | Bundle metadata |
 
 새 requirement가 발견되면 source, owner, test와 evidence key를 함께 추가한다. Source 문장 없이 production default/API/수치를 추가하지 않는다.
