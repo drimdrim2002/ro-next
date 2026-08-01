@@ -12,7 +12,6 @@
     <description>RPDPTW/CVRPTW solver (target: AWS S3 + Step Functions + Lambda|ECS).</description>
 
     <modules>
-        <module>legacy</module>
         <module>build</module>
         <module>rpdptw</module>
     </modules>
@@ -21,35 +20,12 @@
         <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.build.outputTimestamp>2026-08-01T00:00:00Z</project.build.outputTimestamp>
-        <google.cloud.workflow.executions.version>2.94.0</google.cloud.workflow.executions.version>
-        <google.cloud.storage.version>2.70.0</google.cloud.storage.version>
-        <jackson.version>2.19.2</jackson.version>
         <junit.version>5.13.1</junit.version>
         <archunit.version>1.4.1</archunit.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>com.google.cloud</groupId>
-                <artifactId>google-cloud-workflow-executions</artifactId>
-                <version>${google.cloud.workflow.executions.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.google.cloud</groupId>
-                <artifactId>google-cloud-storage</artifactId>
-                <version>${google.cloud.storage.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.datatype</groupId>
-                <artifactId>jackson-datatype-jsr310</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter</artifactId>

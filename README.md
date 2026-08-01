@@ -32,9 +32,9 @@ mvn verify
 | 층 | 상태 |
 |---|---|
 | **Target platform** | AWS — S3 + Step Functions + (Lambda \| ECS) |
-| **현재 tracked 코드** (`src/`, root `pom.xml`) | **GCP legacy placeholder** — Google Cloud Storage + Cloud Workflows + Cloud Run HTTP. 합성 `AlnsBatchEngine` objective |
-| **tracked `gcp/`** | legacy 배포 가이드. **target 아님** |
-| **구현 acceptance** | 문서 기준 0/15. placeholder ≠ 솔버 완료 (Master A9) |
+| **현재 tracked 코드** | Multi-module **RPDPTW architecture skeleton** (`rpdptw/*`, `build/*`). Domain/solver logic not implemented yet. |
+| **Legacy GCP placeholder** | **Removed** (no `legacy/`, no `gcp/`, no legacy Dockerfile). Not target. |
+| **구현 acceptance** | 문서 기준 0/15. skeleton ≠ 솔버 완료 (Master A9) |
 
 Target API 형태(목표): `s3://` 입력 URI를 받고 Step Functions 실행을 시작한다.
 
@@ -49,6 +49,10 @@ Target API 형태(목표): `s3://` 입력 URI를 받고 Step Functions 실행을
 }
 ```
 
-`parameters` 예시 수치(`8`, `5000` 등)는 배포 흐름 설명용이며 official benchmark default가 아닙니다.  
+`parameters` 예시 수치(`8`, `5000` 등)는 배포 흐름 설명용이며 official benchmark default가 아닙니다 (**Q-BENCH-02 OPEN**).  
 실제 RPDPTW 입력 파싱, 초기해, destroy/repair, local search, 독립 verifier는 인프라 어댑터 밖의 순수 Java 계층에 추가합니다. 상세는 [`docs/implementation/master-realization-plan.md`](docs/implementation/master-realization-plan.md) §3 inventory를 보세요.
+
+```bash
+./mvnw -B -ntp verify
+```
 

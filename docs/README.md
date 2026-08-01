@@ -11,7 +11,7 @@ Phase C(O5) 이후 **current design authority** 와 **역사 문서** 를 분리
 | 저장 | **Amazon S3 only** | DB · Redis 없음. 로컬 통합 = **LocalStack S3** |
 | durable orchestration | **AWS Step Functions** | 각본은 application/coordinator; Domain 점수 소유 아님 |
 | worker / API compute | **Lambda 또는 ECS** | **O1 OPEN** — 한쪽 단정 금지 |
-| 현재 tracked 코드 (`src/`, `gcp/`) | **GCP legacy placeholder** | GCS + Cloud Workflows + Cloud Run. Phase 00 characterization 후 AWS로 대체 |
+| 현재 tracked 코드 | **RPDPTW multi-module skeleton** (`rpdptw/*`, `build/*`) | Domain/solver not implemented. GCP legacy placeholder **removed** |
 
 상세 배치: [Architecture §3 · §9.4](architecture-design.md).  
 구현 inventory: [Master Realization Plan §3](implementation/master-realization-plan.md#3-2026-07-28-current-state-inventory).
@@ -76,7 +76,7 @@ Phase C는 경로·SUPERSEDED·권위 지도만 고쳤고 완료(O5)다.
 | [master-design-sessions/](master-design-sessions/) | 세션 review input · evidence (비규범) |
 | [arranged/](arranged/) | 연구 정리 (비규범). `08_gcp_architecture.md` 는 **legacy GCP** 참고 |
 | [orgin/](orgin/) | 원본 요약 보존 (비규범; 디렉터리 철자 유지) |
-| repo root [`gcp/`](../gcp/) | **legacy** Cloud Run/Workflows/GCS 가이드. AWS target 아님 |
+| GCP legacy (`legacy/`, `gcp/`) | **removed** by Phase 00 user decision | not target; not reintroduced |
 
 구 undated `master-design.md` / `domain-design.md` / `architecture-design.md` 는 **deprecated 안**에만 있으며 current로 링크하지 않는다.
 
