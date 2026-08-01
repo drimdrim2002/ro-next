@@ -438,9 +438,10 @@ Phase 13이 Phase 14B predecessor가 된다.
 - Entry gate: Phase 00 accepted; Domain §4 fixed input contract와 alias/adapter 경계가 상세에 명시됨.
 - 입력: External bytes/reference, adapter identity(optional), numeric/time/service/size/capability/zone/trip 계약.
 - 산출물: Immutable canonical/normalized input, typed pre-solve errors, raw digest, adapter/coercion provenance.
-- Exit gate: Decimal/overflow/alias/time/service/compatibility의 positive·negative·boundary evidence가 모두 통과.
+- Exit gate: Decimal/overflow/time/service/compatibility의 positive·negative·boundary evidence가 모두 통과.
   `reqDate` 의미 = 고객 요청 시각 (`serviceStartTime ≤ reqDate` only; `serviceEndTime` 조건 제외; Domain §4.3).
   `servicePattern` only (`DELIVERY_ONLY` | `PICKUP_DELIVERY`).
+  ownership absent = 축 미사용 (silent DIRECT 금지). vehicle multi-zone 허용.
 - Evidence/handoff: `E-P01-NUMERIC`, `E-P01-TIME`, `E-P01-COMPAT`, `E-P01-ERROR`; Phase 2가 소비.
 
 실행·검증 절차:
@@ -448,8 +449,9 @@ Phase 13이 Phase 14B predecessor가 된다.
 1. 외부 DTO와 canonical domain type을 분리한다. `adapters/input` 이 정본으로 변환한다 (D1).
 2. 무게·부피를 exact decimal `n=3/FLOOR`, item-first 후 qty 곱으로 checked normalization한다.
 3. 비용·거리·시간 소수, 음수·비유한 값, overflow, order-level `taskTime`을 거부한다.
-4. `[planStart,planEnd)`, inclusive close, repeating/overnight, full-arc work-window 의미와 service-time 조합을 정규화한다.
-5. Size/`["ALL"]`/capability subset, vehicle multi-zone 허용(Domain §5.3), ownership, oneway/single-roundtrip을 property test한다. “차량 zone 1개 강제”는 Domain과 충돌하면 폐기.
+4. `[planStart,planEnd)`, inclusive close, repeating/overnight, full-arc work-window 의미와 service-time·쪽별 `reqDate`를 정규화한다 (판정 실행은 Phase 03).
+5. Size/`["ALL"]`/capability subset, vehicle multi-zone 허용(Domain §5.3), ownership present|absent,
+   oneway/single-roundtrip을 property test한다. “차량 zone 1개 강제”·silent DIRECT는 Domain과 충돌 시 폐기.
 6. 같은 input은 stable fingerprint를, 의미가 다른 input은 다른 fingerprint를 만드는지 검증한다.
 
 ### Phase 02 — Prepared travel + immutable solve snapshot
@@ -474,9 +476,10 @@ Phase 13이 Phase 14B predecessor가 된다.
 1. Solver node와 physical location identity를 분리하고 external↔dense mapping을 검증한다.
 2. Provided integer directed `D/U`를 우선하고 decimal을 거부한다.
 3. Missing `D`를 approved Great Circle + meter `HALF_UP`, missing `U`를 vehicle별 `CEILING(D×3.6/speed)`로 생성한다.
-4. Missing speed 기본값(예: 과거 서술 `45 km/h`)은 **official Domain MUST가 아니다.**
-   승인된 experiment/test-only config 또는 별도 travel-policy 승인 기록으로만 쓰고,
-   present-invalid speed는 거부한다. 숨은 production default로 승격하지 않는다.
+4. Missing speed **default = 45 km/h** (사용자 2026-08-01 확정; Domain §6과 정합).
+   Phase 01은 speed absent를 채우지 않고 정책 ref만 handoff한다. Phase 02+가
+   missing `U`에 speed(기본 45)를 적용하고, 추후 ruleset으로 present `U`도 speed
+   재계산할 수 있다. present-invalid speed는 거부한다.
 5. Runtime lazy/reverse/symmetric fallback을 architecture test로 막는다.
 6. Pair/node/location/vehicle/travel completeness와 checked range를 생성 시 검증한다.
 

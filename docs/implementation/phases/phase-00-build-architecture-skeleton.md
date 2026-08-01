@@ -4,37 +4,42 @@
 phase: "00"
 canonical_filename: phase-00-build-architecture-skeleton.md
 document_authoring_status: DRAFT_COMPLETE
-document_status: REVIEWED_WITH_CORRECTIONS
+document_status: REBASE_APPLIED_PENDING_REREVIEW
 implementation_status: NOT_STARTED
 phase_acceptance_status: PLANNED
 evidence_status: NOT_PRODUCED
 baseline_date: 2026-07-28
+semantic_rebase_date: 2026-08-01
+semantic_rebase_note: >
+  APPROVED Master/Domain/Architecture + plan §4.1/Phase 00 overlay 정렬.
+  구현 status·win_poc·ACCEPTED 승격 없음. filename KEEP.
 inventory_checkout:
+  note: historical inventory at original document authoring (2026-07-28); not re-measured by semantic rebase
   repository: /Users/brown/workspace/ro-next
   branch: codex/domain-design
   commit: 3424277
-source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
-phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
+source_authority: APPROVED_MASTER_DOMAIN_ARCHITECTURE_PLUS_USER_PHASE_MAP
+phase_c_note: path remap to docs/deprecated/*; semantic rebase recomputed live authority fingerprints
 direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 direction_revision_status: ALNS_FIRST_GATE_OVERLAY_APPLIED_DOCUMENTATION_ONLY
 source_fingerprints_sha256:
-  docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
-  docs/deprecated/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
-  docs/deprecated/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
-  docs/deprecated/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
-  docs/deprecated/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
-  docs/implementation/master-realization-plan.md: 940fe8c2156bf0472deafcd450e0ea49f0036ab6b304d6d051f0148a38cd0f5d
-  docs/implementation/README.md: 6454238185af7b7c420f468adf42609a0ec045d6c70c16cc7601f0342fa74358
-  docs/deprecated/2026-07-26-master-design.md: 5da9fd05a027e748b642517d33c0edab86ec818645d5b78c2a0d573fa968419a
+  docs/deprecated/2026-07-30-design-interview-phase-a.md: cec96defaa6a3617a7504ea0aeb57e0a111c77dc44a7af9981096c70261868e5
+  docs/master-design.md: 765641c215cd512ca78eb5dfc943503bc8bdb278102a3c3103cf4935ff7f38be
+  docs/domain-design.md: 0d2509fd7d90cb460a6eeef1e8105fcf1154a8afae383b34bc4886088a8cd044
+  docs/architecture-design.md: 8f588a11a9f0648b58f94cb3ed8cf6e20819fd50fd09fcabaec3e794b7729818
+  docs/implementation/master-realization-plan.md: 0bd2336cfeac8894c6fc3f664920957185562a9f1343fa08b7eff2b7c7c1e91b
+  docs/implementation/README.md: 63bc51f42e025d7aee7c81c2d28fec7cb016f781a924727b4c0fb8993e221518
+  docs/deprecated/2026-07-26-domain-design.md: e257e4e983c8a906d4aec0cd414826dad21588f43e306e06f80486917efa1745
+  docs/deprecated/2026-07-26-architecture-design.md: cd603429c2da4d36b5a98307a184bd6311ca3eff5643cb4223815a39d4c1c04e
+  docs/deprecated/2026-07-26-master-design.md: 5f0f6a48011942d85295eb980b66ccef99a6ee49b656feb23b1fefbcd170da90
 source_sections:
-  canonical_master: "§1.1~§1.5, §2.4, §3.2~§3.3, §4.3~§4.7, §15.1~§15.3, §16, §17"
-  final_domain: "§1, §3, §7~§8, §17~§18"
-  final_architecture: "§1.2~§1.5, §2.1~§2.7, §5.6, §6.1~§6.5"
-  integrated_design: "§1.1~§1.5, §2, §3.1~§3.6, §4, §22~§25, §27~§28"
-  open_questions: "§1~§4; Q-BENCH-02, Q-INFRA-01, Q-VAR-01 exact rows"
-  realization_plan: "§1~§4, §6~§7 Phase 00, §8~§15"
-  implementation_readme: "§1~§7"
-  superseded_historical_cross_check: "§1.3~§1.5, §4, §10~§12 only"
+  phase_a_interview: "A1–A12, D1·D2, O1"
+  canonical_master: "A9·A10, D2/O1, §5.3, §8.4–§8.5"
+  approved_domain: "status/authority; Phase 00 does not implement Domain math"
+  approved_architecture: "§1.3, §4.1–§4.6, §9.4, §10"
+  realization_plan: "§4.1 tree, Phase 00 overlay, §3 current≠target"
+  implementation_readme: "§5.1 KEEP_DISPLAY_SEPARATION; authority map"
+  historical_cross_check_only: "2026-07-26 Final D/A/M — conflict loses to APPROVED"
 public_api_status: NOT_DEFINED
 scheduler_task_id: TBD
 owners:
@@ -46,14 +51,15 @@ owners:
 prerequisites:
   - 사용자 선언으로 고정된 source authority와 conflict rule
   - docs/implementation/master-realization-plan.md의 Phase 00 entry contract
-  - commit 3424277의 read-only build/source/test/deployment inventory
+  - historical inventory at commit 3424277 (re-measure before implementation entry)
   - 미확정 값을 production default로 만들지 않는다는 합의
 handoff:
   next_phase: "01"
   next_document: phase-01-canonical-input-normalization.md
 review:
   document: ../reviews/phase-00-review.md
-  verdict: PASS_WITH_RESIDUAL_BLOCKERS
+  verdict: REBASE_PENDING_REREVIEW
+  prior_verdict: PASS_WITH_RESIDUAL_BLOCKERS
   implementation_authorized: false
 ```
 
@@ -61,36 +67,43 @@ review:
 
 이 문서는 Phase 00 구현을 위한 상세 설계이며 구현 완료 보고가 아니다. `document_authoring_status`는 이 Markdown의 작성 상태이고, `implementation_status`, `phase_acceptance_status`, `evidence_status`는 실제 코드·빌드·검증 상태다. 이 세 상태를 섞지 않는다.
 
-이 문서 세트의 입력 권위는 **사용자 선언으로 고정**되었다. 원문 metadata의 `REVIEW`는 provenance로
-보존하지만 이 문서 작성을 멈추는 조건이 아니다. 이 문서의 `REVIEWED_WITH_CORRECTIONS`는 문서
-contract review만 끝났다는 뜻이며 Phase 00 구현, exit evidence 또는 acceptance가 끝났다는 뜻이 아니다.
+이 문서 세트의 **live 권위**는 사용자 선언(15 Phase map 포함), [Phase A 인터뷰](../../deprecated/2026-07-30-design-interview-phase-a.md),
+[Master](../../master-design.md) / [Domain](../../domain-design.md) / [Architecture](../../architecture-design.md) **APPROVED**,
+그리고 이미 정렬된 implementation core 3([plan](../master-realization-plan.md), [README](../README.md), progress)이다.
+`document_status: REBASE_APPLIED_PENDING_REREVIEW`는 **의미 rebase 반영 + 독립 re-review 대기**이며
+Phase 00 구현, exit evidence, acceptance, win_poc 성공을 뜻하지 않는다.
+`implementation_status` / `phase_acceptance_status` / `evidence_status`와 섞지 않는다.
 
 다음 충돌 규칙을 적용한다.
 
-1. 사용자 선언과 canonical Master의 최신 결정이 우선한다.
-2. 질문 상태는 질문 등록부의 exact `Q-*` 행을 따른다.
-3. Domain 의미는 canonical Master 불변조건을 유지하면서 Final Domain의 상세로 해석한다.
-4. Java/Maven 배치는 의미를 바꾸지 않는 범위에서 Final Architecture를 따른다.
-5. 15 Phase, no-DB, capability/profile, AWS reference와 provider substitution 구조는 구현 중심 통합 설계를 따른다.
-6. [2026-07-26 Master Design — SUPERSEDED](../../deprecated/2026-07-26-master-design.md)는 누락·퇴행 cross-check에만 사용한다.
-7. `docs/codex/*`는 역사/참고 자료이며 이 Phase에서 복사·수정·삭제하거나 현재 authority로 사용하지 않는다.
+1. 사용자 선언과 APPROVED Master(D1·D2, A1–A12, O1 등)가 우선한다.
+2. Domain 의미는 [current Domain Design](../../domain-design.md) APPROVED + Master 불변조건으로 해석한다. Phase 00은 Domain 계산을 구현하지 않는다.
+3. Java/Maven module tree·DAG·금지선·build 검사는 [Architecture](../../architecture-design.md) **§4.1–§4.6** 및 plan §4.1 / Phase 00 overlay를 따른다.
+4. 2026-07-26 Final Domain/Architecture/Master 및 deprecated open-questions·integrated design은 **historical cross-check only**다. live 권위와 충돌하면 APPROVED가 이긴다.
+5. Master에 없는 `Q-INFRA-01 RESOLVED` / “compute = Lambda only” 귀속을 현 상태로 승격하지 않는다.
+6. `docs/codex/*`는 역사/참고 자료이며 이 Phase에서 복사·수정·삭제하거나 현재 authority로 사용하지 않는다.
 
-Final Domain §18과 Final Architecture §6 일부의 `Q-INFRA-01 DEFERRED`, `25/1/2` 표기는 최신 canonical Master와 질문 등록부에 의해 대체되었다. 현재 적용 상태는 `Q-INFRA-01 RESOLVED`, 질문 집계 `26/1/1`이며 target/reference는 AWS S3 + Step Functions + Lambda다. 다만 실제 AWS adapter, 배포, parity와 cutover는 Phase 11/14 gate다. Phase 00은 AWS SDK나 배포 skeleton을 만들지 않는다.
+**Reference platform (Master A10 · Architecture §9.4 · plan §3):** AWS **S3** (저장 MUST) + **Step Functions** + worker/API compute **(Lambda | ECS)**.  
+compute 제품 선택만 **O1 OPEN** — 한쪽 단정 금지. GCP(Cloud Run/Workflows/GCS) current path는 **legacy**이며 target이 아니다.  
+실제 AWS adapter·배포·parity·cutover는 Phase 11/14 gate다. Phase 00은 AWS SDK나 배포 skeleton을 만들지 않는다.
 
 ### 1.1 권위 입력 fingerprint와 사용 section
 
-Fingerprint는 이 문서 작성 시 읽은 bytes의 SHA-256이다. 원문이 바뀌면 구현 착수 전에 이 표를 다시 계산하고 영향 section을 review한다.
+Fingerprint는 **2026-08-01 semantic rebase** 시 읽은 live authority bytes의 SHA-256이다.
+원문이 바뀌면 구현 착수 전에 이 표를 다시 계산하고 영향 section을 review한다.
+2026-07-28 inventory(branch/commit)는 historical이며 이 rebase가 checkout을 재측정하지 않았다.
 
 | 역할 | 입력과 SHA-256 | Phase 00에서 직접 적용하는 section |
 |---|---|---|
-| Canonical Master | [Master Design](../../master-design.md), `e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd` | §1.1~§1.5, §2.4, §3.2~§3.3, §4.3~§4.7, §15.1~§15.3, §16, §17 |
-| Final Domain | [2026-07-26 Domain Design](../../deprecated/2026-07-26-domain-design.md), `1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac` | §1, §3의 Maven/package mapping, §7~§8의 immutable/COW 경계, §17~§18의 evidence와 drift 확인 |
-| Final Architecture | [2026-07-26 Architecture Design](../../deprecated/2026-07-26-architecture-design.md), `1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed` | §1.2~§1.5, §2.1~§2.7, §5.6, §6.1~§6.5 |
-| 구현 중심 통합 설계 | [Architecture-domain implementation design](../../deprecated/architecture-domain-implementation-design.md), `883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571` | §1.1~§1.5, §2, §3.1~§3.6, §4, §22~§25, §27~§28 |
-| 질문 등록부 | [Master Design open questions](../../deprecated/master-design-open-questions.md), `b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b` | §1~§4 전체, 특히 `Q-BENCH-02`, `Q-INFRA-01`, `Q-VAR-01` exact 행 |
-| 총괄 실행 계획 | [Master Realization Plan](../master-realization-plan.md), `993979f67e8c07cf80a27c3aa3bd5bc379b12bc27657c4520ff44b093fda99be` | §1~§4, §6~§7의 Phase 00, §8~§15 |
-| 구현 문서 지도 | [Implementation README](../README.md), `ad7534e51a967528efebe045926edca2c800d85437eda87e4bac6f29365a97cb` | §1~§7 전체 |
-| Historical cross-check only | [2026-07-26 Master Design — SUPERSEDED](../../deprecated/2026-07-26-master-design.md), `5da9fd05a027e748b642517d33c0edab86ec818645d5b78c2a0d573fa968419a` | §1.3~§1.5, §4, §10~§12를 현재 결정의 누락·퇴행 확인에만 사용 |
+| Phase A 인터뷰 | [design-interview-phase-a](../../deprecated/2026-07-30-design-interview-phase-a.md), `cec96defaa6a3617a7504ea0aeb57e0a111c77dc44a7af9981096c70261868e5` | A1–A12, D1·D2, O1 |
+| Canonical Master | [Master Design](../../master-design.md), `765641c215cd512ca78eb5dfc943503bc8bdb278102a3c3103cf4935ff7f38be` | A9·A10, D2/O1, §5.3, §8.4–§8.5 |
+| Approved Domain | [Domain Design](../../domain-design.md), `0d2509fd7d90cb460a6eeef1e8105fcf1154a8afae383b34bc4886088a8cd044` | 권위·용어; Phase 00은 Domain 수식 미구현 |
+| Approved Architecture | [Architecture Design](../../architecture-design.md) v3.4, `8f588a11a9f0648b58f94cb3ed8cf6e20819fd50fd09fcabaec3e794b7729818` | §1.3 current≠target; **§4.1–§4.6** module/DAG/forbid/build; §9.4·§10 |
+| 총괄 실행 계획 | [Master Realization Plan](../master-realization-plan.md), `0bd2336cfeac8894c6fc3f664920957185562a9f1343fa08b7eff2b7c7c1e91b` | §3 inventory, §4.1 tree, Phase 00 overlay |
+| 구현 문서 지도 | [Implementation README](../README.md), `63bc51f42e025d7aee7c81c2d28fec7cb016f781a924727b4c0fb8993e221518` | authority map, §5.1 filename KEEP |
+| Historical only | [2026-07-26 Domain](../../deprecated/2026-07-26-domain-design.md), `e257e4e983c8a906d4aec0cd414826dad21588f43e306e06f80486917efa1745` | 퇴행 cross-check only |
+| Historical only | [2026-07-26 Architecture](../../deprecated/2026-07-26-architecture-design.md), `cd603429c2da4d36b5a98307a184bd6311ca3eff5643cb4223815a39d4c1c04e` | 퇴행 cross-check only |
+| Historical only | [2026-07-26 Master — SUPERSEDED](../../deprecated/2026-07-26-master-design.md), `5f0f6a48011942d85295eb980b66ccef99a6ee49b656feb23b1fefbcd170da90` | 퇴행 cross-check only |
 
 ### 1.2 규범 표기
 
@@ -122,8 +135,9 @@ Phase 00의 목표는 다음 Phase가 잘못된 dependency 방향 위에서 시�
 - Root parent/aggregator와 하위 aggregator/POM
 - Java 25와 Maven 3.9.14 wrapper/toolchain enforcement
 - Dependency/plugin version 중앙 관리와 reproducible archive policy
-- `rpdptw-core`, `rpdptw-solver`, `rpdptw-verification`, `rpdptw-application`, `rpdptw-capabilities`, `rpdptw-profile-catalog` skeleton
+- Architecture §4.2 정합 skeleton: `rpdptw-core`, `rpdptw-solver`, `rpdptw-verification`, `rpdptw-application`, `rpdptw/profiles/*` (최소 `profiles/standard` ownership)
 - `build/test-fixtures`, `build/architecture-rules`
+- 구 tree 이름 `capabilities` / `profile-catalog` / `object-filesystem` / `compute-aws-lambda` **폐기** (생성·문서 필수화 금지)
 - Current `com.ronext.optimizer` source/test의 explicit legacy module 격리
 - Existing HTTP/GCS/Workflow/synthetic objective behavior의 golden characterization
 - ArchUnit, Maven Enforcer, dependency tree와 bytecode/source boundary 검사
@@ -135,9 +149,10 @@ Phase 00의 목표는 다음 Phase가 잘못된 dependency 방향 위에서 시�
 - Canonical input field, alias, normalization, `ProblemInstance`, `PreparedTravel` 또는 RPDPTW 계산 구현
 - Pickup-delivery pair, propagation, evaluation, profile binding, portfolio, ALNS, verifier 또는 result 구현
 - Legacy endpoint를 target public API로 승인하거나 현재 합성 objective를 target behavior로 보존하는 결정
-- S3, Step Functions, Lambda adapter/IaC, GCP cutover 또는 provider parity
+- S3 / Step Functions / compute(Lambda\|ECS) adapter·IaC, GCP cutover 또는 provider parity
+- `adapters/*`, `backends/*`, `apps/{cli,api,worker}`, `deployment/` empty module 필수 생성
 - Database/object-storage CAS, coordinator와 multi-round runtime 구현
-- Route pool/MIP module, `com.google.ortools` dependency 또는 capability 광고
+- Route pool/MIP module, `com.google.ortools` dependency, `backends/*` 또는 route-selection capability 광고
 - Public wire schema, public Java API, 공식 performance threshold
 - `Q-BENCH-02`의 step/worker/round/watchdog 수치 확정
 - Decimal `D/U` Win fixture를 official baseline으로 사용
@@ -160,8 +175,8 @@ rpdptw-core
 
 rpdptw-solver           → rpdptw-core
 rpdptw-verification     → rpdptw-core
-rpdptw-capabilities     → rpdptw-core
-rpdptw-profile-catalog  → rpdptw-core
+rpdptw-profiles-*       → rpdptw-core
+  (Architecture §4.1: profiles/* → core only; solver search internal 금지)
 
 rpdptw-application      → rpdptw-core
 rpdptw-application      → rpdptw-solver
@@ -178,28 +193,47 @@ rpdptw-architecture-rules -TEST→ 모든 stable target module
 legacy-gcp-placeholder
   - 기존 Google/Jackson dependency를 자체 module 안에만 보존
   - target module이 의존하지 않음
+
+# Phase 00에서 empty 필수 생성하지 않음 (이름·경계만 예약; owner Phase):
+#   adapters/* → application ports (+ 필요 시 core 공개 타입)
+#   backends/* → core, solver only (↛ verification); C-17 GATED / optional
+#   apps/*     → application + 고른 adapters/profiles (+ 선택 backends)
 ```
 
-`rpdptw-profile-catalog`은 Phase 00에서 capability implementation을 compile-depend하지 않는다. 향후 distribution composition root가 approved capability registry와 profile catalog를 조립한다. Customer 수가 POM 수를 늘리지 않는다.
+`profiles/*`는 Phase 00에서 **Architecture §4.2** 경로·ownership skeleton만 잡는다.
+Customer 수가 POM 수를 늘리지 않는다 (`profiles/<namespace>` leaf는 고객 온보딩 시 추가; Phase 00에 임의 customer module 생성 금지).
+구 `rpdptw-capabilities` / `rpdptw-profile-catalog` Maven module 이름은 **폐기**한다.
 
 ### 3.2 MUST/MUST NOT
 
 1. Root `pom.xml`은 `packaging=pom`이며 business, customer, cloud 또는 optimizer dependency를 갖지 않는다.
-2. Target stable module의 base namespace는 `com.ronext.rpdptw`다.
+2. Target stable module의 base namespace는 `com.ronext.rpdptw`다. Module tree 정본 = Architecture **§4.2**.
 3. `core`는 다른 target module을 compile-depend하지 않는다.
 4. `verification`은 `solver`, search/cache package 또는 legacy module을 compile-depend하지 않는다.
 5. Core/solver/verification/application의 AWS/GCP/Azure/Kubernetes/HTTP SDK reference는 0이다.
-6. Generic target module의 `com.google.ortools` API reference는 0이다.
+6. Generic target module(core…application, profiles)의 `com.google.ortools` API reference는 0이다. OR-Tools는 향후 `backends/*` only.
 7. Core/solver/verification의 customer-name conditional과 customer-specific package는 0이다.
 8. 다른 module의 `.internal` package에 접근하지 않는다.
 9. Test fixture bytecode는 attached `tests` classifier에만 넣고 consumer가
    `type=test-jar`, `classifier=tests`, `scope=test`로만 의존한다. Main artifact나 production
    compile/runtime classpath로 새지 않는다.
-10. Default root `verify`는 cloud credential, OR-Tools 설치 또는 native runtime 없이 통과해야 한다.
+10. Default root `verify`는 cloud credential, OR-Tools 설치 또는 native runtime 없이 통과해야 한다 (backends 없는 기본 경로).
 11. Core는 environment variable, system clock, global random과 static mutable registry를 읽지 않는다.
 12. OPEN/GATED/DEFERRED 기능을 나타내는 fake success provider나 production default를 만들지 않는다.
 13. Legacy GCP dependency는 명시적 legacy allowlist 경계에서만 허용하며 target DAG의 예외로 전파하지 않는다.
 14. Skeleton module 성공을 domain 기능 또는 Phase 01 evidence로 계산하지 않는다.
+15. Worker compute 제품을 모듈명으로 단정하지 않는다 (`compute-aws-lambda` 등 금지). O1 = Lambda | ECS OPEN.
+16. **Architecture §4.6 build 검사 (위반 시 root verify 실패)** — adapters/backends module이 아직 없어도 패턴 부재로 통과 가능:
+
+| # | 검사 | 기대 |
+|---|---|---|
+| 1 | core/solver/verification 의 cloud SDK | 0 |
+| 2 | core…application 의 JDBC/Redis | 0 |
+| 3 | S3 SDK outside `adapters/*` | 0 |
+| 4 | OR-Tools outside `backends/*` | 0 |
+| 5 | verification → solver | 0 |
+| 6 | reactor cycle | 없음 |
+| 7 | (권장) `.internal` 교차 참조 | 0 |
 
 ## 4. Entry gate와 선행 evidence 확인
 
@@ -213,7 +247,7 @@ legacy-gcp-placeholder
 | Dirty/untracked 사용자 작업을 덮어쓰지 않음 | `git status --short` 기록 후 대상 파일 overlap 검토 | `docs/implementation/`이 untracked. 이 문서 외 변경 금지 |
 | Current build/source/test/deployment inventory가 read-only로 확인됨 | §5의 명령과 file fingerprint | 확인됨 |
 | Phase implementation owner와 reviewer가 지정됨 | Scheduler task/review assignment | `scheduler_task_id: TBD`; 구현 시작 전 필요 |
-| Phase 00 상세 문서가 review됨 | [Phase 00 review](../reviews/phase-00-review.md) | 문서 review 완료. `PASS_WITH_RESIDUAL_BLOCKERS`; 구현 acceptance/evidence는 미충족 |
+| Phase 00 상세 문서가 review됨 | [Phase 00 review](../reviews/phase-00-review.md) | prior `PASS_WITH_RESIDUAL_BLOCKERS`는 historical. 현재 `REBASE_PENDING_REREVIEW`. 구현 acceptance/evidence 미충족 |
 | Code change authorization가 있음 | 별도 구현 task scope | 이 요청은 문서 작성만 허용. 아직 미충족 |
 
 `scheduler_task_id` 또는 implementation authorization가 없으므로 이 문서 작성 직후 실제 POM/source 이동을 시작하지 않는다. 이는 설계 blocker이지 문서 작성 blocker가 아니다.
@@ -238,9 +272,13 @@ rg -n 'com\.google\.ortools|route-selection-ortools-cpsat' pom.xml src
 
 ## 5. 현 상태 inventory와 target gap
 
+> **Inventory 지위:** 아래 §5 표·fingerprint는 **2026-07-28 문서 작성 시점 historical inventory**다.
+> 2026-08-01 semantic rebase가 checkout을 재측정하거나 구현 baseline 완료를 주장하지 않는다.
+> 구현 entry 전 inventory 명령을 다시 실행한다. current ≠ target (Master A9 · Architecture §1.3).
+
 ### 5.1 Build/toolchain
 
-| 항목 | 2026-07-28 현재 사실 | Phase 00 target gap |
+| 항목 | 2026-07-28 현재 사실 (historical) | Phase 00 target gap |
 |---|---|---|
 | Maven project | Root `pom.xml` 하나, implicit `jar`, `com.ronext:ro-next:0.1.0-SNAPSHOT`; `<modules>` 없음 | Parent/aggregator reactor와 module DAG 없음 |
 | Java/Maven pin | `.sdkmanrc`에 `25.0.3-amzn`, Maven `3.9.14`; local도 Corretto 25.0.3/Maven 3.9.14 | Maven Wrapper와 wrapper distribution checksum 없음 |
@@ -303,7 +341,9 @@ Phase 00은 실제 cloud에 접속해 배포 여부를 확인하지 않는다. �
 
 ## 6. 변경 대상 module/package/file tree
 
-다음은 **PROPOSED INTERNAL** target이다. Phase 00 review에서 이름은 바꿀 수 있지만 §3의 의존 방향과 격리는 바꿀 수 없다.
+**Authority:** Architecture [§4.2](../../architecture-design.md) (+ plan §4.1).  
+Phase 00 ADR에서 leaf 표시 이름을 미세 조정할 수 있으나 §3·§4.3 금지선과 §4.2 모듈 경계는 바꿀 수 없다.
+구 `capabilities` / `profile-catalog` / `object-s3` / `compute-aws-lambda` 경로는 **폐기**한다.
 
 ```text
 ro-next/
@@ -360,12 +400,12 @@ ro-next/
 │   │       ├── port/out/package-info.java
 │   │       ├── service/package-info.java
 │   │       └── execution/package-info.java
-│   ├── capabilities/
-│   │   ├── pom.xml
-│   │   └── src/main/java/com/ronext/rpdptw/capability/package-info.java
-│   └── profile-catalog/
-│       ├── pom.xml
-│       └── src/main/java/com/ronext/rpdptw/profile/catalog/package-info.java
+│   └── profiles/
+│       ├── pom.xml                          # profiles aggregator (optional)
+│       └── standard/
+│           ├── pom.xml
+│           └── src/main/java/com/ronext/rpdptw/profiles/standard/package-info.java
+│       # <namespace>/ — customer onboarding only; not created in Phase 00
 ├── legacy/
 │   ├── pom.xml                              # legacy-only aggregator
 │   └── gcp-placeholder/
@@ -377,7 +417,17 @@ ro-next/
 └── docs/
 ```
 
-Phase 00은 `adapters/object-s3`, `workflow-aws-stepfunctions`, `compute-aws-lambda`, `apps`, `distributions`, `deployment/aws`를 빈 module로 만들지 않는다. 각 owner Phase가 contract와 test를 함께 추가한다. `solver.pool`, `solver.selection`, `solver.hybrid`도 `C-17` 승인 전 package skeleton을 만들지 않는다.
+**Target map (Architecture §4.2) — Phase 00에서 empty module로 만들지 않음.**  
+각 owner Phase가 contract·test와 함께 추가한다.
+
+- `adapters/` — `common`, `input`, `s3` (LocalStack 동일 adapter), `<provider>` DEFERRED
+- `backends/` — `route-selection-ortools-cpsat` OPTIONAL · C-17 GATED only
+- `apps/` — `cli`, `api`, `worker` (worker 조립 = Lambda \| ECS, O1 OPEN; 모듈명으로 compute 단정 금지)
+- `deployment/` — DEFERRED
+
+폐기 이름(문서·skeleton 금지): `adapters/object-s3`, `compute-aws-lambda`, `distributions`, `workflow-aws-stepfunctions` as Maven module, `rpdptw-capabilities`, `rpdptw-profile-catalog`.
+
+`solver.pool`, `solver.selection`, `solver.hybrid` package와 `backends/*`도 `C-17` 승인 전 생성하지 않는다.
 
 ### 6.1 Package ownership
 
@@ -387,9 +437,8 @@ Phase 00은 `adapters/object-s3`, `workflow-aws-stepfunctions`, `compute-aws-lam
 | `com.ronext.rpdptw.travel/propagation/evaluation` | Dependency direction을 설명하는 `package-info.java`만 | Travel/evaluation placeholder implementation |
 | `com.ronext.rpdptw.solver` | Package ownership 선언만 | ALNS fake, random objective, route pool/MIP |
 | `com.ronext.rpdptw.verification/result` | Solver 독립성 선언만 | `alwaysPass` verifier |
-| `com.ronext.rpdptw.application` | Provider-neutral ownership 선언만 | S3/GCS/Lambda/HTTP type |
-| `com.ronext.rpdptw.capability` | Reusable capability ownership 선언만 | Customer 이름 class |
-| `com.ronext.rpdptw.profile.catalog` | Data-driven catalog ownership 선언만 | `latest` fallback, arbitrary executable rule |
+| `com.ronext.rpdptw.application` | Provider-neutral ownership 선언만 | S3/GCS/Lambda/HTTP SDK type |
+| `com.ronext.rpdptw.profiles.standard` | Profile SPI ownership 선언만 (Architecture §5) | Customer 이름 hardcode, first-wins/latest fallback |
 | `com.ronext.optimizer` | Legacy behavior와 characterization | Target type의 역유입 |
 
 ## 7. 입력·출력 artifact, contract, identity와 lifecycle
@@ -484,7 +533,7 @@ Elapsed build time과 machine path는 관측 metadata이며 artifact content ide
 
 Phase 00 production source는 `package-info.java`와 필요한 module descriptor 수준에 그친다. 단순히 JAR을 non-empty로 만들기 위한 `CoreMarker`, `SolverMarker`, 빈 service interface 또는 항상 성공하는 verifier를 만들지 않는다.
 
-`module-info.java`/JPMS는 Final Architecture의 ADR backlog에 남아 있으므로 Phase 00 default로 도입하지 않는다. Maven module 경계와 package/bytecode test를 먼저 사용한다.
+`module-info.java`/JPMS는 Phase 00 default로 도입하지 않는다. Maven module 경계와 package/bytecode test를 먼저 사용한다 (Architecture §4.6).
 
 ### 8.2 Architecture rule test type 후보
 
@@ -495,6 +544,7 @@ final class StableModuleDependencyArchitectureTest {
     @Test void coreHasNoOutboundProjectDependency();
     @Test void solverDependsOnlyOnCore();
     @Test void verificationDependsOnlyOnCore();
+    @Test void profilesDependOnlyOnCore();
     @Test void applicationDependsOnlyOnCoreSolverAndVerification();
 }
 
@@ -841,20 +891,21 @@ Script는 evidence에 기록한 exact implementation commit 또는 content-addre
 
 **구체 작업**
 
-1. Core, solver, verification, application, capabilities, profile-catalog, test-fixtures module을 생성한다.
-2. POM compile edge를 §3.1 allowlist와 정확히 맞춘다.
+1. Core, solver, verification, application, `profiles` (최소 `profiles/standard`), test-fixtures module을 생성한다. Architecture §4.2 경로 사용.
+2. POM compile edge를 §3.1 allowlist와 정확히 맞춘다 (`profiles/*` → core only).
 3. Package Javadoc에 owner, allowed dependency, forbidden responsibility를 쓴다.
 4. 구현 세부용 `.internal` convention을 정의하되 cross-module access를 허용하지 않는다.
 5. Empty marker/fake service/domain DTO 없이 compile 가능한 skeleton을 만든다.
-6. Phase 13 GATED package와 future provider module은 생성하지 않는다.
+6. Phase 13 GATED package, `backends/*`, `adapters/*`, `apps/*`, `deployment/` empty 필수 module은 생성하지 않는다.
 7. `rpdptw-test-fixtures`는 `src/test/java`를 Maven test-jar의 `tests` classifier로 attach한다.
    Consumer 예제와 effective POM은 `type=test-jar`, `classifier=tests`, `scope=test`를 모두 명시한다.
 8. `rpdptw-core`가 Phase 01의 유일한 semantic production-code 시작점임을 handoff manifest에 기록한다.
+9. 구 `capabilities` / `profile-catalog` module coordinate를 만들지 않는다.
 
 **검증 명령**
 
 ```bash
-./mvnw -B -ntp -Dstyle.color=never -pl rpdptw/core,rpdptw/solver,rpdptw/verification,rpdptw/application,rpdptw/capabilities,rpdptw/profile-catalog -am verify
+./mvnw -B -ntp -Dstyle.color=never -pl rpdptw/core,rpdptw/solver,rpdptw/verification,rpdptw/application,rpdptw/profiles/standard -am verify
 ./mvnw -B -ntp -Dstyle.color=never -pl build/test-fixtures -am verify
 ./mvnw -B -ntp -Dstyle.color=never help:effective-pom
 ./mvnw -B -ntp -Dstyle.color=never dependency:tree
@@ -894,18 +945,20 @@ Script는 evidence에 기록한 exact implementation commit 또는 content-addre
 
 1. Maven Enforcer로 artifact-level forbidden dependency와 test-scope leakage를 막는다.
 2. ArchUnit으로 verification isolation, package direction, provider/vendor/internal access를 검사한다.
-3. `jdeps` 또는 동등 bytecode scan으로 transitive/provider reference를 확인한다.
-4. Source scan으로 core environment/clock/random과 generic customer-name conditional을 검사한다.
-5. 의도적 bad fixture가 각 rule에 의해 실패하는 self-test를 만든다.
-6. Legacy allowlist는 module coordinate와 namespace로 좁게 제한한다. Target rule을 끄는 global skip property를 제공하지 않는다.
-7. Skipped/incomplete architecture test가 root `verify` 성공으로 보이지 않게 한다.
-8. Customer-identity 검사는 승인된 identity/token manifest, 허용 package
-   (`profile-catalog`, 향후 adapter authorization)와 AST/bytecode dependency rule을 함께 사용한다.
+3. Architecture **§4.6** 표(§3.2 item 16)를 root `verify`에 1:1 연결한다. adapters/backends module이
+   없어도 S3/OR-Tools SDK·JDBC/Redis·verification→solver 패턴 부재로 통과 가능해야 한다.
+4. `jdeps` 또는 동등 bytecode scan으로 transitive/provider reference를 확인한다.
+5. Source scan으로 core environment/clock/random과 generic customer-name conditional을 검사한다.
+6. 의도적 bad fixture가 각 rule에 의해 실패하는 self-test를 만든다.
+7. Legacy allowlist는 module coordinate와 namespace로 좁게 제한한다. Target rule을 끄는 global skip property를 제공하지 않는다.
+8. Skipped/incomplete architecture test가 root `verify` 성공으로 보이지 않게 한다.
+9. Customer-identity 검사는 승인된 identity/token manifest, 허용 package
+   (`profiles/*`, 향후 adapter authorization)와 AST/bytecode dependency rule을 함께 사용한다.
    Scanner self-test는 conditional/string/switch bad fixture를 각각 검출해야 한다. 선언되지 않은 미래
    업무 문자열까지 정적으로 완전 검출한다고 주장하지 않고 coverage manifest와 독립 change review를
    evidence에 남긴다.
-9. Phase 00에는 target distribution이 없으므로 “default assembly capability 없음” oracle은 reactor module,
-   service registration/resource와 capability advertisement class의 부재를 검사한다. 존재하지 않는
+10. Phase 00에는 target distribution이 없으므로 “default assembly route-selection 없음” oracle은 reactor module,
+   service registration/resource와 C-17/backends advertisement class의 부재를 검사한다. 존재하지 않는
    runtime assembly를 실행했다고 주장하지 않는다.
 
 **검증 명령**
@@ -1230,7 +1283,7 @@ Phase 00은 다음을 모두 만족해야만 `ACCEPTED`다.
 | Archive timestamp derivation | OPEN internal build choice | Build/Release | Reproducible gate seal 금지 | UTF-8/current build baseline | Explicit deterministic value/derivation ADR와 two-build proof |
 | `Q-BENCH-02` official values | OPEN — EXPERIMENT_REQUIRED | Benchmark·Quality | Phase 00을 막지 않음; 수치 default 금지 | No official numeric manifest | Calibration + explicit approval |
 | Current Win fixture decimal `D/U` | Blocker for official fixture only | Input·Matrix + Benchmark | Phase 00을 막지 않음 | Fixture read-only | Compliant integer matrix 또는 계약 변경 승인 |
-| `C-17` route pool/MIP | GATED TARGET; backend policy = direct OR-Tools CP-SAT | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain owners | Module/package/OR-Tools dependency 생성 금지 | ALNS-only DAG | Phase 06/07/08 accepted + Phase 14A `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`, scope와 OR-Tools version/config/native/OSS-license/SBOM/fallback 승인 |
+| `C-17` route pool/MIP | GATED TARGET; backend product **not Master-normative** (implementation proposed only, e.g. OR-Tools CP-SAT in Phase 13 docs) | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain owners | Module/package/OR-Tools/`backends/*` dependency·advertisement 생성 금지 | ALNS-only DAG | Phase 06/07/08 accepted + Phase 14A `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`, scope와 version/config/native/OSS-license/SBOM/fallback **별도 승인** |
 | `Q-VAR-01` optional variants | DEFERRED | Product·Domain·Algorithm | 질문·skeleton·구현 금지 | Single-trip boundary | Variant/fixture/core-impact 승인 |
 | Multi-trip/rotation | Deferred feature | Product·Domain·Algorithm | Phase 01 skeleton에 hook 미리 추가 금지 | Current single-trip contract | Trip/reset/depot/resource 계약과 승인 |
 | AWS implementation/cutover | Selected target, implementation gated | Platform·Operations·Security | AWS module/IaC 생성 금지 | Provider-neutral target DAG | Phase 10/11 entry, parity/security/operations approval |
@@ -1283,20 +1336,22 @@ Phase 01은 다음을 모두 확인하기 전 구현을 시작하지 않는다.
 
 | Requirement ID | Source | Phase 00 requirement | Planned test/command | Evidence |
 |---|---|---|---|---|
-| `P00-REQ-AUTH` | Master §1.5/§17, Realization §2, README §3 | User-locked authority와 drift rule 고정 | Source SHA 재계산, link/section audit | `E-P00-BUILD` |
-| `P00-REQ-BASELINE` | Master §1.1, Realization §3 | Placeholder를 target completion으로 오인하지 않음 | Inventory digest + legacy report | `E-P00-LEGACY` |
-| `P00-REQ-DAG` | Final Architecture §2.1~§2.3, Integrated §3.3~§3.5 | Stable module DAG와 owner 분리 | `AllowedModuleGraphTest`, `dependency:tree` | `E-P00-ARCH` |
-| `P00-REQ-ROOT` | Final Architecture §2.1/§2.7, Integrated §4 | Business dependency 없는 parent/aggregator | `ReactorTopologyTest`, effective POM | `E-P00-BUILD` |
-| `P00-REQ-JAVA25` | Final Architecture metadata/§2.7, Integrated §4.2 | Java 25와 Maven pin | Wrapper/enforcer contract test | `E-P00-BUILD` |
-| `P00-REQ-OFFLINE` | Integrated §4.2/§26.4, Realization Phase 00 | Controlled cache offline root verify | `OfflineBuildIT`, wrapper `-o verify` | `E-P00-BUILD` |
-| `P00-REQ-REPRO` | Final Architecture §2.1, Integrated §4.2/§26.4, Realization Phase 00/§13 | Immutable source snapshot의 deterministic archive/build identity | `ReproducibleArchiveIT` | `E-P00-BUILD` |
-| `P00-REQ-PROVIDER` | `C-20`, Final Architecture §2.2/§2.7 | Stable module provider SDK reference 0 | Enforcer + provider isolation ArchUnit/jdeps | `E-P00-ARCH` |
-| `P00-REQ-VERIFY-ISO` | `C-21`, Final Architecture §2.2, Integrated §23.10 | Verification → solver/search/cache 0 | `verificationDependsOnlyOnCore()` | `E-P00-ARCH` |
-| `P00-REQ-CUSTOMER` | `C-03`, Final Architecture §2.6, Integrated §3.6 | Generic customer branch/module 0 | Customer isolation source/package test | `E-P00-ARCH` |
-| `P00-REQ-VENDOR` | `C-17`, Final Architecture §2.2/§4.1 | OR-Tools-free default build, no Phase 13 skeleton | Dependency Enforcer/ArchUnit + tree absence | `E-P00-ARCH` |
-| `P00-REQ-TEST-SCOPE` | Final Architecture §2.7, Integrated §3.6 | Test fixture production leakage 0 | `TestScopeLeakageArchitectureTest` | `E-P00-ARCH` |
-| `P00-REQ-LEGACY` | Master §16.2, Integrated §1.3/§18.2, Realization Phase 00 | Existing GCP behavior를 golden characterization | Legacy contract/workflow tests | `E-P00-LEGACY` |
-| `P00-REQ-NO-DOMAIN` | Realization Phase 00/01, README §2 | Phase 01 normalization logic 선취 금지 | Production class inventory, marker/fake scan | `E-P00-ARCH` |
+| `P00-REQ-AUTH` | Master authority; Phase A; plan §2; README | APPROVED authority와 drift rule 고정 | Source SHA 재계산, link/section audit | `E-P00-BUILD` |
+| `P00-REQ-BASELINE` | Master A9 §8.4; Architecture §1.3·§10; plan §3 | Placeholder/legacy를 target completion으로 오인하지 않음 | Inventory digest + legacy report | `E-P00-LEGACY` |
+| `P00-REQ-DAG` | Architecture §4.1–§4.2; plan §4.1 | Stable module DAG와 owner 분리 (`profiles/*`, not capabilities) | `AllowedModuleGraphTest`, `dependency:tree` | `E-P00-ARCH` |
+| `P00-REQ-ROOT` | Architecture §4.2·§4.6; plan Phase 00 | Business/cloud/ortools dependency 없는 parent/aggregator | `ReactorTopologyTest`, effective POM | `E-P00-BUILD` |
+| `P00-REQ-JAVA25` | Architecture §4.6 tool placement; plan Phase 00 | Java 25와 Maven pin | Wrapper/enforcer contract test | `E-P00-BUILD` |
+| `P00-REQ-OFFLINE` | plan Phase 00 | Controlled cache offline root verify | `OfflineBuildIT`, wrapper `-o verify` | `E-P00-BUILD` |
+| `P00-REQ-REPRO` | plan Phase 00; Master A9 | Immutable source snapshot의 deterministic archive/build identity | `ReproducibleArchiveIT` | `E-P00-BUILD` |
+| `P00-REQ-PROVIDER` | Architecture §4.3·§4.6 #1; Master A10 | Stable module provider/cloud SDK reference 0 | Enforcer + provider isolation ArchUnit/jdeps | `E-P00-ARCH` |
+| `P00-REQ-VERIFY-ISO` | Architecture §4.3·§4.6 #5 | Verification → solver/search/cache 0 | `verificationDependsOnlyOnCore()` | `E-P00-ARCH` |
+| `P00-REQ-CUSTOMER` | Architecture §4.1 profiles; Master A11 | Generic customer branch/module 0; profiles isolation | Customer isolation source/package test | `E-P00-ARCH` |
+| `P00-REQ-VENDOR` | Architecture §4.3·§4.6 #4; Master C-17 GATED | OR-Tools-free default build; no backends/C-17 skeleton | Dependency Enforcer/ArchUnit + tree absence | `E-P00-ARCH` |
+| `P00-REQ-STORAGE` | Architecture §4.6 #2–#3; §3.2 S3 only | JDBC/Redis 0; S3 SDK outside `adapters/*` 0 | Enforcer + bytecode/source scan | `E-P00-ARCH` |
+| `P00-REQ-TEST-SCOPE` | Architecture §4.6; plan Phase 00 | Test fixture production leakage 0 | `TestScopeLeakageArchitectureTest` | `E-P00-ARCH` |
+| `P00-REQ-LEGACY` | Master A9; Architecture §10; plan Phase 00 | Existing GCP behavior를 golden characterization only | Legacy contract/workflow tests | `E-P00-LEGACY` |
+| `P00-REQ-NO-DOMAIN` | Domain APPROVED (no P00 math); plan Phase 00/01 | Phase 01 normalization logic 선취 금지 | Production class inventory, marker/fake scan | `E-P00-ARCH` |
+| `P00-REQ-COMPUTE-OPEN` | Master D2/O1; Architecture §3.3·§9.4 | Lambda-only module/skeleton 금지; O1 OPEN | Module name/path scan; no `compute-aws-lambda` | `E-P00-ARCH` |
 | `P00-REQ-HANDOFF` | Realization §6~§7, README §6 | Phase 01이 소비할 skeleton/evidence만 소유 | Handoff checklist + Phase 01 entry audit | Bundle index |
 
 새 requirement/test/evidence를 추가하면 source와 owner를 연결한다. 이 표의 requirement를 삭제하거나 더 약한 “파일 존재” test로 바꾸지 않는다.

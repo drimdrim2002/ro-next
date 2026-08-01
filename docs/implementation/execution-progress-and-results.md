@@ -16,7 +16,7 @@ semantic_rebase_core3: AUTHORITY_ALIGNED_2026-07-31
 core3_residual_phrasing_pass: 2026-08-01
 inventory_platform_reframe: 2026-08-01
 filename_slug_policy: KEEP_DISPLAY_SEPARATION
-semantic_rebase_phases: NOT_DONE
+semantic_rebase_phases: PHASE_00_01_DONE_02_TO_14_PENDING
 implementation_completion_claim: NONE
 execution_success_fixture: data/win_poc_case_floor.json
 execution_success_status: NOT_RUN
@@ -42,8 +42,8 @@ current_design:
 [Master v1.1](../master-design.md) · [Domain v1.2](../domain-design.md) ·
 [Architecture v3.4](../architecture-design.md) — 모두 `APPROVED`.  
 규범 입력: [Phase A](../deprecated/2026-07-30-design-interview-phase-a.md).  
-`phases/*` 본문 의미 rebase는 **미실시** — 충돌 시 APPROVED 우선
-([README §3](README.md#3-source-authority)).
+`phases/*` 본문 의미 rebase: **Phase 00·01 적용** (2026-08-01); 02–14 미실시 —
+충돌 시 APPROVED 우선 ([README §3](README.md#3-source-authority)).
 
 2026-07-28 사용자 결정으로 `distanceMatrix.D`는 meter, `distanceMatrix.U`는 second
 단위에서 exact decimal `FLOOR`하는 migration이 승인되었다.
@@ -165,8 +165,8 @@ Phase 12/13처럼 조건부 branch의 applicability가 총괄 스케줄러에 �
 
 | Phase | Canonical 상세 문서 | 문서 작성 task ID | Review task ID | 문서/review 결과 | 구현 상태 |
 |---:|---|---|---|---|---|
-| 00 | [actual](phases/phase-00-build-architecture-skeleton.md) | `019fa5d9-6162-7a81-9d47-fefabdb5b0c9` | `019fa63a-c730-72e1-bc94-44e62b9c6f58` | `PASS_WITH_RESIDUAL_BLOCKERS` | `NOT_STARTED / NOT_ACCEPTED` |
-| 01 | [actual](phases/phase-01-canonical-input-normalization.md) | `019fa5d9-aacd-7633-8226-5d1d524d7bb0` | `019fa63b-03b8-71a2-ac1a-cbe0889c1870` | `ACCEPTED_WITH_APPLIED_CORRECTIONS` | `NOT_STARTED / NOT_ACCEPTED` |
+| 00 | [actual](phases/phase-00-build-architecture-skeleton.md) | `019fa5d9-6162-7a81-9d47-fefabdb5b0c9` | `019fa63a-c730-72e1-bc94-44e62b9c6f58` | prior `PASS_WITH_RESIDUAL_BLOCKERS` → **`REBASE_PENDING_REREVIEW`** (2026-08-01 body rebase) | `NOT_STARTED / NOT_ACCEPTED` |
+| 01 | [actual](phases/phase-01-canonical-input-normalization.md) | `019fa5d9-aacd-7633-8226-5d1d524d7bb0` | `019fa63b-03b8-71a2-ac1a-cbe0889c1870` | prior `ACCEPTED_WITH_APPLIED_CORRECTIONS` → **`REBASE_PENDING_REREVIEW`** (2026-08-01 body rebase) | `NOT_STARTED / NOT_ACCEPTED` |
 | 02 | [actual](phases/phase-02-prepared-travel-immutable-problem.md) | `019fa5d9-e82e-7231-a51e-1329ac4bb3b3` | `019fa63b-3acb-7fd1-a652-c0ed2f63c671` | `PASS_AFTER_APPLIED_CORRECTIONS` | `BLOCKED_BY_ENTRY_GATES / NOT_ACCEPTED` |
 | 03 | [actual](phases/phase-03-route-propagation-evaluation-kernel.md) | `019fa5da-2584-7d52-b2d1-024c59f24bc0` | `019fa63b-6d96-70a2-b153-26c7d140aa5a` | `CHANGES_REQUIRED` | `BLOCKED / NOT_ACCEPTED` |
 | 04 | [actual](phases/phase-04-capabilities-customer-profiles.md) | `019fa5ec-6aa7-75f2-b131-5f6813b7201b` | `019fa655-1511-7023-aa44-41d343b36945` | `CHANGES_REQUIRED` | `NOT_STARTED / NOT_ACCEPTED` |
@@ -228,20 +228,29 @@ Phase B APPROVED (Master v1.1 / Domain v1.2 / Architecture v3.4) 및 Phase C 완
 | Traceability §15 | 깨진 Master anchors / deprecated | current Domain/Architecture 절 |
 | C-17 backend | Master 확정처럼 읽힘 | implementation proposed only |
 
-`phases/*` · `reviews/*` 본문 rebase와 content hash 재계산은 **미실시** — residual
+`phases/*` · `reviews/*` 본문 rebase: **Phase 00·01** 2026-08-01 semantic rebase 적용
+(implementation status / win_poc / ACCEPTED 승격 없음). Phase 02–14 본문은 미실시 — residual
 blocker (§8).
 
 2026-08-01 core 3 residual phrasing pass (registry/status 불변):
 
 1. plan §6 mermaid: `immutable problem` → `immutable solve snapshot` 등 라벨 정합
 2. Phase 00: Architecture §4.2 / plan §4.1 tree **authority overlay** 추가
-3. Phase 02: missing-speed `45 km/h` = experiment/test-only, Domain MUST 아님
+3. Phase 02: missing-speed **default = 45 km/h** (사용자 2026-08-01; Phase 01은 absent 유지·정책 ref만;
+   적용·optional U-recalc ruleset = Phase 02+)
 4. Phase 06: `screenMaxSteps` 등 step 수치 = OPEN envelope, official default 아님
 5. Phase filename 정책 채택: **KEEP + 표시 분리** (README §5.1).
    slug `…-immutable-problem` 유지; 표시/계약 용어 = `immutable solve snapshot`.
    rename은 phase 본문 rebase와 같은 변경 단위에서만 예외 허용.
 6. 2026-08-01 **platform reframe:** target = AWS S3 + Step Functions + Lambda\|ECS;
-   tracked GCP path = legacy only (core docs + plan §3; phases/* body rebase 미실시).
+   tracked GCP path = legacy only (core docs + plan §3; phases 02–14 body rebase 미실시).
+7. **2026-08-01 Phase 00 body rebase (interview-decided):** Q-INFRA/Lambda-only 제거;
+   tree→`profiles/*` §4.2; authority→APPROVED M/D/A; review `REBASE_PENDING_REREVIEW`;
+   구현 `NOT_STARTED` / win_poc `NOT_RUN` / `0/15 ACCEPTED` 유지.
+8. **2026-08-01 Phase 01 body rebase (interview Decisions 1–10):** D1 single canonical +
+   `adapters/input`; reqDate 요청 시각; servicePattern only; ownership absence;
+   multi-zone; speed 45 policy at travel prep; review `REBASE_PENDING_REREVIEW`;
+   구현 `NOT_STARTED` / win_poc `NOT_RUN` / ACCEPTED 승격 없음.
 
 ### 6.2 Review 수정 요약
 
@@ -377,11 +386,11 @@ task 기록은 그대로 보존한다.
 | Central pair-removal editor ownership | `RESIDUAL CROSS-PHASE BLOCKER` | Phase 05/06 module·dependency 경계 차단 | Architecture + Phase 05/06 owner가 단일 소유 위치 승인 |
 | Authorization/failure/worker commit | `RESIDUAL CROSS-PHASE BLOCKER` | Phase 08/09 public/async authority와 lossless failure contract 차단 | Application/Security/Storage owner가 non-ambient binding, sealed failure와 exact commit operation 승인 |
 | Publication/cancellation/deadline/S3 ownership | `RESIDUAL CROSS-PHASE BLOCKER` | Phase 09~12 CAS race, crash-resume와 adapter evidence acceptance 차단 | Phase 08~12 + Operations/Architecture가 precondition, same-state cancel fence, durable deadline와 Phase 09/11 owner 승인 |
-| **`phases/*` Phase B 의미 rebase** | `NOT_DONE` | Phase 상세 본문이 2026-07-26 frozen; 착수 시 D1/D2/module/LocalStack 등 오해 위험 | Design·Implementation docs owner가 phase/review 본문을 APPROVED에 재정렬 (다음 세션 인터뷰 가능) |
-| D1 vs Phase 01 frozen body (multi-version wording) | `DOC DRIFT — CORE ALIGNED / PHASE BODY STALE` | Phase 01 착수 시 versioned schema 운영 오해 | 착수 시 Master plan Phase 01 authority overlay + Domain §4 우선 |
-| D2/O1 compute OPEN vs historical Lambda-lock / GCP-as-target | `DOC DRIFT — CORE PARTIALLY ALIGNED / PHASE BODY STALE` | Phase 11 Lambda-only 단정 또는 GCP 유지 오해 | Master D2/O1 + Arch §9.4: AWS S3+SFN+(Lambda\|ECS); GCP legacy; plan §3 |
-| Platform: AWS SFN+Lambda\|ECS vs GCP inventory language | `DOC DRIFT — CORE REFRAMED 2026-08-01 / PHASE+REVIEW BODY STALE` | phases/reviews 본문이 GCP inventory를 중립 현재 상태로 서술 | Core docs + plan §3 우선; phase body rebase 때 legacy 표기 통일 |
-| Architecture v3.4 module tree vs Phase 00 frozen tree | `DOC DRIFT — CORE ALIGNED / PHASE BODY STALE` | 잘못된 module skeleton 착수 | Architecture §4.2 + master plan §4.1 우선 |
+| **`phases/*` Phase B 의미 rebase** | `IN_PROGRESS` — Phase **00·01 body rebased** (2026-08-01); 02–14 미실시 | 나머지 Phase frozen body 착수 시 D1/D2/module/LocalStack 오해 위험 | 01 re-review 후 02→14 동일 루프 |
+| D1 vs Phase 01 body | `ALIGNED — 2026-08-01 body rebase` (re-review pending) | — | independent re-review |
+| D2/O1 compute OPEN vs historical Lambda-lock / GCP-as-target | `DOC DRIFT — CORE PARTIALLY ALIGNED / PHASE 00·01 REBASED / 02–14 BODY STALE` | Phase 11 Lambda-only 단정 또는 GCP 유지 오해 | Master D2/O1 + Arch §9.4; Phase 00 본문은 O1 OPEN 정렬됨 |
+| Platform: AWS SFN+Lambda\|ECS vs GCP inventory language | `DOC DRIFT — CORE REFRAMED 2026-08-01 / PHASE 00·01 REBASED / 02–14+REVIEW BODY STALE` | 02–14/reviews 본문이 GCP inventory를 중립 현재 상태로 서술 | Core docs + plan §3 우선; phase body rebase 때 legacy 표기 통일 |
+| Architecture v3.4 module tree vs Phase 00 frozen tree | `DOC DRIFT — PHASE 00 REBASED (pending re-review)` | Phase 00 본문 §4.2 정렬; 독립 re-review·구현 전 | [phase-00](phases/phase-00-build-architecture-skeleton.md) + review `REBASE_PENDING_REREVIEW` |
 | LocalStack S3 vs filesystem-local Phase 08/09 body | `DOC DRIFT — CORE ALIGNED / PHASE BODY STALE` | local 통합 타깃 오해 | Architecture §3.2 · §8 우선 |
 | Portfolio count/4×2 as Domain MUST | `DOC DRIFT — CORE ALIGNED / PHASE BODY STALE` | 숨은 official default | Domain §10.5 OPEN; experiment config만 |
 | Phase filename slug `immutable-problem` vs Domain `immutable solve snapshot` | `RESOLVED — KEEP_DISPLAY_SEPARATION` | 일상 rename 없음; 오독 완화는 표시 용어·overlay | [README §5.1](README.md#51-filename-slug-vs-domain-공식-용어-정책--keep--표시-분리); rename은 phase body rebase 때 예외 |
