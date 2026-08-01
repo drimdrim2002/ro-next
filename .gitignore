@@ -3,6 +3,7 @@
 .vscode/
 target/
 target/phase-00-evidence/
+target/phase-01-evidence/
 target/phase-00-m2/
 .serverless/
 .serverless_plugins/

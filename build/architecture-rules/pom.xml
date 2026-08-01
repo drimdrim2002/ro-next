@@ -27,6 +27,12 @@
         </dependency>
         <dependency>
             <groupId>com.ronext.rpdptw</groupId>
+            <artifactId>rpdptw-adapter-input</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.ronext.rpdptw</groupId>
             <artifactId>rpdptw-solver</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
