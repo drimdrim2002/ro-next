@@ -135,9 +135,15 @@ public class DefaultCanonicalInputNormalizer implements CanonicalInputNormalizer
 
             // Validate items & service time
             try {
+                long totalWeight = 0;
+                long totalVolume = 0;
                 for (CanonicalItemInput item : req.items()) {
-                    fixedPointNormalizer.floorNonNegativeToScale3(item.weightDecimal());
-                    fixedPointNormalizer.floorNonNegativeToScale3(item.volumeDecimal());
+                    long w = fixedPointNormalizer.floorNonNegativeToScale3(item.weightDecimal());
+                    long v = fixedPointNormalizer.floorNonNegativeToScale3(item.volumeDecimal());
+                    long itemWeight = fixedPointNormalizer.multiplyChecked(w, item.quantity());
+                    long itemVolume = fixedPointNormalizer.multiplyChecked(v, item.quantity());
+                    totalWeight = fixedPointNormalizer.addChecked(totalWeight, itemWeight);
+                    totalVolume = fixedPointNormalizer.addChecked(totalVolume, itemVolume);
                 }
                 serviceTimeNormalizer.calculateServiceSeconds(req.delivery() != null ? req.delivery().durationSeconds() : "0", Optional.empty(), req.items());
             } catch (NumericReject e) {
@@ -149,7 +155,15 @@ public class DefaultCanonicalInputNormalizer implements CanonicalInputNormalizer
             // Compatibility specs
             AllowedVehicleSizes allowedSizes = new AllowedVehicleSizes.All();
             Set<CapabilityCode> requiredCaps = Set.of();
-            Set<ZoneCode> reqZones = Set.of();
+            Set<ZoneCode> reqZones = new java.util.HashSet<>();
+
+            // Extract zones from service visits
+            if (req.pickup().isPresent() && req.pickup().get().zone().isPresent()) {
+                reqZones.add(new ZoneCode(req.pickup().get().zone().get()));
+            }
+            if (req.delivery() != null && req.delivery().zone().isPresent()) {
+                reqZones.add(new ZoneCode(req.delivery().zone().get()));
+            }
 
             if (req.compatibility() != null) {
                 try {
@@ -160,7 +174,7 @@ public class DefaultCanonicalInputNormalizer implements CanonicalInputNormalizer
                 }
             }
 
-            normalizedRequests.add(new NormalizedRequestSpec(req.id(), allowedSizes, requiredCaps, reqZones));
+            normalizedRequests.add(new NormalizedRequestSpec(req.id(), allowedSizes, requiredCaps, Set.copyOf(reqZones)));
         }
 
         // 5. Validate travel costs
@@ -168,13 +182,10 @@ public class DefaultCanonicalInputNormalizer implements CanonicalInputNormalizer
             CanonicalTravelInput t = input.travelCosts().get(i);
             InputPath tPath = new InputPath("travelCosts[" + i + "]");
             try {
-                long duration = Long.parseLong(t.durationSeconds());
-                long distance = Long.parseLong(t.distanceMeters());
-                if (duration < 0 || distance < 0) {
-                    problems.add(new InputProblem.Numeric(InputProblemCode.NEGATIVE_VALUE, tPath));
-                }
-            } catch (NumberFormatException e) {
-                problems.add(new InputProblem.Numeric(InputProblemCode.INVALID_NUMERIC_SYNTAX, tPath));
+                fixedPointNormalizer.requireIntegerLexeme(t.durationSeconds());
+                fixedPointNormalizer.requireIntegerLexeme(t.distanceMeters());
+            } catch (NumericReject e) {
+                problems.add(new InputProblem.Numeric(e.code(), tPath));
             }
         }
 
