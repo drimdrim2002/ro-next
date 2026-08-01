@@ -3,6 +3,7 @@
 ```yaml
 document_status: DOCUMENTATION_COMPLETE_WITH_RESIDUAL_BLOCKERS
 baseline_date: 2026-07-28
+authority_alignment_date: 2026-07-31
 registry_owner: 총괄 스케줄러
 current_documentation_task_id: 019fa5c8-4efa-70a3-b6b6-205a4230e0af
 master_plan_task_id: 019fa5c9-3acf-78d2-ac5d-93f14ec0a137
@@ -10,21 +11,39 @@ final_audit_task_id: 019fa6ad-495d-7cd1-87f3-9815ed58145d
 alns_first_direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 implementation_direction_decision: ALNS_FIRST_BENCHMARK_BEFORE_OPTIONAL_MIP
 direction_overlay_contract_version: ALNS_FIRST_1.0
+plan_version: 1.3
+semantic_rebase_core3: AUTHORITY_ALIGNED_2026-07-31
+core3_residual_phrasing_pass: 2026-08-01
+inventory_platform_reframe: 2026-08-01
+filename_slug_policy: KEEP_DISPLAY_SEPARATION
+semantic_rebase_phases: NOT_DONE
 implementation_completion_claim: NONE
 execution_success_fixture: data/win_poc_case_floor.json
 execution_success_status: NOT_RUN
 fixture_migration_status: COMPLETE_VERIFIED
+current_design:
+  master: APPROVED v1.1
+  domain: APPROVED v1.2
+  architecture: APPROVED v3.4
 ```
 
 ## 1. 목적과 갱신 권한
 
-이 문서는 두 가지를 분리해 추적한다.
+이 문서는 다음을 분리해 추적한다.
 
 1. 이 구현 문서 세트를 조사·작성·검증한 **문서 생성 workflow**
 2. [Master Realization Plan](master-realization-plan.md)의 Phase 00~14를 실제로 구현·검증한 **구현 workflow**
 3. `win_poc_case_floor.json`을 실제 solver로 실행해 검증 결과를 제시하는 **사용자 고정 최종 성공 gate**
+4. APPROVED Master/Domain/Architecture에 맞춘 **core 3 authority alignment** (구현 승격 아님)
 
-문서가 작성되었다고 코드 Phase가 완료된 것은 아니며, 코드나 test 파일이 존재한다고 Phase exit gate가 승인된 것도 아니다.
+문서가 작성되었다고 코드 Phase가 완료된 것은 아니며, 코드나 test 파일이 존재한다고 Phase exit gate가 승인된 것도 아니다. Authority alignment도 구현 acceptance를 승격하지 않는다.
+
+**Live design authority (2026-07-31):**  
+[Master v1.1](../master-design.md) · [Domain v1.2](../domain-design.md) ·
+[Architecture v3.4](../architecture-design.md) — 모두 `APPROVED`.  
+규범 입력: [Phase A](../deprecated/2026-07-30-design-interview-phase-a.md).  
+`phases/*` 본문 의미 rebase는 **미실시** — 충돌 시 APPROVED 우선
+([README §3](README.md#3-source-authority)).
 
 2026-07-28 사용자 결정으로 `distanceMatrix.D`는 meter, `distanceMatrix.U`는 second
 단위에서 exact decimal `FLOOR`하는 migration이 승인되었다.
@@ -41,6 +60,11 @@ fixture_migration_status: COMPLETE_VERIFIED
 문서 전체에 반영하는 별도 documentation task다. 코드, Phase implementation,
 benchmark run과 evidence를 만들지 않았으며 registry의 구현 acceptance는 계속
 `0/15`다.
+
+2026-07-31 **core 3 authority alignment** 역시 새 scheduler task ID를 발명하지 않았다.
+README / master-realization-plan / 이 파일의 권위·충돌·D1/D2/module tree/traceability
+서술을 APPROVED 3문서에 맞췄을 뿐, §5 registry의 task ID·문서 verdict·구현 상태는
+변경하지 않는다 (`0/15`, win_poc `NOT_RUN` 유지).
 
 **이 baseline 이후 task registry, phase status와 result summary를 갱신할 수 있는 주체는 총괄 스케줄러뿐이다.** 구현자·reviewer는 evidence와 review 결과를 제출하지만 이 파일의 authoritative 상태를 직접 승격하지 않는다. 수정이 필요하면 총괄 스케줄러가 source task/evidence/review를 확인한 뒤 한 번에 갱신한다.
 
@@ -106,7 +130,7 @@ official/provider/production gate를 계속 적용한다.
 | 문서 최종 감사 상태 | 최종 audit와 owner 보완 | `PASS_WITH_RESIDUAL_BLOCKERS` | 구조·링크·상태·DAG·gate 검사는 통과했고 구현/외부 권위 blocker는 보존됨 |
 | 구현 accepted-gate 완료율 | `ACCEPTED` Phase / applicable Phase | 0/15 = 0% | Target exit evidence가 승인된 Phase가 없음 |
 | 코드 작성량 | 별도 계측 대상 | NOT_MEASURED | 구현 완료율의 대용치가 아님 |
-| 배포 완료율 | 승인된 distribution cutover / applicable distribution | 0 | 현재 GCP 자료나 AWS 선택을 production cutover로 계산하지 않음 |
+| 배포 완료율 | 승인된 distribution cutover / applicable distribution | 0 | legacy GCP 자료·ignored serverless·AWS reference 선택 어느 것도 production cutover로 계산하지 않음 |
 | 최종 실행 성공 | §11.3 AND gate | `NOT_RUN` | FLOOR fixture는 준비됐지만 실제 solver/result/verifier/replay evidence가 없음 |
 
 Phase 12/13처럼 조건부 branch의 applicability가 총괄 스케줄러에 의해 바뀌면 분모와 근거를 같이 기록한다. 현재 baseline은 canonical 15 Phase 전체를 registry에 두되, Phase 12는 provider별 approval-gated, Phase 13은 `C-17 GATED`로 표시한다.
@@ -185,6 +209,40 @@ corpus/protocol/criteria가 준비되면 production authority 없이 총괄 스�
   correctness oracle, both-verifier, objective/quality, timeout/resource,
   variance/replay와 immutable independent acceptance evidence를 요구했다.
 
+#### 2026-07-31 Core 3 authority alignment — registry/status 불변
+
+Phase B APPROVED (Master v1.1 / Domain v1.2 / Architecture v3.4) 및 Phase C 완료
+이후, core 3문서만 권위·충돌 규칙을 재정렬했다. **구현/evidence/Phase acceptance
+승격 없음** (`0/15`, win_poc `NOT_RUN`).
+
+정렬 요약:
+
+| 주제 | 이전 (구현 세트 잔존) | 정렬 후 (APPROVED) |
+|---|---|---|
+| Design authority | frozen Final + “REVIEW provenance” 혼재 | APPROVED M/D/A + Phase A; phases/* frozen body 유지 |
+| D1 입력 | versioned multi-schema 운영 문구 | 단일 고정 canonical + adapter 하나 |
+| D2 compute | Q-INFRA “Lambda RESOLVED” / GCP-as-target 혼동 | AWS reference = S3 + **Step Functions** + (**Lambda \| ECS**); **OPEN = Lambda vs ECS only**; S3 only MUST; GCP = legacy |
+| Module tree | object-filesystem / compute-aws-lambda / adapters OR-Tools | Architecture §4.2: profiles, adapters/s3·input, backends/* |
+| Local 통합 | filesystem E2E 1급 | LocalStack S3 authoritative |
+| Portfolio 4×2/8 | MUST처럼 읽힘 | Domain OPEN/예시 |
+| Traceability §15 | 깨진 Master anchors / deprecated | current Domain/Architecture 절 |
+| C-17 backend | Master 확정처럼 읽힘 | implementation proposed only |
+
+`phases/*` · `reviews/*` 본문 rebase와 content hash 재계산은 **미실시** — residual
+blocker (§8).
+
+2026-08-01 core 3 residual phrasing pass (registry/status 불변):
+
+1. plan §6 mermaid: `immutable problem` → `immutable solve snapshot` 등 라벨 정합
+2. Phase 00: Architecture §4.2 / plan §4.1 tree **authority overlay** 추가
+3. Phase 02: missing-speed `45 km/h` = experiment/test-only, Domain MUST 아님
+4. Phase 06: `screenMaxSteps` 등 step 수치 = OPEN envelope, official default 아님
+5. Phase filename 정책 채택: **KEEP + 표시 분리** (README §5.1).
+   slug `…-immutable-problem` 유지; 표시/계약 용어 = `immutable solve snapshot`.
+   rename은 phase 본문 rebase와 같은 변경 단위에서만 예외 허용.
+6. 2026-08-01 **platform reframe:** target = AWS S3 + Step Functions + Lambda\|ECS;
+   tracked GCP path = legacy only (core docs + plan §3; phases/* body rebase 미실시).
+
 ### 6.2 Review 수정 요약
 
 - Phase 00~07: Maven/architecture/evaluation/identity/portfolio/ALNS/verifier의 false-green, ownership, replay와 handoff 결함을 교정했다.
@@ -195,10 +253,15 @@ corpus/protocol/criteria가 준비되면 production authority 없이 총괄 스�
 
 #### 2026-07-28 Phase 13 backend 정책 addendum — registry/status 불변
 
-사용자 결정에 따라, `C-17`이 향후 별도 승인으로 열릴 경우의 canonical exact
-backend는 **Google OR-Tools direct Java CP-SAT**로 고정했다. Boolean
-route/unassigned 변수와 integer/fixed-point 목적·제약을 사용하므로 `MPSolver`는
-canonical backend가 아니다. 이 addendum은 §5 task registry의 ID, 문서/review
+사용자 결정(implementation-direction)에 따라, `C-17`이 향후 별도 승인으로 열릴
+경우의 **implementation proposed** exact backend는 **Google OR-Tools direct Java
+CP-SAT**다. Boolean route/unassigned 변수와 integer/fixed-point 목적·제약을
+사용하므로 `MPSolver`는 proposed backend가 아니다. 모듈 위치 =
+`backends/route-selection-ortools-cpsat` (Architecture B1; adapters 금지).
+
+이 정책은 Master/Domain이 backend 제품을 규범으로 확정한 것이 아니다 (Master §6.2
+모델·budget 미확정; Domain §12.4 OPEN). C-17 승인 + evidence 전 착수·기본 ON 금지.
+config default false ≠ C-17 우회. 이 addendum은 §5 task registry의 ID, 문서/review
 결과 또는 구현 상태를 바꾸지 않는다. Phase 13은 계속
 `C17_GATE_CLOSED / NOT_ACCEPTED`, implementation/evidence는
 `NOT_STARTED / NOT_PRODUCED`다.
@@ -236,7 +299,11 @@ Phase 14A acceptance를 우회하지 않는지 정렬했다. Canonical source,
 
 `NONE CLAIMED`.
 
-현재 checkout의 Java/GCP code는 synthetic objective와 orchestration placeholder다. Target RPDPTW Phase completion evidence로 승인된 것은 없다. Ignored `target/`의 과거 단일 test pass, GCP deployment guide, ignored `.serverless/` artifacts도 target 구현 또는 production evidence가 아니다.
+현재 checkout의 tracked Java 코드는 **GCP legacy placeholder**(GCS + Cloud Workflows +
+Cloud Run HTTP)이며 synthetic objective orchestration demo다. **Target platform은 AWS**
+(S3 + Step Functions + Lambda\|ECS)이다. Target RPDPTW Phase completion evidence로
+승인된 것은 없다. Ignored `target/` 과거 test pass, `gcp/` guide, ignored `.serverless/`
+artifacts도 AWS reference 구현 또는 production evidence가 아니다.
 
 ## 7. 자체 review와 검증 기록
 
@@ -310,17 +377,27 @@ task 기록은 그대로 보존한다.
 | Central pair-removal editor ownership | `RESIDUAL CROSS-PHASE BLOCKER` | Phase 05/06 module·dependency 경계 차단 | Architecture + Phase 05/06 owner가 단일 소유 위치 승인 |
 | Authorization/failure/worker commit | `RESIDUAL CROSS-PHASE BLOCKER` | Phase 08/09 public/async authority와 lossless failure contract 차단 | Application/Security/Storage owner가 non-ambient binding, sealed failure와 exact commit operation 승인 |
 | Publication/cancellation/deadline/S3 ownership | `RESIDUAL CROSS-PHASE BLOCKER` | Phase 09~12 CAS race, crash-resume와 adapter evidence acceptance 차단 | Phase 08~12 + Operations/Architecture가 precondition, same-state cancel fence, durable deadline와 Phase 09/11 owner 승인 |
+| **`phases/*` Phase B 의미 rebase** | `NOT_DONE` | Phase 상세 본문이 2026-07-26 frozen; 착수 시 D1/D2/module/LocalStack 등 오해 위험 | Design·Implementation docs owner가 phase/review 본문을 APPROVED에 재정렬 (다음 세션 인터뷰 가능) |
+| D1 vs Phase 01 frozen body (multi-version wording) | `DOC DRIFT — CORE ALIGNED / PHASE BODY STALE` | Phase 01 착수 시 versioned schema 운영 오해 | 착수 시 Master plan Phase 01 authority overlay + Domain §4 우선 |
+| D2/O1 compute OPEN vs historical Lambda-lock / GCP-as-target | `DOC DRIFT — CORE PARTIALLY ALIGNED / PHASE BODY STALE` | Phase 11 Lambda-only 단정 또는 GCP 유지 오해 | Master D2/O1 + Arch §9.4: AWS S3+SFN+(Lambda\|ECS); GCP legacy; plan §3 |
+| Platform: AWS SFN+Lambda\|ECS vs GCP inventory language | `DOC DRIFT — CORE REFRAMED 2026-08-01 / PHASE+REVIEW BODY STALE` | phases/reviews 본문이 GCP inventory를 중립 현재 상태로 서술 | Core docs + plan §3 우선; phase body rebase 때 legacy 표기 통일 |
+| Architecture v3.4 module tree vs Phase 00 frozen tree | `DOC DRIFT — CORE ALIGNED / PHASE BODY STALE` | 잘못된 module skeleton 착수 | Architecture §4.2 + master plan §4.1 우선 |
+| LocalStack S3 vs filesystem-local Phase 08/09 body | `DOC DRIFT — CORE ALIGNED / PHASE BODY STALE` | local 통합 타깃 오해 | Architecture §3.2 · §8 우선 |
+| Portfolio count/4×2 as Domain MUST | `DOC DRIFT — CORE ALIGNED / PHASE BODY STALE` | 숨은 official default | Domain §10.5 OPEN; experiment config만 |
+| Phase filename slug `immutable-problem` vs Domain `immutable solve snapshot` | `RESOLVED — KEEP_DISPLAY_SEPARATION` | 일상 rename 없음; 오독 완화는 표시 용어·overlay | [README §5.1](README.md#51-filename-slug-vs-domain-공식-용어-정책--keep--표시-분리); rename은 phase body rebase 때 예외 |
 | Signed applicability trust와 actual receipt | `OPEN / NOT_PRODUCED` | Phase 13 handoff와 Phase 14 applicability consumption 차단 | Scheduler + Security/Release가 algorithm/trust/validity/revocation policy 승인 후 signed envelope/verification receipt 생성 |
 | ALNS benchmark corpus/protocol/acceptance receipt | `OPEN — EXPERIMENT_REQUIRED / NOT_PRODUCED` | Phase 13 착수와 ALNS quality/performance acceptance 주장 차단 | Benchmark·Quality + Independent Review가 corpus/criteria/seed-repeat/resource/variance policy 승인 후 Phase 06/07/08 evidence로 immutable bundle/review/receipt 생성 |
 | `Q-BENCH-02` official 실행 수치 | `OPEN — EXPERIMENT_REQUIRED` | Phase 14 official manifest/baseline/cutover 차단 | Benchmark·Quality가 calibration/승인 |
 | Raw `win_poc_case.json` decimal `D/U` | `RESOLVED_FOR_PLAN_EXECUTION` | 원본 직접 canonical 실행만 차단 | 승인 script/FLOOR fixture/digest 검증 완료; 원본은 provenance/negative fixture 유지 |
 | `win_poc_case_floor.json` final run | `NOT_RUN` | 사용자 고정 구현 성공 gate 미충족 | 실제 solver 실행, both-verifier PASS, deterministic replay와 결과 제시 |
-| `C-17` route pool/MIP | `GATED TARGET`; direct CP-SAT policy only resolved | Phase 13 착수/production activation 차단 | 유효한 ALNS benchmark acceptance receipt 뒤 Product·Algorithm·Architecture와 OR-Tools/Legal/Supply-chain/Security/Operations/Cost owners가 scope 및 version/config/native/SBOM/security/operations/cost/compute-admission/fallback/rollback evidence를 별도 승인 |
+| `C-17` route pool/MIP | `GATED TARGET`; CP-SAT = implementation proposed only | Phase 13 착수/production activation 차단 | 유효한 ALNS benchmark acceptance receipt 뒤 Product·Algorithm·Architecture와 OR-Tools/Legal/Supply-chain/Security/Operations/Cost owners가 scope 및 version/config/native/SBOM/security/operations/cost/compute-admission/fallback/rollback evidence를 별도 승인 |
+| Worker compute Lambda vs ECS (O1) | `OPEN` | compute 제품 단정 금지 | Platform·Architecture; reference = AWS 안에서의 후보 병기 |
+| durable orchestration engine | reference = **AWS Step Functions** | GCP Cloud Workflows를 target으로 유지 | Phase 11 SFN 조립 + LocalStack/AWS parity |
 | `Q-VAR-01` | `DEFERRED` | Optional variant 질문/구현 금지 | Product·Domain·Algorithm restart evidence 전 유지 |
 | Multi-trip/rotation | Deferred feature | Current single-trip 밖 기능 차단 | 별도 domain/algorithm/verifier 계약 승인 |
 | Phase 12 target provider | Provider별 미선택 | 특정 future adapter 구현/cutover 차단 | Platform·Operations·Security adoption decision |
-| Public API/wire schema | Proposed/open | External compatibility 약속 차단 | Product/API/Data review와 version 승인 |
-| AWS production authority | Not granted by target selection | 실제 cutover 차단 | Phase 11/14 parity, security, operations, rollback 후 explicit approval |
+| Public API/wire schema (O2/O3) | Proposed/open | External compatibility 약속 차단 | Product/API/Data review와 version 승인 |
+| AWS production authority | Not granted by reference selection | 실제 cutover 차단 | Phase 11/14 parity, security, operations, rollback 후 explicit approval |
 | Actual implementation/evidence | `0/15 ACCEPTED` | 모든 Phase 구현 acceptance 차단 | 문서의 entry gate 순서대로 별도 구현 task와 immutable evidence/review/receipt 수행 |
 
 ## 9. Scheduler update protocol

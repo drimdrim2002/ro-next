@@ -39,6 +39,9 @@ section_3_policy: >
   철학·온보딩 장문은 본 문서에 두지 않는다 (2026-07-31 검수 1번 합의).
 reorg_note: >
   v3.4: 내용 보존 + 중복 제거 + 구조 재정비. 신규 설계·합의 변경 없음.
+  2026-08-01 platform reframe (version 유지): §3.1/§8/§9.4/§10 에서
+  reference = AWS S3 + Step Functions + (Lambda|ECS), current tracked =
+  GCP legacy 를 명시. O1(Lambda vs ECS) OPEN 유지. production cutover 아님.
 out_of_scope:
   - Domain 수식·의미 재작성
   - Master/Domain front-matter 외 본문 재작성
@@ -152,7 +155,7 @@ Master A1 목표 계약을 **module DAG · port · runtime 배치 · adapter sea
 | Master 논리 역할 | Architecture 배치 | 비고 |
 |---|---|---|
 | **object storage** | `ArtifactStore` · `ResultPublisher` → **`adapters/s3`** (S3) | 바이트 창고. 의미 재판정 금지 |
-| **durable orchestration** | 각본: `rpdptw-application` + `RunStateRepository` port. 상태 바이트: **S3**. 엔진: adapter/deployment (**OPEN**) | Domain 점수 소유 아님. port 목록 → **§6.4** |
+| **durable orchestration** | 각본: `rpdptw-application` + `RunStateRepository` port. 상태 바이트: **S3**. AWS reference 엔진: **Step Functions** (adapter/deployment) | Domain 점수 소유 아님. port 목록 → **§6.4** |
 | **worker compute** | `ExecuteWorkerRun` 등 · `apps/worker` · Dispatcher adapter | **Lambda \| ECS — O1 OPEN**. 로컬 프로세스 가능 |
 
 ```text
@@ -1181,14 +1184,14 @@ PublishableResult        = 2단 PASS 후 (S3 에 저장)
 | **local 단위** | 인메모리 port fake | 같은 JVM worker |
 | **local 통합** | **LocalStack S3** + 같은 adapter | `apps/worker` 등 로컬 프로세스 |
 | **worker** | S3 (실 또는 LocalStack) | portfolio → ALNS → (optional hybrid) → candidate |
-| **distributed** | 실 S3 + (선택) workflow 엔진 OPEN | fan-out/fan-in (수치 OPEN) |
+| **distributed** | 실 S3 + **Step Functions** (reference, **§9.4**) | fan-out/fan-in (수치 OPEN); compute = Lambda\|ECS (O1 OPEN) |
 
 **MUST:** 같은 application use case · 같은 verifier gate.  
 **차이는 port 구현체·endpoint 뿐** (LocalStack ↔ 실 AWS).
 
 Outer `ExecutionRound` / `WorkerRun` vs inner `HybridPhase`: hybrid 는 worker-local (C-17, **§9.2**).  
-orchestration 각본은 application; durable 엔진 제품은 **OPEN**.
-
+orchestration 각본은 application; durable 엔진 **reference** = **AWS Step Functions** (**§9.4**).  
+worker/API compute 제품(**Lambda vs ECS**)만 **O1 OPEN**.
 ### 8.1 LocalStack (로컬 통합 타깃)
 
 | 규칙 | 규범 |
@@ -1245,32 +1248,39 @@ verification ↛ solver (§4.3). cache 비신뢰. 발행 전. core pure 함수 �
 
 ### 9.4 AWS · LocalStack reference
 
-| 역할 | 후보 | 비고 |
+**Reference platform = AWS.** Google Cloud (Cloud Run / Workflows / GCS) 는
+current tree의 **legacy placeholder** 이며 target 확장이 아니다.
+
+| 역할 | reference | 비고 |
 |---|---|---|
 | 저장 (결과·중간·상태·접수 input) | **S3** | **only** (§3.2). DB·Redis 없음 |
 | 로컬 통합 | **LocalStack (S3)** | §3.2 · §8 |
-| orchestration 각본 | application | 이 프로젝트 |
-| durable 엔진 | Step Functions 등 | OPEN |
-| worker | Lambda 또는 ECS | O1 OPEN |
-| API | API Gateway + apps/api | placeholder ≠ target |
+| orchestration 각본 | application | provider-neutral. Domain 점수 소유 아님 |
+| durable 엔진 | **AWS Step Functions** | reference 조립. 논리 계약은 coordinator/port |
+| worker / API compute | **Lambda 또는 ECS** | **O1 OPEN** — 한쪽 단정 MUST NOT |
+| API 조립 | API Gateway + `apps/api` 등 | placeholder ≠ target 완료 |
 
-클라우드 SDK = adapters/deployment 만. OR-Tools = backends/* 만. LocalStack compose 세부 OPEN.
+클라우드 SDK = adapters/deployment 만. OR-Tools = backends/* 만.  
+LocalStack compose 세부 OPEN. production cutover ≠ reference 선택 (A9, A10).
 
 ---
 
 ## 10. current vs target · migration · 위험
 
-| 축 | current | target |
+| 축 | current (tracked tree) | target / reference |
 |---|---|---|
 | Maven | 단일 project | multi-module |
 | package | `com.ronext.optimizer` | `com.ronext.rpdptw` |
-| 계산 | placeholder | ALNS + verifier 2단 |
-| 저장 | (혼재 가능) | **S3 only** · DB·Redis 없음 (§3.2) |
+| 계산 | synthetic placeholder | ALNS + verifier 2단 |
+| 클라우드 | **GCP legacy** (GCS + Cloud Workflows + Cloud Run) | **AWS** (S3 + Step Functions + Lambda\|ECS) |
+| 저장 | GCS direct SDK · prefix listing | **S3 only** · exact-key/CAS · DB·Redis 없음 (§3.2) |
 | 로컬 | (미정) | **LocalStack S3** |
-| compute | — | Lambda\|ECS OPEN |
+| orchestration | Cloud Workflows placeholder | **Step Functions** + application 각본 |
+| compute | Cloud Run HTTP | **Lambda \| ECS — O1 OPEN** |
 | hybrid | evidence 없음 | C-17 GATED default off |
 
-Migration: characterization → semantic core → ports → shadow → gated cutover.  
+Migration: legacy GCP characterization → semantic core → ports → AWS reference
+(LocalStack parity) → shadow → gated cutover.  
 Verifier PASS 전 placeholder 를 정상 발행으로 승격 금지.
 
 | 위험 | 완화 |

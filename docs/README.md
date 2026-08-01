@@ -3,6 +3,19 @@
 Phase C(O5) 이후 **current design authority** 와 **역사 문서** 를 분리한 진입점이다.  
 코드 구현 완료 보고가 아니다.
 
+## 0. Platform target (reference)
+
+| 축 | 규범 | 비고 |
+|---|---|---|
+| 클라우드 | **AWS** (Google Cloud 경로 유지·확장 아님) | production cutover 승인 ≠ reference 선택 |
+| 저장 | **Amazon S3 only** | DB · Redis 없음. 로컬 통합 = **LocalStack S3** |
+| durable orchestration | **AWS Step Functions** | 각본은 application/coordinator; Domain 점수 소유 아님 |
+| worker / API compute | **Lambda 또는 ECS** | **O1 OPEN** — 한쪽 단정 금지 |
+| 현재 tracked 코드 (`src/`, `gcp/`) | **GCP legacy placeholder** | GCS + Cloud Workflows + Cloud Run. Phase 00 characterization 후 AWS로 대체 |
+
+상세 배치: [Architecture §3 · §9.4](architecture-design.md).  
+구현 inventory: [Master Realization Plan §3](implementation/master-realization-plan.md#3-2026-07-28-current-state-inventory).
+
 ## 1. Current design authority (정본)
 
 | 순서 | 문서 | status | 역할 |
@@ -32,13 +45,20 @@ docs/README.md
 | 경로 | 역할 |
 |---|---|
 | [implementation/README.md](implementation/README.md) | 15 Phase 구현 문서 세트 진입점 |
-| [implementation/master-realization-plan.md](implementation/master-realization-plan.md) | Phase DAG·DoD |
+| [implementation/master-realization-plan.md](implementation/master-realization-plan.md) | Phase DAG·DoD (plan v1.3) |
 | [implementation/execution-progress-and-results.md](implementation/execution-progress-and-results.md) | 진행 현황 |
 
-**중요 (A9 current ≠ target):**  
-이 구현 문서 세트는 **2026-07-26 Final Domain/Architecture 계열**을 frozen input으로 작성했다.  
-Phase B APPROVED 3문서와의 **의미 재정렬(rebase)은 아직 하지 않았다.**  
-Phase C는 경로·SUPERSEDED 표기·권위 지도만 고친다. implementation 본문을 Phase B에 맞춰 재작성하지 않는다.
+**중요 (A9 current ≠ target · 2026-07-31):**
+
+| 층 | 상태 |
+|---|---|
+| Core 3 (README / master plan / progress) | **Authority aligned** to APPROVED Master v1.1 · Domain v1.2 · Architecture v3.4 |
+| Phase filename slug | **KEEP + 표시 분리** (`implementation/README` §5.1). 예: path `…immutable-problem` ↔ 용어 `immutable solve snapshot` |
+| `phases/*` · `reviews/*` 본문 | 여전히 **2026-07-26 frozen 작성 스냅샷**. 의미 rebase **미실시** |
+| 구현 acceptance | **0/15**. win_poc **NOT_RUN**. 문서 alignment ≠ 솔버 완료 |
+
+**충돌 시:** current APPROVED 3문서가 `phases/*` frozen 본문보다 이긴다 (D1·D2 포함).  
+Phase C는 경로·SUPERSEDED·권위 지도만 고쳤고 완료(O5)다.
 
 역사 frozen inputs (SUPERSEDED, 경로만 유효):
 
@@ -54,8 +74,9 @@ Phase C는 경로·SUPERSEDED 표기·권위 지도만 고친다. implementation
 |---|---|
 | [deprecated/](deprecated/) | `SUPERSEDED` / `ARCHIVED` archive. **current authority 아님** |
 | [master-design-sessions/](master-design-sessions/) | 세션 review input · evidence (비규범) |
-| [arranged/](arranged/) | 연구 정리 (비규범) |
+| [arranged/](arranged/) | 연구 정리 (비규범). `08_gcp_architecture.md` 는 **legacy GCP** 참고 |
 | [orgin/](orgin/) | 원본 요약 보존 (비규범; 디렉터리 철자 유지) |
+| repo root [`gcp/`](../gcp/) | **legacy** Cloud Run/Workflows/GCS 가이드. AWS target 아님 |
 
 구 undated `master-design.md` / `domain-design.md` / `architecture-design.md` 는 **deprecated 안**에만 있으며 current로 링크하지 않는다.
 

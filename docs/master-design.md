@@ -73,9 +73,10 @@ reorganization_note: >
 - module/package DAG, dependency 금지선
 - port/adapter, profile 확장 seam
 - local / worker / distributed 논리 runtime
-- compute: **Lambda | ECS 미결정** (후보 병기)
+- compute: **Lambda | ECS 미결정** (후보 병기; 한쪽 단정 금지)
 - verifier 격리, optional MIP backend 격리
-- AWS 등은 reference/후보, production 승인 아님
+- physical reference 조립은 Architecture 소유: **AWS** S3 + Step Functions +
+  (Lambda \| ECS). production cutover 승인 아님. GCP legacy placeholder ≠ target
 
 #### Master가 소유하지 않는 것
 
@@ -213,7 +214,7 @@ Master는 **완료가 gate+evidence AND**라는 원칙만 고정한다.
 | **A7** | 완료 = gate + evidence AND | §2.4, §7, §8.3 |
 | **A8** | ALNS-first; route pool/MIP = C-17 GATED | §6 |
 | **A9** | current ≠ target; placeholder ≠ 완료 evidence | §8.4 |
-| **A10** | object storage + durable orchestration + worker compute **논리 역할 분리** 유지 가능. 클라우드 선택 ≠ 알고리즘 완료 ≠ production cutover. provider SDK는 adapter/deployment 경계에만 | §5.3 |
+| **A10** | object storage + durable orchestration + worker compute **논리 역할 분리**. 클라우드 **조립** ≠ 알고리즘 완료 ≠ production cutover. reference physical 조립(Architecture §9.4) = AWS **S3** + **Step Functions** + (**Lambda \| ECS**); GCP legacy ≠ target. provider SDK는 adapter/deployment 경계에만 | §5.3 |
 | **A11** | profile 격리 | §3.5 |
 
 ### 4.3 상속 결정 — 기존 유지(미재심)
@@ -284,7 +285,10 @@ Phase A에서 다시 열지 않은 기존 `C-*` / `P-*` / `Q-*` / `RM-*` 등은 
 | durable orchestration | 작업 수명·재개·상태 (논리) |
 | worker compute | 실제 solve 실행. **Lambda 또는 ECS — OPEN** |
 
-클라우드 선택 ≠ 알고리즘 완료 ≠ production cutover 승인.  
+클라우드 조립 ≠ 알고리즘 완료 ≠ production cutover 승인.  
+**Reference physical 조립 (Architecture §9.4):** AWS **S3** + **Step Functions** +
+(**Lambda \| ECS**). GCP(Cloud Run/Workflows/GCS) current path는 legacy
+characterization 대상이며 target으로 읽지 않는다.  
 provider SDK는 **adapter / deployment 경계**에만 둔다 (Architecture에서 배치).
 
 ---
@@ -385,18 +389,22 @@ Phase B 순서: **Master 단독 → 검수 → Domain → 검수 → Architectur
 - 레거시: **adapter 하나** (이름·범위 O3 OPEN).
 - multi-version 스키마를 장기 운영 전제로 두지 않음.
 
-**compute (D2)**
+**compute · runtime 조립 (D2, A10)**
 
 - 논리 3역할(storage / orchestration / compute)은 유지 가능 (§5.3).
-- compute 구현체(Lambda | ECS)는 **OPEN**. 전환 계획이 있어도 Master에서 하나를 확정하지 않음.
+- reference physical 조립은 Architecture §9.4: AWS **S3** + **Step Functions** +
+  (**Lambda \| ECS**). GCP(Cloud Run/Workflows/GCS) current path는 legacy.
+- worker/API **compute 제품**(Lambda vs ECS)만 **OPEN** (O1). 한쪽 단정 금지.
+- reference 조립 ≠ 알고리즘 완료 ≠ production cutover.
 
 ### 8.6 위험 (Master 수준)
 
 | 위험 | 완화 방향 |
 |---|---|
 | current를 target으로 오인 | A9 용어 분리, 완료=gate+evidence |
+| GCP legacy를 target으로 유지 | A10 · §5.3 · Architecture §9.4 (AWS SFN + Lambda\|ECS) |
 | multi-version 입력 재유입 | D1, Domain 계약 단일화 |
-| Lambda 단정으로 아키텍처 왜곡 | D2, 후보 병기 |
+| Lambda **only** 단정으로 아키텍처 왜곡 | D2/O1, Lambda **또는** ECS 후보 병기 |
 | C-17 조기 구현·기본 ON | GATED, 승인 전 MUST NOT |
 | 고객 분기 core 오염 | A11 profile 격리 |
 | verifier 생략 발행 | A1·A5, PASS 전 발행 권위 없음 |

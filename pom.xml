@@ -8,7 +8,7 @@
     <artifactId>ro-next</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <name>ro-next</name>
-    <description>CVRPTW optimization workflow for Cloud Run and Google Cloud Workflows</description>
+    <description>RPDPTW/CVRPTW solver (target: AWS S3 + Step Functions + Lambda|ECS). Root module still hosts GCP legacy placeholder adapters until multi-module migration.</description>
 
     <properties>
         <maven.compiler.release>25</maven.compiler.release>

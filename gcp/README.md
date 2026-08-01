@@ -1,4 +1,14 @@
-# GCP 배포
+# GCP 배포 (LEGACY — target 아님)
+
+> **Status: LEGACY PLACEHOLDER.**  
+> 이 저장소의 **target / reference platform 은 AWS** 다  
+> (S3 + Step Functions + Lambda 또는 ECS).  
+> 아래 Cloud Run + Workflows + GCS 구성은 과거/현재 tracked tree의
+> characterization 자료일 뿐, 목표 topology·production authority·Phase 11
+> evidence 가 아니다.  
+> 규범: [`docs/README.md`](../docs/README.md) §0 ·  
+> [`docs/architecture-design.md`](../docs/architecture-design.md) §9.4 ·  
+> [`docs/implementation/master-realization-plan.md`](../docs/implementation/master-realization-plan.md) §3.
 
 이 구성은 **Cloud Run API + Cloud Run worker + Workflows + Cloud Storage**를 사용한다. 두 Cloud Run 서비스는 기본적으로 scale-to-zero이며, 결과와 ALNS 후보만 Cloud Storage에 남긴다.
 

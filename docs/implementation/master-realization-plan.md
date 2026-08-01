@@ -2,12 +2,20 @@
 
 ```yaml
 document_status: DOCUMENT_SET_COMPLETE
-plan_version: 1.2
+plan_version: 1.3
 baseline_date: 2026-07-28
+authority_alignment_date: 2026-07-31
 scope: Phase 0~14의 구현·검증·전환 계획
 implementation_status: ACCEPTED_0_OF_15
-source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
-phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
+source_authority: >
+  USER_LOCKED for scope/map/win_poc/15-phase numbering;
+  LIVE design meaning = APPROVED Master v1.1 / Domain v1.2 / Architecture v3.4
+phase_c_status: COMPLETE
+semantic_rebase_core3: AUTHORITY_ALIGNED_2026-07-31
+core3_residual_phrasing_pass: 2026-08-01  # mermaid/P00/P02-speed/P06-steps
+inventory_platform_reframe: 2026-08-01  # §3 AWS SFN+Lambda|ECS target; GCP=legacy
+filename_slug_policy: KEEP_DISPLAY_SEPARATION  # README §5.1; rename only with phase body rebase
+semantic_rebase_phases: NOT_DONE
 implementation_direction_decision: ALNS_FIRST_BENCHMARK_BEFORE_OPTIONAL_MIP
 direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 direction_overlay_contract_version: ALNS_FIRST_1.0
@@ -21,7 +29,20 @@ execution_success_status: NOT_RUN
 
 이 계획은 코드 구현 완료 보고가 아니다. 현재 존재하지 않는 module, API, test, 배포와 evidence를 완료된 것으로 간주하지 않는다. 아래의 type·interface·directory 이름은 상위 계약의 의미 경계를 구현하기 위한 **proposed internal design**이며, 승인된 public API나 wire schema가 아니다.
 
-이 문서 세트의 입력 권위는 **사용자 선언으로 고정**되었다. 원문 metadata의 `REVIEW`는 출처 provenance로 보존하지만 이 문서 작성의 중단 조건으로 사용하지 않는다. 반대로 원문이 `REVIEW`라는 이유로 구현 phase의 실제 review·승인·evidence gate를 생략할 수도 없다.
+**권위 (2026-07-31 alignment):**
+
+- 설계 의미의 live authority = [Master](../master-design.md) (`APPROVED` v1.1) ·
+  [Domain](../domain-design.md) (`APPROVED` v1.2) ·
+  [Architecture](../architecture-design.md) (`APPROVED` v3.4).
+- 규범 입력 = [Phase A 인터뷰 정리](../deprecated/2026-07-30-design-interview-phase-a.md)
+  (A1–A12, D1·D2).
+- 사용자 선언으로 고정된 것은 **이 세트의 scope**: 15 Phase map, 파일 규칙,
+  `win_poc_case_floor.json` e2e 성공 기준이다.
+- `phases/*` 본문은 2026-07-26 계열 **작성 스냅샷**이며 아직 Phase B 의미 rebase를
+  하지 않았다. Phase 본문과 APPROVED 설계가 충돌하면 **APPROVED가 이긴다**
+  (D1·D2 충돌 문장은 폐기).
+- Core 3(README / 이 계획 / progress)만 authority alignment를 반영했다.
+  Phase 상세·review 재작성은 후속 세션이다.
 
 현재 Phase/review 계약은 각 문서의 base `document_version` 또는
 `UNVERSIONED_BASE`에 `ALNS_FIRST_1.0` direction overlay와
@@ -91,153 +112,213 @@ solver/backend version은 승인 전 `OPEN — EXPERIMENT_REQUIRED` 또는 `GATE
 
 | 우선순위/역할 | 입력 | 이 계획에서의 사용 |
 |---|---|---|
-| 1. 사용자 선언 | 이 구현 문서 세트의 입력 목록, 15 Phase canonical map, 파일 규칙, `win_poc_case_floor.json` 최종 실행 성공 기준 | 문서 세트의 최상위 scope, phase numbering과 실행 acceptance |
-| 2. Current Master (APPROVED) | [Master Design](../master-design.md) | 전체 requirement, 완료 정의, 최신 결정, gate (Phase B 정본) |
-| 3. Current Domain (APPROVED) | [Domain Design](../domain-design.md) | 값·불변조건·정규화·travel·전파·평가·결과 **의미** (Phase B 정본) |
-| 4. Current Architecture (APPROVED) | [Architecture Design](../architecture-design.md) | module/package/port/runtime **배치** (Phase B 정본) |
-| 5. Frozen open-questions (SUPERSEDED) | [Historical open questions](../deprecated/master-design-open-questions.md) | 이 세트 작성 당시 `Q-*` exact 행·evidence (경로 remap only) |
-| 6. Frozen Domain (2026-07-26, SUPERSEDED) | [Historical Final Domain](../deprecated/2026-07-26-domain-design.md) | phase 본문이 작성된 상세 스냅샷; current Domain과 충돌 시 current 우선 |
-| 7. Frozen Architecture (2026-07-26, SUPERSEDED) | [Historical Final Architecture](../deprecated/2026-07-26-architecture-design.md) | 동일 (스냅샷) |
-| 8. Frozen integrated design (SUPERSEDED) | [Historical integrated design](../deprecated/architecture-domain-implementation-design.md) | 15 Phase 순서, no-DB, AWS reference 구조의 작성 스냅샷 |
-| 9. Historical cross-check only | [2026-07-26 Master — SUPERSEDED](../deprecated/2026-07-26-master-design.md) | 누락·퇴행 여부만 대조. 결정 authority로 사용 금지 |
+| 1. 사용자 선언 | 15 Phase canonical map, 파일 규칙, `win_poc_case_floor.json` e2e 성공 기준 | 문서 세트 scope, phase numbering, 사용자 고정 실행 acceptance |
+| 2. Phase A 규범 입력 | [Phase A 인터뷰 정리](../deprecated/2026-07-30-design-interview-phase-a.md) | A1–A12, D1·D2. 에이전트 신규 설계 결정 금지 |
+| 3. Current Master (APPROVED v1.1) | [Master Design](../master-design.md) | 목표·범위·완료=gate+evidence·e2e·roadmap/gate 개요 |
+| 4. Current Domain (APPROVED v1.2) | [Domain Design](../domain-design.md) | 값·불변조건·정규화·travel·전파·평가·해·검증·결과 **의미** |
+| 5. Current Architecture (APPROVED v3.4) | [Architecture Design](../architecture-design.md) | module/package/port/runtime **배치** |
+| 6. Frozen open-questions (SUPERSEDED) | [Historical open questions](../deprecated/master-design-open-questions.md) | 작성 당시 `Q-*` exact 행·evidence (historical only) |
+| 7. Frozen Domain (2026-07-26, SUPERSEDED) | [Historical Domain](../deprecated/2026-07-26-domain-design.md) | `phases/*` 작성 스냅샷; **current Domain과 충돌 시 폐기** |
+| 8. Frozen Architecture (2026-07-26, SUPERSEDED) | [Historical Architecture](../deprecated/2026-07-26-architecture-design.md) | 동일 (스냅샷 only) |
+| 9. Frozen integrated design (SUPERSEDED) | [Historical integrated design](../deprecated/architecture-domain-implementation-design.md) | 15 Phase 번호·evidence 스키마 참고; 배치 규범 아님 |
+| 10. Historical cross-check only | [2026-07-26 Master](../deprecated/2026-07-26-master-design.md) | 누락·퇴행 대조만. 결정 authority 금지 |
 
-`docs/codex/*`는 역사/참고(repo 미존재 가능)다. 이 문서 세트의 입력 권위가 아니며 복사·수정·삭제 대상으로 다루지 않는다.  
-**Phase C:** frozen 경로만 `docs/deprecated/` 로 remap. content hash 미재계산. Phase B 의미 rebase 미실시.
+`docs/codex/*`는 역사/참고(repo 미존재 가능)다. 입력 권위가 아니다.  
+**Phase C (O5):** 완료 — path remap + SUPERSEDED 표기.  
+**Core 3 authority alignment (2026-07-31):** 본 절·§4·주요 Phase 요약 정렬.  
+**`phases/*` 의미 rebase:** 미실시 — 착수 시 이 절의 우선순위 적용.
 
 ### 2.2 충돌 해소
 
-1. 사용자 선언과 canonical Master의 최신 결정이 우선한다.
-2. 질문 상태는 질문 등록부의 exact 행과 canonical Master의 최신 요약을 사용한다.
-3. Domain 의미 충돌은 canonical Master의 불변조건을 유지하면서 Final Domain의 상세 계약으로 해소한다.
-4. Module/package/runtime 배치 충돌은 의미를 바꾸지 않는 범위에서 Final Architecture를 적용한다.
-5. 15 Phase 번호, no-DB storage와 AWS/reference substitution 구조는 integrated design을 적용한다.
-6. Proposed 이름이 확정 의미와 충돌하면 이름을 버리고 의미를 보존한다.
-7. Historical master와 `docs/codex/*`는 현재 결정을 되돌릴 수 없다.
+1. 사용자 scope 선언 + Phase A (A\*/D\*) + APPROVED Master가 최우선이다.
+2. Domain 의미 충돌 → **current Domain v1.2** (frozen “Final Domain”으로 해소하지 않음).
+3. Module/package/runtime 배치 충돌 → **current Architecture v3.4** (frozen Architecture/integrated tree로 해소하지 않음).
+4. D1·D2와 충돌하는 frozen/phase 본문 문장은 **폐기**한다 (multi-version 입력 운영, compute=Lambda 단정 등).
+5. 15 Phase 번호·파일 규칙·win_poc e2e는 사용자 선언을 유지한다.
+6. Proposed 내부 이름이 확정 의미와 충돌하면 이름을 버리고 의미를 보존한다.
+7. Historical master / `docs/codex/*` / deprecated Q-등록부 집계는 현재 결정을 되돌릴 수 없다.
 
-현재 확인된 문서 drift는 다음처럼 해소한다.
+현재 확인된 문서 drift 해소:
 
 | Drift | 적용 판단 |
 |---|---|
-| Final Domain §18과 Final Architecture §6 일부가 `Q-INFRA-01`을 `DEFERRED`, 상태를 `25/1/2`로 표시 | 최신 canonical Master/질문 등록부의 `Q-INFRA-01 RESOLVED`, `26/1/1`을 적용 |
-| Final Architecture가 provider 미결정을 전제로 한 package 설명을 포함 | Provider-neutral 경계는 유지하고, integrated design의 AWS S3 + Step Functions + Lambda target/reference를 Phase 11에 적용 |
-| AWS target 선택과 실제 AWS 구현·cutover를 혼동할 가능성 | 선택은 확정이지만 Phase 11 parity/evidence와 Phase 14 production authority 전에는 구현·배포·cutover 완료를 주장하지 않음 |
-| Route pool/MIP 상세 설계가 존재 | `C-17 GATED TARGET`을 유지한다. Gate-open exact backend는 Google OR-Tools direct CP-SAT로 고정하지만 Phase 13 entry approval 전 구현·기본 활성화는 금지한다. |
-| 기존 문서가 decimal Win fixture만 존재한다고 기록 | 원본은 provenance/negative fixture로 유지하고, 사용자 승인 `FLOOR` script로 만든 `win_poc_case_floor.json`을 이 계획의 실행 성공 fixture로 사용 |
+| Frozen 문서의 `Q-INFRA-01` DEFERRED 또는 “Master가 Lambda RESOLVED” 주장 | **Master에 Q-INFRA RESOLVED 문구 없음.** 저장 = **S3 only (Architecture MUST)**. reference platform = **AWS** (S3 + **Step Functions** + **Lambda \| ECS**). worker compute 제품 선택(**Lambda vs ECS**)만 **O1 OPEN**. “Lambda only RESOLVED” 또는 GCP(Cloud Run/Workflows/GCS)를 target으로 승격 금지 |
+| Frozen Architecture package tree vs Architecture v3.4 | **v3.4 §4.2 tree 적용** (`profiles/*`, `adapters/s3`, `adapters/input`, `backends/*`). 구 `object-filesystem` / `compute-aws-lambda` / adapters 안 OR-Tools 배치는 폐기 |
+| AWS reference와 production cutover 혼동 | reference ≠ 구현 완료 ≠ production authority (A9, A10) |
+| Route pool/MIP 상세 설계 존재 | `C-17 GATED TARGET` 유지. 구현 **proposed** backend = OR-Tools direct CP-SAT (Master/Domain 제품 확정 아님). Phase 13 entry 전 착수·기본 ON 금지. config default off ≠ C-17 승인 우회 |
+| multi-version / versioned schema 운영 문구 (구 Phase 01) | **D1:** 단일 고정 canonical. 외부 → **adapter 하나**. multi-version 병행 운영 MUST NOT |
+| initial portfolio “4×2 / 최대 8” MUST 표현 | Domain §10.5: **예시 / OPEN**. stage 존재·pair/XOR/COW는 MUST; 개수·휴리스틱 이름은 experiment |
+| decimal Win fixture만 존재 기록 | 원본 provenance 유지 + `win_poc_case_floor.json` 실행 fixture |
+| profile “no fallback” 전면 거부 | Architecture §5.3.5: 미등록 `customerId` → YAML `customers.default` **MUST**. core `switch(customerId)`·classpath first-wins는 계속 금지 |
 
 ## 3. 2026-07-28 current-state inventory
 
-조사 기준은 branch `codex/domain-design`, commit `3424277`이다. 문서 작성 전 `git status --short`는 비어 있었다. 이 inventory는 read-only inspection 결과이며 production 배포 사실을 검증한 것이 아니다.
+조사 기준은 branch `codex/domain-design`, commit `3424277`이다. 문서 작성 전
+`git status --short`는 비어 있었다. 이 inventory는 read-only inspection 결과이며
+production 배포 사실을 검증한 것이 아니다.
+
+**Declared platform target (README · [Architecture §9.4](../architecture-design.md)):**  
+이 프로젝트의 reference distribution은 **Google Cloud가 아니라 AWS**다.
+
+| 역할 | Target (reference) | 비고 |
+|---|---|---|
+| 저장 | **Amazon S3 only** | DB · Redis 없음. 로컬 통합 = **LocalStack S3** |
+| durable orchestration | **AWS Step Functions** | application 각본은 provider-neutral; 엔진 조립은 Phase 11 |
+| worker / API compute | **AWS Lambda 또는 ECS** | **O1 OPEN** — 둘 중 하나로 단정하지 않음 |
+| 런타임 이미지 | AWS Corretto 25 | `.sdkmanrc` / Dockerfile base와 정합 |
+
+아래 표의 “현재 사실”은 그 목표 대비 **tracked tree에 실제로 있는 것**이다.
+`src/**`의 Google SDK·Cloud Run 진입점과 tracked `gcp/*`는 **target 구현이 아니라
+legacy placeholder**이며, Phase 00 characterization 입력으로만 보존한다.
+ignored `.serverless/`·`node_modules/` 산출물은 로컬 실험 흔적일 뿐 tracked AWS
+구현·배포 authority가 아니다.
 
 ### 3.1 Build와 dependency
 
-| 항목 | 현재 사실 | 목표와의 차이 |
+| 항목 | 현재 사실 | AWS target과의 차이 |
 |---|---|---|
-| Maven | Root [pom.xml](../../pom.xml) 하나, `com.ronext:ro-next:0.1.0-SNAPSHOT` 단일 project | Parent/aggregator 기반 multi-module reactor와 architecture enforcement가 없음 |
-| Toolchain | `.sdkmanrc`: Corretto `25.0.3-amzn`, Maven `3.9.14`; 로컬 조회도 Java 25.0.3/Maven 3.9.14 | 목표 Java 25 기준과 일치하지만 reproducible build evidence는 아직 없음 |
-| Dependencies | Google Workflow Executions, Google Cloud Storage, Jackson, JUnit가 root classpath에 직접 존재 | Core/application/provider dependency 격리가 없음 |
-| Packaging | Shade plugin이 `OptimizationHttpServer`를 main으로 한 app JAR 생성 | Target distributions와 module별 artifact가 없음 |
-| Container | [Dockerfile](../../Dockerfile)이 Maven build 후 Corretto 25에서 shaded JAR 실행 | 단일 GCP-oriented app image이며 target AWS/local distributions를 증명하지 않음 |
-| CI/IaC | Tracked `.github` workflow, AWS IaC, Serverless/SAM/CDK/Terraform source가 없음 | Architecture, contract, provider parity와 deployment automation이 없음 |
+| Maven | Root [pom.xml](../../pom.xml) 하나, `com.ronext:ro-next:0.1.0-SNAPSHOT` 단일 project | Parent/aggregator multi-module reactor와 architecture enforcement 없음 |
+| Toolchain | `.sdkmanrc`: Corretto `25.0.3-amzn`, Maven `3.9.14` | Java 25/Corretto 기준과 일치. reproducible build evidence는 아직 없음 |
+| Dependencies | root classpath에 **Google** Workflow Executions · Cloud Storage + Jackson · JUnit 직접 존재. **AWS SDK(S3 / SFN / Lambda) 없음** | Target: cloud SDK는 `adapters/*`·`deployment/` only. S3·Step Functions·Lambda/ECS adapter 미존재. core/application 격리 없음 |
+| Packaging | Shade plugin이 `OptimizationHttpServer`를 main으로 한 단일 app JAR | Target: `apps/api` · `apps/worker`(Lambda zip 또는 ECS image) · CLI 등 배포 단위 분리 없음 |
+| Container | [Dockerfile](../../Dockerfile)이 Maven build 후 **amazoncorretto:25** 에서 shaded JAR 실행 | 런타임 base는 AWS 정합. 그러나 이미지 내용·entrypoint는 legacy HTTP/GCP 경로용이며 Lambda/ECS reference distribution을 증명하지 않음 |
+| CI/IaC | Tracked `.github` workflow, SAM/CDK/Terraform, tracked Serverless 정의 **없음** | Phase 11 AWS reference IaC·parity automation 없음 |
 
 ### 3.2 Source와 test
 
 | 항목 | 현재 사실 | 해석 |
 |---|---|---|
-| Main source | `src/main/java`에 6개 Java 파일 | `com.ronext.optimizer`의 HTTP/GCP adapter 5개와 application placeholder 1개뿐 |
-| Solver | `AlnsBatchEngine`이 seed/iterations로 합성 `objective` map을 생성 | 입력 parsing, RPDPTW domain, initial portfolio, ALNS, verifier가 아님 |
-| API | `/optimizations`, `/internal/batches`, `/internal/finalize`와 `Map<String,Object>` payload | Characterization 대상이며 public target API로 확정하지 않음 |
-| Storage | Controller가 GCS client를 직접 만들고 `candidates/{requestId}/` prefix listing 후 최소 objective 선택 | Provider isolation, declared completeness, independent verification, no-list authority와 불일치 |
-| Test | `AlnsBatchEngineTest` 한 개 | 합성 candidate status/objective만 검사하며 target phase evidence가 아님 |
-| 기존 build artifact | ignored `target/`에 2026-07-26 test report(`1` test pass)와 JAR가 존재 | 이 작업에서 새로 실행한 evidence가 아니며 accepted phase evidence로 사용 금지 |
+| Main source | `src/main/java` 6개 Java 파일 (`com.ronext.optimizer`) | HTTP adapter 5 + application placeholder 1. `com.ronext.rpdptw` target 모듈 소스 없음 |
+| Platform coupling | `OptimizationApiController`가 **Google Workflows Executions** 를 기동하고, API/worker controller가 **GCS** client를 직접 생성 | Target은 **S3 URI/key + Step Functions StartExecution + Lambda/ECS handler** mapping. 현재 코드는 **GCP 경로**이며 AWS reference와 불일치 |
+| Entry point | `OptimizationHttpServer` — 주석상 Cloud Run `SERVICE_MODE` (API \| worker) | Target: API Gateway + `apps/api`, worker는 Lambda handler 또는 ECS 프로세스 (`apps/worker`). compute 제품은 O1 OPEN |
+| Solver | `AlnsBatchEngine`이 seed/iterations로 합성 `objective` map 생성 | 입력 parsing, RPDPTW domain, portfolio, COW ALNS, verifier 아님. 배포 흐름 검증용 stub |
+| API surface | `/optimizations`, `/internal/batches`, `/internal/finalize` + `Map<String,Object>` | Characterization 대상. public target API/schema 아님 |
+| Storage semantics | GCS `candidates/{requestId}/` **prefix listing** 후 raw objective 최소 선택 | Target: S3 exact-key · put-if-absent · CAS pointer · declared completeness. listing/last-write-wins champion 금지 |
+| Test | `AlnsBatchEngineTest` 1개 | 합성 status/objective만 검사. phase evidence 아님 |
+| Build artifact | ignored `target/` 등에 과거 test report/JAR 존재 가능 | accepted phase evidence로 사용 금지 |
 
 ### 3.3 Deployment와 운영 자료
 
 | 항목 | 현재 사실 | 해석 |
 |---|---|---|
-| GCP build | [gcp/cloudbuild.yaml](../../gcp/cloudbuild.yaml)이 Docker image를 build | Historical/current migration inventory |
-| GCP orchestration | [gcp/workflows/optimization.yaml](../../gcp/workflows/optimization.yaml)이 parallel batch HTTP 호출 후 finalize | 일부 worker 결과·prefix listing·raw objective에 의존하며 target coordinator 의미를 충족하지 않음 |
-| GCP guide | [gcp/README.md](../../gcp/README.md)에 Cloud Run API/worker, Workflows, GCS, IAM 예시 | 배포 가이드일 뿐 현재 배포 또는 보안 승인 evidence가 아님 |
-| AWS 흔적 | ignored `.serverless/`와 ignored `node_modules/`이 local working tree에 존재하지만 tracked AWS source/config는 없음 | 실제 AWS 배포, target implementation 또는 dependency authority를 추론하지 않음 |
-| Data | [ro_input_json_spec.pdf](../../data/ro_input_json_spec.pdf), [win_poc_case.json](../../data/win_poc_case.json), [win_poc_case_floor.json](../../data/win_poc_case_floor.json) | PDF는 legacy 참고, 원본 JSON은 provenance/negative fixture, FLOOR JSON은 205,209개 `D/U`가 integer인 사용자 승인 최종 실행 fixture |
+| AWS target (선언) | [README](../../README.md): S3 입력 URI, **Step Functions** 오케스트레이션, **Lambda 또는 ECS** worker/API | 제품·문서 선언. **구현·배포 완료가 아님** |
+| Tracked AWS source | SAM/CDK/Terraform, tracked `serverless.yml`, `adapters/s3`, Step Functions ASL, Lambda/ECS 조립 **없음** | Phase 11 entry 전 reference distribution 미착수 |
+| Local ignored AWS 흔적 | ignored `.serverless/`(CloudFormation/state)와 `node_modules/serverless*` 가 working tree에 존재할 수 있음 | 로컬 실험 inventory. DynamoDB results table 등 **target 금지 축(DB)** 이 섞일 수 있어 authority로 쓰지 않음 |
+| Legacy GCP build | tracked [gcp/cloudbuild.yaml](../../gcp/cloudbuild.yaml) | **legacy.** AWS target이 아님. characterization/migration 입력 |
+| Legacy GCP orchestration | tracked [gcp/workflows/optimization.yaml](../../gcp/workflows/optimization.yaml) — Cloud Workflows parallel batch + finalize | **legacy.** target Step Functions + declared-worker coordinator 의미와 불일치 (prefix listing · raw objective) |
+| Legacy GCP guide | [gcp/README.md](../../gcp/README.md) — Cloud Run + Workflows + GCS | **legacy 가이드.** 현재 배포·보안 승인 evidence 아님 |
+| Data | [ro_input_json_spec.pdf](../../data/ro_input_json_spec.pdf), [win_poc_case.json](../../data/win_poc_case.json), [win_poc_case_floor.json](../../data/win_poc_case_floor.json) | PDF legacy 참고; 원본 JSON provenance/negative; FLOOR JSON = 사용자 승인 최종 실행 fixture |
 
 ### 3.4 현재 gap 요약
 
-현재 코드는 Phase 0~14 어느 exit gate도 통과했다는 evidence bundle이 없다. 이는 “코드가 전혀 없다”는 뜻이 아니라 **target phase accepted completion이 0/15**라는 뜻이다. GCP placeholder와 build 산출물은 Phase 0/14의 characterization 입력으로 보존한다.
+현재 코드는 Phase 0~14 어느 exit gate도 통과했다는 evidence bundle이 없다.
+이는 “코드가 전혀 없다”가 아니라 **target phase accepted completion이 0/15**라는
+뜻이다.
+
+플랫폼 관점 요약:
+
+1. **Target platform = AWS** — S3 + Step Functions + (Lambda \| ECS). Google Cloud
+   경로를 유지·확장하는 계획이 아니다.
+2. **Current tracked runtime path = GCP legacy placeholder** — GCS + Cloud Workflows +
+   Cloud Run HTTP. AWS target과 **불일치**하며 Phase 00에서 characterize 후 대체한다.
+3. **AWS 구현 부재** — tracked S3/SFN/Lambda/ECS adapter·IaC·parity evidence 없음.
+   ignored serverless 산출물로 구현 완료를 주장하지 않는다.
+4. **Lambda vs ECS** 는 O1 OPEN. inventory가 한쪽을 RESOLVED로 올리지 않는다.
+5. **Orchestration 의미** 는 application/coordinator가 소유한다. Step Functions는
+   durable 엔진 조립 후보이며 Domain 점수·champion·verifier를 소유하지 않는다.
 
 특히 다음을 현재 완료로 주장하지 않는다.
 
-- RPDPTW canonical input, immutable problem 또는 prepared travel
-- Pair-aware propagation/evaluation, capability/profile binding
-- 최대 8개 initial portfolio와 COW ALNS
+- RPDPTW 단일 고정 canonical 입력, `immutable solve snapshot`, prepared travel
+- Pair-aware propagation/evaluation, profile binding (A11)
+- initial portfolio stage + COW ALNS (개수·operator는 OPEN)
 - Candidate/result 독립 verifier와 publishable result
-- Provider-neutral ports, object-storage CAS, declared-worker coordinator
-- AWS reference distribution, provider parity, official cutover
+- Provider-neutral ports, **S3** object-storage CAS, declared-worker coordinator
+- **AWS** Step Functions + Lambda/ECS reference distribution, LocalStack parity,
+  provider substitution, official cutover
 - Route pool/MIP 또는 official benchmark
 
 ## 4. 목표 구조와 불변 경계
 
 ### 4.1 Proposed target modules
 
+**Authority:** [Architecture §4.2](../architecture-design.md) (v3.4).  
+구 구현 세트의 `capabilities` / `object-filesystem` / `compute-aws-lambda` /
+adapters 안 OR-Tools tree는 **폐기**한다.
+
 ```text
-root parent/aggregator
+ro-next/
+├── pom.xml                          # parent/reactor. cloud·ortools 공통 deps 금지
 ├── build/
-│   ├── architecture-rules
-│   ├── test-fixtures
-│   └── port-contract-tests
+│   ├── architecture-rules/
+│   ├── test-fixtures/
+│   └── port-contract-tests/         # proposed extension
 ├── rpdptw/
-│   ├── core
-│   ├── solver
-│   ├── verification
-│   ├── application
-│   ├── capabilities
-│   └── profile-catalog
+│   ├── core/
+│   ├── solver/
+│   ├── verification/
+│   ├── application/
+│   └── profiles/
+│       ├── standard/
+│       └── <namespace>/
 ├── adapters/
-│   ├── common
-│   ├── object-common
-│   ├── object-filesystem
-│   ├── object-s3
-│   ├── workflow-aws-stepfunctions
-│   ├── compute-aws-lambda
-│   └── route-selection-ortools-cpsat   # Phase 13, GATED
+│   ├── common/
+│   ├── input/                       # D1: external → single canonical
+│   ├── s3/                          # LocalStack 동일 adapter (단위 테스트 fake 허용)
+│   └── <provider>/                  # DEFERRED / approval-gated
+├── backends/
+│   └── route-selection-ortools-cpsat/   # OPTIONAL · C-17 GATED only
 ├── apps/
-│   ├── cli
-│   ├── api
-│   ├── coordinator
-│   └── worker
-└── distributions/
-    ├── local
-    └── aws-serverless
+│   ├── cli/
+│   ├── api/                         # REST 접수: validate → S3 put → 200 + s3 key
+│   └── worker/                      # solve 본체 (Lambda | ECS 조립 — O1 OPEN)
+└── deployment/                      # DEFERRED · IaC/배포 조립
 ```
 
-이 tree는 proposed internal structure다. Phase 0 ADR/review에서 이름을 바꿀 수 있지만 다음 경계는 바꿀 수 없다.
+이 tree는 Architecture 정합 proposed structure다. Phase 00 ADR에서 leaf 이름을
+조정할 수 있으나 다음 경계는 바꿀 수 없다 (Architecture §4.3).
+
+- OR-Tools / MIP vendor → **`backends/*` only** (adapters 금지)
+- S3 SDK → **`adapters/s3` only**
+- JDBC/JPA/RDB · Redis → **어디에도 MUST NOT**
+- verification ↛ solver
+- application은 S3/OR-Tools SDK를 직접 쓰지 않음 (port only)
+- worker compute 제품(Lambda \| ECS)을 모듈명으로 단정하지 않음 (O1 OPEN)
 
 ### 4.2 Compile/runtime invariants
 
 1. Core/solver/verification/application의 cloud SDK reference는 0이다.
-2. Generic core/solver/verification의 customer-name branch는 0이다.
+2. Generic core/solver/verification의 customer-name branch는 0이다 (A11).
 3. Verification은 solver/search/cache를 compile-depend하지 않는다.
-4. Generic module의 `com.google.ortools` API reference는 0이며 기본 build/ALNS-only runtime은 OR-Tools/native-loader-free다.
-5. Search는 immutable normalized problem, complete prepared travel와 exact bound profile만 소비한다.
-6. 모든 stable solution은 complete pair와 route/bank exact partition을 만족한다.
+4. Generic module의 `com.google.ortools` API reference는 0이며 기본 build/ALNS-only runtime은 OR-Tools/native-loader-free다. OR-Tools는 `backends/*` only.
+5. Search는 `immutable solve snapshot`(정규화 문제 + prepared travel + bound profile 등 봉인 묶음)만 소비한다. 탐색이 문제/travel/profile 의미를 바꾸지 않는다.
+6. 모든 stable solution은 complete pair와 route/`SearchRequestBank` exact partition(XOR)을 만족한다.
 7. Search 중 lazy/reverse/symmetric travel fallback은 0이다.
-8. COW trial만 step 안에서 mutable하며 reject/fail/cancel 시 전체 폐기한다.
-9. 두 verifier `PASS` 없는 result는 정상 publication/retrieval/benchmark 대상이 아니다.
-10. Artifact는 create-once immutable이고 authoritative state/pointer만 CAS로 전이한다.
+8. COW `TrialDraft`만 step 안에서 mutable하며 reject/fail/cancel 시 전체 폐기한다. apply/undo 비기본.
+9. 두 verifier(`candidate solution` + `result-integrity`) `PASS` 없는 result는 정상 publication/retrieval/benchmark 대상이 아니다. trial마다 verifier를 돌리지 않는다.
+10. Artifact는 create-once immutable이고 authoritative state/pointer만 CAS로 전이한다. 저장 = S3 only (LocalStack 동일 adapter). DB/Redis 0.
 11. Prefix listing 또는 event 도착 순서는 worker completeness와 champion authority가 아니다.
 12. Provider workflow는 objective, comparator, verifier와 publication eligibility를 소유하지 않는다.
 13. Retry는 logical identity, seed, warm start와 requested work를 바꾸지 않는다.
-14. Open/gated/deferred 값은 hidden default로 채우지 않는다.
+14. Open/gated/deferred 값은 hidden default로 채우지 않는다. portfolio/ALNS 수치·MIP budget 포함.
 15. Raw optimizer incumbent는 fresh materialization, full evaluation과 verifier를 우회하지 않는다.
+16. `servicePattern` only (`DELIVERY_ONLY` | `PICKUP_DELIVERY`). `kind=LOGICAL|REAL` 폐기.
+17. `SearchRequestBank` ≠ 최종 `UNASSIGNED` (직접 dump/승격 금지).
 
 ## 5. Canonical Phase 파일명
 
 문서 workflow 사실은 **15개 Phase 상세 문서와 15개 review 문서 완료, 구현 `ACCEPTED` 0개**다. 문서 작성·review 완료는 구현 완료나 Phase `ACCEPTED`를 뜻하지 않는다. 아래 표의 slug가 canonical이며 이후 작업은 다른 slug를 만들지 않는다.
 
-| Phase | Canonical 상세 문서 | Canonical review 문서 |
+**Filename slug 정책 (`KEEP_DISPLAY_SEPARATION`):** slug는 안정 식별자다.  
+표시·계약 용어는 Domain English-first를 쓰고, slug 철자와 달라도 **일상 rename하지 않는다.**  
+예: path `phase-02-…-immutable-problem.md` ↔ 의미 `immutable solve snapshot`.  
+상세 규칙·rename 예외 조건은 [README §5.1](README.md#51-filename-slug-vs-domain-공식-용어-정책--keep--표시-분리).
+
+| Phase | Canonical 상세 문서 (slug) | Canonical review 문서 |
 |---:|---|---|
 | 00 | [phase-00-build-architecture-skeleton.md](phases/phase-00-build-architecture-skeleton.md) | [phase-00-review.md](reviews/phase-00-review.md) |
 | 01 | [phase-01-canonical-input-normalization.md](phases/phase-01-canonical-input-normalization.md) | [phase-01-review.md](reviews/phase-01-review.md) |
-| 02 | [phase-02-prepared-travel-immutable-problem.md](phases/phase-02-prepared-travel-immutable-problem.md) | [phase-02-review.md](reviews/phase-02-review.md) |
+| 02 | [phase-02-prepared-travel-immutable-problem.md](phases/phase-02-prepared-travel-immutable-problem.md) · 표시: immutable solve snapshot | [phase-02-review.md](reviews/phase-02-review.md) |
 | 03 | [phase-03-route-propagation-evaluation-kernel.md](phases/phase-03-route-propagation-evaluation-kernel.md) | [phase-03-review.md](reviews/phase-03-review.md) |
 | 04 | [phase-04-capabilities-customer-profiles.md](phases/phase-04-capabilities-customer-profiles.md) | [phase-04-review.md](reviews/phase-04-review.md) |
 | 05 | [phase-05-pair-insertion-initial-portfolio.md](phases/phase-05-pair-insertion-initial-portfolio.md) | [phase-05-review.md](reviews/phase-05-review.md) |
@@ -256,16 +337,16 @@ root parent/aggregator
 ```mermaid
 flowchart TD
     P00["Phase 00 Build/architecture"] --> P01["Phase 01 Canonical input/normalization"]
-    P01 --> P02["Phase 02 Prepared travel/immutable problem"]
+    P01 --> P02["Phase 02 Prepared travel/immutable solve snapshot"]
     P02 --> P03["Phase 03 Propagation/evaluation kernel"]
-    P03 --> P04["Phase 04 Capabilities/profiles"]
+    P03 --> P04["Phase 04 Profiles/capabilities"]
     P04 --> P05["Phase 05 Pair insertion/portfolio"]
     P05 --> P06["Phase 06 COW ALNS/reproducibility"]
-    P06 --> P07["Phase 07 Verification/final result"]
+    P06 --> P07["Phase 07 Independent verification"]
     P07 --> P08["Phase 08 Ports/local runtime"]
-    P08 --> P09["Phase 09 No-DB object storage"]
+    P08 --> P09["Phase 09 S3-only object storage"]
     P09 --> P10["Phase 10 Coordinator"]
-    P10 --> P11["Phase 11 AWS reference"]
+    P10 --> P11["Phase 11 AWS reference (compute OPEN)"]
     P10 --> P12["Phase 12 Provider substitution"]
     P08 --> P14A["Phase 14A ALNS benchmark qualification — EVIDENCE GATE"]
     P07 --> P14A
@@ -299,7 +380,7 @@ Phase 13이 Phase 14B predecessor가 된다.
 | 선행 gate 뒤 병렬 가능 | 허용 범위 | 합류 gate |
 |---|---|---|
 | Phase 0 뒤 | Phase 8 port signature/test fake scaffold, Phase 7 corruption fixture 설계, profile descriptor schema 초안 | Phase 7 실제 authority와 Phase 8 local E2E 전에는 완료 주장 금지 |
-| Phase 1 뒤 | Travel oracle/fixture와 domain ID/property test 준비 | Phase 2 complete travel/problem gate |
+| Phase 1 뒤 | Travel oracle/fixture와 domain ID/property test 준비 | Phase 2 complete travel / immutable solve snapshot gate |
 | Phase 2 뒤 | Propagation hand oracle, verifier 독립 reference 계산 설계 | Phase 3/7 review |
 | Phase 6 뒤 | COW profiling 계측 준비와 ALNS benchmark protocol/corpus 제안 | Phase 07 both-gate와 Phase 08 local execution 전에는 benchmark acceptance 금지 |
 | Phase 8 뒤 | Phase 14A ALNS benchmark qualification, Phase 09 storage work | Phase 13은 Phase 14A acceptance receipt + `C-17` 승인 전 시작 금지 |
@@ -316,47 +397,75 @@ Phase 13이 Phase 14B predecessor가 된다.
 ### Phase 00 — Build와 architecture 뼈대
 
 - 상세/review: [상세 문서](phases/phase-00-build-architecture-skeleton.md) / [review 문서](reviews/phase-00-review.md)
-- 목표: 단일 GCP placeholder project를 보존·characterize하면서 proposed multi-module reactor와 forbidden-dependency guard를 만든다.
-- Entry gate: 이 계획 baseline, current inventory, source authority/conflict 규칙 승인.
-- 입력: root POM/toolchain, current source/test/deployment inventory, target module DAG.
-- 산출물: Parent/aggregator, core/solver/verification/application/capability/profile skeleton, architecture rules, legacy characterization, build provenance.
-- Exit gate: Optional-backend-free root build 성공, reactor cycle 0, forbidden provider/customer/backend/verifier dependency 0, legacy characterization 통과.
+- **Authority overlay:** 모듈/의존 경계는 이 계획 [§4.1](#41-proposed-target-modules) 및
+  [Architecture §4.2](../architecture-design.md) (`profiles/*`, `adapters/s3`·`input`,
+  `backends/*`, apps `cli|api|worker`). Phase 본문의 구 tree
+  (`capabilities`/`object-filesystem`/`compute-aws-lambda`/adapters 안 OR-Tools 등)는
+  **폐기**한다. compute 제품을 Lambda로 단정하는 skeleton을 만들지 않는다 (O1 OPEN).
+- 목표: **AWS target**(S3 + Step Functions + Lambda\|ECS) 기준 Architecture 정합
+  multi-module reactor와 forbidden-dependency guard를 만든다. 현재 tracked tree의
+  **GCP legacy placeholder**(GCS + Cloud Workflows + Cloud Run HTTP)는 삭제 전
+  golden characterization 입력으로 보존한다 (target 구현으로 승격 금지).
+- Entry gate: 이 계획 baseline, §3 current inventory(AWS target 선언 포함),
+  source authority/conflict 규칙 승인.
+- 입력: root POM/toolchain, current source/test/deployment inventory, target module DAG (§4.1).
+- 산출물: Parent/aggregator, core/solver/verification/application/`profiles` skeleton,
+  architecture rules, legacy(GCP) characterization, build provenance.
+  (OR-Tools backend·AWS compute 제품 모듈은 optional/GATED owner Phase 전 empty 필수화 금지.
+   Lambda-only skeleton으로 ECS 경로를 닫지 않는다 — O1 OPEN.)
+- Exit gate: Optional-backend-free root build 성공, reactor cycle 0, forbidden
+  provider/customer/backend/verifier dependency 0, legacy characterization 통과.
 - Evidence/handoff: `E-P00-BUILD`, `E-P00-ARCH`, `E-P00-LEGACY`; Phase 1과 모든 parallel scaffold가 소비.
 
 실행·검증 절차:
 
-1. Current endpoint, payload, storage key, error, GCP workflow와 test behavior를 golden characterization으로 기록한다.
+1. Current endpoint, payload, storage key, error, **legacy GCP** workflow/GCS/Cloud Run
+   과 test behavior를 golden characterization으로 기록한다. 동시에 §3의 AWS target
+   (S3 / Step Functions / Lambda\|ECS)과 불일치 항목을 inventory에 남긴다.
 2. Root POM을 business dependency 없는 parent/aggregator로 전환하고 Java 25/Maven/reproducible archive 정책을 중앙화한다.
-3. Stable module skeleton과 `com.ronext.rpdptw` namespace를 만들되 기능 stub을 완료 evidence로 계산하지 않는다.
-4. Enforcer/architecture/bytecode 검사로 SDK·vendor·customer·verification 역의존을 차단한다.
+3. §4.1/Architecture §4.2 정합 module skeleton과 `com.ronext.rpdptw` namespace를 만들되 기능 stub을 완료 evidence로 계산하지 않는다.
+4. Enforcer/architecture/bytecode 검사로 SDK·vendor·customer·verification 역의존과
+   OR-Tools outside `backends/*`, S3 SDK outside `adapters/*`, JDBC/Redis 0을 차단한다.
 5. Root `mvn verify`, module DAG, dependency tree, test-scope leakage와 reproducible artifact 검사를 evidence bundle에 저장한다.
 
-### Phase 01 — 내부 표준 입력과 정규화
+### Phase 01 — Fixed input contract + normalization (D1)
 
 - 상세/review: [상세 문서](phases/phase-01-canonical-input-normalization.md) / [review 문서](reviews/phase-01-review.md)
-- 목표: Versioned external input을 provider-neutral canonical input과 exact normalized facts로 바꾼다.
-- Entry gate: Phase 00 accepted; canonical field meaning과 alias/version policy가 상세 문서에 명시됨.
-- 입력: External bytes/reference, schema/adapter version, numeric/time/service/size/capability/zone/trip 계약.
-- 산출물: Immutable canonical/normalized input, typed pre-solve errors, raw digest, coercion/alias/policy provenance.
+- **Authority overlay:** Phase 본문에 “versioned multi-schema” 표현이 있으면 **D1이 이긴다.**
+- 목표: 외부/레거시 입력을 **단일 고정 canonical 계약**과 exact normalized facts로 바꾼다.
+  multi-version 입력 스키마 병행 운영 MUST NOT. 레거시 변환 = **`adapters/input` 경로의 adapter 하나**
+  (공식 이름·범위 O3 OPEN). wire 메타데이터 ≠ multi-canonical 운영.
+- Entry gate: Phase 00 accepted; Domain §4 fixed input contract와 alias/adapter 경계가 상세에 명시됨.
+- 입력: External bytes/reference, adapter identity(optional), numeric/time/service/size/capability/zone/trip 계약.
+- 산출물: Immutable canonical/normalized input, typed pre-solve errors, raw digest, adapter/coercion provenance.
 - Exit gate: Decimal/overflow/alias/time/service/compatibility의 positive·negative·boundary evidence가 모두 통과.
+  `reqDate` 의미 = 고객 요청 시각 (`serviceStartTime ≤ reqDate` only; `serviceEndTime` 조건 제외; Domain §4.3).
+  `servicePattern` only (`DELIVERY_ONLY` | `PICKUP_DELIVERY`).
 - Evidence/handoff: `E-P01-NUMERIC`, `E-P01-TIME`, `E-P01-COMPAT`, `E-P01-ERROR`; Phase 2가 소비.
 
 실행·검증 절차:
 
-1. 외부 DTO와 canonical domain type을 분리하고 지원 schema/version 및 alias를 allowlist한다.
+1. 외부 DTO와 canonical domain type을 분리한다. `adapters/input` 이 정본으로 변환한다 (D1).
 2. 무게·부피를 exact decimal `n=3/FLOOR`, item-first 후 qty 곱으로 checked normalization한다.
 3. 비용·거리·시간 소수, 음수·비유한 값, overflow, order-level `taskTime`을 거부한다.
 4. `[planStart,planEnd)`, inclusive close, repeating/overnight, full-arc work-window 의미와 service-time 조합을 정규화한다.
-5. Size/`["ALL"]`/capability subset/one-concrete-zone, ownership, oneway/single-roundtrip 계약을 property test한다.
+5. Size/`["ALL"]`/capability subset, vehicle multi-zone 허용(Domain §5.3), ownership, oneway/single-roundtrip을 property test한다. “차량 zone 1개 강제”는 Domain과 충돌하면 폐기.
 6. 같은 input은 stable fingerprint를, 의미가 다른 input은 다른 fingerprint를 만드는지 검증한다.
 
-### Phase 02 — 이동 자료 준비와 immutable problem
+### Phase 02 — Prepared travel + immutable solve snapshot
 
 - 상세/review: [상세 문서](phases/phase-02-prepared-travel-immutable-problem.md) / [review 문서](reviews/phase-02-review.md)
-- 목표: 모든 directed physical-location pair와 사용 vehicle의 time을 solve 전에 완성하고 immutable problem을 동결한다.
+- **Filename policy (채택 `KEEP_DISPLAY_SEPARATION`):** path slug `…-immutable-problem` 은 **안정 식별자**.  
+  공식 의미 이름은 `immutable solve snapshot` ([README §5.1](README.md#51-filename-slug-vs-domain-공식-용어-정책--keep--표시-분리)).  
+  slug가 Domain 의미를 정의하지 않는다. 일상 rename 없음; rename은 phase 본문 rebase와 같은 변경 단위에서만 예외.
+- **Authority overlay:** 공식 용어 = `immutable solve snapshot` (Domain §7).  
+  `ProblemInstance`는 snapshot **구성 요소(문제 본체)** 의 proposed 이름일 수 있으며 freeze 단위 전체가 아니다.
+- 목표: 모든 directed physical-location pair와 사용 vehicle의 time을 solve 전에 완성하고
+  **immutable solve snapshot** 문제 쪽을 동결한다 (이후 탐색은 해만 변경).
 - Entry gate: Phase 01 accepted; approved Great Circle function/version과 typed travel source policy가 명시됨.
 - 입력: Normalized locations/vehicles/requests, provided sparse `D/U`, coordinates/speed, generation policy.
-- 산출물: Complete `PreparedTravel`, dense ID bijection, immutable `ProblemInstance`, source/fingerprint provenance.
+- 산출물: Complete `PreparedTravel`, dense ID bijection, snapshot 구성 요소 + source/fingerprint provenance.
+  (bound profile 최종 봉인 시점은 Phase 04와 정합 — Domain §7·§10).
 - Exit gate: `M²` coverage, self `0/0`, asymmetric/provided/generated priority, rounding, ID/reference와 solver/verifier fingerprint equality 통과.
 - Evidence/handoff: `E-P02-TRAVEL`, `E-P02-DENSE-ID`, `E-P02-PROBLEM`; Phase 3/5/7이 소비.
 
@@ -365,75 +474,92 @@ Phase 13이 Phase 14B predecessor가 된다.
 1. Solver node와 physical location identity를 분리하고 external↔dense mapping을 검증한다.
 2. Provided integer directed `D/U`를 우선하고 decimal을 거부한다.
 3. Missing `D`를 approved Great Circle + meter `HALF_UP`, missing `U`를 vehicle별 `CEILING(D×3.6/speed)`로 생성한다.
-4. Missing speed만 `45 km/h`로 처리하고 present-invalid speed는 거부한다.
+4. Missing speed 기본값(예: 과거 서술 `45 km/h`)은 **official Domain MUST가 아니다.**
+   승인된 experiment/test-only config 또는 별도 travel-policy 승인 기록으로만 쓰고,
+   present-invalid speed는 거부한다. 숨은 production default로 승격하지 않는다.
 5. Runtime lazy/reverse/symmetric fallback을 architecture test로 막는다.
 6. Pair/node/location/vehicle/travel completeness와 checked range를 생성 시 검증한다.
 
-### Phase 03 — 경로 전파 계산과 평가 kernel
+### Phase 03 — Route propagation + evaluation kernel
 
 - 상세/review: [상세 문서](phases/phase-03-route-propagation-evaluation-kernel.md) / [review 문서](reviews/phase-03-review.md)
 - 목표: Route sequence에서 물리 fact를 cache 없이 재계산하고 hard/metric/score/objective 책임을 분리한다.
 - Entry gate: Phase 02 accepted; propagation/evaluation API와 단위 선언이 상세 문서에서 review됨.
-- 입력: `ProblemInstance`, `PreparedTravel`, proposed bound constraint/evaluation declarations, immutable `RoutePlan`.
+- 입력: Snapshot 문제 쪽 + `PreparedTravel`, proposed bound constraint/evaluation declarations, immutable `RoutePlan`.
 - 산출물: Stateless propagator, typed infeasibility, neutral fact/metric, evaluation SPI, comparator와 cache-free reference.
 - Exit gate: Hand-calculated load/time/wait/rest/stop/resource, hard-no-penalty, comparator 법칙, cache equality 통과.
+  `reqDate`: `serviceStartTime ≤ reqDate` (Domain §4.3·§9). delivery-only는 `servicePattern=DELIVERY_ONLY` (가짜 pickup visit 없음).
 - Evidence/handoff: `E-P03-PROPAGATION`, `E-P03-EVALUATION`, `E-P03-COMPARATOR`; Phase 4/5/7이 소비.
 
 실행·검증 절차:
 
 1. Terminal에서 route 끝까지 full-arc travel, arrival, wait, service, load와 resource를 순서대로 계산한다.
-2. Delivery-only initial load와 real pickup/delivery delta를 혼합하고 모든 prefix capacity를 검사한다.
+2. `DELIVERY_ONLY` initial load와 `PICKUP_DELIVERY` pickup/delivery delta를 혼합하고 모든 prefix capacity를 검사한다.
 3. Stop/location transition, drive resource와 route operational time breakdown을 독립 보존한다.
 4. Structural/hard gate → neutral metric → score → objective → comparator의 단방향 API를 강제한다.
 5. Hard violation이 finite penalty/SA/comparator로 통과하지 못하게 한다.
 6. Small hand oracle와 property test로 incremental/cache 결과가 full reference와 같은지 검증한다.
 
-### Phase 04 — 재사용 기능과 고객 profile
+### Phase 04 — Profiles / capabilities (A11)
 
 - 상세/review: [상세 문서](phases/phase-04-capabilities-customer-profiles.md) / [review 문서](reviews/phase-04-review.md)
+- **Authority overlay:** 모듈 배치는 Architecture `profiles/*` + YAML 카탈로그 (§5).  
+  미등록 `customerId` → `customers.default` fallback (Arch §5.3.5).  
+  core `switch(customerId)` · classpath first-wins · “latest” 버전 추측 금지.
 - 목표: 고객 차이를 reusable typed capability와 immutable data-driven profile/preset으로 bind한다.
 - Entry gate: Phase 03 accepted; descriptor format/registry 선택은 ADR로 review되며 public wire로 오인하지 않음.
 - 입력: Exact customer/profile/version/preset, approved capability registry, typed parameter/dependency/unit declaration.
 - 산출물: Immutable `BoundProfile`, exact dependency closure와 fingerprint, customer authorization/binding errors.
-- Exit gate: Unknown/latest/cross-customer/duplicate/missing/unit mismatch 거부, profile 격리와 기존 fingerprint 회귀 통과.
+- Exit gate: 잘못된 명시 component/unit mismatch/duplicate 거부; 미등록 customer는 default 행; profile 격리와 fingerprint 회귀 통과.
 - Evidence/handoff: `E-P04-BINDING`, `E-P04-ISOLATION`, `E-P04-FACET`; Phase 5/7이 소비.
 
 실행·검증 절차:
 
-1. Customer별 POM/JAR 대신 exact versioned descriptor와 reusable capability registry를 구현한다.
+1. Customer별 POM/JAR 대신 `profiles/*` + YAML 카탈로그와 reusable capability registry를 구현한다 (Architecture §5).
 2. Binder가 schema, capability version, parameter range, fact/metric dependency, objective direction과 `LEASE`/mandatory 계약을 pre-solve 검증한다.
-3. Omitted preset은 exact profile version에 명시된 default만 허용한다.
+3. Omitted preset/slot은 exact profile version 또는 YAML default 행 merge 규칙만 허용한다 (Arch §5.3.5).
 4. 새 물리 상태만 typed facet으로 추가하고 price/label/objective 차이에 facet을 사용하지 않는다.
-5. Customer name branch와 classpath first-wins fallback을 architecture test로 금지한다.
+5. Core customer-name branch와 classpath first-wins / “latest” 추측을 architecture test로 금지한다. 미등록 customerId → `customers.default`.
 6. 여러 profile을 같은 problem facts에 bind해 결과 격리와 verifier closure를 검증한다.
 
-### Phase 05 — Pickup-delivery pair, 삽입과 초기 후보군
+### Phase 05 — Pair insertion + initial portfolio
 
 - 상세/review: [상세 문서](phases/phase-05-pair-insertion-initial-portfolio.md) / [review 문서](reviews/phase-05-review.md)
-- 목표: Stable route/bank partition, side-effect-free exact pair insertion과 최대 8개 independent construction을 만든다.
-- Entry gate: Phase 04 accepted; request/route/vehicle stable total order와 portfolio config가 명시됨.
-- 입력: Immutable solve facts/profile, atomic requests, prepared travel, comparator.
-- 산출물: `SearchSnapshot`, `SearchRequestBank`, COW trial primitive, pair editor/evaluator, 4×2 initial candidates와 lineage.
+- **Authority overlay:** Domain §10.5 — portfolio **개수·휴리스틱 이름은 예시/OPEN** (구현 MUST 아님).  
+  MUST = pair/XOR/`SearchRequestBank`/COW `TrialDraft` 경계 + portfolio **stage 존재**.  
+  Phase 본문의 “4×2 / 최대 8”은 experiment/test 예시로만 취급한다.
+- 목표: Stable route/bank partition, side-effect-free exact pair insertion과 initial portfolio stage를 만든다.
+- Entry gate: Phase 04 accepted; request/route/vehicle stable total order와 (experiment) portfolio config가 명시됨.
+- 입력: Immutable solve snapshot, atomic requests, prepared travel, comparator.
+- 산출물: `SearchSnapshot`, `SearchRequestBank`, `TrialDraft`/COW primitive, pair editor/evaluator, initial candidates + lineage.
 - Exit gate: Pair/bank property, insertion brute-force oracle, rollback/no-alias, terminal/vehicle uniqueness, candidate independence 통과.
 - Evidence/handoff: `E-P05-PAIR`, `E-P05-INSERTION`, `E-P05-PORTFOLIO`; Phase 06이 소비하며 MIP/backend는 소비자나 oracle이 아님.
 
 실행·검증 절차:
 
-1. Request가 complete same-vehicle pair 또는 bank 중 정확히 하나에 있도록 stable invariant를 구현한다.
+1. Request가 complete same-vehicle pair 또는 `SearchRequestBank` 중 정확히 하나에 있도록 stable invariant를 구현한다.
 2. Destroy/remove/insert 실패 시 route/bank/cache/fingerprint가 원상태인 중앙 atomic editor를 만든다.
 3. Cheap shortlist와 모든 합법 pickup/delivery position을 검사하는 exact evaluator를 분리한다.
 4. `NEW_ROUTE`가 실제 unused concrete vehicle을 소비하게 한다.
-5. `CLOCK`, `SEQ_FARTHEST`, `SEQ_LARGE_DEMAND`, `SEQ_EARLIEST_DEADLINE` × `DIRECT_FIRST_LARGE/SMALL`을 독립 실행한다.
-6. 좌표 없는 `CLOCK`은 `UNAVAILABLE`로 남기고 다른 정책으로 위장하지 않는다.
+5. Experiment config에 등록된 construction 정책을 독립 실행한다 (이름·개수는 OPEN; Phase 본문 4×2는 예시).
+6. 좌표 없는 정책 등은 typed `UNAVAILABLE`로 남기고 다른 정책으로 위장하지 않는다.
 
 ### Phase 06 — 복사 후 변경 방식의 ALNS
 
 - 상세/review: [상세 문서](phases/phase-06-cow-alns-reproducibility.md) / [review 문서](reviews/phase-06-review.md)
+- **Authority overlay:** Domain §11 — operator 목록·step 수치·난수 시드는
+  **OPEN/예시** (구현 MUST로 문서가 채우지 않음). MUST = pair destroy/repair,
+  COW `TrialDraft`, completed-step 경계, accept/discard, reproducibility 기록,
+  ALNS-only default (OR-Tools-free).
 - 목표: COW 기반 pair destroy/repair, completed-step 의미, phase-1 screen과 reproducible worker run을 구현한다.
-- Entry gate: Phase 05 accepted; algorithm/operator/acceptance config와 모든 test-only step 값이 explicit함.
-- 입력: Validated initial candidates, `BoundProfile`/`SolvePlan`, namespaced seed, screen/worker step config.
+- Entry gate: Phase 05 accepted; algorithm/operator/acceptance config와 모든
+  **test-only 또는 experiment** step 값이 explicit함 (official default 아님).
+- 입력: Validated initial candidates, `BoundProfile`/`SolvePlan`, namespaced seed,
+  screen/worker step config (**experiment envelope**).
 - 산출물: Phase-1 champion, immutable current/stageBest/solveBest, committed worker candidate, termination/trace/reproducibility record.
-- Exit gate: Accept/reject/fault/cancel isolation, cache equality, exact step accounting, same-envelope trace/result fingerprint 통과.
+- Exit gate: Accept/reject/fault/cancel isolation, cache equality, exact step accounting
+  (요청된 envelope 기준), same-envelope trace/result fingerprint 통과.
+  step 상한 수치 자체는 OPEN — exit가 특정 production `screenMaxSteps`를 확정하지 않음.
 - Evidence/handoff: `E-P06-COW`, `E-P06-ALNS`, `E-P06-REPLAY`; Phase 07/08/10과 Phase 14A가 소비. Phase 13은 Phase 14A acceptance 뒤에만 조건부 소비.
 
 실행·검증 절차:
@@ -441,8 +567,10 @@ Phase 13이 Phase 14B predecessor가 된다.
 1. Changed route와 independent bank만 first-write copy하고 current/best는 immutable snapshot 교체로 관리한다.
 2. Completed step을 destroy→repair→bounded improvement→full evaluation→accept/discard→adaptive update 전체로 정의한다.
 3. `INVALID_CANDIDATE`/`INTERRUPTED`가 step, reward, temperature와 adaptive state를 전진시키지 않게 한다.
-4. 각 available initial candidate를 exact test/experiment `screenMaxSteps`로 실행해 stable champion을 고른다.
-5. Worker single-run이 exact requested step을 수행하고 watchdog/cancel/resource/platform failure를 정상 종료와 분리한다.
+4. 각 available initial candidate를 **manifest에 명시한** test/experiment
+   `screenMaxSteps`(또는 동등 step budget)로 실행해 stable champion을 고른다.
+   수치·이름은 OPEN; Phase 본문 예시값을 official default로 승격하지 않는다.
+5. Worker single-run이 **요청된** step budget을 수행하고 watchdog/cancel/resource/platform failure를 정상 종료와 분리한다.
 6. Global random, unordered reduction, completion-first winner와 clock tie-break를 제거하고 fixed-envelope repeat를 검증한다.
 7. Apply/undo는 구현하지 않는다. COW 병목 evidence와 별도 변경 승인 시에만 후속 제안한다.
 8. ALNS-only default build/run은 OR-Tools, MIP solver, solver license/server/token,
@@ -450,53 +578,61 @@ Phase 13이 Phase 14B predecessor가 된다.
 9. Benchmark용 run은 dataset/fixture, seed/repeat, hardware/runtime, timeout/resource
    envelope를 명시하지만 승인 전 값을 production default로 만들지 않는다.
 
-### Phase 07 — 독립 검증과 최종 결과
+### Phase 07 — Independent verification + publishable result
 
 - 상세/review: [상세 문서](phases/phase-07-independent-verification-final-result.md) / [review 문서](reviews/phase-07-review.md)
-- 목표: Solver와 compile/runtime authority가 분리된 candidate/result verifier로 publication을 봉인한다.
+- 목표: Solver와 compile/runtime authority가 분리된 **candidate solution verifier** +
+  **result-integrity verifier**로 publication을 봉인한다 (Domain §13).
 - Entry gate: Phase 06 committed candidate, Phase 02/04 authority, independent corruption oracle 준비.
-- 입력: Problem/travel/profile declaration, candidate route/bank, finalization inputs와 proposed payload.
-- 산출물: Candidate `PASS`/`FAIL`, `VerifiedSolution`, final audit/outcomes/summary, result `PASS`/`FAIL`, `PublishableResult`.
+- 입력: Snapshot + travel/profile declaration, candidate **전체** route/bank, finalization inputs와 proposed payload.
+- 산출물: Candidate `PASS`/`FAIL`, `VerifiedSolution`, final audit/outcomes/summary, result `PASS`/`FAIL`, publishable result.
 - Exit gate: Pair/travel/cache/metric/objective/outcome/audit/summary/payload corruption 거부와 both-gate publication block 통과.
+  `SearchRequestBank`를 최종 UNASSIGNED로 직접 dump하지 않는다.
 - Evidence/handoff: `E-P07-CANDIDATE-VERIFY`, `E-P07-AUDIT`, `E-P07-RESULT-VERIFY`; Phase 08/10/11/14A가 소비. Phase 13은 별도 `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT` 뒤에만 소비.
 
 실행·검증 절차:
 
 1. Verification module이 core만 사용하고 solver/search/cache dependency가 없음을 build로 증명한다.
-2. Candidate route/bank를 prepared travel과 bound declaration에서 cache 없이 재계산한다.
+2. Candidate **전체** route/bank를 prepared travel과 bound declaration에서 cache 없이 재계산한다 (변경 route만 검사 금지).
 3. Candidate `PASS` 뒤에만 preliminary `ASSIGNED/UNASSIGNED` partition을 만든다.
 4. Static `PROVEN` 외 모든 unassigned request를 final routes 고정 상태에서 모든 eligible vehicle/positions로 audit한다.
 5. Feasible insertion 발견을 자동 적용·재탐색하지 않고 confidence를 evidence 범위로 제한한다.
-6. Result verifier가 exactly-one outcome, ownership, audit completeness, summary와 payload digest를 독립 검사한다.
+6. Result-integrity verifier가 exactly-one outcome, ownership, audit completeness, summary와 payload digest를 독립 검사한다.
 7. 어느 gate든 fail/incomplete이면 정상 result와 benchmark vector를 차단한다.
 8. Phase 07 `PASS`는 benchmark quality/performance acceptance가 아니다. Phase 14A가
    immutable benchmark bundle과 독립 acceptance receipt를 별도로 발행해야 한다.
 
-### Phase 08 — Application interface와 local 실행
+### Phase 08 — Application ports + local runtime
 
 - 상세/review: [상세 문서](phases/phase-08-application-ports-local-runtime.md) / [review 문서](reviews/phase-08-review.md)
-- 목표: Provider-neutral use case/port와 filesystem/same-process reference runtime을 만든다.
+- **Authority overlay (Architecture §3.4 · §8):**
+  - REST 동기 구간 = validation → `ArtifactStore` put → **200 + s3 key**. ALNS 전체 완료를 HTTP 한 요청에 두지 않음.
+  - **local 통합/e2e 타깃 = LocalStack S3** + 동일 `adapters/s3`. 단위 테스트 인메모리 fake 허용.
+  - 순수 filesystem E2E는 dev convenience일 수 있으나 Architecture authoritative local 통합이 아님.
+- 목표: Provider-neutral use case/port와 local reference runtime을 만든다.
 - Entry gate: Interface scaffold는 Phase 00 뒤 가능하지만 exit는 Phase 07 both-gate 경로가 accepted되어야 함.
-- 입력: Immutable solve/result artifacts, execution identity, local workspace/config.
-- 산출물: Inbound use cases, outbound ports, local artifact/state/dispatch/cancel/publication adapter, deterministic local E2E.
+- 입력: Immutable solve/result artifacts, execution identity, local/LocalStack config.
+- 산출물: Inbound use cases, outbound ports, local/LocalStack adapter, deterministic local E2E.
 - Exit gate: Exact-key artifact digest, state/publication CAS, cancellation 분리, both-gate success/retrieval과 rerun 통과.
 - Evidence/handoff: `E-P08-PORT`, `E-P08-LOCAL-E2E`, `E-P08-IDEMPOTENCY`; Phase 09/10이 소비.
 
 실행·검증 절차:
 
-1. Proposed `SubmitSolve`, `PrepareSolveSnapshot`, `ExecuteWorkerRun`, `PublishVerifiedResult`, status/result use case를 application이 소유하게 한다.
-2. `ArtifactStore`, `RunStateRepository`, `ResultPublisher`, dispatcher/scheduler/cancel/telemetry port에서 provider type을 제거한다.
-3. Explicit local workspace, immutable create/atomic rename/digest, CAS state와 same-process dispatcher를 구현한다.
+1. Proposed `AcceptSolve`/`SubmitSolve`, `PrepareSolveSnapshot`, `ExecuteWorkerRun`, `PublishVerifiedResult`, status/result use case를 application이 소유하게 한다.
+2. `ArtifactStore`, `RunStateRepository`(≠ JPA/DB), `ResultPublisher`, `WorkerDispatcher` 등 port에서 provider type을 제거한다.
+3. Local 단위 = fake ports; local 통합 = LocalStack S3 endpoint로 동일 adapter. CAS state와 dispatcher를 구현한다.
 4. Same key/same digest 수렴과 same key/different digest conflict를 검증한다.
 5. Local E2E가 두 verifier 뒤에만 success/result를 공개하고 fixed manifest에서 재현되는지 확인한다.
 
-### Phase 09 — DB 없는 object storage
+### Phase 09 — Object storage (S3 only, no DB / no Redis)
 
 - 상세/review: [상세 문서](phases/phase-09-object-storage-no-database.md) / [review 문서](reviews/phase-09-review.md)
-- 목표: Database 없이 immutable artifact와 단일 authoritative pointer/state CAS로 저장 의미를 구현한다.
+- **Authority overlay:** Architecture §3.2 — **S3 only**. 관계형 DB MUST NOT. Redis MUST NOT.  
+  LocalStack = 동일 `adapters/s3` endpoint. filesystem suite는 non-authoritative 보조일 뿐 1급 저장 경로로 승격하지 않음.
+- 목표: Database/Redis 없이 immutable artifact와 단일 authoritative pointer/state CAS로 저장 의미를 구현한다.
 - Entry gate: Phase 08 local port semantics accepted; object canonical encoding/key-layout ADR review.
 - 입력: Typed `ArtifactKey/Ref`, content digest, state version, tenant scope.
-- 산출물: Object-common semantics, filesystem/S3 backend contract, exact-key retrieval, immutable artifact + mutable CAS pointer model.
+- 산출물: Object storage semantics (S3/LocalStack), exact-key retrieval, immutable artifact + mutable CAS pointer model.
 - Exit gate: Put-if-absent, digest, stale-version conflict, tenant isolation, listing-free completeness, publication CAS contract 통과.
 - Evidence/handoff: `E-P09-STORAGE-CONTRACT`, `E-P09-CAS`, `E-P09-TENANT`; Phase 10/11이 소비.
 
@@ -506,8 +642,8 @@ Phase 13이 Phase 14B predecessor가 된다.
 2. Immutable artifact를 먼저 저장·재독해 digest 검증 후 하나의 state/pointer를 CAS commit한다.
 3. Multi-object transaction, directory rename, file lock와 last-write-wins를 공통 계약에서 금지한다.
 4. Declared exact key를 authority로 사용하고 prefix listing/event를 wake-up hint로만 취급한다.
-5. Filesystem과 S3가 동일 abstract storage suite를 통과하게 한다.
-6. No-DB 기본 query를 exact solve/submission/profile key 조회로 제한한다.
+5. S3와 LocalStack S3가 동일 abstract storage suite를 통과하게 한다.
+6. No-DB/no-Redis 기본 query를 exact solve/submission/profile key 조회로 제한한다.
 
 ### Phase 10 — 여러 round를 조정하는 coordinator
 
@@ -528,49 +664,66 @@ Phase 13이 Phase 14B predecessor가 된다.
 5. Duplicate success same digest는 수렴하고 different digest는 integrity failure로 만든다.
 6. Cancel intent, dispatch stop와 actual worker termination을 분리한다.
 
-### Phase 11 — AWS reference distribution
+### Phase 11 — AWS reference distribution (compute OPEN)
 
 - 상세/review: [상세 문서](phases/phase-11-aws-reference-distribution.md) / [review 문서](reviews/phase-11-review.md)
-- 목표: 선택된 S3 + Step Functions + Lambda target/reference가 같은 application semantics를 보존하게 한다.
-- Entry gate: Phase 10 accepted; AWS resource/IAM/network/retention/cost ADR와 non-production integration environment 승인.
-- 입력: Provider-neutral actions/ports, S3 state/artifact semantics, Lambda assignments, Step Functions command/wakeup mapping.
-- 산출물: S3, Step Functions, Lambda adapters, `aws-serverless` distribution/deployment, parity/shadow/rollback evidence.
-- Exit gate: Local↔AWS semantic parity, event/error/retry/cancel mapping, S3 CAS, missing-worker block, both-gate publication, security evidence 통과.
+- **Authority overlay (Master D2/O1, Architecture §3.3 · §9.4, README):**
+  - reference platform = **AWS** (Google Cloud 경로 유지·확장이 아님).
+  - **Storage MUST = S3** (LocalStack parity). DB · Redis 없음.
+  - durable orchestration reference = **AWS Step Functions**.
+    application/coordinator 각본은 provider-neutral; SFN은 엔진 조립이며
+    Domain 점수·champion·verifier를 소유하지 않는다.
+  - worker/API compute = **Lambda \| ECS — O1 OPEN**. “Lambda only RESOLVED” 금지.
+  - AWS reference 조립 ≠ 알고리즘 완료 ≠ production cutover (A9, A10).
+  - tracked tree의 GCP(Cloud Run/Workflows/GCS)와 ignored serverless 실험 산출물은
+    target evidence가 아니다 (§3).
+- 목표: 승인된 AWS **reference**(S3 + Step Functions + Lambda\|ECS) 조립이
+  같은 application semantics를 보존하게 한다.
+- Entry gate: Phase 10 accepted; AWS resource/IAM/network/retention/cost ADR와 non-production integration environment 승인. compute 축 제품이 아직 OPEN이면 후보 adapter를 병기한다.
+- 입력: Provider-neutral actions/ports, S3 state/artifact semantics, worker assignment, orchestration command/wakeup mapping.
+- 산출물: S3 adapter, (후보) orchestration/compute adapters, reference deployment 조립, parity/shadow/rollback evidence.
+- Exit gate: Local(LocalStack)↔AWS semantic parity, event/error/retry/cancel mapping, S3 CAS, missing-worker block, both-gate publication, security evidence 통과.
 - Evidence/handoff: `E-P11-AWS-CONTRACT`, `E-P11-PARITY`, `E-P11-SECURITY`; Phase 14가 소비.
 
 실행·검증 절차:
 
-1. AWS SDK/ARN/event/resource name을 adapter/distribution/deployment 밖으로 노출하지 않는다.
-2. Step Functions는 command, wait/wakeup, provider retry scheduling과 cancel 전달만 수행한다.
-3. Lambda API/coordinator/worker handler는 event를 application command로 mapping하고 domain 의미를 구현하지 않는다.
-4. Lambda remaining time/platform timeout을 algorithm 정상 종료로 변환하지 않는다.
-5. Local과 AWS에서 동일 logical manifest의 canonical artifact, outcome, termination과 digest를 비교한다.
+1. AWS SDK/ARN/event/resource name을 adapter/deployment 밖으로 노출하지 않는다.
+2. Orchestration adapter는 command, wait/wakeup, provider retry scheduling과 cancel 전달만 수행한다.
+3. API/worker handler는 event를 application command로 mapping하고 domain 의미를 구현하지 않는다.
+4. Platform remaining time/timeout을 algorithm 정상 종료로 변환하지 않는다.
+5. Local(LocalStack)과 AWS에서 동일 logical manifest의 canonical artifact, outcome, termination과 digest를 비교한다.
 6. Least privilege, tenant isolation, encryption, secret/PII redaction, failure/retry와 rollback을 rehearsal한다.
 
 ### Phase 12 — Provider substitution
 
 - 상세/review: [상세 문서](phases/phase-12-provider-substitution.md) / [review 문서](reviews/phase-12-review.md)
 - 목표: Storage/workflow/compute 축을 독립 교체할 수 있음을 contract와 승인된 provider migration으로 증명한다.
+  compute 축은 처음부터 O1 OPEN이므로 “Lambda→ECS 전환”만의 전용 서술이 아니다.
 - Entry gate: Phase 10 accepted; 교체 대상 provider와 adoption scope에 별도 승인. 승인 전에는 future module을 빈 skeleton으로 만들지 않음.
 - 입력: Stable port contract, source/destination artifact refs, selected provider adapter, parity manifest.
-- 산출물: 승인된 adapter/distribution, content-digest migration record, parity/shadow/cutover/rollback playbook.
+- 산출물: 승인된 adapter/deployment, content-digest migration record, parity/shadow/cutover/rollback playbook.
 - Exit gate: 동일 storage/execution suite, locator leakage 0, artifact digest 보존, semantic parity, security/cost/operations approval.
 - Evidence/handoff: `E-P12-PROVIDER-CONTRACT`, `E-P12-MIGRATION`, `E-P12-PARITY`; 향후 provider cutover가 소비.
 
 실행·검증 절차:
 
 1. 변경 요구가 storage, workflow, compute 중 어느 축인지 먼저 분리한다.
-2. AWS 내부 Lambda→ECS, S3→GCS/Azure, workflow→approved runtime 등 승인된 최소 축만 adapter로 추가한다.
+2. 승인된 최소 축만 adapter로 추가한다 (예: compute Lambda↔ECS, storage S3↔다른 object store, workflow 엔진 교체).
 3. Source artifact read/verify → destination put-if-absent → read-back verify → ref mapping → pointer CAS 순으로 migration한다.
 4. Provider URI/locator와 runtime execution ID가 domain/result fingerprint를 바꾸지 않게 한다.
 5. 동일 port suite, duplicate/retry/cancel/completeness와 local/AWS/new-provider parity를 실행한다.
 6. Shadow와 recoverable rollback 뒤에만 해당 provider를 활성화한다.
 
-### Phase 13 — Optional hybrid
+### Phase 13 — Optional hybrid (C-17 GATED)
 
 - 상세/review: [상세 문서](phases/phase-13-optional-hybrid-route-selection.md) / [review 문서](reviews/phase-13-review.md)
 - 목표: Immutable evaluated route pool, exact-projectable selection과 strictly-better adoption을 optional branch로 검증한다.
-- Backend 결정: Boolean route/unassigned 변수와 integer/fixed-point 목적·제약이므로 `MPSolver`가 아니라 `com.google.ortools.sat` direct CP-SAT를 사용한다. Adapter는 selected route IDs만 반환한다.
+- **C-17 이중층 (Domain §12):** (1) config flag default **false** — 실행 스위치.
+  (2) C-17 승인·evidence — 제품 자격. config true ≠ C-17 우회.
+- **Backend (implementation proposed, not Master-normative):** gate 개방 시
+  Boolean route/unassigned + integer/fixed-point 목적·제약 → `com.google.ortools.sat` direct CP-SAT
+  (`MPSolver` 아님). 모듈 위치 = **`backends/route-selection-ortools-cpsat`** (adapters 금지).
+  selected route IDs만 반환. exact version/checksum/SBOM/native 등은 별도 승인.
 - Entry gate: Phase 06/07/08 accepted, Phase 14A가 발행한 유효한
   `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`, `C-17` scope 승인, OR-Tools exact
   version/checksum/config·Apache-2.0/applicable notice/SBOM·native/platform·Security·
@@ -829,7 +982,8 @@ Phase 하나는 다음을 모두 만족할 때만 `ACCEPTED`다.
 7. Candidate와 result verifier 모두 `PASS`.
 8. Declared worker completeness와 completion-order-independent champion.
 9. Immutable artifact + CAS publication, idempotency/cancel/retry semantics.
-10. AWS reference parity/security/operations evidence.
+10. 승인된 reference distribution(S3 + 선택된 orchestration/compute 후보)의 parity/security/operations evidence.
+    compute 제품(Lambda \| ECS)은 O1 OPEN이므로 System DoD가 한쪽을 단정하지 않는다.
 11. Phase 14 calibration, official manifest, shadow, rollback과 production authority 승인.
 
 Phase 13 hybrid는 별도 applicable 결정과 `C-17` gate를 통과한 경우에만 System DoD에 추가한다.
@@ -885,7 +1039,7 @@ Phase 13 hybrid는 별도 applicable 결정과 `C-17` gate를 통과한 경우�
 |---|---|---|
 | Semantic drift | Adapter/solver/verifier가 같은 값을 다르게 해석 | Exact policy/source fingerprint, shared immutable authority, independent corruption |
 | Pair/COW | Partial pair, rollback 오염, stale cache | Central atomic editor, no-alias COW, fault injection, full recomputation |
-| Customer extension | Core/customer branch와 profile fallback | Exact registry/binding, architecture rule, cross-customer denial |
+| Customer extension | Core customer-name branch; classpath first-wins | Exact registry/binding, YAML `customers.default` (Arch §5.3.5), core branch 금지 |
 | Benchmark | 다른 manifest/incomplete worker 비교 | Immutable card, all-worker gate, compare-not-allowed |
 | Object storage | Listing/last-write-wins/multi-object transaction 의존 | Exact-key declared completeness, put-if-absent, single-pointer CAS |
 | Provider coupling | SDK/event/locator가 core/application 의미에 침투 | Ports/adapters, dependency rules, local/provider parity |
@@ -912,36 +1066,51 @@ Phase 13 hybrid는 별도 applicable 결정과 `C-17` gate를 통과한 경우�
 | Phase 12 provider adoption | Approval-gated per provider | Platform·Operations·Security | 특정 GCS/Azure/ECS/Cloud Run/Kubernetes adapter/cutover | Workload, parity, security, retention, retry/recovery, cost와 별도 adoption 승인 |
 | Phase 14 production authority | Gate | Product·Operations·Security·Release | 실제 traffic/pointer cutover | Phase 11, approved calibration/fixture, shadow/rollback, operational evidence와 explicit production approval |
 | Proposed public API/schema/수치 | OPEN until separately approved | Product/API/Data owner | External compatibility 약속 | Versioned contract, compatibility/security review와 approval |
+| Worker/API compute (Lambda vs ECS) | `OPEN` (Master O1 / D2) | Architecture·Platform | compute 제품 단정 | reference = AWS Lambda **또는** ECS; 한쪽 RESOLVED 서술 금지 |
+| durable orchestration engine | reference = **AWS Step Functions** | Architecture·Platform | GCP Cloud Workflows를 target으로 유지 | Phase 11 SFN 조립 + local/AWS parity; application 각본은 provider-neutral |
+| Initial portfolio count / ALNS step 수치 | `OPEN — EXPERIMENT_REQUIRED` (Domain §10.5·§11) | Domain·Algorithm·Benchmark | 숨은 official default | 승인된 experiment config만 |
+| Adapter 공식 이름·범위 (O3) | `OPEN` | Domain·API | 외부 호환 약속 | “adapter 하나” 원칙만 고정 |
+| Wire field 깊이 (O2) | `OPEN` | Domain·API | public schema 승인 | Domain 의미 목록 ≠ wire 승인 |
 
-`Q-INFRA-01`은 더 이상 deferred가 아니다. AWS S3 + Step Functions + Lambda 선택은 `RESOLVED`다. 다만 구현, parity, sizing, security와 cutover는 위 Phase 11/14 gate로 남는다.
+**저장 축:** Architecture MUST = S3 only · no DB · no Redis.  
+**platform 축:** reference = **AWS** S3 + **Step Functions** + (**Lambda \| ECS**).  
+GCP Cloud Run/Workflows/GCS 는 legacy placeholder (§3).  
+**O1 OPEN:** Lambda **vs** ECS 제품 선택만 — “Lambda only RESOLVED” 금지.  
+**historical `Q-INFRA-01`:** deprecated 등록부의 “전부 RESOLVED” 문구를 Master 결정으로
+인용하지 않는다. production cutover authority는 Phase 14 gate.
 
 ## 15. Requirement/source/phase/evidence traceability
 
-아래 evidence key는 **planned requirement**이며 완료 evidence가 아니다.
+아래 evidence key는 **planned requirement**이며 완료 evidence가 아니다.  
+**Normative source = current APPROVED Master/Domain/Architecture.**  
+Source 열의 deprecated 링크가 남아 있으면 historical fingerprint/trace 용이며,
+의미 충돌 시 current 절이 이긴다.
 
-| Requirement | Source | Phase | Planned evidence |
+| Requirement | Source (normative first) | Phase | Planned evidence |
 |---|---|---:|---|
-| `REQ-ARCH-DAG` stable module/provider/vendor/verifier dependency | [Architecture §2](../deprecated/2026-07-26-architecture-design.md#2-module과-package-경계), [Integrated §3](../deprecated/architecture-domain-implementation-design.md#3-목표-project-architecture) | 00 | `E-P00-ARCH` |
-| `REQ-NUMERIC` n=3/FLOOR/item-first/integer-only/checked | [Master §7.2](../master-design.md#72-fixed-point와-checked-arithmetic), 질문 `Q-NUM-*` | 01 | `E-P01-NUMERIC` |
-| `REQ-TIME` plan/window/work/service meaning | [Master §7.3](../master-design.md#73-planning-period와-time), 질문 `Q-TIME-*`/`Q-IN-*` | 01,03 | `E-P01-TIME`, `E-P03-PROPAGATION` |
-| `REQ-COMPAT` size/capability/zone/ownership | [Domain §5.3](../deprecated/2026-07-26-domain-design.md#53-size-capability와-zone) | 01,04 | `E-P01-COMPAT`, `E-P04-BINDING` |
-| `REQ-TRAVEL` complete directed prepared authority | [Master §8](../master-design.md#8-directed-distancetime-matrix-계약), 질문 `Q-MTX-*` | 02 | `E-P02-TRAVEL` |
-| `REQ-PAIR` same-vehicle/exactly-once/precedence/route-bank XOR | [Master §6](../master-design.md#6-핵심-불변조건과-atomic-mutation), `C-06` | 02,05,07 | `E-P05-PAIR`, `E-P07-CANDIDATE-VERIFY` |
-| `REQ-EVAL` hard/metric/score/objective/SolvePlan 분리 | [Master §9](../master-design.md#9-extensible-policy-evaluation과-profile-architecture), `C-04` | 03,04 | `E-P03-EVALUATION`, `E-P04-ISOLATION` |
-| `REQ-PROFILE` exact customer profile/preset, no fallback | 질문 `Q-OBJ-*`, [Integrated §8](../deprecated/architecture-domain-implementation-design.md#8-phase-4--capability와-data-driven-customer-profile) | 04 | `E-P04-BINDING` |
-| `REQ-PORTFOLIO` 4×2 initial candidates | `C-16`, 질문 `Q-ALG-01`, [Master §11.2](../master-design.md#112-현재-범위의-initial-solution-portfolio) | 05 | `E-P05-PORTFOLIO` |
-| `REQ-COW-ALNS` pair operator, COW, exact step, replay | `C-08`, `C-09`, `C-22`, 질문 `Q-ALG-02` | 05,06 | `E-P06-COW`, `E-P06-REPLAY` |
-| `REQ-RESULT` bank/outcome 분리와 final audit | `C-15`, 질문 `Q-RES-*`, [Master §10](../master-design.md#10-search-solution과-final-result) | 07 | `E-P07-AUDIT` |
-| `REQ-VERIFY` 두 독립 verifier와 publication block | `C-21`, [Master §14.1](../master-design.md#141-publication-gate) | 07 | `E-P07-CANDIDATE-VERIFY`, `E-P07-RESULT-VERIFY` |
-| `REQ-LOCAL-PORT` provider-neutral local reference | [Integrated §12](../deprecated/architecture-domain-implementation-design.md#12-phase-8--application-ports와-local-reference-runtime) | 08 | `E-P08-LOCAL-E2E` |
-| `REQ-FINAL-EXEC` `win_poc_case_floor.json` actual run, both-verifier PASS, replay와 결과 제시 | 사용자 고정 기준, 이 계획 §1.1/§11.3 | 01~08 | `E-WIN-POC-EXECUTION`, `E-WIN-POC-REPLAY`, `E-WIN-POC-RESULT` |
-| `REQ-ALNS-BENCHMARK` MIP-independent correctness/quality/performance/reproducibility acceptance | 사용자 결정 `ALNS_FIRST_BENCHMARK_BEFORE_OPTIONAL_MIP`, 이 계획 §1.2/Phase 14A | 05~08,14A | `E-P14-ALNS-BENCHMARK`, `E-P14-ALNS-BENCHMARK-ACCEPTANCE` |
-| `REQ-NODB` immutable object + exact key + CAS, listing 금지 | [Integrated §13](../deprecated/architecture-domain-implementation-design.md#13-phase-9--database-없는-object-storage-architecture) | 09 | `E-P09-STORAGE-CONTRACT`, `E-P09-CAS` |
-| `REQ-COORD` declared worker completeness/retry identity | `C-22`, [Integrated §14](../deprecated/architecture-domain-implementation-design.md#14-phase-10--provider-neutral-logical-coordinator) | 10 | `E-P10-COMPLETENESS`, `E-P10-RETRY` |
-| `REQ-AWS` selected S3/Step Functions/Lambda with semantic parity | `C-20`, 질문 `Q-INFRA-01`, [Integrated §15](../deprecated/architecture-domain-implementation-design.md#15-phase-11--selected-aws-targetreference-distribution) | 11 | `E-P11-AWS-CONTRACT`, `E-P11-PARITY` |
-| `REQ-SUBSTITUTION` independent storage/workflow/compute replacement | [Integrated §16](../deprecated/architecture-domain-implementation-design.md#16-phase-12--ecs-gcp와-kubernetes-future-substitution) | 12 | `E-P12-PROVIDER-CONTRACT`, `E-P12-PARITY` |
-| `REQ-HYBRID` accepted ALNS benchmark 뒤 immutable pool/exact selection/full-eval fallback | `C-17`, `P-15~P-19`, 사용자 ALNS-first 결정, [Master §11.7~11.10](../master-design.md#117-immutable-route-pool) | 13 | `E-P14-ALNS-BENCHMARK-ACCEPTANCE`, `E-P13-GATE`, `E-P13-POOL`, `E-P13-SELECTION`, `E-P13-HYBRID` |
-| `REQ-OFFICIAL` approved values, comparator, all-worker official run | `C-18`, `Q-BENCH-01~03`, [Master §14.2~14.4](../master-design.md#142-primary-fixture와-manifest) | 14 | `E-P14-CALIBRATION`, `E-P14-OFFICIAL-RUN` |
-| `REQ-CUTOVER` versioned shadow/cutover/rollback/operations | [Master §16.2](../master-design.md#162-migration), [Integrated §18](../deprecated/architecture-domain-implementation-design.md#18-phase-14--calibration-migration과-cutover) | 11,14 | `E-P11-PARITY`, `E-P14-CUTOVER`, `E-P14-ROLLBACK` |
+| `REQ-ARCH-DAG` stable module/provider/vendor/verifier dependency | [Architecture §4](../architecture-design.md) | 00 | `E-P00-ARCH` |
+| `REQ-NUMERIC` n=3/FLOOR/item-first/integer-only/checked | [Domain §5.1](../domain-design.md), historical `Q-NUM-*` | 01 | `E-P01-NUMERIC` |
+| `REQ-TIME` plan/window/work/service/`reqDate` meaning | [Domain §4.3 · §5.2 · §9](../domain-design.md), historical `Q-TIME-*` | 01,03 | `E-P01-TIME`, `E-P03-PROPAGATION` |
+| `REQ-COMPAT` size/capability/zone/ownership | [Domain §5.3](../domain-design.md) | 01,04 | `E-P01-COMPAT`, `E-P04-BINDING` |
+| `REQ-INPUT-D1` single fixed canonical; adapter one path; no multi-version ops | [Master D1](../master-design.md), [Domain §4](../domain-design.md) | 01 | `E-P01-COMPAT`, `E-P01-ERROR` |
+| `REQ-TRAVEL` complete directed prepared authority | [Domain §6](../domain-design.md), historical `Q-MTX-*` | 02 | `E-P02-TRAVEL` |
+| `REQ-SNAPSHOT` immutable solve snapshot freeze | [Master §3.4 · §5](../master-design.md), [Domain §7](../domain-design.md) | 02,04 | `E-P02-PROBLEM`, `E-P04-BINDING` |
+| `REQ-PAIR` same-vehicle/exactly-once/precedence/route-bank XOR | [Master A3 · §3.2](../master-design.md), [Domain §2.2–2.3](../domain-design.md), `C-06` | 02,05,07 | `E-P05-PAIR`, `E-P07-CANDIDATE-VERIFY` |
+| `REQ-EVAL` hard/metric/score/objective/SolvePlan 분리 | [Domain §10](../domain-design.md), Master A11, `C-04` | 03,04 | `E-P03-EVALUATION`, `E-P04-ISOLATION` |
+| `REQ-PROFILE` exact bind + YAML default fallback; no core customer branch | [Architecture §5](../architecture-design.md), [Domain §10.2](../domain-design.md) | 04 | `E-P04-BINDING` |
+| `REQ-PORTFOLIO` portfolio stage exists; count/heuristic OPEN | [Domain §10.5](../domain-design.md), Master A5/A8 | 05 | `E-P05-PORTFOLIO` |
+| `REQ-COW-ALNS` pair operator, TrialDraft/COW, exact step, replay | [Domain §8.4 · §11](../domain-design.md), `C-08`/`C-09`/`C-22` | 05,06 | `E-P06-COW`, `E-P06-REPLAY` |
+| `REQ-RESULT` bank ≠ UNASSIGNED; final audit | [Domain §8.2 · §13](../domain-design.md), `C-15` | 07 | `E-P07-AUDIT` |
+| `REQ-VERIFY` two independent verifiers + publication block | [Master §7](../master-design.md), [Domain §13](../domain-design.md), `C-21` | 07 | `E-P07-CANDIDATE-VERIFY`, `E-P07-RESULT-VERIFY` |
+| `REQ-LOCAL-PORT` provider-neutral ports; LocalStack S3 e2e | [Architecture §3.4 · §6 · §8](../architecture-design.md) | 08 | `E-P08-LOCAL-E2E` |
+| `REQ-FINAL-EXEC` `win_poc_case_floor.json` actual run, both-verifier PASS, replay | 사용자 고정 기준, 이 계획 §1.1/§11.3 | 01~08 | `E-WIN-POC-EXECUTION`, `E-WIN-POC-REPLAY`, `E-WIN-POC-RESULT` |
+| `REQ-ALNS-BENCHMARK` MIP-independent acceptance | ALNS_FIRST decision, Master A8, 이 계획 §1.2/Phase 14A | 05~08,14A | `E-P14-ALNS-BENCHMARK`, `E-P14-ALNS-BENCHMARK-ACCEPTANCE` |
+| `REQ-NODB` S3 only + exact key + CAS; no DB/Redis; listing 금지 | [Architecture §3.2](../architecture-design.md) | 09 | `E-P09-STORAGE-CONTRACT`, `E-P09-CAS` |
+| `REQ-COORD` declared worker completeness/retry identity | [Architecture §3 · §6](../architecture-design.md), `C-22` | 10 | `E-P10-COMPLETENESS`, `E-P10-RETRY` |
+| `REQ-AWS` AWS reference parity; storage S3; compute O1 OPEN | [Master A10 · D2](../master-design.md), [Architecture §9](../architecture-design.md) | 11 | `E-P11-AWS-CONTRACT`, `E-P11-PARITY` |
+| `REQ-SUBSTITUTION` independent storage/workflow/compute replacement | [Architecture §6 · §9](../architecture-design.md) | 12 | `E-P12-PROVIDER-CONTRACT`, `E-P12-PARITY` |
+| `REQ-HYBRID` ALNS receipt 뒤 pool/exact selection/full-eval fallback; backends only | [Master §6.2](../master-design.md), [Domain §12](../domain-design.md), [Architecture §9.2](../architecture-design.md), `C-17` | 13 | `E-P14-ALNS-BENCHMARK-ACCEPTANCE`, `E-P13-GATE`, `E-P13-POOL`, `E-P13-SELECTION`, `E-P13-HYBRID` |
+| `REQ-OFFICIAL` approved values, comparator, all-worker official run | Master §7.3 · §8.3, `Q-BENCH-*` | 14 | `E-P14-CALIBRATION`, `E-P14-OFFICIAL-RUN` |
+| `REQ-CUTOVER` versioned shadow/cutover/rollback/operations | [Master §8.4–8.5](../master-design.md), Architecture A9 | 11,14 | `E-P11-PARITY`, `E-P14-CUTOVER`, `E-P14-ROLLBACK` |
 
 Phase 상세 작성자는 이 표의 requirement를 삭제하거나 다른 의미로 축약하지 않는다. 새로운 requirement/evidence가 필요하면 source와 owner를 연결하고 총괄 스케줄러의 registry에 반영한다.

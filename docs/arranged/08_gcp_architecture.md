@@ -1,5 +1,10 @@
 # 08. GCP 배포 아키텍처
 
+> **비규범 · LEGACY.** 연구/과거 정리용.  
+> **Target platform = AWS** (S3 + Step Functions + Lambda\|ECS).  
+> 정본: [`docs/README.md`](../README.md) §0 · [`architecture-design.md`](../architecture-design.md) §9.4.
+
+
 ## 실행 흐름
 
 ```text
