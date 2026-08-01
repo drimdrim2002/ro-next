@@ -198,10 +198,13 @@ public class DefaultCompatibilityNormalizer implements CompatibilityNormalizer {
             }
         }
 
-        return Optional.of(new StaticUnassignabilityFact(
-                request.requestId(),
-                "No eligible vehicle satisfies request requirements (size/capabilities/zones)"
-        ));
+        UnassignabilityReason reason = request.requestZones().size() > 1
+                ? UnassignabilityReason.PICKUP_DELIVERY_ZONE_UNION_UNCOVERED
+                : UnassignabilityReason.NO_ELIGIBLE_VEHICLE;
+        String detail = reason == UnassignabilityReason.PICKUP_DELIVERY_ZONE_UNION_UNCOVERED
+                ? "No eligible vehicle covers pickup/delivery zone union"
+                : "No eligible vehicle satisfies request requirements (size/capabilities/zones)";
+        return Optional.of(new StaticUnassignabilityFact(request.requestId(), reason, detail));
     }
 
     @Override

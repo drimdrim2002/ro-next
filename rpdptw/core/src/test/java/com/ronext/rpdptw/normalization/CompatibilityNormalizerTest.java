@@ -122,6 +122,7 @@ class CompatibilityNormalizerTest {
 
         assertTrue(fact.isPresent());
         assertEquals(reqId, fact.get().requestId());
+        assertEquals(UnassignabilityReason.NO_ELIGIBLE_VEHICLE, fact.get().reason());
     }
 
     @Test
@@ -155,6 +156,7 @@ class CompatibilityNormalizerTest {
 
         assertTrue(fact.isPresent());
         assertEquals(reqId, fact.get().requestId());
+        assertEquals(UnassignabilityReason.PICKUP_DELIVERY_ZONE_UNION_UNCOVERED, fact.get().reason());
     }
 
     @Test

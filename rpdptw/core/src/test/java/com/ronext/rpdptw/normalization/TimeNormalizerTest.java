@@ -94,7 +94,13 @@ class TimeNormalizerTest {
 
         TemporalReject rejectOvernight = assertThrows(TemporalReject.class, () ->
                 normalizer.expandOvernightWindow(LocalTime.of(8, 0), LocalTime.of(8, 0),
-                        new NormalizedPlanEnvelope(new ExternalPlanId("P"), "C", "P", "1", Optional.empty(), 0, 86400, 86400),
+                        new NormalizedPlanEnvelope(
+                                new ExternalPlanId("P"),
+                                new NormalizedProfileSelectionInput("C", "P", "1", Optional.empty()),
+                                0, 86400, 86400,
+                                new NormalizedRouteResourceLimits(Optional.empty(), Optional.empty()),
+                                WorkArcPolicy.FULL_ARC_WITHIN_ONE_WORK_WINDOW
+                        ),
                         LocalDateTime.of(2026, 8, 1, 0, 0))
         );
         assertEquals(InputProblemCode.AMBIGUOUS_WINDOW, rejectOvernight.code());

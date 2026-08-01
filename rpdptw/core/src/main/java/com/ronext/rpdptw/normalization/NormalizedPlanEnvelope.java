@@ -7,19 +7,34 @@ import java.util.Optional;
 
 public record NormalizedPlanEnvelope(
         ExternalPlanId planId,
-        String customer,
-        String profile,
-        String profileVersion,
-        Optional<String> preset,
+        NormalizedProfileSelectionInput profileSelection,
         long planStartEpochSecond,
         long planDurationSeconds,
-        long planEndExclusiveSeconds
+        long planEndExclusiveSeconds,
+        NormalizedRouteResourceLimits globalRouteResourceLimits,
+        WorkArcPolicy workArcPolicy
 ) {
     public NormalizedPlanEnvelope {
         Objects.requireNonNull(planId, "planId must not be null");
-        Objects.requireNonNull(customer, "customer must not be null");
-        Objects.requireNonNull(profile, "profile must not be null");
-        Objects.requireNonNull(profileVersion, "profileVersion must not be null");
-        Objects.requireNonNull(preset, "preset must not be null");
+        Objects.requireNonNull(profileSelection, "profileSelection must not be null");
+        Objects.requireNonNull(globalRouteResourceLimits, "globalRouteResourceLimits must not be null");
+        Objects.requireNonNull(workArcPolicy, "workArcPolicy must not be null");
+    }
+
+    /** Convenience: customer from profile selection. */
+    public String customer() {
+        return profileSelection.customer();
+    }
+
+    public String profile() {
+        return profileSelection.profile();
+    }
+
+    public String profileVersion() {
+        return profileSelection.profileVersion();
+    }
+
+    public Optional<String> preset() {
+        return profileSelection.requestedPreset();
     }
 }

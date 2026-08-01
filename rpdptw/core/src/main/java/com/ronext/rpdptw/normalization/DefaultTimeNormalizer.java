@@ -12,6 +12,7 @@ import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 public class DefaultTimeNormalizer implements TimeNormalizer {
@@ -64,15 +65,21 @@ public class DefaultTimeNormalizer implements TimeNormalizer {
         long planStartEpochSecond = startLdt.toEpochSecond(ZoneOffset.UTC);
         long durationSeconds = Duration.between(startLdt, endLdt).getSeconds();
 
-        return new NormalizedPlanEnvelope(
-                envelope.planId(),
+        NormalizedProfileSelectionInput profileSelection = new NormalizedProfileSelectionInput(
                 envelope.customer(),
                 envelope.profile(),
                 envelope.profileVersion(),
-                envelope.preset(),
+                envelope.preset()
+        );
+
+        return new NormalizedPlanEnvelope(
+                envelope.planId(),
+                profileSelection,
                 planStartEpochSecond,
                 durationSeconds,
-                durationSeconds
+                durationSeconds,
+                new NormalizedRouteResourceLimits(Optional.empty(), Optional.empty()),
+                WorkArcPolicy.FULL_ARC_WITHIN_ONE_WORK_WINDOW
         );
     }
 

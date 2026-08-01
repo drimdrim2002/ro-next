@@ -8,8 +8,10 @@ import com.ronext.rpdptw.input.CanonicalRequestInput;
 import com.ronext.rpdptw.input.CanonicalServiceInput;
 import com.ronext.rpdptw.input.CanonicalTravelInput;
 import com.ronext.rpdptw.input.CanonicalVehicleInput;
+import com.ronext.rpdptw.input.ServicePattern;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -61,20 +63,19 @@ public class DefaultCanonicalInputNormalizer implements CanonicalInputNormalizer
         CanonicalBusinessInput input = adapted.canonicalInput();
         List<InputProblem> problems = new ArrayList<>();
 
-        // 1. Validate identity duplicates & references
         problems.addAll(identityNormalizer.validate(input));
 
-        // 2. Validate plan envelope times
+        NormalizedPlanEnvelope planEnvelope = null;
         try {
-            timeNormalizer.normalizePlanEnvelope(input.plan());
+            planEnvelope = timeNormalizer.normalizePlanEnvelope(input.plan());
         } catch (TemporalReject e) {
             problems.add(new InputProblem.Temporal(e.code(), new InputPath("plan")));
         } catch (RuntimeException e) {
             problems.add(new InputProblem.Temporal(InputProblemCode.INVALID_PLAN_RANGE, new InputPath("plan")));
         }
 
-        // 3. Validate & normalize vehicles
-        List<NormalizedVehicleSpec> normalizedVehicles = new ArrayList<>();
+        List<NormalizedVehicle> vehicles = new ArrayList<>();
+        List<NormalizedVehicleSpec> vehicleSpecs = new ArrayList<>();
         for (int i = 0; i < input.vehicles().size(); i++) {
             CanonicalVehicleInput v = input.vehicles().get(i);
             InputPath vPath = new InputPath("vehicles[" + i + "]");
@@ -82,15 +83,20 @@ public class DefaultCanonicalInputNormalizer implements CanonicalInputNormalizer
                 SizeFeatureCode sizeCode = compatibilityNormalizer.normalizeVehicleSizeCode(v.sizeFeatureCode());
                 Set<CapabilityCode> caps = compatibilityNormalizer.normalizeCapabilities(v.capabilities());
                 VehicleZoneSet zoneSet = compatibilityNormalizer.normalizeVehicleZones(v.vehicleZoneIds());
-                compatibilityNormalizer.normalizeOwnership(v.ownership());
-                compatibilityNormalizer.normalizeSpeed(v.speedKmH());
-                tripPolicyNormalizer.normalizeTripPolicy(v.oneway(), v.singleRoundtrip(), 0);
+                VehicleOwnership ownership = compatibilityNormalizer.normalizeOwnership(v.ownership());
+                VehicleSpeedInput speed = compatibilityNormalizer.normalizeSpeed(v.speedKmH());
+                TripPolicy tripPolicy = tripPolicyNormalizer.normalizeTripPolicy(v.oneway(), v.singleRoundtrip(), 0);
+                Optional<DepotWaitPolicy> waitPolicy = Optional.empty();
                 if (v.waitPolicy().isPresent()) {
-                    tripPolicyNormalizer.normalizeWaitPolicy(v.waitPolicy().get());
+                    waitPolicy = Optional.of(tripPolicyNormalizer.normalizeWaitPolicy(v.waitPolicy().get()));
                 }
-                routeResourceNormalizer.normalizeLimit(v.routeResourceLimit());
+                Optional<Long> routeLimit = routeResourceNormalizer.normalizeLimit(v.routeResourceLimit());
 
-                normalizedVehicles.add(new NormalizedVehicleSpec(sizeCode, caps, zoneSet));
+                NormalizedVehicle nv = new NormalizedVehicle(
+                        v.id(), sizeCode, caps, zoneSet, ownership, speed, tripPolicy, waitPolicy, routeLimit
+                );
+                vehicles.add(nv);
+                vehicleSpecs.add(new NormalizedVehicleSpec(sizeCode, caps, zoneSet));
             } catch (CompatibilityReject e) {
                 problems.add(new InputProblem.Compatibility(e.code(), vPath));
             } catch (TripReject e) {
@@ -102,147 +108,210 @@ public class DefaultCanonicalInputNormalizer implements CanonicalInputNormalizer
             }
         }
 
-        // 4. Validate & normalize requests & items
-        List<NormalizedRequestSpec> normalizedRequests = new ArrayList<>();
+        List<NormalizedRequest> requests = new ArrayList<>();
+        List<NormalizedRequestSpec> requestSpecs = new ArrayList<>();
         for (int i = 0; i < input.requests().size(); i++) {
             CanonicalRequestInput req = input.requests().get(i);
             InputPath reqPath = new InputPath("requests[" + i + "]");
-
             try {
-                compatibilityNormalizer.normalizeServicePattern(req.servicePattern());
+                ServicePattern pattern = compatibilityNormalizer.normalizeServicePattern(req.servicePattern());
+
+                Optional<NormalizedServiceVisit> pickupVisit = Optional.empty();
+                if (req.pickup().isPresent()) {
+                    pickupVisit = Optional.of(normalizeVisit(
+                            req.pickup().get(),
+                            input.plan().planStart(),
+                            "requests[" + i + "].pickup"
+                    ));
+                }
+
+                if (req.delivery() == null) {
+                    problems.add(new InputProblem.Schema(InputProblemCode.MISSING_REQUIRED_FIELD, new InputPath("requests[" + i + "].delivery")));
+                    continue;
+                }
+                NormalizedServiceVisit deliveryVisit = normalizeVisit(
+                        req.delivery(),
+                        input.plan().planStart(),
+                        "requests[" + i + "].delivery"
+                );
+
+                List<NormalizedItem> items = new ArrayList<>();
+                long totalWeight = 0L;
+                long totalVolume = 0L;
+                for (CanonicalItemInput item : req.items()) {
+                    long unitW = fixedPointNormalizer.floorNonNegativeToScale3(item.weightDecimal());
+                    long unitV = fixedPointNormalizer.floorNonNegativeToScale3(item.volumeDecimal());
+                    long productW = fixedPointNormalizer.multiplyChecked(unitW, item.quantity());
+                    long productV = fixedPointNormalizer.multiplyChecked(unitV, item.quantity());
+                    totalWeight = fixedPointNormalizer.addChecked(totalWeight, productW);
+                    totalVolume = fixedPointNormalizer.addChecked(totalVolume, productV);
+                    long task = fixedPointNormalizer.requireIntegerLexeme(item.itemTaskTimeSeconds());
+                    items.add(new NormalizedItem(
+                            new MilliKilograms(productW),
+                            new MilliCubicMeters(productV),
+                            item.quantity(),
+                            new Seconds(task)
+                    ));
+                }
+
+                long totalService = serviceTimeNormalizer.calculateServiceSeconds(
+                        req.delivery().durationSeconds(), Optional.empty(), req.items()
+                );
+
+                AllowedVehicleSizes allowedSizes = new AllowedVehicleSizes.All();
+                Set<CapabilityCode> requiredCaps = Set.of();
+                if (req.compatibility() != null) {
+                    allowedSizes = compatibilityNormalizer.normalizeAllowedVehicleSizes(req.compatibility().allowedVehicleSizes());
+                    requiredCaps = compatibilityNormalizer.normalizeCapabilities(req.compatibility().requiredVehicleCapabilities());
+                }
+
+                Set<ZoneCode> reqZones = new HashSet<>();
+                if (pickupVisit.isPresent() && pickupVisit.get().zone().isPresent()) {
+                    reqZones.add(pickupVisit.get().zone().get());
+                }
+                if (deliveryVisit.zone().isPresent()) {
+                    reqZones.add(deliveryVisit.zone().get());
+                }
+
+                NormalizedRequest nreq = new NormalizedRequest(
+                        req.id(),
+                        pattern,
+                        pickupVisit,
+                        deliveryVisit,
+                        items,
+                        new MilliKilograms(totalWeight),
+                        new MilliCubicMeters(totalVolume),
+                        new Seconds(totalService),
+                        allowedSizes,
+                        requiredCaps,
+                        req.mandatoryDeclaration(),
+                        req.extensionInput()
+                );
+                requests.add(nreq);
+                requestSpecs.add(new NormalizedRequestSpec(req.id(), allowedSizes, requiredCaps, Set.copyOf(reqZones)));
             } catch (CompatibilityReject e) {
                 problems.add(new InputProblem.Compatibility(e.code(), reqPath));
-            }
-
-            // Validate service windows
-            if (req.pickup().isPresent()) {
-                CanonicalServiceInput pickup = req.pickup().get();
-                try {
-                    timeNormalizer.normalizeWindow(pickup.windowOpen(), pickup.windowCloseInclusive(), input.plan().planStart());
-                } catch (TemporalReject e) {
-                    problems.add(new InputProblem.Temporal(e.code(), new InputPath("requests[" + i + "].pickup")));
-                }
-            }
-
-            if (req.delivery() != null) {
-                CanonicalServiceInput delivery = req.delivery();
-                try {
-                    timeNormalizer.normalizeWindow(delivery.windowOpen(), delivery.windowCloseInclusive(), input.plan().planStart());
-                } catch (TemporalReject e) {
-                    problems.add(new InputProblem.Temporal(e.code(), new InputPath("requests[" + i + "].delivery")));
-                }
-            }
-
-            // Validate items & service time
-            try {
-                long totalWeight = 0;
-                long totalVolume = 0;
-                for (CanonicalItemInput item : req.items()) {
-                    long w = fixedPointNormalizer.floorNonNegativeToScale3(item.weightDecimal());
-                    long v = fixedPointNormalizer.floorNonNegativeToScale3(item.volumeDecimal());
-                    long itemWeight = fixedPointNormalizer.multiplyChecked(w, item.quantity());
-                    long itemVolume = fixedPointNormalizer.multiplyChecked(v, item.quantity());
-                    totalWeight = fixedPointNormalizer.addChecked(totalWeight, itemWeight);
-                    totalVolume = fixedPointNormalizer.addChecked(totalVolume, itemVolume);
-                }
-                serviceTimeNormalizer.calculateServiceSeconds(req.delivery() != null ? req.delivery().durationSeconds() : "0", Optional.empty(), req.items());
             } catch (NumericReject e) {
                 problems.add(new InputProblem.Numeric(e.code(), reqPath));
             } catch (TemporalReject e) {
                 problems.add(new InputProblem.Temporal(e.code(), reqPath));
+            } catch (RuntimeException e) {
+                problems.add(new InputProblem.Schema(InputProblemCode.MISSING_REQUIRED_FIELD, reqPath));
             }
-
-            // Compatibility specs
-            AllowedVehicleSizes allowedSizes = new AllowedVehicleSizes.All();
-            Set<CapabilityCode> requiredCaps = Set.of();
-            Set<ZoneCode> reqZones = new java.util.HashSet<>();
-
-            // Extract zones from service visits
-            if (req.pickup().isPresent() && req.pickup().get().zone().isPresent()) {
-                reqZones.add(new ZoneCode(req.pickup().get().zone().get()));
-            }
-            if (req.delivery() != null && req.delivery().zone().isPresent()) {
-                reqZones.add(new ZoneCode(req.delivery().zone().get()));
-            }
-
-            if (req.compatibility() != null) {
-                try {
-                    allowedSizes = compatibilityNormalizer.normalizeAllowedVehicleSizes(req.compatibility().allowedVehicleSizes());
-                    requiredCaps = compatibilityNormalizer.normalizeCapabilities(req.compatibility().requiredVehicleCapabilities());
-                } catch (CompatibilityReject e) {
-                    problems.add(new InputProblem.Compatibility(e.code(), reqPath));
-                }
-            }
-
-            normalizedRequests.add(new NormalizedRequestSpec(req.id(), allowedSizes, requiredCaps, Set.copyOf(reqZones)));
         }
 
-        // 5. Validate travel costs
+        List<NormalizedTravelArc> travelArcs = new ArrayList<>();
         for (int i = 0; i < input.travelCosts().size(); i++) {
             CanonicalTravelInput t = input.travelCosts().get(i);
             InputPath tPath = new InputPath("travelCosts[" + i + "]");
             try {
-                fixedPointNormalizer.requireIntegerLexeme(t.durationSeconds());
-                fixedPointNormalizer.requireIntegerLexeme(t.distanceMeters());
+                long duration = fixedPointNormalizer.requireIntegerLexeme(t.durationSeconds());
+                long distance = fixedPointNormalizer.requireIntegerLexeme(t.distanceMeters());
+                travelArcs.add(new NormalizedTravelArc(
+                        t.from(),
+                        t.to(),
+                        new Seconds(duration),
+                        new Meters(distance)
+                ));
             } catch (NumericReject e) {
                 problems.add(new InputProblem.Numeric(e.code(), tPath));
             }
         }
 
-        // If any problems exist, sort and return Rejected
+        List<NormalizedLocation> locations = new ArrayList<>();
+        for (CanonicalLocationInput loc : input.locations()) {
+            Optional<ZoneCode> zone = loc.zone().map(ZoneCode::new);
+            locations.add(new NormalizedLocation(loc.id(), zone));
+        }
+
         if (!problems.isEmpty()) {
             problems.sort(CanonicalOrdering.PROBLEM_COMPARATOR);
             return new NormalizationResult.Rejected(new InputRejectionReport(problems));
         }
 
-        // 6. Sort entity collections lexicographically
-        List<CanonicalVehicleInput> sortedVehicles = new ArrayList<>(input.vehicles());
-        sortedVehicles.sort(CanonicalOrdering.VEHICLE_COMPARATOR);
+        // Success path only when plan envelope succeeded
+        if (planEnvelope == null) {
+            return new NormalizationResult.Rejected(new InputRejectionReport(List.of(
+                    new InputProblem.Temporal(InputProblemCode.INVALID_PLAN_RANGE, new InputPath("plan"))
+            )));
+        }
 
-        List<CanonicalLocationInput> sortedLocations = new ArrayList<>(input.locations());
-        sortedLocations.sort(CanonicalOrdering.LOCATION_COMPARATOR);
+        vehicles.sort(CanonicalOrdering.NORMALIZED_VEHICLE_COMPARATOR);
+        locations.sort(CanonicalOrdering.NORMALIZED_LOCATION_COMPARATOR);
+        requests.sort(CanonicalOrdering.NORMALIZED_REQUEST_COMPARATOR);
+        travelArcs.sort(CanonicalOrdering.NORMALIZED_TRAVEL_COMPARATOR);
 
-        List<CanonicalRequestInput> sortedRequests = new ArrayList<>(input.requests());
-        sortedRequests.sort(CanonicalOrdering.REQUEST_COMPARATOR);
+        // Rebuild specs in same order for unassignability
+        vehicleSpecs.clear();
+        for (NormalizedVehicle v : vehicles) {
+            vehicleSpecs.add(new NormalizedVehicleSpec(v.sizeCode(), v.capabilities(), v.zoneSet()));
+        }
+        requestSpecs.clear();
+        for (NormalizedRequest r : requests) {
+            Set<ZoneCode> zones = new HashSet<>();
+            r.pickup().flatMap(NormalizedServiceVisit::zone).ifPresent(zones::add);
+            r.delivery().zone().ifPresent(zones::add);
+            requestSpecs.add(new NormalizedRequestSpec(r.id(), r.allowedSizes(), r.requiredCapabilities(), zones));
+        }
 
-        List<CanonicalTravelInput> sortedTravelCosts = new ArrayList<>(input.travelCosts());
-        sortedTravelCosts.sort(CanonicalOrdering.TRAVEL_COMPARATOR);
+        List<StaticUnassignabilityFact> facts =
+                compatibilityNormalizer.evaluateStaticUnassignability(requestSpecs, vehicleSpecs);
 
-        CanonicalBusinessInput sortedPayload = new CanonicalBusinessInput(
-                input.plan(),
-                sortedVehicles,
-                sortedLocations,
-                sortedRequests,
-                sortedTravelCosts,
-                input.provenance()
-        );
-
-        // 7. Evaluate static unassignability facts
-        List<StaticUnassignabilityFact> unassignabilityFacts =
-                compatibilityNormalizer.evaluateStaticUnassignability(normalizedRequests, normalizedVehicles);
-
-        // 8. Compute normalized plan envelope & fingerprints
-        NormalizedPlanEnvelope planEnvelope = timeNormalizer.normalizePlanEnvelope(input.plan());
         CanonicalFingerprint fingerprint = CanonicalFingerprint.compute(
                 policy,
                 input.provenance(),
                 adapted.rawInputDigest(),
-                sortedPayload
+                planEnvelope,
+                vehicles,
+                locations,
+                requests,
+                travelArcs
         );
 
         NormalizedInputArtifact artifact = new NormalizedInputArtifact(
                 planEnvelope,
-                sortedVehicles,
-                sortedLocations,
-                sortedRequests,
-                sortedTravelCosts,
+                vehicles,
+                locations,
+                requests,
+                travelArcs,
                 adapted.rawInputDigest(),
                 fingerprint,
-                unassignabilityFacts,
+                facts,
                 input.provenance(),
                 policy
         );
 
         return new NormalizationResult.Accepted(artifact);
+    }
+
+    private NormalizedServiceVisit normalizeVisit(
+            CanonicalServiceInput service,
+            String planStart,
+            String pathPrefix
+    ) {
+        NormalizedWindow window = timeNormalizer.normalizeWindow(
+                service.windowOpen(), service.windowCloseInclusive(), planStart
+        );
+        long duration = fixedPointNormalizer.requireIntegerLexeme(service.durationSeconds());
+
+        Optional<Seconds> reqDate = Optional.empty();
+        if (service.reqDate().isPresent()) {
+            String raw = service.reqDate().get();
+            try {
+                long seconds = timeNormalizer.toPlanOriginSeconds(raw, planStart);
+                reqDate = Optional.of(new Seconds(seconds));
+            } catch (TemporalReject e) {
+                throw new TemporalReject(InputProblemCode.INVALID_REQ_DATE, "Invalid reqDate at " + pathPrefix);
+            }
+        }
+
+        Optional<ZoneCode> zone = service.zone().map(ZoneCode::new);
+        return new NormalizedServiceVisit(
+                service.locationId(),
+                window,
+                new Seconds(duration),
+                reqDate,
+                zone
+        );
     }
 }

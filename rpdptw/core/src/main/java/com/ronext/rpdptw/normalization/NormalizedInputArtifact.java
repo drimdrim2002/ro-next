@@ -1,21 +1,21 @@
 package com.ronext.rpdptw.normalization;
 
-import com.ronext.rpdptw.input.CanonicalLocationInput;
-import com.ronext.rpdptw.input.CanonicalRequestInput;
-import com.ronext.rpdptw.input.CanonicalTravelInput;
-import com.ronext.rpdptw.input.CanonicalVehicleInput;
 import com.ronext.rpdptw.input.InputProvenance;
 import com.ronext.rpdptw.input.RawInputDigest;
 
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Sealed Phase 01 success artifact. Holds normalized facts only —
+ * Phase 02 must not re-parse raw decimal/time strings.
+ */
 public record NormalizedInputArtifact(
         NormalizedPlanEnvelope plan,
-        List<CanonicalVehicleInput> vehicles,
-        List<CanonicalLocationInput> locations,
-        List<CanonicalRequestInput> requests,
-        List<CanonicalTravelInput> travelCosts,
+        List<NormalizedVehicle> vehicles,
+        List<NormalizedLocation> locations,
+        List<NormalizedRequest> requests,
+        List<NormalizedTravelArc> travelCosts,
         RawInputDigest rawInputDigest,
         CanonicalFingerprint fingerprint,
         List<StaticUnassignabilityFact> unassignabilityFacts,

@@ -13,9 +13,10 @@ public final class Phase01FailureFixtures {
     }
 
     public static String scaleBoundary() {
+        // Both 1.2340 and 1.2349 floor to 1234 milli-units (item-first).
         return new ExternalInputFixtureBuilder()
             .clearRequests()
-            .addRequestJson("{\"id\":\"REQ-1\",\"servicePattern\":\"DELIVERY_ONLY\",\"delivery\":{\"locationId\":\"LOC-DELIVERY-1\",\"windowOpen\":\"2026-08-01 09:00:00\",\"windowCloseInclusive\":\"2026-08-01 17:00:00\",\"durationSeconds\":\"300\"},\"items\":[{\"weightDecimal\":\"1.2349\",\"volumeDecimal\":\"0.500\",\"quantity\":1,\"itemTaskTimeSeconds\":\"0\"}],\"compatibility\":{\"allowedVehicleSizes\":[\"ALL\"],\"requiredVehicleCapabilities\":[]}}")
+            .addRequestJson("{\"id\":\"REQ-1\",\"servicePattern\":\"DELIVERY_ONLY\",\"delivery\":{\"locationId\":\"LOC-DELIVERY-1\",\"windowOpen\":\"2026-08-01 09:00:00\",\"windowCloseInclusive\":\"2026-08-01 17:00:00\",\"durationSeconds\":\"300\"},\"items\":[{\"weightDecimal\":\"1.2340\",\"volumeDecimal\":\"0.500\",\"quantity\":1,\"itemTaskTimeSeconds\":\"0\"},{\"weightDecimal\":\"1.2349\",\"volumeDecimal\":\"0.500\",\"quantity\":1,\"itemTaskTimeSeconds\":\"0\"}],\"compatibility\":{\"allowedVehicleSizes\":[\"ALL\"],\"requiredVehicleCapabilities\":[]}}")
             .buildJson();
     }
 

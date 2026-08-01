@@ -24,6 +24,19 @@ public final class CanonicalOrdering {
             Comparator.comparing((CanonicalTravelInput t) -> t.from().value())
                     .thenComparing(t -> t.to().value());
 
+    public static final Comparator<NormalizedRequest> NORMALIZED_REQUEST_COMPARATOR =
+            Comparator.comparing(r -> r.id().value());
+
+    public static final Comparator<NormalizedVehicle> NORMALIZED_VEHICLE_COMPARATOR =
+            Comparator.comparing(v -> v.id().value());
+
+    public static final Comparator<NormalizedLocation> NORMALIZED_LOCATION_COMPARATOR =
+            Comparator.comparing(l -> l.id().value());
+
+    public static final Comparator<NormalizedTravelArc> NORMALIZED_TRAVEL_COMPARATOR =
+            Comparator.comparing((NormalizedTravelArc t) -> t.from().value())
+                    .thenComparing(t -> t.to().value());
+
     public static final Comparator<InputProblem> PROBLEM_COMPARATOR =
             Comparator.comparing((InputProblem p) -> p.path().dotted())
                     .thenComparing(p -> p.code().name());

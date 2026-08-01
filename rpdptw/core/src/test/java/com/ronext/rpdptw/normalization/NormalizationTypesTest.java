@@ -65,7 +65,11 @@ class NormalizationTypesTest {
     @Test
     void testNormalizationResultTypes() {
         NormalizedPlanEnvelope plan = new NormalizedPlanEnvelope(
-                new com.ronext.rpdptw.input.ExternalPlanId("P"), "C", "P", "1.0", java.util.Optional.empty(), 0, 100, 100
+                new com.ronext.rpdptw.input.ExternalPlanId("P"),
+                new NormalizedProfileSelectionInput("C", "P", "1.0", java.util.Optional.empty()),
+                0, 100, 100,
+                new NormalizedRouteResourceLimits(java.util.Optional.empty(), java.util.Optional.empty()),
+                WorkArcPolicy.FULL_ARC_WITHIN_ONE_WORK_WINDOW
         );
         RawInputDigest digest = new RawInputDigest(new byte[]{1});
         CanonicalFingerprint fp = new CanonicalFingerprint("sem", "env");

@@ -1,15 +1,19 @@
 package com.ronext.rpdptw.normalization;
 
-import com.ronext.rpdptw.input.CanonicalBusinessInput;
 import com.ronext.rpdptw.input.InputProvenance;
 import com.ronext.rpdptw.input.RawInputDigest;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Comparator;
 import java.util.HexFormat;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
+/**
+ * Fingerprints bind to the sealed normalized meaning graph (fp-v2), not raw lexemes.
+ */
 public record CanonicalFingerprint(
         String semanticFingerprint,
         String envelopeFingerprint
@@ -23,98 +27,97 @@ public record CanonicalFingerprint(
             NormalizationPolicySnapshot policy,
             InputProvenance provenance,
             RawInputDigest rawInputDigest,
-            CanonicalBusinessInput sortedPayload
+            NormalizedPlanEnvelope plan,
+            java.util.List<NormalizedVehicle> vehicles,
+            java.util.List<NormalizedLocation> locations,
+            java.util.List<NormalizedRequest> requests,
+            java.util.List<NormalizedTravelArc> travelCosts
     ) {
-        String semantic = computeSemanticFingerprint(policy, sortedPayload);
+        String semantic = computeSemanticFingerprint(policy, plan, vehicles, locations, requests, travelCosts);
         String envelope = computeEnvelopeFingerprint(rawInputDigest, semantic, provenance);
         return new CanonicalFingerprint(semantic, envelope);
     }
 
     public static String computeSemanticFingerprint(
             NormalizationPolicySnapshot policy,
-            CanonicalBusinessInput payload
+            NormalizedPlanEnvelope plan,
+            java.util.List<NormalizedVehicle> vehicles,
+            java.util.List<NormalizedLocation> locations,
+            java.util.List<NormalizedRequest> requests,
+            java.util.List<NormalizedTravelArc> travelCosts
     ) {
         StringBuilder sb = new StringBuilder();
-        sb.append("fp-v1\n");
+        sb.append("fp-v2\n");
         sb.append(policy.version()).append("|")
-          .append(policy.scalePolicy()).append("|")
-          .append(policy.fixedPointPrecision()).append("\n");
+                .append(policy.scalePolicy()).append("|")
+                .append(policy.fixedPointPrecision()).append("\n");
 
-        // Plan
-        var plan = payload.plan();
         sb.append("PLAN:").append(plan.planId().value()).append("|")
-          .append(plan.customer()).append("|")
-          .append(plan.profile()).append("|")
-          .append(plan.profileVersion()).append("|")
-          .append(plan.preset().orElse("NONE")).append("|")
-          .append(plan.planStart()).append("|")
-          .append(plan.planEndExclusive()).append("\n");
+                .append(plan.customer()).append("|")
+                .append(plan.profile()).append("|")
+                .append(plan.profileVersion()).append("|")
+                .append(plan.preset().orElse("NONE")).append("|")
+                .append(plan.planStartEpochSecond()).append("|")
+                .append(plan.planDurationSeconds()).append("|")
+                .append(plan.planEndExclusiveSeconds()).append("|")
+                .append(plan.workArcPolicy()).append("|")
+                .append(plan.globalRouteResourceLimits().maxRouteDurationSeconds().map(Object::toString).orElse("NONE")).append("|")
+                .append(plan.globalRouteResourceLimits().maxRouteDistanceMeters().map(Object::toString).orElse("NONE"))
+                .append("\n");
 
-        // Vehicles
-        sb.append("VEHICLES:").append(payload.vehicles().size()).append("\n");
-        for (var v : payload.vehicles()) {
+        sb.append("VEHICLES:").append(vehicles.size()).append("\n");
+        for (NormalizedVehicle v : vehicles) {
             sb.append("V:").append(v.id().value()).append("|")
-              .append(v.sizeFeatureCode()).append("|")
-              .append(v.capabilities().stream().sorted().toList()).append("|")
-              .append(v.vehicleZoneIds().stream().sorted().toList()).append("|")
-              .append(v.ownership().orElse("NONE")).append("|")
-              .append(v.speedKmH().orElse("NONE")).append("|")
-              .append(v.oneway()).append("|")
-              .append(v.singleRoundtrip()).append("|")
-              .append(v.waitPolicy().orElse("NONE")).append("|")
-              .append(v.routeResourceLimit().orElse("NONE")).append("\n");
+                    .append(v.sizeCode().value()).append("|")
+                    .append(v.capabilities().stream().map(CapabilityCode::value).sorted().toList()).append("|")
+                    .append(encodeZoneSet(v.zoneSet())).append("|")
+                    .append(encodeOwnership(v.ownership())).append("|")
+                    .append(encodeSpeed(v.speed())).append("|")
+                    .append(encodeTrip(v.tripPolicy())).append("|")
+                    .append(v.waitPolicy().map(Enum::name).orElse("NONE")).append("|")
+                    .append(v.routeResourceLimit().map(Object::toString).orElse("NONE"))
+                    .append("\n");
         }
 
-        // Locations
-        sb.append("LOCATIONS:").append(payload.locations().size()).append("\n");
-        for (var loc : payload.locations()) {
+        sb.append("LOCATIONS:").append(locations.size()).append("\n");
+        for (NormalizedLocation loc : locations) {
             sb.append("L:").append(loc.id().value()).append("|")
-              .append(loc.zone().orElse("NONE")).append("\n");
+                    .append(loc.zone().map(ZoneCode::value).orElse("NONE")).append("\n");
         }
 
-        // Requests
-        sb.append("REQUESTS:").append(payload.requests().size()).append("\n");
-        for (var req : payload.requests()) {
+        sb.append("REQUESTS:").append(requests.size()).append("\n");
+        for (NormalizedRequest req : requests) {
             sb.append("R:").append(req.id().value()).append("|")
-              .append(req.servicePattern()).append("|");
-
+                    .append(req.servicePattern()).append("|");
             if (req.pickup().isPresent()) {
-                var p = req.pickup().get();
-                sb.append("P[").append(p.locationId().value()).append("|")
-                  .append(p.windowOpen()).append("|")
-                  .append(p.windowCloseInclusive()).append("|")
-                  .append(p.durationSeconds()).append("]|");
+                sb.append("P[").append(encodeVisit(req.pickup().get())).append("]|");
             } else {
                 sb.append("P[NONE]|");
             }
-
-            var d = req.delivery();
-            sb.append("D[").append(d.locationId().value()).append("|")
-              .append(d.windowOpen()).append("|")
-              .append(d.windowCloseInclusive()).append("|")
-              .append(d.durationSeconds()).append("]|");
-
+            sb.append("D[").append(encodeVisit(req.delivery())).append("]|");
             sb.append("ITEMS:").append(req.items().size()).append("[");
-            for (var item : req.items()) {
-                sb.append("I(").append(item.weightDecimal()).append(",")
-                  .append(item.volumeDecimal()).append(",")
-                  .append(item.quantity()).append(",")
-                  .append(item.itemTaskTimeSeconds()).append(")");
+            for (NormalizedItem item : req.items()) {
+                sb.append("I(")
+                        .append(item.weightMilli().value()).append(",")
+                        .append(item.volumeMilli().value()).append(",")
+                        .append(item.quantity()).append(",")
+                        .append(item.itemTaskTime().value()).append(")");
             }
             sb.append("]|");
-
-            sb.append("COMPAT:").append(req.compatibility().allowedVehicleSizes()).append(",")
-              .append(req.compatibility().requiredVehicleCapabilities().stream().sorted().toList()).append("|");
-
+            sb.append("TOTALS:")
+                    .append(req.totalWeightMilli().value()).append(",")
+                    .append(req.totalVolumeMilli().value()).append(",")
+                    .append(req.totalServiceSeconds().value()).append("|");
+            sb.append("COMPAT:").append(encodeAllowedSizes(req.allowedSizes())).append(",")
+                    .append(req.requiredCapabilities().stream().map(CapabilityCode::value).sorted().toList()).append("|");
             sb.append("MANDATORY:").append(req.mandatoryDeclaration().map(Object::toString).orElse("NONE")).append("\n");
         }
 
-        // Travel costs
-        sb.append("TRAVEL:").append(payload.travelCosts().size()).append("\n");
-        for (var t : payload.travelCosts()) {
+        sb.append("TRAVEL:").append(travelCosts.size()).append("\n");
+        for (NormalizedTravelArc t : travelCosts) {
             sb.append("T:").append(t.from().value()).append("->").append(t.to().value()).append("|")
-              .append(t.durationSeconds()).append("|")
-              .append(t.distanceMeters()).append("\n");
+                    .append(t.duration().value()).append("|")
+                    .append(t.distance().value()).append("\n");
         }
 
         return sha256Hex(sb.toString().getBytes(StandardCharsets.UTF_8));
@@ -129,18 +132,84 @@ public record CanonicalFingerprint(
         sb.append("RAW_DIGEST:").append(HexFormat.of().formatHex(rawDigest.sha256())).append("\n");
         sb.append("SEMANTIC_FP:").append(semanticFingerprint).append("\n");
         sb.append("PROVENANCE:").append(provenance.adapterIdentity().value()).append("|")
-          .append(provenance.schemaIdentity().value()).append("|")
-          .append(provenance.aliasesApplied()).append("|")
-          .append(provenance.unknownFieldsIgnored()).append("\n");
-
+                .append(provenance.schemaIdentity().value()).append("|")
+                .append(provenance.aliasesApplied()).append("|")
+                .append(provenance.unknownFieldsIgnored()).append("\n");
         return sha256Hex(sb.toString().getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static String encodeVisit(NormalizedServiceVisit v) {
+        return v.locationId().value() + "|"
+                + v.window().startSecond() + "|"
+                + v.window().endSecondExclusive() + "|"
+                + v.serviceDuration().value() + "|"
+                + v.reqDateFromPlanOrigin().map(s -> Long.toString(s.value())).orElse("NONE") + "|"
+                + v.zone().map(ZoneCode::value).orElse("NONE");
+    }
+
+    private static String encodeZoneSet(VehicleZoneSet zoneSet) {
+        if (zoneSet instanceof VehicleZoneSet.AllZones) {
+            return "ALL_ZONES";
+        }
+        if (zoneSet instanceof VehicleZoneSet.Restricted restricted) {
+            return restricted.zoneIds().stream()
+                    .map(ZoneCode::value)
+                    .sorted()
+                    .collect(Collectors.joining(",", "RESTRICTED[", "]"));
+        }
+        return zoneSet.toString();
+    }
+
+    private static String encodeOwnership(VehicleOwnership ownership) {
+        if (ownership instanceof VehicleOwnership.Absent) {
+            return "ABSENT";
+        }
+        if (ownership instanceof VehicleOwnership.Direct) {
+            return "DIRECT";
+        }
+        if (ownership instanceof VehicleOwnership.Lease) {
+            return "LEASE";
+        }
+        return ownership.toString();
+    }
+
+    private static String encodeSpeed(VehicleSpeedInput speed) {
+        if (speed instanceof VehicleSpeedInput.Absent) {
+            return "ABSENT";
+        }
+        if (speed instanceof VehicleSpeedInput.PresentKmH present) {
+            return "PRESENT:" + Double.toString(present.value());
+        }
+        return speed.toString();
+    }
+
+    private static String encodeTrip(TripPolicy trip) {
+        if (trip instanceof TripPolicy.OneWay) {
+            return "ONEWAY";
+        }
+        if (trip instanceof TripPolicy.SingleRoundTrip) {
+            return "SINGLE_ROUNDTRIP";
+        }
+        return trip.toString();
+    }
+
+    private static String encodeAllowedSizes(AllowedVehicleSizes sizes) {
+        if (sizes instanceof AllowedVehicleSizes.All) {
+            return "ALL";
+        }
+        if (sizes instanceof AllowedVehicleSizes.Concrete concrete) {
+            return concrete.codes().stream()
+                    .map(SizeFeatureCode::value)
+                    .sorted()
+                    .collect(Collectors.joining(",", "CONCRETE[", "]"));
+        }
+        return sizes.toString();
     }
 
     private static String sha256Hex(byte[] bytes) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] digest = md.digest(bytes);
-            return HexFormat.of().formatHex(digest);
+            return HexFormat.of().formatHex(md.digest(bytes));
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 algorithm not available", e);
         }

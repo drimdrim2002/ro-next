@@ -9,34 +9,36 @@ This file is a tracked pointer for Phase 02 Domain·Travel owners.
 | :--- | :--- |
 | Artifact type | `com.ronext.rpdptw.normalization.NormalizedInputArtifact` |
 | Entry path | External bytes → `adapters/input` (`TEST_FIXTURE_V1` in tests) → `CanonicalBusinessInput` → `DefaultCanonicalInputNormalizer` → sealed artifact **or** ordered rejection |
-| Digests | `rawInputDigest` (SHA-256), `semanticFingerprint`, `envelopeFingerprint` |
+| Digests | `rawInputDigest` (SHA-256), `semanticFingerprint` (fp-v2 normalized meaning), `envelopeFingerprint` |
 | Policy snapshot | captured on artifact; Phase 01 does not bind profile/preset defaults |
 
-## Must preserve as-is
+## Sealed graph (normalized facts only)
 
-- External identity graph (no dense IDs in Phase 01)
-- `servicePattern` + per-side `reqDate` (request-time meaning)
-- customer / profile / version + preset omission
-- mandatory + approved extension declarations (**unbound**)
-- sparse integer travel `D`/`U` only when present
-- vehicle speed **present \| absent** (do not assume 45 already filled)
-- ownership **present \| absent** (do not assume DIRECT)
-- multi-zone / all-zones vehicle zone sets
-- trip / wait / route-resource typed absence
-- `StaticUnassignabilityFact` list (e.g. zone conflict)
+Phase 02 **MUST NOT** re-parse raw decimal strings or re-apply FLOOR.
+
+| Entity | Sealed types |
+| :--- | :--- |
+| Plan | `NormalizedPlanEnvelope` + `NormalizedProfileSelectionInput` + `WorkArcPolicy` + global resource Optionals |
+| Vehicles | `NormalizedVehicle`: size, caps, `VehicleZoneSet`, **`VehicleOwnership`**, **`VehicleSpeedInput`**, `TripPolicy`, wait/resource Optionals |
+| Requests | `NormalizedRequest`: `ServicePattern`, visits with `NormalizedWindow` + optional `reqDateFromPlanOrigin`, **`NormalizedItem` milli products**, totals |
+| Travel | `NormalizedTravelArc`: integer `Seconds` / `Meters` |
+| Facts | `StaticUnassignabilityFact` + `UnassignabilityReason` (incl. zone-union Option A) |
+
+## Explicit absences
+
+| Field | Meaning |
+| :--- | :--- |
+| `VehicleSpeedInput.Absent` | Phase 01 did **not** fill 45; travel prep may apply later |
+| `VehicleOwnership.Absent` | ownership axis unused — **not** silent DIRECT |
+| empty `requestedPreset` | omission preserved |
+| empty route resource Optionals | typed absence, no numeric sentinel |
 
 ## Out of Phase 01 (Phase 02+ owns)
 
 - Dense internal IDs
 - `PreparedTravel` / Great Circle / speed→`U` execution
 - Immutable solve snapshot assembly
-- Filling absent speed with `45`
 - Public production wire / multi-version schema ops
-
-## Negative catalog
-
-See sealed `handoff/negative-fixture-catalog.md` and
-`com.ronext.rpdptw.fixture.Phase01FailureFixtures`.
 
 ## Acceptance note
 
