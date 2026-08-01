@@ -19,5 +19,6 @@
     <description>Parent pom for build helper modules</description>
     <modules>
         <module>test-fixtures</module>
+        <module>architecture-rules</module>
     </modules>
 </project>

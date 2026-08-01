@@ -25,4 +25,43 @@
         <module>application</module>
         <module>profiles</module>
     </modules>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-target-banned-dependencies</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <dependencyConvergence/>
+                                <bannedDependencies>
+                                    <excludes>
+                                        <exclude>com.google.cloud:*</exclude>
+                                        <exclude>com.google.ortools:*</exclude>
+                                        <exclude>software.amazon.awssdk:*</exclude>
+                                        <exclude>com.amazonaws:*</exclude>
+                                        <exclude>com.azure:*</exclude>
+                                        <exclude>io.kubernetes:*</exclude>
+                                        <exclude>org.springframework.boot:*-data-jpa</exclude>
+                                        <exclude>redis.clients:jedis</exclude>
+                                        <exclude>org.redisson:*</exclude>
+                                        <exclude>org.redisson</exclude>
+                                        <exclude>org.hibernate:*</exclude>
+                                        <exclude>jakarta.persistence:*</exclude>
+                                        <exclude>org.springframework.data:*</exclude>
+                                    </excludes>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>
