@@ -50,8 +50,8 @@
                                         <exclude>io.kubernetes:*</exclude>
                                         <exclude>org.springframework.boot:*-data-jpa</exclude>
                                         <exclude>redis.clients:jedis</exclude>
+                                        <exclude>io.lettuce:*</exclude>
                                         <exclude>org.redisson:*</exclude>
-                                        <exclude>org.redisson</exclude>
                                         <exclude>org.hibernate:*</exclude>
                                         <exclude>jakarta.persistence:*</exclude>
                                         <exclude>org.springframework.data:*</exclude>
