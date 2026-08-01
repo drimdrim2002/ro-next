@@ -1,20 +1,25 @@
 # Phase 01 독립 Review — 내부 표준 입력과 정규화
 
 ```yaml
-document_status: FINAL
-review_status: COMPLETE
+document_status: REBASE_PENDING_REREVIEW
+review_status: REBASE_PENDING_REREVIEW
 review_type: INDEPENDENT_PHASE_DOCUMENT_REVIEW
 review_date: 2026-07-28
+review_timezone: Asia/Seoul
 reviewer_role: independent Phase 01 reviewer
 target:
   - docs/implementation/phases/phase-01-canonical-input-normalization.md
-source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
-phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
-document_verdict: ACCEPTED_WITH_APPLIED_CORRECTIONS
+source_authority: APPROVED_MASTER_DOMAIN_ARCHITECTURE_PLUS_USER_PHASE_MAP
+phase_c_note: path remap to docs/deprecated/*; 2026-08-01 phase body semantic rebase pending independent re-review
+semantic_rebase_date: 2026-08-01
+document_verdict: REBASE_PENDING_REREVIEW
+prior_verdict: ACCEPTED_WITH_APPLIED_CORRECTIONS
+prior_verdict_note: historical document-contract review (2026-07-28); does not certify post-APPROVED semantic rebase
 phase_acceptance_verdict: BLOCKED_NOT_IMPLEMENTED
 phase_acceptance_status: NOT_ACCEPTED
 implementation_verdict: NOT_REVIEWABLE_NOT_STARTED
 implementation_evidence_status: NOT_PRODUCED
+implementation_authorized: false
 execution_gate: BLOCKED_BY_PHASE_00_ENTRY_EVIDENCE
 scheduler_status_change: NOT_AUTHORIZED
 whole_file_reciprocal_hashes: NOT_USED
@@ -28,11 +33,31 @@ fake_evidence_detected: false
 code_change_reviewed: false
 ```
 
+## 0. Semantic rebase note (2026-08-01)
+
+Phase 01 상세 본문이 APPROVED Master/Domain/Architecture + plan Phase 01 (D1) overlay +
+**2026-08-01 interview Decisions 1–10**에 **의미 rebase**되었다.
+본 review 파일의 2026-07-28 finding 본문은 **대규모 재작성하지 않았다.**
+
+| 항목 | 상태 |
+|---|---|
+| `prior_verdict` | `ACCEPTED_WITH_APPLIED_CORRECTIONS` — historical only |
+| 현재 verdict | **`REBASE_PENDING_REREVIEW`** |
+| 구현 authorization | **false** (변경 없음) |
+| 구현 / acceptance / evidence | `NOT_STARTED` / `NOT_ACCEPTED` / `NOT_PRODUCED` |
+| 독립 re-review 필요 축 | 권위(Final→APPROVED), D1 single canonical/`adapters/input`, reqDate(요청 시각), servicePattern only, ownership absence, multi-zone, speed default-45 policy at travel prep, Q-INFRA/26 집계 제거 |
+
+이 노트는 옛 문서 계약 ACCEPTED를 새 본문에 승격하지 않는다. `E-P01-*`·ACCEPTED·win_poc 주장 금지.
+
 ## 1. Scope와 verdict
 
 이 review는 [Phase 01 상세 문서](../phases/phase-01-canonical-input-normalization.md)의 구현 가능성, 원문 계약 보존, Phase 경계, test/evidence failure-detection과 실제 checkout 정합성을 독립 검토한다. Java/POM/공용 문서/다른 Phase/status registry는 수정하지 않았다. Phase 00과 Phase 02는 handoff·overlap·gap 확인을 위해 읽기 전용으로만 사용했다.
 
-Verdict는 **`ACCEPTED_WITH_APPLIED_CORRECTIONS`**다. 발견한 5건은 모두 Phase 01 문서 안에서 source 의미를 새로 결정하지 않고 안전하게 반영했다. 현재 Phase 상세 문서 15/15와 review 15/15가 모두 존재하지만 이 verdict는 **구현 승인이나 Phase acceptance가 아니다**. Phase 00 review는 `PASS_WITH_RESIDUAL_BLOCKERS`로 완료됐어도 Phase 00 implementation/evidence/acceptance가 `NOT_STARTED`/`NOT_PRODUCED`/`PLANNED·NOT_ACCEPTED`이고 `E-P00-BUILD/ARCH/LEGACY`도 없으므로 Phase 01 실행은 계속 `BLOCKED_BY_PHASE_00_ENTRY_EVIDENCE`다. Phase 01 자체도 implementation/evidence/acceptance를 `NOT_STARTED`/`NOT_PRODUCED`/`NOT_ACCEPTED`로 유지한다.
+**2026-07-28 당시** verdict는 **`ACCEPTED_WITH_APPLIED_CORRECTIONS`**였다 (아래 finding 본문 보존).
+**2026-08-01 semantic rebase 이후** 현재 document/review verdict는 **`REBASE_PENDING_REREVIEW`**다.
+옛 문서 계약 승인이 새 본문을 자동 승인하지 않는다. 이 verdict는 **구현 승인이나 Phase acceptance가 아니다**.
+
+Phase 00는 2026-08-01 body rebase 후 review **`REBASE_PENDING_REREVIEW`**이며 implementation/evidence/acceptance는 여전히 `NOT_STARTED`/`NOT_PRODUCED`/`PLANNED·NOT_ACCEPTED`이고 `E-P00-*`도 없으므로 Phase 01 실행은 계속 `BLOCKED_BY_PHASE_00_ENTRY_EVIDENCE`다. Phase 01 자체도 implementation/evidence/acceptance를 `NOT_STARTED`/`NOT_PRODUCED`/`NOT_ACCEPTED`로 유지한다.
 
 Source 문서의 `REVIEW` metadata는 사용자 선언에 따라 이 문서 작업을 중단시키는 blocker로 취급하지 않았다. 반대로 review 문서 작성이나 기존 placeholder의 `mvn test` 성공을 구현 evidence로 승격하지 않았다.
 
@@ -210,5 +235,12 @@ docs/implementation/reviews/phase-01-review.md
 
 Task `019fa901-8776-7f61-b467-a8c6595b970d`에서 C-17 restart 조건에 Phase 06/07/08
 accepted evidence와 Phase 14A `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`를 추가한 변경을
-검토했다. Phase 01은 ALNS-only 입력 경로를 유지하고 기존 review verdict,
-implementation, acceptance와 evidence 상태는 변하지 않는다.
+검토했다. Phase 01은 ALNS-only 입력 경로를 유지하고 implementation, acceptance와
+evidence 상태는 변하지 않는다.
+
+## 2026-08-01 semantic rebase addendum
+
+Phase 01 상세가 Decisions 1–10(권위 APPROVED, D1, reqDate, servicePattern, ownership,
+zone, speed 45 at travel prep, Q 상태, review pending, snapshot 용어)으로 rebase되었다.
+이 addendum은 독립 re-review를 대체하지 않으며 `REBASE_PENDING_REREVIEW`를 유지한다.
+구현 `NOT_STARTED` · phase acceptance `NOT_ACCEPTED` · win_poc 승격 없음.

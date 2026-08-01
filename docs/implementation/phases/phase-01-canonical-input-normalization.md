@@ -1,18 +1,24 @@
 # Phase 01 — 내부 표준 입력과 정규화
 
 ```yaml
-document_status: REVIEWED_WITH_CORRECTIONS
-document_workflow_status: INDEPENDENT_REVIEWED_WITH_CORRECTIONS
+document_status: REBASE_APPLIED_PENDING_REREVIEW
+document_workflow_status: SEMANTIC_REBASE_APPLIED_PENDING_REREVIEW
 phase_execution_status: BLOCKED_BY_PHASE_00_ENTRY_EVIDENCE
 implementation_status: NOT_STARTED
 implementation_evidence_status: NOT_PRODUCED
 phase_acceptance_status: NOT_ACCEPTED
 phase: 01
 canonical_slug: phase-01-canonical-input-normalization
+filename_policy: KEEP_DISPLAY_SEPARATION
 plan_version: 1.0
 baseline_date: 2026-07-28
-source_authority: USER_LOCKED_FOR_THIS_DOCUMENT_SET
-phase_c_note: path remap to docs/deprecated/*; content hashes not recomputed
+semantic_rebase_date: 2026-08-01
+semantic_rebase_note: >
+  APPROVED Master/Domain/Architecture + plan Phase 01 (D1) overlay +
+  2026-08-01 interview Decisions 1–10. implementation status·win_poc·ACCEPTED 승격 없음.
+  filename KEEP.
+source_authority: APPROVED_MASTER_DOMAIN_ARCHITECTURE_PLUS_USER_PHASE_MAP
+phase_c_note: path remap to docs/deprecated/*; semantic rebase recomputed live authority fingerprints
 direction_revision_task_id: 019fa901-8776-7f61-b467-a8c6595b970d
 direction_revision_status: ALNS_FIRST_GATE_OVERLAY_APPLIED_DOCUMENTATION_ONLY
 implementation_claim: NONE
@@ -26,7 +32,7 @@ owners:
   review: independent Phase 01 reviewer role, assignee TBD
   handoff_consumer: Phase 02 Domain·Travel owner role
 prerequisites:
-  - Phase 00 detailed plan and review exist and are approved
+  - Phase 00 detailed plan and review exist
   - E-P00-BUILD accepted
   - E-P00-ARCH accepted
   - E-P00-LEGACY accepted
@@ -34,56 +40,98 @@ prerequisites:
 planned_handoff:
   - phase-02-prepared-travel-immutable-problem.md
 source_fingerprints_sha256:
-  docs/master-design.md: e16d82789a77ceb2783ae027c3218c5da9b6c65413fc89cd5cab6771be8098bd
-  docs/deprecated/2026-07-26-domain-design.md: 1b56cf8b508755f9a61c6aa5bf447e8ff2d4cae0695fc797c185c453919cdbac
-  docs/deprecated/2026-07-26-architecture-design.md: 1162d7c22bdd506836d699ac38ea7a95ff06d7d45de34107676db4e537a049ed
-  docs/deprecated/architecture-domain-implementation-design.md: 883af86062254e7b6984a0716e102bc25be614ef6096bc451e45b45486f11571
-  docs/deprecated/master-design-open-questions.md: b16bd877065d70919991e17031b8be8186acb40c53c39652acd8212a294d126b
-  docs/implementation/master-realization-plan.md: 940fe8c2156bf0472deafcd450e0ea49f0036ab6b304d6d051f0148a38cd0f5d
-  docs/implementation/README.md: 6454238185af7b7c420f468adf42609a0ec045d6c70c16cc7601f0342fa74358
+  docs/deprecated/2026-07-30-design-interview-phase-a.md: cec96defaa6a3617a7504ea0aeb57e0a111c77dc44a7af9981096c70261868e5
+  docs/master-design.md: 765641c215cd512ca78eb5dfc943503bc8bdb278102a3c3103cf4935ff7f38be
+  docs/domain-design.md: 0d2509fd7d90cb460a6eeef1e8105fcf1154a8afae383b34bc4886088a8cd044
+  docs/architecture-design.md: 8f588a11a9f0648b58f94cb3ed8cf6e20819fd50fd09fcabaec3e794b7729818
+  docs/implementation/master-realization-plan.md: 0bd2336cfeac8894c6fc3f664920957185562a9f1343fa08b7eff2b7c7c1e91b
+  docs/implementation/README.md: 63bc51f42e025d7aee7c81c2d28fec7cb016f781a924727b4c0fb8993e221518
 historical_cross_check_sha256:
-  docs/deprecated/2026-07-26-master-design.md: 5da9fd05a027e748b642517d33c0edab86ec818645d5b78c2a0d573fa968419a
+  docs/deprecated/2026-07-26-domain-design.md: e257e4e983c8a906d4aec0cd414826dad21588f43e306e06f80486917efa1745
+  docs/deprecated/2026-07-26-architecture-design.md: cd603429c2da4d36b5a98307a184bd6311ca3eff5643cb4223815a39d4c1c04e
+  docs/deprecated/2026-07-26-master-design.md: 5f0f6a48011942d85295eb980b66ccef99a6ee49b656feb23b1fefbcd170da90
 source_sections:
+  phase_a_interview:
+    - "A1–A12, D1·D2, O1–O3"
   master:
-    - "§1.5, §3, §4.1~§4.7, §5~§8, §15.1~§15.3, §16~§17"
+    - "D1, §2.2–§2.3, §3.1, §4.1, §5.1–§5.2, §8.5"
   domain:
-    - "§1~§7, §16~§18, §20~§21"
+    - "§2.4 servicePattern, §4 fixed input, §4.3 reqDate, §4.4 vehicle, §4.6 adapter, §5 normalization"
   architecture:
-    - "§1, §2, §5.6, §6"
-  integrated:
-    - "§1~§5, §22~§25, §27~§30"
-  open_questions:
-    - "Q-NUM-01~03, Q-TIME-01~04, Q-IN-01~02, Q-COMP-01~02, Q-REQ-01~02, Q-RES-01, Q-BENCH-03, Q-INFRA-01, Q-VAR-01"
+    - "§4.2 adapters/input, D1 placement"
   realization_plan:
-    - "§1~§7 Phase 00~02, §8~§15"
+    - "Phase 01 D1 overlay, §4.1 tree, §2 drift table"
   implementation_readme:
-    - "§1, §3~§7"
+    - "§5.1 KEEP_DISPLAY_SEPARATION; authority map"
+  historical_cross_check_only:
+    - "2026-07-26 Final D/A/M — conflict loses to APPROVED"
+review:
+  document: ../reviews/phase-01-review.md
+  verdict: REBASE_PENDING_REREVIEW
+  prior_verdict: ACCEPTED_WITH_APPLIED_CORRECTIONS
+  implementation_authorized: false
 ```
 
 ## 1. 문서 지위와 사용 규칙
 
-이 구현 문서 세트의 입력 권위는 **사용자 선언으로 고정**되어 있다. 원문 metadata의 `REVIEW`는 source provenance로 기록하지만 이 문서 작성을 중단시키지 않는다. 반대로 이 문서가 작성되었다는 사실은 Phase 00 또는 Phase 01의 구현·review·evidence gate를 통과했다는 뜻이 아니다.
+이 문서는 Phase 01 구현을 위한 상세 설계이며 구현 완료 보고가 아니다.
+`document_status` / workflow 상태와 `implementation_status` / `phase_acceptance_status` /
+`implementation_evidence_status`를 섞지 않는다.
 
-현재 checkout에는 Phase 00~14 상세 문서 **15/15**와 독립 review **15/15**가 모두 실제 존재한다. [Phase 00 상세 문서](phase-00-build-architecture-skeleton.md)의 review verdict는 `PASS_WITH_RESIDUAL_BLOCKERS`지만 Phase 00 implementation은 `NOT_STARTED`, evidence는 `NOT_PRODUCED`, phase acceptance는 `PLANNED/NOT_ACCEPTED`다. 이 Phase의 [Phase 01 review](../reviews/phase-01-review.md) verdict는 `ACCEPTED_WITH_APPLIED_CORRECTIONS`이며 문서 계약 review는 완료됐다. 그러나 문서/review의 존재나 verdict만으로 predecessor 구현이 accepted되는 것은 아니므로 Phase 01 실행 상태는 계속 `BLOCKED_BY_PHASE_00_ENTRY_EVIDENCE`다. Entry evidence가 생기기 전 마지막 안전 지점은 **문서 review와 test/fixture 설계**이며 production source나 target POM을 수정하지 않는다.
+이 문서 세트의 **live 권위**는 사용자 선언(15 Phase map · 2026-08-01 Phase 01 인터뷰 Decisions 1–10 포함),
+[Phase A 인터뷰](../../deprecated/2026-07-30-design-interview-phase-a.md),
+[Master](../../master-design.md) / [Domain](../../domain-design.md) / [Architecture](../../architecture-design.md) **APPROVED**,
+그리고 이미 정렬된 implementation core 3([plan](../master-realization-plan.md), [README](../README.md), progress)이다.
 
-질문 상태는 [Canonical Master](../../master-design.md)와 [질문 등록부](../../deprecated/master-design-open-questions.md)의 최신 값인 `RESOLVED 26`, `OPEN — EXPERIMENT_REQUIRED 1`, `DEFERRED 1`을 적용한다. Final Domain/Architecture에 남은 과거 `25/1/2`, `Q-INFRA-01 DEFERRED` 표기는 이 Phase의 결정을 되돌리지 않는다. `Q-BENCH-02`, `C-17`, `Q-VAR-01`과 public API/schema 미확정 항목은 임의의 수치·default·완료 상태로 바꾸지 않는다.
+`document_status: REBASE_APPLIED_PENDING_REREVIEW`는 **의미 rebase 반영 + 독립 re-review 대기**이며
+Phase 01 구현, exit evidence, acceptance, win_poc 성공을 뜻하지 않는다.
 
-구체 package, type, method, canonical encoding과 error code 이름은 모두 **proposed internal design**이다. Phase 00의 accepted module tree 또는 별도 API/schema 승인이 다른 이름을 고르면 이름을 바꿀 수 있지만 이 문서의 의미, 불변조건, failure oracle과 dependency direction은 보존해야 한다.
+다음 충돌 규칙을 적용한다.
+
+1. 사용자 선언과 APPROVED Master(**D1**, A1–A12, D2/O1 등)가 우선한다.
+2. 입력·정규화 의미는 [Domain](../../domain-design.md) APPROVED §4·§5·§2.4를 따른다.
+3. adapter 배치는 [Architecture](../../architecture-design.md) **`adapters/input`** 및 plan Phase 01 overlay를 따른다.
+4. 2026-07-26 Final Domain/Architecture/Master, deprecated open-questions·integrated design은
+   **historical cross-check only**다. live 권위와 충돌하면 APPROVED가 이긴다.
+5. Master에 없는 `Q-INFRA-01 RESOLVED` / “compute = Lambda only” / 구 `RESOLVED 26` 집계를
+   live 질문 상태로 승격하지 않는다. Phase 01 관련 live OPEN은 wire/schema(**O3** 등),
+   C-17 **GATED**, compute **O1 OPEN**(비범위) 등으로 Master/Domain/plan에서 인용한다.
+6. `docs/codex/*`는 역사/참고이며 이 Phase에서 현재 authority로 사용하지 않는다.
+
+현재 checkout에는 Phase 00~14 상세·review **15/15**가 존재한다.
+[Phase 00](phase-00-build-architecture-skeleton.md) / [review](../reviews/phase-00-review.md)는
+2026-08-01 semantic rebase 후 document/review **`REBASE_PENDING_REREVIEW`**(prior document-contract
+`PASS_WITH_RESIDUAL_BLOCKERS`)이며 implementation은 `NOT_STARTED`, evidence `NOT_PRODUCED`,
+acceptance `PLANNED/NOT_ACCEPTED`다. 따라서 Phase 01 실행은 계속
+`BLOCKED_BY_PHASE_00_ENTRY_EVIDENCE`다.
+
+이 Phase의 [review](../reviews/phase-01-review.md)는 본문 rebase 후 **`REBASE_PENDING_REREVIEW`**다.
+prior 문서 계약 verdict `ACCEPTED_WITH_APPLIED_CORRECTIONS`(2026-07-28)는 historical이며
+새 본문을 자동 승인하지 않고, 구현/acceptance evidence도 아니다.
+Entry evidence 전 마지막 안전 지점은 **문서 설계와 test/fixture 명세**이며 production source·target POM을 수정하지 않는다.
+
+구체 package, type, method, canonical encoding과 error code 이름은 모두 **proposed internal design**이다.
+Phase 00 accepted module tree 또는 별도 API/schema 승인이 다른 이름을 고르면 이름을 바꿀 수 있지만
+이 문서의 **의미·불변조건·failure oracle·dependency direction**(D1 포함)은 보존해야 한다.
 
 ### 1.1 권위 source baseline
 
-| 입력 | 역할 |
-|---|---|
-| [Canonical Master](../../master-design.md) | 전체 requirement, 결정, 불변조건과 `RM-1` gate |
-| [Final Domain Design](../../deprecated/2026-07-26-domain-design.md) | Input, normalization, time, compatibility, travel handoff의 상세 의미 |
-| [Final Architecture Design](../../deprecated/2026-07-26-architecture-design.md) | Java 25/Maven module/package와 dependency placement |
-| [Integrated implementation design](../../deprecated/architecture-domain-implementation-design.md) | 15 Phase numbering과 Phase 01/02 경계 |
-| [Master Design open questions](../../deprecated/master-design-open-questions.md) | Exact `Q-*` 상태, owner와 restart condition |
-| [Master Realization Plan](../master-realization-plan.md) | Current inventory, Phase contract, evidence와 DoD |
-| [Implementation document map](../README.md) | Canonical filename, authority와 review workflow |
-| [SUPERSEDED historical Master](../../deprecated/2026-07-26-master-design.md) | 누락·퇴행 cross-check 전용; 현재 decision authority가 아님 |
+Fingerprint는 **2026-08-01 semantic rebase** 시 읽은 live authority bytes의 SHA-256이다.
+원문이 바뀌면 구현 착수 전에 이 표를 다시 계산하고 영향 section을 review한다.
 
-위 파일들은 metadata의 SHA-256과 절 범위까지 전체 대조했다. Source fingerprint가 달라지면 구현 전에 영향 절을 다시 읽고 이 문서의 requirement/test trace를 review한다. `docs/codex/*`는 역사/참고 자료이므로 이 문서의 authority로 인용하거나 복사·수정하지 않는다.
+| 역할 | 입력과 SHA-256 | Phase 01에서 직접 적용하는 section |
+|---|---|---|
+| Phase A 인터뷰 | [design-interview-phase-a](../../deprecated/2026-07-30-design-interview-phase-a.md), `cec96defaa6a3617a7504ea0aeb57e0a111c77dc44a7af9981096c70261868e5` | D1, A1–A12, O3 |
+| Canonical Master | [Master Design](../../master-design.md), `765641c215cd512ca78eb5dfc943503bc8bdb278102a3c3103cf4935ff7f38be` | D1, §5.1–§5.2, §8.5 |
+| Approved Domain | [Domain Design](../../domain-design.md), `0d2509fd7d90cb460a6eeef1e8105fcf1154a8afae383b34bc4886088a8cd044` | §2.4, §4, §4.3 reqDate, §4.4, §4.6, §5 |
+| Approved Architecture | [Architecture Design](../../architecture-design.md), `8f588a11a9f0648b58f94cb3ed8cf6e20819fd50fd09fcabaec3e794b7729818` | `adapters/input`, D1 placement |
+| 총괄 실행 계획 | [Master Realization Plan](../master-realization-plan.md), `0bd2336cfeac8894c6fc3f664920957185562a9f1343fa08b7eff2b7c7c1e91b` | Phase 01 D1 overlay, §4.1 |
+| 구현 문서 지도 | [Implementation README](../README.md), `63bc51f42e025d7aee7c81c2d28fec7cb016f781a924727b4c0fb8993e221518` | §5.1 filename KEEP |
+| Historical only | [2026-07-26 Domain](../../deprecated/2026-07-26-domain-design.md), `e257e4e983c8a906d4aec0cd414826dad21588f43e306e06f80486917efa1745` | 퇴행 cross-check only |
+| Historical only | [2026-07-26 Architecture](../../deprecated/2026-07-26-architecture-design.md), `cd603429c2da4d36b5a98307a184bd6311ca3eff5643cb4223815a39d4c1c04e` | 퇴행 cross-check only |
+| Historical only | [2026-07-26 Master — SUPERSEDED](../../deprecated/2026-07-26-master-design.md), `5f0f6a48011942d85295eb980b66ccef99a6ee49b656feb23b1fefbcd170da90` | 퇴행 cross-check only |
+
+`docs/codex/*` 및 deprecated open-questions·integrated design은 authority로 인용하지 않는다.
 
 ### 1.2 2026-07-28 사용자 승인 Win fixture migration
 
@@ -102,87 +150,103 @@ decimal `FLOOR`해 별도 파일로 만드는 migration을 승인했다.
 
 ## 2. 목표, 범위와 비범위
 
-### 2.1 목표
+### 2.1 목표 (**D1**)
 
-외부 request/fixture의 bytes와 명시된 schema/adapter version을 anti-corruption boundary에서 해석하여 다음 두 단계의 immutable artifact를 만든다.
+외부/레거시 request·fixture bytes를 anti-corruption boundary에서 해석하여
+**단일 고정 canonical 계약**과 exact normalized facts를 만든다.
+**multi-version 입력 스키마 병행 운영 MUST NOT.** 레거시 변환 경로는
+Architecture **`adapters/input`의 adapter 하나**(공식 이름·범위 **O3 OPEN**).
+wire/schema 문자열·declared adapter identity는 provenance용일 수 있으나
+**multi-canonical track 운영이 아니다** (Master D1 · Domain §4.1·§4.6 · plan Phase 01 overlay).
 
 ```text
-external bytes + declared schema/adapter identity
-→ versioned anti-corruption adapter
-→ CanonicalBusinessInput
+external bytes + optional declared adapter/source identity
+→ adapters/input (single anti-corruption path)
+→ CanonicalBusinessInput   // single fixed contract
 → strict normalization
 → NormalizedInputArtifact
 ```
 
-`NormalizedInputArtifact`는 외부 표현의 alias, 문자열, 단위, 순서와 누락값을 solver가 다시 추정할 필요가 없도록 numeric, time, service, identity, compatibility, ownership와 trip 의미를 확정한다. 동일 artifact는 Phase 02가 dense identity, complete `PreparedTravel`과 immutable `ProblemInstance`를 만드는 유일한 입력이다.
+`NormalizedInputArtifact`는 외부 표현의 alias, 문자열, 단위, 순서와 누락값을 solver가 다시 추정할 필요가 없도록
+numeric, time, service(`reqDate`·`servicePattern`), identity, compatibility, ownership, zone, trip 의미를 확정한다.
+동일 artifact는 Phase 02가 dense identity, complete `PreparedTravel`과
+**`immutable solve snapshot`** 문제 쪽(구성 요소 proposed 이름 예: `ProblemInstance` ≠ freeze 단위 전체)을
+만드는 **유일한** 입력이다.
 
 ### 2.2 범위
 
-- 명시적 schema/adapter version 선택과 지원 version allowlist
+- 단일 canonical으로의 변환 (`adapters/input`); multi-version 스키마 **병행 운영 없음**
 - 외부 DTO와 provider-neutral canonical input의 분리
-- Raw bytes digest와 적용 alias/coercion/default/policy provenance
+- Raw bytes digest와 적용 alias/coercion/default/policy **provenance** (adapter identity 기록 허용)
 - Plan identity, exact customer/profile/version과 objective preset의 명시적 선택 또는 omission
 - External request/order/vehicle/location identity와 reference validation
-- Delivery-only와 real pickup-delivery를 하나의 canonical `Request` 의미로 통합
+- **`servicePattern` only**: `DELIVERY_ONLY` | `PICKUP_DELIVERY` (Domain §2.4; `kind` 없음)
 - Optional mandatory declaration과 승인된 typed extension input의 보존·검증
-- 무게·부피 `n=3/FLOOR`, item-first, `qty` 곱과 checked arithmetic
+- 무게·부피 `n=3/FLOOR`, item-first, `qty` 곱과 checked arithmetic (단위 **전역 고정**, D1)
 - 비용·거리·시간의 integer-only syntax와 단위
 - Plan `[start,end)`, inclusive close, planning-origin `long` seconds
 - Repeating/overnight window의 deterministic expansion과 clipping
 - `duration + Σ(item.taskTime × qty)` service-time 정규화
-- Vehicle size, request `vehicleFeatureList`, capability, zone, ownership 정규화
+- 쪽별 **`reqDate`** 보존 (의미: 고객 요청 시각; Domain §4.3)
+- Vehicle size, `vehicleFeatureList`, capability, **vehicle `zoneIds` 복수**, visit zone, ownership 정규화
 - `oneway`와 single `roundtrip`, `multiRotation` 처리와 `waitInDepot` 의미 고정
 - Vehicle/global `maxStopCnt`, `maxDriveTime`, `maxDriveDist`의 typed present/absent 선언
+- Vehicle speed **present / absent / invalid→reject** (absent 시 01이 45를 채우지 않음; §6 handoff)
 - Sparse provided travel declaration의 syntax/reference 정규화
 - Canonical ordering, duplicate/ambiguity detection, deterministic error ordering
 - Immutable artifact lifecycle, semantic fingerprint와 Phase 02 handoff contract
 
 ### 2.3 비범위
 
-- Missing `D/U` 생성, Great Circle 계산, `M²` coverage와 vehicle-resolved travel time
+- Missing `D/U` 생성, Great Circle, `M²` coverage, speed→duration **실행** (Phase 02+)
 - Dense `RequestId`/`VehicleId`/`SolverNodeId`/`PhysicalLocationId` 할당
-- `PreparedTravel` 또는 `ProblemInstance` 생성
-- Route propagation, actual full-arc next-work-window 실행과 feasibility 판정
+- `PreparedTravel` 또는 **`immutable solve snapshot`** 조립
+- Route propagation, `serviceStartTime ≤ reqDate` **판정 실행**, full-arc feasibility (Phase 03)
 - `servableVehicles` dense bitset, final `PROVEN` unassignability 판정
 - Profile/capability binding, preset default 해소, score, objective와 `SolvePlan`
 - Pair insertion, route/bank state, portfolio, ALNS와 verifier
 - HTTP/storage/cloud DTO, AWS/GCP SDK, object key 또는 public submission API 확정
+- multi-version 입력 스키마 **병행 운영** 체계
 - Route pool/MIP, provider 준비, solver/backend logic
 - Current decimal `D/U` Win fixture를 compliant/official input으로 변경
 
-Phase 01은 travel source를 **보존·검증하여 넘길 수는 있지만 준비하지 않는다**. Phase 02가 소비할 raw provided/generated-input facts만 산출하고, search 또는 verifier가 사용할 travel authority를 미리 만들지 않는다.
+Phase 01은 travel source를 **보존·검증하여 넘길 수는 있지만 준비하지 않는다**.
+Phase 02가 소비할 provided/generated-input facts만 산출하고, search·verifier travel authority를 미리 만들지 않는다.
 
 ## 3. 적용 결정과 불변조건
 
-### 3.1 확정 의미
+### 3.1 확정 의미 (APPROVED + 2026-08-01 interview)
 
 | 영역 | 적용 결정 |
 |---|---|
-| Numeric | `Q-NUM-01~03`, `C-10~C-12`: 무게·부피 `n=3/FLOOR`, item-first 후 positive integer `qty`, 비용·거리·시간 integer-only, checked arithmetic |
-| Time | `Q-TIME-01~04`: exact `yyyy-MM-dd HH:mm:ss`, solver 밖 timezone 처리, `[planStart,planEnd)`, inclusive window close, repeating/overnight window |
-| Service | `Q-IN-01`: `reqDate`/`dueDate`는 완료기한 alias, `duration + Σ(item.taskTime×qty)`, order-level `taskTime` 거부 |
-| Trip/resource declaration | `Q-IN-02`, `Q-BENCH-03`: oneway 우선, single roundtrip만 지원, route resource는 route 전체 의미 |
-| Compatibility | `Q-COMP-01~02`, `C-05`: vehicle size와 capability 분리, exact `["ALL"]`, case-sensitive free-form code, size∧zone |
-| Pair/service pattern | `Q-REQ-01~02`, `C-06~C-07`: delivery-only initial-load 의미와 real pair를 구분하고 single-trip pair 의미 유지 |
-| Ownership | `Q-OBJ-03`, `Q-RES-01`, `C-15`: missing/null/empty=`DIRECT`, exact `DIRECT/LEASE`; outcome status가 아님 |
-| Travel handoff | `Q-MTX-01~03`, `C-13`: provided integer directed `D/U`의 syntax/source를 보존하되 complete preparation은 Phase 02 |
-| Adapter | `P-12`: versioned adapter와 제한된 alias/coercion 방향은 유지하되 exact allowlist, unknown-field policy와 public schema는 아직 미확정 |
+| **D1 / Adapter** | 단일 고정 canonical. multi-version 병행 운영 MUST NOT. 단위 전역 고정. 레거시 → **`adapters/input` adapter 하나** (이름 O3 OPEN). wire 메타 ≠ multi-canonical 운영 |
+| Numeric | 무게·부피 exact decimal `n=3/FLOOR`, item-first 후 positive integer `qty`, 비용·거리·시간 integer-only, checked arithmetic (Domain §5.1) |
+| Time | exact `yyyy-MM-dd HH:mm:ss`, solver 밖 timezone, `[planStart,planEnd)`, inclusive window close, repeating/overnight (Domain §5.2) |
+| **`reqDate`** | **고객 요청 시각** (완료 기한 아님). 제약 의미 = **`serviceStartTime ≤ reqDate` only** (`serviceEndTime` 제외). 쪽별: DELIVERY_ONLY=delivery; PICKUP_DELIVERY=pickup·delivery 각각 (Domain §4.3). 판정 **실행**은 Phase 03 |
+| Service time | `duration + Σ(item.taskTime×qty)`; order-level `taskTime` 거부 |
+| Trip/resource | oneway 우선, single roundtrip만 지원, route resource는 route 전체; multi-trip non-oneway → unsupported |
+| Compatibility | vehicle size와 capability 분리, exact `["ALL"]`, case-sensitive free-form code, size ∧ capability ∧ zone |
+| **`servicePattern`** | **only** `DELIVERY_ONLY` \| `PICKUP_DELIVERY`. `kind` / LOGICAL\|REAL / `REAL_PICKUP_DELIVERY` **폐기**. DELIVERY_ONLY = delivery visit + initial load (Domain §2.4) |
+| **Ownership** | present → exact `DIRECT`\|`LEASE` only. **absent(미입력) = 소유 축 미사용**. missing→숨은 `DIRECT` 채움 **금지** (Domain §4.4) |
+| **Zone** | vehicle **`zoneIds` 복수**; 미입력 = 전 구역. visit zone 쪽별 보존. zone 1개 강제 금지. conflict → 정규화 fact(≠ malformed reject) (Domain §5.3) |
+| **Speed handoff** | present valid / absent / present-invalid→reject. **default 45 km/h는 travel prep 정책**(missing `U` 또는 추후 ruleset으로 `U` 재계산). Phase 01이 absent에 45를 **채우지 않음** |
+| Travel handoff | provided integer directed `D/U` syntax/source 보존; complete preparation = Phase 02 |
+| Wire/public schema | OPEN (Product·API·Data). alias/unknown policy exact 값은 승인 전 production 약속 아님 |
 
 ### 3.2 Phase 01 불변조건
 
 1. Core canonical/normalized type은 Jackson, HTTP, cloud event, provider URI와 SDK type을 참조하지 않는다.
-2. Adapter는 명시된 schema/version만 사용하며 `latest`, 유사 이름, field 추측과 silent fallback을 하지 않는다.
+2. 변환 경로는 **단일**이다. multi-version 입력 **운영**·`latest`/유사 이름/field 추측/silent fallback 금지. declared adapter identity는 provenance로만 기록한다.
 3. External ID는 schema가 명시한 decoding 뒤 case-sensitive opaque identity다. 승인되지 않은 trim, case-fold와 Unicode normalization을 하지 않는다.
 4. Duplicate identity와 duplicate directed travel key는 canonical sorting이나 map overwrite 전에 거부한다.
-5. Approved alias가 함께 존재하면 canonical value의 exact equality를 요구하고 provenance에 둘 다 기록한다.
-6. Normalization은 exact decimal/integer string에서 시작하며 `double`을 중간 표현으로 쓰지 않는다.
-7. 모든 scale, `qty` 곱, item/request/limit/service 합과 time offset 계산은 checked arithmetic이다.
-8. Missing/invalid/infeasible를 numeric sentinel, `Long.MAX_VALUE`, plan end, 0 또는 999로 일반 치환하지 않는다.
-9. 999 CBM은 adapter가 volume dimension 미사용을 명시한 경우에만 적용하는 유한 capacity이며 provenance에 남긴다.
-10. Canonical collection order는 semantic set과 ordered sequence를 구분한다. Set-like collection만 versioned canonical comparator로 정렬한다.
-11. 같은 normalized meaning과 policy는 같은 semantic fingerprint를 만든다. Raw byte digest와 alias provenance는 별도 identity로 보존한다.
-12. Failure는 partial normalized artifact를 내지 않는다. Complete, deterministically ordered typed problems 또는 sealed success 중 하나만 반환한다.
-13. Phase 01 output에는 dense solver ID, prepared matrix, **bound profile**, route, bank, score, objective와 solver state가 없다. Exact customer/profile/version, requested preset 또는 omission, mandatory와 승인된 typed extension 선언은 Phase 04가 raw input을 다시 읽지 않도록 보존하되 이 Phase에서 bind하거나 default를 채우지 않는다.
+5. Normalization은 exact decimal/integer string에서 시작하며 `double`을 중간 표현으로 쓰지 않는다.
+6. 모든 scale, `qty` 곱, item/request/limit/service 합과 time offset 계산은 checked arithmetic이다.
+7. Missing/invalid/infeasible를 numeric sentinel, `Long.MAX_VALUE`, plan end, 0 또는 999로 일반 치환하지 않는다. ownership/speed/zone restriction absence를 숨은 값으로 채우지 않는다.
+8. 999 CBM은 adapter가 volume dimension 미사용을 명시한 경우에만 적용하는 유한 capacity이며 provenance에 남긴다.
+9. Canonical collection order는 semantic set과 ordered sequence를 구분한다. Set-like collection만 versioned canonical comparator로 정렬한다.
+10. 같은 normalized meaning과 policy는 같은 semantic fingerprint를 만든다. Raw byte digest와 alias provenance는 별도 identity로 보존한다.
+11. Failure는 partial normalized artifact를 내지 않는다. Complete, deterministically ordered typed problems 또는 sealed success 중 하나만 반환한다.
+12. Phase 01 output에는 dense solver ID, prepared matrix, **bound profile**, route, bank, score, objective와 solver state가 없다. Exact customer/profile/version, requested preset 또는 omission, mandatory와 승인된 typed extension 선언은 Phase 04가 raw input을 다시 읽지 않도록 보존하되 이 Phase에서 bind하거나 default를 채우지 않는다.
 
 ## 4. Entry gate와 현재 evidence 확인
 
@@ -190,11 +254,11 @@ Phase 01은 travel source를 **보존·검증하여 넘길 수는 있지만 준�
 
 | 확인 항목 | 요구 evidence | 현재 checkout 판정 |
 |---|---|---|
-| Phase 00 상세/review | [actual Phase 00](phase-00-build-architecture-skeleton.md), [actual Phase 00 review](../reviews/phase-00-review.md) | 문서/review 있음; review `PASS_WITH_RESIDUAL_BLOCKERS`, implementation `NOT_STARTED`, evidence `NOT_PRODUCED`, acceptance `PLANNED/NOT_ACCEPTED` — `BLOCKED` |
+| Phase 00 상세/review | [actual Phase 00](phase-00-build-architecture-skeleton.md), [actual Phase 00 review](../reviews/phase-00-review.md) | 문서/review 있음; document/review **`REBASE_PENDING_REREVIEW`** (prior contract `PASS_WITH_RESIDUAL_BLOCKERS`); implementation `NOT_STARTED`, evidence `NOT_PRODUCED`, acceptance `PLANNED/NOT_ACCEPTED` — **`BLOCKED`** |
 | Build skeleton | `E-P00-BUILD` accepted, root reactor와 exact build command | evidence 없음 — `BLOCKED` |
 | Dependency guard | `E-P00-ARCH` accepted, module/package DAG와 forbidden dependency | evidence 없음 — `BLOCKED` |
 | Legacy baseline | `E-P00-LEGACY` accepted | evidence 없음 — `BLOCKED` |
-| Phase 01 source contract | [actual Phase 01 review](../reviews/phase-01-review.md) verdict | `ACCEPTED_WITH_APPLIED_CORRECTIONS` — 문서 gate 충족; 구현/acceptance evidence 아님 |
+| Phase 01 source contract | [actual Phase 01 review](../reviews/phase-01-review.md) | **`REBASE_PENDING_REREVIEW`** (prior `ACCEPTED_WITH_APPLIED_CORRECTIONS`); 구현/acceptance evidence 아님 |
 
 Entry gate 확인 명령 후보는 다음과 같다. Phase 00가 Maven wrapper나 다른 module path를 승인하면 그 명령이 우선한다.
 
@@ -262,18 +326,18 @@ rpdptw/core/
     ├── normalization/CanonicalOrderingTest.java
     └── normalization/NormalizedInputArtifactTest.java
 
-adapters/common/
+adapters/input/   # Architecture §4.2 · D1 — proposed module name; Phase 00 accepted tree 우선
 ├── src/main/java/com/ronext/rpdptw/adapter/input/
-│   ├── VersionedInputAdapter.java
+│   ├── InputAdapter.java              # proposed; single anti-corruption path (not multi-schema ops)
 │   ├── ExternalInputDocument.java
 │   ├── AdaptationResult.java
-│   └── v1/
-│       ├── V1ExternalSolveDto.java
-│       ├── V1ExternalInputAdapter.java
-│       └── V1AliasPolicy.java
+│   └── legacy/                        # optional one legacy mapping path (O3 OPEN name)
+│       ├── LegacyExternalSolveDto.java
+│       ├── LegacyExternalInputAdapter.java
+│       └── LegacyAliasPolicy.java
 └── src/test/java/com/ronext/rpdptw/adapter/input/
-    ├── VersionedInputAdapterContractTest.java
-    └── V1ExternalInputAdapterTest.java
+    ├── InputAdapterContractTest.java
+    └── LegacyExternalInputAdapterTest.java
 
 build/test-fixtures/
 └── src/test/java/com/ronext/rpdptw/fixture/
@@ -292,12 +356,12 @@ Phase 01은 기존 `com.ronext.optimizer` controller/engine을 새 canonical pat
 ### 5.1 Dependency direction
 
 ```text
-adapters/common input DTO/mapper
+adapters/input DTO/mapper   # single path (D1)
   → rpdptw-core/input
   → rpdptw-core/normalization
 
 build/test-fixtures
-  → adapter/common + core test APIs
+  → adapters/input + core test APIs
 
 Phase 02 domain/travel
   → Phase 01 NormalizedInputArtifact
@@ -309,7 +373,8 @@ Phase 02 domain/travel
 core → Jackson/HTTP/cloud/provider adapter
 normalization → travel preparation/solver/application/verification
 adapter → solver/profile/objective
-Phase 01 → PreparedTravel/ProblemInstance builder implementation
+Phase 01 → PreparedTravel / immutable-solve-snapshot builder implementation
+multi-version input schema ops as parallel canonical tracks
 ```
 
 ## 6. 입력·출력 artifact와 contract
@@ -318,9 +383,9 @@ Phase 01 → PreparedTravel/ProblemInstance builder implementation
 
 | 입력 | 필수 내용 | 권위 |
 |---|---|---|
-| `ExternalInputDocument` (proposed) | exact bytes, declared schema ID/version, declared adapter version, media type | Inbound adapter가 전달; raw digest는 Phase 01이 계산/검증 |
-| Adapter policy | approved alias/coercion/unknown-field allowlist와 version | Product·API·Data owner 승인 필요 |
-| `NormalizationPolicySnapshot` (proposed) | numeric/time/service/identity/order policy ID/version | Canonical decisions에서 생성, solve 중 변경 금지 |
+| `ExternalInputDocument` (proposed) | exact bytes, optional declared adapter/source identity, media type | Inbound `adapters/input`가 전달; raw digest는 Phase 01이 계산/검증. identity ≠ multi-canonical 운영 |
+| Adapter policy | approved alias/coercion/unknown-field policy (public wire OPEN) | Product·API·Data; O3 adapter 이름·범위 OPEN |
+| `NormalizationPolicySnapshot` (proposed) | numeric/time/service/identity/order policy ID (+ travel-prep speed default policy ref) | Canonical decisions에서 생성, solve 중 변경 금지 |
 | Test fixture | raw bytes + expected canonical meaning 또는 expected typed failures | Test-only; public schema authority가 아님 |
 
 Object reference resolve, tenant authorization과 bytes fetch는 Phase 08/09 adapter 책임이다. Phase 01 경계는 이미 획득한 bytes와 declared source identity를 받는다. Fixture path나 S3/GCS URI를 core identity로 사용하지 않는다.
@@ -351,20 +416,24 @@ NormalizedInputArtifact
 
 - Exact external identity와 validated reference graph
 - Normalized integer quantities and seconds
-- Delivery-only/real-pair service pattern
+- **`servicePattern`**: `DELIVERY_ONLY` | `PICKUP_DELIVERY` (+ DELIVERY_ONLY initial-load 의미)
+- 쪽별 **`reqDate`** (요청 시각 의미; 판정 실행은 Phase 03)
 - Exact customer/profile/version identity, requested objective preset 또는 명시적 omission
 - Optional mandatory declaration과 승인된 typed extension input; binding/evaluation은 아직 수행하지 않음
 - Location/coordinate input and sparse directed provided travel values
-- Vehicle speed source, including “missing and eligible for 45 km/h default”와 “present valid”
+- Vehicle speed: **present valid** 또는 **absent** (invalid reject).
+  Policy note only: travel prep **default speed = 45 km/h**; missing `U` 시 speed로 산출;
+  추후 ruleset으로 present `U`도 speed 재계산 가능 — **적용 실행은 Phase 02+**. Phase 01이 45를 채우지 않음
+- Vehicle **`zoneIds` 복수** 또는 전 구역(absent restriction); visit zone; ownership present/absent
 - Terminal/trip/`waitInDepot`/vehicle·global route-resource declarations와 typed absence
-- Policy IDs/versions, source provenance와 fingerprints
+- Policy IDs, source provenance와 fingerprints
 
 다음은 제공하지 않는다.
 
 - Dense IDs/array indices
-- Generated distance/time
+- Generated distance/time 또는 speed→`U` 계산 결과
 - Complete matrix or `PreparedTravel`
-- `ProblemInstance`
+- **`immutable solve snapshot` 조립** (`ProblemInstance`는 snapshot 구성 요소 proposed 이름일 수 있음; Phase 01 산출 아님)
 - Bound profile, routes, bank, score/objective
 
 ### 6.3 Public와 internal contract
@@ -372,7 +441,7 @@ NormalizedInputArtifact
 | Contract | 상태 | 규칙 |
 |---|---|---|
 | External JSON/wire schema | `OPEN` | 별도 Product/API/Data 승인 전 fixture나 DTO를 public 약속으로 인용 금지 |
-| Java adapter SPI | `PROPOSED INTERNAL` | schema/version dispatch와 typed failure 의미만 고정 |
+| Java adapter SPI | `PROPOSED INTERNAL` | **단일** `adapters/input` path + typed failure; multi-schema 운영 아님 |
 | Canonical input records | `PROPOSED MODULE CONTRACT` | Jackson/cloud annotation 금지, Phase 02가 소비; plan/profile/preset/mandatory/typed extension 선언을 누락하지 않음 |
 | Error code/wire mapping | Java code는 `PROPOSED`, wire status는 `OPEN` | Internal typed error와 external HTTP code를 분리 |
 | Fingerprint encoding/algorithm | `PROPOSED INTERNAL` | algorithm/version을 identity에 포함; 변경은 migration/replay review 필요 |
@@ -423,8 +492,9 @@ any pre-seal state
 ### 7.1 Adapter와 normalization boundary
 
 ```java
-public interface VersionedInputAdapter {
-    boolean supports(SchemaIdentity schema, AdapterIdentity adapter);
+/** Proposed SPI: single anti-corruption path (D1). Not multi-schema operations. */
+public interface InputAdapter {
+    boolean supports(AdapterIdentity adapter);
 
     AdaptationResult adapt(ExternalInputDocument document);
 }
@@ -451,32 +521,39 @@ public sealed interface NormalizationResult {
 
 이 interface는 Java module 내부 계약 후보이지 public submission API가 아니다.
 
-### 7.2 Canonical request와 service pattern
+### 7.2 Canonical request와 service pattern (Domain §2.4 · §4.3)
 
 ```java
 public record CanonicalRequestInput(
     ExternalRequestId id,
-    PickupInput pickup,
+    ServicePattern servicePattern,
+    Optional<CanonicalServiceInput> pickup,   // empty when DELIVERY_ONLY (no route visit)
     CanonicalServiceInput delivery,
     List<CanonicalItemInput> items,
     CanonicalCompatibilityInput compatibility,
-    Optional<CanonicalDeadlineInput> completionDeadline,
     Optional<Boolean> mandatoryDeclaration,
     Optional<ApprovedTypedExtensionInput> extensionInput
 ) {}
 
-public sealed interface PickupInput {
-    record LogicalInitialLoad() implements PickupInput {}
-    record PhysicalService(CanonicalServiceInput service) implements PickupInput {}
-}
-
+/** Domain §2.4 — kind LOGICAL|REAL discarded. */
 public enum ServicePattern {
     DELIVERY_ONLY,
-    REAL_PICKUP_DELIVERY
+    PICKUP_DELIVERY
 }
+
+/** Per-visit service side: windows, service time inputs, zone, reqDate (request time). */
+public record CanonicalServiceInput(
+    ExternalLocationId locationId,
+    /* windows, duration, ... */
+    Optional<NormalizedRequestTime> reqDate,  // 고객 요청 시각
+    Optional<ZoneCode> zone
+) {}
 ```
 
-Delivery-only의 logical pickup은 location, travel, stop 또는 depot service node를 만들지 않는다. Real request는 pickup과 delivery 둘을 같은 `ExternalRequestId` 아래 묶는다. Dense node와 pair object 생성은 Phase 02다.
+`DELIVERY_ONLY`: route 방문은 **delivery만**. pickup 쪽은 pair 소유 + **initial load**만이며
+location/travel/stop/service visit을 만들지 않는다 (`kind`/logical enum 없음).
+`PICKUP_DELIVERY`: pickup·delivery 둘 다 route 방문; **`reqDate`는 쪽별** 각각 보존.
+Dense node와 pair object 생성은 Phase 02. `serviceStartTime ≤ reqDate` **판정 실행**은 Phase 03.
 
 ### 7.3 Numeric value
 
@@ -512,7 +589,7 @@ normalizeRequest(items):
   return total
 ```
 
-비용·거리·시간 parser는 decimal point와 exponent가 있는 numeric lexeme를 integer value로 조용히 바꾸지 않는다. Exact lexical policy는 adapter schema version에 포함한다.
+비용·거리·시간 parser는 decimal point와 exponent가 있는 numeric lexeme를 integer value로 조용히 바꾸지 않는다. Exact lexical policy는 adapter policy(OPEN wire)에 포함한다.
 
 ### 7.4 Time, window와 trip
 
@@ -542,10 +619,8 @@ public record NormalizedWindow(
     // then clipped to planEndExclusive.
 }
 
-public enum CustomerWindowPolicy {
-    START_ONLY,
-    COMPLETE_WITHIN_WINDOW
-}
+// reqDate constraint is NOT a completion-window policy.
+// Domain §4.3: serviceStartTime <= reqDate only (executed in Phase 03).
 
 public enum WorkArcPolicy {
     FULL_ARC_WITHIN_ONE_WORK_WINDOW
@@ -572,13 +647,13 @@ public record NormalizedRouteResourceLimits(
 
 `requestedPreset`의 empty는 exact omission이며 Phase 01이 customer default로 대체하지 않는다. Optional mandatory와 typed extension도 입력의 present/absent를 보존한다. Extension은 승인된 versioned type만 허용하며 raw customer field map을 통과시키지 않는다. Vehicle별 route-resource limit도 같은 typed present/absent 값으로 정규화한다. Vehicle/global 한도를 실제 `min`으로 적용하고 full-arc restart, `waitInDepot` departure를 계산하는 책임은 Phase 03이 소유한다.
 
-### 7.5 Compatibility와 ownership
+### 7.5 Compatibility, zone, ownership (Domain §4.4 · §5.3)
 
 ```java
 public record NormalizedCompatibilityInput(
     AllowedVehicleSizes allowedSizes,
     SortedSet<CapabilityCode> requiredCapabilities,
-    ZoneCode zone
+    Optional<ZoneCode> visitZone   // request/visit side; per pickup/delivery as applicable
 ) {}
 
 public sealed interface AllowedVehicleSizes {
@@ -587,13 +662,30 @@ public sealed interface AllowedVehicleSizes {
         implements AllowedVehicleSizes {}
 }
 
-public enum VehicleOwnership {
-    DIRECT,
-    LEASE
+/** Vehicle zones: multi-zone; empty/absent = all zones (Domain §5.3). */
+public sealed interface VehicleZoneSet {
+    record AllZones() implements VehicleZoneSet {}
+    record Restricted(SortedSet<ZoneCode> zoneIds) implements VehicleZoneSet {}
+}
+
+/** Ownership: absent = axis unused; never silent DIRECT (Domain §4.4). */
+public sealed interface VehicleOwnership {
+    record Absent() implements VehicleOwnership {}
+    record Direct() implements VehicleOwnership {}
+    record Lease() implements VehicleOwnership {}
+}
+
+/** Speed: Phase 01 does not fill default 45; travel prep owns application. */
+public sealed interface VehicleSpeedInput {
+    record Absent() implements VehicleSpeedInput {}
+    record PresentKmH(double value) implements VehicleSpeedInput {} // valid finite only; else reject
 }
 ```
 
-Free-form code는 exact case-sensitive string이다. `Feature`의 숫자나 배열 순서에서 차량 크기를 추론하지 않는다. Capability subset과 route zone feasibility의 실행은 후속 Phase가 수행하지만 Phase 01은 모호한 shape, duplicate code와 pickup/delivery compatibility fact를 엄격히 정규화한다.
+Free-form code는 exact case-sensitive string이다. `Feature`의 숫자나 배열 순서에서 차량 크기를 추론하지 않는다.
+Capability subset과 route zone feasibility **실행**은 후속 Phase가 수행하지만 Phase 01은
+shape, duplicate code, pickup/delivery zone facts, vehicle multi-zone / all-zones를 엄격히 정규화한다.
+zone conflict → 정규화된 static unassignability fact (malformed input 아님).
 
 ### 7.6 Typed failure
 
@@ -622,7 +714,7 @@ public sealed interface InputProblem {
 Proposed internal codes:
 
 ```text
-UNSUPPORTED_SCHEMA_VERSION
+UNSUPPORTED_ADAPTER_OR_SOURCE
 AMBIGUOUS_ALIAS
 UNKNOWN_FIELD_REJECTED
 MISSING_REQUIRED_FIELD
@@ -640,39 +732,44 @@ TIMEZONE_OR_OFFSET_NOT_ALLOWED
 INVALID_PLAN_RANGE
 AMBIGUOUS_WINDOW
 ORDER_LEVEL_TASK_TIME_NOT_ALLOWED
+INVALID_SERVICE_PATTERN
+INVALID_REQ_DATE
 UNAPPROVED_EXTENSION_INPUT
 INVALID_VEHICLE_FEATURE
 INVALID_FEATURE_LIST
 INVALID_CAPABILITY
 INVALID_ZONE
 INVALID_OWNERSHIP
+INVALID_SPEED
 INVALID_WAIT_POLICY
 INVALID_ROUTE_RESOURCE_LIMIT
 UNSUPPORTED_TRIP_POLICY
 UNSUPPORTED_ROTATION
 ```
 
-Unknown-field policy 자체는 `P-12` 아래 `OPEN`이다. `UNKNOWN_FIELD_REJECTED`는 explicit `REJECT` adapter policy일 때만 사용하며 hidden default가 아니다. Problem은 `InputPath → code → stable evidence digest` 순으로 deterministic sort하고 raw PII/value 전체를 message나 log에 넣지 않는다.
+Unknown-field policy exact 값은 public wire **OPEN**이다. `UNKNOWN_FIELD_REJECTED`는 explicit `REJECT` adapter policy일 때만 사용하며 hidden default가 아니다. Problem은 `InputPath → code → stable evidence digest` 순으로 deterministic sort하고 raw PII/value 전체를 message나 log에 넣지 않는다.
 
 ### 7.7 End-to-end pseudo-code
 
 ```text
-normalize(document, declaredSchema, policy):
+normalize(document, declaredAdapterIdentity, policy):
   rawDigest = digestExactBytes(document.bytes)
-  adapter = registry.resolveExact(declaredSchema, declaredAdapterVersion)
-      or reject UNSUPPORTED_SCHEMA_VERSION
+  adapter = singleInputPath.resolve(declaredAdapterIdentity)
+      or reject UNSUPPORTED_ADAPTER_OR_SOURCE
+  // D1: one path to single canonical — not multi-version schema ops
 
   dto = adapter.parseStrictly(document.bytes)
-  canonicalDraft = adapter.mapApprovedFields(dto)
+  canonicalDraft = adapter.mapToSingleCanonical(dto)
   problems += detectUnknownFieldsPerExplicitPolicy(dto)
-  problems += detectAliasConflicts(canonicalDraft)
   problems += detectDuplicatesBeforeMapsOrSorting(canonicalDraft)
   problems += validateAllReferences(canonicalDraft)
+  problems += validateServicePatternAndReqDateShape(canonicalDraft)
 
   if problems not empty:
     return Rejected(sortDeterministically(problems))
 
   normalizedDraft = normalizeNumericTimeServiceCompatibilityTrip(canonicalDraft)
+  // ownership/speed/zone: typed absence preserved; no silent DIRECT / no fill 45
   problems += checkedArithmeticAndBoundaryProblems(normalizedDraft)
 
   if problems not empty:
@@ -680,10 +777,10 @@ normalize(document, declaredSchema, policy):
 
   ordered = canonicalOrderOnlySetLikeCollections(normalizedDraft)
   semanticFingerprint = fingerprint(
-      policy + schema + adapter
+      policy + adapter identity
       + plan/profile/preset-or-omission
       + mandatory/typed-extension declarations
-      + trip/wait/resource declarations
+      + trip/wait/resource/ownership/zone/speed declarations
       + ordered)
   envelopeFingerprint =
       fingerprint(rawDigest + semanticFingerprint + provenance)
@@ -708,16 +805,16 @@ normalize(document, declaredSchema, policy):
 | 실패/rollback | 하나라도 없거나 다른 digest면 Phase 01 source edit 금지, 상태 `BLOCKED` 유지 |
 | handoff | WP-01.1~01.7이 사용할 accepted build/module baseline |
 
-### WP-01.1 — Versioned anti-corruption adapter
+### WP-01.1 — Single-path input adapter (D1 · `adapters/input`)
 
 | 항목 | 내용 |
 |---|---|
-| 사전조건 | WP-01.0 완료; exact supported schema/version과 alias allowlist 승인 |
-| 수정 대상 | `adapters/common/.../adapter/input`, `rpdptw-core/.../input` |
-| 구체 작업 | External DTO 분리, exact adapter registry, raw digest, alias equality/conflict, unknown-field policy 주입, plan/customer/profile/version와 preset omission, canonical request/order/mandatory/approved-extension mapping, provenance 작성 |
-| 검증 명령 | `mvn -pl adapters/common -am -Dtest=VersionedInputAdapterContractTest,V1ExternalInputAdapterTest -Dsurefire.failIfNoSpecifiedTests=false test` |
-| 테스트 | `acceptsSupportedSchemaAndRecordsRawDigest`, `rejectsUnknownSchemaVersionWithoutFallback`, `acceptsEqualReqDateDueDateAliasAndRecordsBoth`, `rejectsConflictingReqDateDueDate`, `preservesExactProfileSelectionAndPresetOmission`, `rejectsUnapprovedRawCustomerExtension`, `unknownFieldBehaviorComesFromExplicitVersionedPolicy` |
-| 기대 결과 | 지원 version만 deterministic canonical input 또는 ordered typed problems 반환 |
+| 사전조건 | WP-01.0 완료; adapter identity·alias policy(OPEN wire) 방향 합의 |
+| 수정 대상 | `adapters/input/...`, `rpdptw-core/.../input` |
+| 구체 작업 | External DTO 분리, **단일** adapter path, raw digest, unknown-field policy, plan/customer/profile/version와 preset omission, `servicePattern`/`reqDate` 쪽별 mapping, mandatory/approved-extension, provenance |
+| 검증 명령 | `mvn -pl adapters/input -am -Dtest=InputAdapterContractTest,LegacyExternalInputAdapterTest -Dsurefire.failIfNoSpecifiedTests=false test` |
+| 테스트 | `acceptsSupportedAdapterAndRecordsRawDigest`, `rejectsUnknownAdapterWithoutFallback`, `mapsPerSideReqDateOnly`, `preservesExactProfileSelectionAndPresetOmission`, `rejectsUnapprovedRawCustomerExtension`, `unknownFieldBehaviorComesFromExplicitPolicy` |
+| 기대 결과 | 단일 canonical 또는 ordered typed problems; multi-version 운영 경로 없음 |
 | 실패/rollback | 새 adapter registration과 code를 revert 가능한 WP commit으로 폐기; 기존 placeholder 연결 변경 없음 |
 | handoff | `AdaptedCanonicalInput` fixture set |
 
@@ -753,24 +850,24 @@ normalize(document, declaredSchema, policy):
 |---|---|
 | 사전조건 | WP-01.3 checked seconds/service primitives |
 | 수정 대상 | core time/service/trip normalizer와 tests |
-| 구체 작업 | Strict local datetime, planning-origin seconds, plan range, inclusive close representation, repeating/overnight expansion/clip, service-time sum, deadline alias, trip/wait policy와 vehicle/global route-resource present/absent 선언 |
+| 구체 작업 | Strict local datetime, planning-origin seconds, plan range, inclusive close representation, repeating/overnight expansion/clip, service-time sum, **쪽별 reqDate 보존**(요청 시각 의미; 판정 실행 없음), trip/wait policy와 vehicle/global route-resource present/absent 선언 |
 | 검증 명령 | `mvn -pl rpdptw/core -am -Dtest=TimeNormalizerTest,ServiceTimeNormalizerTest,TripPolicyNormalizerTest,RouteResourceNormalizerTest -Dsurefire.failIfNoSpecifiedTests=false test` |
 | 테스트 | `convertsExactLocalDateTimeToPlanOriginSeconds`, `rejectsOffsetOrZone`, `keepsPlanEndExclusiveAndCloseInclusive`, `expandsOvernightWindowOncePerPlanDate`, `rejectsEqualOpenCloseWithoutSchemaMeaning`, `preservesFullArcRestartPolicyAndExactHandoffOracle`, `checksServiceDurationItemTimeQuantitySum`, `rejectsOrderLevelTaskTime`, `onewayIgnoresRotationButRecordsRawValue`, `normalizesExplicitDepotWaitPolicyWithoutFallback`, `rejectsUnknownDepotWaitPolicy`, `rejectsNonOnewayRotation`, `preservesMissingRouteLimitsAsTypedAbsence`, `rejectsNegativeOrFractionalRouteResourceLimit` |
 | 기대 결과 | Normalized interval/policy와 exact expected seconds 또는 typed rejection 일치 |
 | 실패/rollback | Partial window expansion을 폐기; plan/time sentinel 없음 |
 | handoff | `E-P01-TIME` candidate report와 Phase 03 full-arc fixture |
 
-### WP-01.5 — Size, capability, zone와 ownership
+### WP-01.5 — Size, capability, zone, ownership, speed shape
 
 | 항목 | 내용 |
 |---|---|
 | 사전조건 | WP-01.2 identity/reference rules |
-| 수정 대상 | core compatibility records/normalizer, compatibility oracle |
-| 구체 작업 | Vehicle concrete feature, request exact `ALL`/set, legacy list alias, capability sets, zone `ALL`, pickup/delivery intersections/conflicts, `DIRECT/LEASE` |
+| 수정 대상 | core compatibility/vehicle records/normalizer, compatibility oracle |
+| 구체 작업 | Vehicle concrete feature, request exact `ALL`/set, capability sets, **vehicle `zoneIds` 복수 / 미입력=전 구역**, visit zone, pickup/delivery zone conflict fact, ownership present `DIRECT`\|`LEASE` / **absent 축 미사용**, speed present/absent/invalid (no fill 45), `servicePattern` shape |
 | 검증 명령 | `mvn -pl rpdptw/core -am -Dtest=CompatibilityNormalizerTest -Dsurefire.failIfNoSpecifiedTests=false test` |
-| 테스트 | `keepsFreeFormSizeCodeCaseSensitive`, `acceptsOnlyExactAllAlternative`, `rejectsMixedAllAndConcreteCode`, `rejectsVehicleAllOrBlank`, `requiresLegacyAndNewFeatureListsToMatchExactly`, `computesRealPairSizeIntersectionWithoutGuessing`, `preservesNoEligibleVehicleAsValidNormalizedFact`, `normalizesMissingZoneToAll`, `preservesConflictingConcretePickupDeliveryZonesAsStaticUnassignabilityFact`, `normalizesOwnershipStrictly` |
-| 기대 결과 | Static facts가 exact하고 compatible vehicle 0개를 input corruption으로 오인하지 않음 |
-| 실패/rollback | No fallback registry/톤수 추론; draft 폐기 |
+| 테스트 | `keepsFreeFormSizeCodeCaseSensitive`, `acceptsOnlyExactAllAlternative`, `rejectsMixedAllAndConcreteCode`, `rejectsVehicleAllOrBlank`, `preservesVehicleMultiZoneIds`, `normalizesMissingVehicleZonesToAllZones`, `preservesNoEligibleVehicleAsValidNormalizedFact`, `preservesConflictingConcretePickupDeliveryZonesAsStaticUnassignabilityFact`, `normalizesOwnershipPresentOrAbsentNeverSilentDirect`, `preservesAbsentSpeedWithoutFilling45`, `rejectsInvalidSpeed`, `acceptsServicePatternDeliveryOnlyAndPickupDeliveryOnly` |
+| 기대 결과 | Static facts exact; zone conflict ≠ malformed; ownership/speed absence 보존 |
+| 실패/rollback | No fallback registry/톤수 추론/숨은 DIRECT/45 채움; draft 폐기 |
 | handoff | `E-P01-COMPAT` candidate report |
 
 ### WP-01.6 — Artifact sealing, typed error와 architecture guard
@@ -780,7 +877,7 @@ normalize(document, declaredSchema, policy):
 | 사전조건 | WP-01.1~01.5의 모든 normalizer |
 | 수정 대상 | artifact/fingerprint/result types, architecture rule |
 | 구체 작업 | Defensive immutable copy, semantic/envelope fingerprint, deterministic error aggregation, raw input/PII-safe evidence와 log/report redaction, forbidden dependency와 forbidden output type 검사 |
-| 검증 명령 | `mvn -pl rpdptw/core,adapters/common,build/architecture-rules -am test` |
+| 검증 명령 | `mvn -pl rpdptw/core,adapters/input,build/architecture-rules -am test` |
 | 테스트 | `artifactDefensivelyCopiesAllCollections`, `sameMeaningAndPolicyHasSameSemanticFingerprint`, `profilePresetMandatoryResourceMeaningChangesSemanticFingerprint`, `aliasProvenanceChangesEnvelopeNotMeaning`, `rejectionNeverExposesPartialArtifact`, `rejectionEvidenceRedactsRawValuesAndInputBytes`, `phase01HasNoSolverTravelPreparationOrProviderDependency` |
 | 기대 결과 | Sealed success 또는 ordered rejection만 존재하고 forbidden edge 0 |
 | 실패/rollback | Fingerprint version 변화는 같은 ID overwrite 금지; last accepted WP artifact로 rollback |
@@ -793,7 +890,7 @@ normalize(document, declaredSchema, policy):
 | 사전조건 | 모든 WP green, no skipped required test |
 | 수정 대상 | Evidence bundle only; scheduler/progress는 총괄 owner가 별도 갱신 |
 | 구체 작업 | Exact commands/toolchain/test counts/failures/fixtures/fingerprints/limitations/rollback을 묶고 independent review 요청 |
-| 검증 명령 | `mvn -pl rpdptw/core,adapters/common,build/architecture-rules -am verify`<br>`mvn verify` |
+| 검증 명령 | `mvn -pl rpdptw/core,adapters/input,build/architecture-rules -am verify`<br>`mvn verify` |
 | 테스트 | §9.2의 모든 exact class/method, forbidden-dependency suite, required test skipped/failed 수 0 확인 |
 | 기대 결과 | `E-P01-NUMERIC/TIME/COMPAT/ERROR` 모두 digest-protected, review verdict accepted |
 | 실패/rollback | Phase 상태를 `IMPLEMENTED_PENDING_EVIDENCE` 또는 `REVIEW_PENDING`에 유지; Phase 02 implementation 시작 금지 |
@@ -805,11 +902,11 @@ normalize(document, declaredSchema, policy):
 
 현재 target module/type/test가 없으므로 아래 functional test를 먼저 추가하면 **test compilation 또는 missing class로 실패하는 것이 예상되는 미래 red**다. 이 실패는 현재 결함 evidence나 Phase completion이 아니다.
 
-1. Adapter contract red: version dispatch, alias, unknown policy와 raw digest.
+1. Adapter contract red: single-path D1, unknown policy, raw digest, no multi-version ops.
 2. Identity/order red: duplicate/reference/order/fingerprint.
 3. Numeric red: hand boundary, item-first, overflow.
-4. Time/service/trip red: exact seconds, interval, service sum와 unsupported rotation.
-5. Compatibility red: feature/capability/zone/ownership.
+4. Time/service/trip red: exact seconds, interval, service sum, reqDate shape, unsupported rotation.
+5. Compatibility red: feature/capability/multi-zone/ownership absence/speed absence.
 6. Artifact/error red: deep immutability, typed failures, fingerprint.
 7. Architecture red: forbidden dependency/output type.
 8. Minimal implementation으로 각 suite를 green으로 만들고 root verify를 실행한다.
@@ -820,8 +917,8 @@ Phase 03의 actual full-arc restart test와 Phase 02의 generated travel test는
 
 | Test class | Exact methods | Fixture/builder | Oracle | Layer |
 |---|---|---|---|---|
-| `VersionedInputAdapterContractTest` | `acceptsSupportedSchemaAndRecordsRawDigest`; `rejectsUnknownSchemaVersionWithoutFallback`; `unknownFieldBehaviorComesFromExplicitVersionedPolicy` | Raw JSON bytes builder | Independent SHA-256 + expected code/path | Adapter contract |
-| `V1ExternalInputAdapterTest` | `acceptsEqualReqDateDueDateAliasAndRecordsBoth`; `rejectsConflictingReqDateDueDate`; `rejectsOrderLevelTaskTime`; `preservesExactProfileSelectionAndPresetOmission`; `rejectsUnapprovedRawCustomerExtension` | `ExternalInputFixtureBuilder` | Hand canonical DTO | Adapter unit |
+| `InputAdapterContractTest` | `acceptsSupportedAdapterAndRecordsRawDigest`; `rejectsUnknownAdapterWithoutFallback`; `unknownFieldBehaviorComesFromExplicitPolicy` | Raw JSON bytes builder | Independent SHA-256 + expected code/path | Adapter contract |
+| `LegacyExternalInputAdapterTest` | `mapsPerSideReqDateOnly`; `rejectsOrderLevelTaskTime`; `preservesExactProfileSelectionAndPresetOmission`; `rejectsUnapprovedRawCustomerExtension` | `ExternalInputFixtureBuilder` | Hand canonical DTO | Adapter unit |
 | `CanonicalOrderingTest` | `rejectsDuplicateRequestBeforeCanonicalSort`; `setPermutationKeepsSemanticFingerprint`; `visitOrderChangesSemanticFingerprint`; `failureOrderIsInputPermutationIndependent` | Permutation generator with fixed seed | UTF-8 comparator reference, sorted expected tuple list | Property/oracle |
 | `FixedPointNormalizerTest` | `floorsWeightAtThirdDecimal`; `normalizesEachItemBeforeQuantityMultiplication`; `rejectsDecimalDistanceEvenWhenMathematicallyIntegral`; overflow methods | Boundary table | `BigInteger`/decimal-string hand oracle, never production normalizer | Value/boundary |
 | `TimeNormalizerTest` | `convertsExactLocalDateTimeToPlanOriginSeconds`; `keepsPlanEndExclusiveAndCloseInclusive`; `expandsOvernightWindowOncePerPlanDate`; `rejectsEqualOpenCloseWithoutSchemaMeaning`; `preservesFullArcRestartPolicyAndExactHandoffOracle` | Fixed 3-day plan + full-arc handoff fixture | Explicit expected second intervals and restart tuple | Value/oracle |
@@ -830,7 +927,7 @@ Phase 03의 actual full-arc restart test와 Phase 02의 generated travel test는
 | `RouteResourceNormalizerTest` | `preservesMissingRouteLimitsAsTypedAbsence`; `normalizesVehicleAndGlobalRouteLimitsIndependently`; `rejectsNegativeOrFractionalRouteResourceLimit`; `detectsRouteResourceLimitOverflow` | Vehicle/global resource table | Hand typed-presence and checked-integer oracle | Value/boundary |
 | `CompatibilityNormalizerTest` | §8 WP-01.5 methods | Compatibility matrix builder | Independent set/subset/intersection functions | Property |
 | `NormalizedInputArtifactTest` | `artifactDefensivelyCopiesAllCollections`; `sameMeaningAndPolicyHasSameSemanticFingerprint`; `profilePresetMandatoryResourceMeaningChangesSemanticFingerprint`; `aliasProvenanceChangesEnvelopeNotMeaning`; `rejectionNeverExposesPartialArtifact`; `rejectionEvidenceRedactsRawValuesAndInputBytes` | `CanonicalInputFixtureBuilder` | Canonical encoding test implementation + canary-token absence oracle | Contract/security |
-| `Phase01DependencyRulesTest` | `coreDoesNotDependOnJacksonCloudSolverOrVerification`; `normalizationDoesNotCreatePreparedTravelOrProblemInstance`; `adapterDoesNotDependOnSolver` | Compiled class graph | Explicit forbidden package/artifact list | Architecture |
+| `Phase01DependencyRulesTest` | `coreDoesNotDependOnJacksonCloudSolverOrVerification`; `normalizationDoesNotCreatePreparedTravelOrSolveSnapshot`; `adapterDoesNotDependOnSolver` | Compiled class graph | Explicit forbidden package/artifact list | Architecture |
 
 ### 9.3 Exact failure fixtures
 
@@ -841,9 +938,9 @@ Phase 03의 actual full-arc restart test와 Phase 02의 generated travel test는
 | `integer-looking-decimal` | distance/time `1.0` | `FRACTION_NOT_ALLOWED`, exact path |
 | `quantity-overflow` | normalized item near `Long.MAX_VALUE`, qty `2` | `ARITHMETIC_OVERFLOW`, no artifact |
 | `sum-overflow` | individually valid items whose sum overflows | `ARITHMETIC_OVERFLOW`, deterministic item/request path |
-| `duplicate-request` | delivery-only order와 real request가 같은 ID | `DUPLICATE_IDENTITY` before sort/map |
+| `duplicate-request` | two requests same external ID (`DELIVERY_ONLY` + `PICKUP_DELIVERY`) | `DUPLICATE_IDENTITY` before sort/map |
 | `duplicate-arc` | same directed `(A,B)` twice with same value | `DUPLICATE_TRAVEL_KEY`; no silent dedupe |
-| `alias-conflict` | normalized `reqDate != dueDate` | `AMBIGUOUS_ALIAS` |
+| `reqDate-shape` | missing/invalid per-side `reqDate` where required by servicePattern | typed reject or present shape as specified |
 | `ordering-permutation` | same set-like entities in different raw orders | same semantic fingerprint, different raw digest allowed |
 | `meaningful-order-change` | pickup/delivery or ordered service sequence swapped | different meaning or structural rejection |
 | `plan-boundary` | event at `planEnd` and service start at window close | plan-end event excluded; close start representable |
@@ -854,7 +951,10 @@ Phase 03의 actual full-arc restart test와 Phase 02의 generated travel test는
 | `profile-preset-omission` | exact customer/profile/version + preset omitted | omission 보존; Phase 01 default 선택 금지 |
 | `unapproved-extension` | 승인 type/version 없는 customer raw field | `UNAPPROVED_EXTENSION_INPUT` |
 | `pii-redaction` | address/email canary가 포함된 invalid input | code/path/digest만 남고 raw canary/input bytes는 report/log에 없음 |
-| `zone-conflict` | real pickup zone A, delivery zone B | normalized static unassignability fact; not malformed input |
+| `zone-conflict` | `PICKUP_DELIVERY` pickup zone A, delivery zone B | normalized static unassignability fact; not malformed input |
+| `ownership-absent` | ownership omitted | typed absence; not silent `DIRECT` |
+| `speed-absent` | speed omitted | absent preserved; no fill `45` in Phase 01 |
+| `service-pattern-only` | only `DELIVERY_ONLY` / `PICKUP_DELIVERY` accepted | other kind/REAL/LOGICAL tokens reject |
 | `feature-all-mix` | `["ALL","T1"]` | `INVALID_FEATURE_LIST` |
 | `decimal-win-travel` | current-style decimal `D/U` | negative fixture; never official/compliant success |
 
@@ -964,46 +1064,51 @@ Phase 01 transformation은 side-effect-free여야 한다. Rejection/exception은
 ```text
 NormalizedInputArtifact
   CanonicalInputIdentity projection
-    schemaVersion
-    adapterVersion
+    adapterIdentity (provenance; not multi-canonical ops)
     rawInputDigest
     semanticFingerprint
   external identity/reference graph
-  normalized requests/service declarations/vehicles/locations
+  normalized requests (servicePattern + per-side reqDate)/vehicles/locations
   plan identity + exact customer/profile/version
   requested objective preset or explicit omission
   optional mandatory + approved typed extension declarations
   integer units and normalized seconds
   sparse directed provided travel declarations
-  coordinate/speed source facts
+  coordinate + speed present/absent facts
+  vehicle zoneIds multi / all-zones; ownership present/absent
   trip/terminal/wait/resource policies and typed absence
-  schema/adapter/normalization identities
+  travel-prep policy refs (default speed 45 km/h; optional U-recalc ruleset — apply in Phase 02+)
+  adapter/normalization identities
   provenance + semantic/envelope fingerprints
 ```
 
-여기서 service declaration은 아직 `SolverNodeId`가 아니다. Phase 02는 handoff fingerprint를 먼저 검증한 뒤 solver nodes와 dense IDs를 만들고 travel을 준비한다. Raw JSON alias, locale/timezone, decimal rounding과 ownership default를 다시 해석하면 handoff 위반이다.
+여기서 service declaration은 아직 `SolverNodeId`가 아니다. Phase 02는 handoff fingerprint를 먼저 검증한 뒤 dense IDs·`PreparedTravel`·**`immutable solve snapshot`** 문제 쪽을 만든다
+(`ProblemInstance`는 구성 요소 proposed 이름일 수 있음; freeze 단위 전체 아님).
+Raw JSON alias, locale/timezone, decimal rounding, ownership silent DIRECT, speed 45 채움,
+`reqDate` 의미(완료 기한/`serviceEndTime` 이중 상한)를 다시 왜곡하면 handoff 위반이다.
 
 ## 12. Blocker, OPEN, GATED와 deferred
 
 | 항목 | 상태 | Owner | 막는 범위 | Last safe point | Restart/해제 조건 |
 |---|---|---|---|---|---|
-| Phase 00 evidence | `BLOCKER` | Phase 00/build owner + reviewer | Phase 01 source implementation 전체 | 이 문서와 fixture 설계 | `E-P00-BUILD/ARCH/LEGACY` accepted + exact module contract |
-| Public wire schema/version inventory | `OPEN` | Product·API·Data owner | Production external adapter와 compatibility promise | Adapter SPI/test-only fixture | Versioned schema, field/unknown/alias policy 승인 |
-| `P-12` exact coercion/alias/unknown policy | `OPEN PROPOSED` | Product·API·Data + Domain·Input | 해당 adapter green/production activation | Strict no-fallback abstract contract | Explicit allowlist/policy/version과 negative fixtures 승인 |
-| Public customer/profile/preset/mandatory/extension field shape | `OPEN` | Product·API·Data + Profile owner | Production wire compatibility promise | Internal typed declaration contract와 test-only fixture | Versioned field/type/omission/authorization 계약 승인 |
-| Canonical comparator/encoding name | `PROPOSED INTERNAL` | Domain·Architecture | Stable fingerprint compatibility | Test-only versioned comparator | Review/ADR와 replay/migration rule 승인 |
-| Current Win fixture decimal `D/U` | `BLOCKER FOR OFFICIAL USE ONLY` | Input·Matrix + Benchmark | 해당 fixture의 compliant/official use | Negative rejection fixture | Integer matrix 제공 또는 명시적 contract/migration 승인 |
-| `Q-BENCH-02` values | `OPEN — EXPERIMENT_REQUIRED` | Benchmark·Quality | Phase 14 official manifest | Phase 01 unaffected | Calibration + measured review + explicit approval |
-| `C-17` route pool/MIP | `GATED TARGET` | Product·Algorithm·Architecture + OR-Tools/Legal/Supply-chain/Security/Operations/Cost | Phase 13 | Phase 01 unaffected | Phase 06/07/08 accepted + Phase 14A `ALNS_BENCHMARK_ACCEPTANCE_RECEIPT`, C-17 scope + OR-Tools version/config/native/OSS-license/SBOM/security/operations/cost/admission/fallback/rollback 승인 |
-| `Q-VAR-01` | `DEFERRED` | Product·Domain·Algorithm | Optional variants | Current pair/trip facts only | Variant/fixture/core-impact approval |
-| Multi-trip/rotation | `DEFERRED FEATURE` | Product·Domain·Algorithm | Non-single-trip input | Reject unsupported input | Trip/reset/depot/resource contract와 승인 |
+| Phase 00 evidence | `BLOCKER` | Phase 00/build owner + reviewer | Phase 01 source implementation 전체 | 이 문서와 fixture 설계 | `E-P00-BUILD/ARCH/LEGACY` accepted + exact module contract (Phase 00 document rebase ≠ accepted evidence) |
+| Public wire schema / adapter name (O3) | `OPEN` | Product·API·Data owner | Production external adapter compatibility | Adapter SPI/test-only fixture | wire·O3 승인 |
+| exact coercion/alias/unknown policy | `OPEN PROPOSED` | Product·API·Data + Domain·Input | adapter green/production activation | Strict no-fallback abstract contract | Explicit policy + negative fixtures |
+| Public customer/profile/preset/mandatory/extension field shape | `OPEN` | Product·API·Data + Profile owner | Production wire compatibility | Internal typed declaration + test-only fixture | field/type/omission/authorization 승인 |
+| Canonical comparator/encoding name | `PROPOSED INTERNAL` | Domain·Architecture | Stable fingerprint compatibility | Test-only comparator | Review/ADR + replay/migration |
+| Current Win fixture decimal `D/U` | `BLOCKER FOR OFFICIAL USE ONLY` | Input·Matrix + Benchmark | 해당 fixture compliant/official use | Negative rejection fixture | Integer matrix 또는 명시 migration |
+| Benchmark calibration values | `OPEN` (Master/Domain; 구 Q-BENCH 표기 historical) | Benchmark·Quality | Phase 14 official manifest | Phase 01 unaffected | Calibration + approval |
+| `C-17` hybrid | `GATED TARGET` | Product·Algorithm·Architecture + legal/ops/cost … | Phase 13 | Phase 01 unaffected | 06/07/08 accepted + 14A receipt + C-17 승인 묶음 |
+| Optional variants | `OPEN/DEFERRED` (Master) | Product·Domain·Algorithm | Optional variants | Current pair/trip facts | 별도 승인 |
+| Multi-trip/rotation | `DEFERRED FEATURE` | Product·Domain·Algorithm | Non-single-trip input | Reject unsupported | Trip contract + 승인 |
+| Compute Lambda vs ECS | `O1 OPEN` | Architecture/ops | Phase 01 **비범위** | — | Master D2/O1; Q-INFRA RESOLVED Lambda **금지** |
 
 Blocker가 발생해도 임시 default, 임의 `Q-*`, public field 또는 완료 evidence를 만들지 않는다.
 
 ## 13. Anti-pattern
 
-- External JSON을 `ProblemInstance`, solver route 또는 `Map<String,Object>` core state로 직접 역직렬화
-- Unknown schema/field/alias를 `latest`, 이름 유사도, first-non-null로 해석
+- External JSON을 `immutable solve snapshot` / solver route 또는 `Map<String,Object>` core state로 직접 역직렬화
+- multi-version 입력 스키마 **병행 운영** 또는 unknown field/alias를 `latest`/유사 이름/first-non-null로 해석
 - `double` parse 후 fixed-point 변환
 - Item line 합계를 먼저 만든 뒤 한 번만 `FLOOR`
 - Decimal cost/distance/time 또는 decimal `D/U`를 round/truncate
@@ -1013,47 +1118,53 @@ Blocker가 발생해도 임시 default, 임의 `Q-*`, public field 또는 완료
 - Unordered collection iteration이나 locale comparator를 fingerprint/error order에 사용
 - Plan end와 window close를 같은 포함/제외 의미로 처리
 - `openTime==closeTime`을 임의로 24시간 또는 빈 창으로 해석
-- Delivery-only logical pickup에 가짜 travel/stop/service node 생성
+- `reqDate`를 완료 기한/`serviceEndTime` 이중 상한으로 해석
+- `kind` LOGICAL\|REAL / `REAL_PICKUP_DELIVERY` / LogicalInitialLoad enum으로 service 구분
+- `DELIVERY_ONLY`에 가짜 pickup travel/stop/service node 생성
+- ownership missing → 숨은 `DIRECT`; speed absent → Phase 01에서 `45` 채움
+- vehicle zone **1개 강제** 또는 multi-zone 폐기
 - `Feature` 숫자에서 톤급 순서를 추론하거나 size/capability/zone을 한 문자열 축으로 합침
-- Compatible vehicle 0개를 malformed input으로 거부하거나 final `PROVEN` outcome을 Phase 01에서 생성
-- Phase 01에서 Great Circle, travel completion, dense ID, `ProblemInstance`, solver/verifier logic 구현
+- Compatible vehicle 0개·zone conflict를 malformed input으로 거부하거나 final `PROVEN` outcome을 Phase 01에서 생성
+- Phase 01에서 Great Circle, travel completion, dense ID, snapshot 조립, solver/verifier logic 구현
 - Current HTTP/GCP placeholder 연결을 Phase 01 완료 evidence로 변경
-- Future red/disabled test, test-only schema 또는 fixture 값을 production default로 승격
-- Preset omission, optional mandatory, resource-limit absence 또는 `waitInDepot`를 hidden customer/default/sentinel 값으로 채움
+- Future red/disabled test 또는 fixture 값을 production default로 승격
+- Preset omission, optional mandatory, resource-limit/ownership/speed absence 또는 `waitInDepot`를 hidden default/sentinel으로 채움
 - Raw customer extension, address/PII 또는 full input bytes를 generic map, error message, evidence/log attribute로 통과시킴
+- 문서 rebase만으로 Phase `ACCEPTED` / win_poc / production 승인
 
 ## 14. Source → requirement → test traceability
 
 | Requirement | Source | Phase 01 realization | Exact test/evidence |
 |---|---|---|---|
-| Versioned anti-corruption boundary | Master §4.1~§4.3, §7.1; Integrated §5.1 | DTO/core 분리, exact registry, raw digest/provenance | `VersionedInputAdapterContractTest`; `E-P01-ERROR` |
-| Plan/profile/preset/extension declaration | Domain §4.1~§4.2, Integrated §5.2~§5.3 | Plan identity, exact customer/profile/version, preset omission, mandatory와 approved typed extension 보존; binding/default 금지 | `V1ExternalInputAdapterTest`, `NormalizedInputArtifactTest`; `E-P01-ERROR` |
-| Fixed-point/integer-only | `C-10~12`, `Q-NUM-01~03`, Master §7.2 | Exact decimal, scale-3 floor, item-first, checked arithmetic | `FixedPointNormalizerTest`; `E-P01-NUMERIC` |
-| Plan/window/time axis | `Q-TIME-01~04`, Master §7.3, Domain §5.2 | Strict local string, origin seconds, half-open plan, inclusive close | `TimeNormalizerTest`; `E-P01-TIME` |
-| Service/deadline | `Q-IN-01`, Domain §4.2 | Deadline alias equality, service checked sum, order taskTime reject | `ServiceTimeNormalizerTest`; `E-P01-TIME` |
-| Trip/wait/resource declaration | `Q-IN-02`, `Q-BENCH-03`, Master §7.3 | Oneway/single-roundtrip sealed policy, raw rotation provenance, explicit depot-wait policy와 typed vehicle/global limit/absence | `TripPolicyNormalizerTest`, `RouteResourceNormalizerTest`; `E-P01-TIME` |
-| Size/capability/zone | `C-05`, `Q-COMP-01~02`, Master §7.5 | Exact size set/ALL, capability subset facts, zone normalization | `CompatibilityNormalizerTest`; `E-P01-COMPAT` |
-| Service pattern/pair input | `C-06~07`, `Q-REQ-01~02` | Logical initial load vs physical pickup, one request identity | Adapter/compatibility fixture; `E-P01-COMPAT` |
-| Ownership | `Q-OBJ-03`, `Q-RES-01` | Strict `DIRECT/LEASE` normalization | `normalizesOwnershipStrictly`; `E-P01-COMPAT` |
-| Identity/order/fingerprint | Master §4.5~§4.6, §13; Integrated §5.9 | Duplicate-before-sort, set/sequence distinction, three identities | `CanonicalOrderingTest`, `NormalizedInputArtifactTest`; `E-P01-ERROR` |
-| Typed pre-solve rejection | Master §4.2, Domain §16 | Ordered sealed problems, no partial artifact | Failure fixture suite; `E-P01-ERROR` |
-| Security/redaction | Integrated §20, Plan §9/§13 | Raw input/PII canary가 error/evidence/log에 없음 | `rejectionEvidenceRedactsRawValuesAndInputBytes`; `E-P01-ERROR` |
-| Phase boundary | Master §15.3; Realization Plan Phase 01/02 | Normalized facts only; no prepared travel/problem/solver | `Phase01DependencyRulesTest`; handoff manifest |
+| D1 single canonical + one adapter path | Master D1; Domain §4.1·§4.6; Arch `adapters/input`; plan Phase 01 | DTO/core 분리, single path, raw digest/provenance; multi-version ops MUST NOT | `InputAdapterContractTest`; `E-P01-ERROR` |
+| Plan/profile/preset/extension declaration | Domain §4.1~§4.2 | Plan identity, customer/profile/version, preset omission, mandatory·typed extension 보존; binding/default 금지 | `LegacyExternalInputAdapterTest`, `NormalizedInputArtifactTest`; `E-P01-ERROR` |
+| Fixed-point/integer-only | Domain §5.1 | Exact decimal, scale-3 floor, item-first, checked arithmetic | `FixedPointNormalizerTest`; `E-P01-NUMERIC` |
+| Plan/window/time axis | Domain §5.2 | Strict local string, origin seconds, half-open plan, inclusive close | `TimeNormalizerTest`; `E-P01-TIME` |
+| reqDate + service time | Domain §4.3·§5.2 | 요청 시각·쪽별 보존; service checked sum; order taskTime reject; 판정 실행은 Phase 03 | `ServiceTimeNormalizerTest`, `mapsPerSideReqDateOnly`; `E-P01-TIME` |
+| Trip/wait/resource declaration | Domain §4.5; Master time facts | Oneway/single-roundtrip, depot-wait, typed vehicle/global limit absence | `TripPolicyNormalizerTest`, `RouteResourceNormalizerTest`; `E-P01-TIME` |
+| Size/capability/zone | Domain §5.3·§4.4 | Exact size/ALL, capability, **vehicle multi-zone / all-zones**, visit zone | `CompatibilityNormalizerTest`; `E-P01-COMPAT` |
+| servicePattern | Domain §2.4 | `DELIVERY_ONLY` \| `PICKUP_DELIVERY` only; initial load for DELIVERY_ONLY | service-pattern fixtures; `E-P01-COMPAT` |
+| Ownership | Domain §4.4 | present DIRECT\|LEASE; **absent = axis unused**; no silent DIRECT | `normalizesOwnershipPresentOrAbsentNeverSilentDirect`; `E-P01-COMPAT` |
+| Speed handoff | Domain §6 + user 2026-08-01; plan Phase 02 | present/absent only; default 45 policy ref for Phase 02+; no fill in 01 | `preservesAbsentSpeedWithoutFilling45`; handoff |
+| Identity/order/fingerprint | Master identity; Domain fingerprint | Duplicate-before-sort, set/sequence, three identities | `CanonicalOrderingTest`, `NormalizedInputArtifactTest`; `E-P01-ERROR` |
+| Typed pre-solve rejection | Master; Domain errors | Ordered sealed problems, no partial artifact | Failure fixture suite; `E-P01-ERROR` |
+| Security/redaction | Plan §9/§13 | Raw PII canary 없음 | `rejectionEvidenceRedactsRawValuesAndInputBytes`; `E-P01-ERROR` |
+| Phase boundary | plan Phase 01/02 | Normalized facts only; no prepared travel / snapshot assembly / solver | `Phase01DependencyRulesTest`; handoff manifest |
 
 ## 15. Review checklist
 
-- [ ] Source fingerprints와 cited sections가 현재 source와 일치한다.
-- [ ] 사용자 고정 authority와 `26/1/1` 질문 상태를 적용한다.
-- [ ] Phase 00 evidence 부재를 구현 완료로 오인하지 않는다.
-- [ ] Public/internal/proposed/test-only/open 상태가 구분된다.
-- [ ] Numeric, time, service, compatibility, trip 의미가 원문 명칭과 일치한다.
-- [ ] Plan/profile/preset/mandatory/typed-extension과 wait/resource present/absent가 보존되고 hidden default/binding이 없다.
-- [ ] Duplicate/ambiguous/overflow/rounding/ordering failure oracle가 exact하다.
-- [ ] Reactor targeted command가 prerequisite module의 no-match를 허용하되 owner test report 누락/0 tests를 실패시킨다.
-- [ ] Raw PII/input bytes가 error/evidence/log에 노출되지 않는 canary test가 있다.
-- [ ] Canonical sorting이 의미 있는 sequence를 바꾸지 않는다.
-- [ ] Phase 02가 소비할 artifact만 만들고 travel preparation/solver를 당기지 않는다.
-- [ ] 모든 work package에 prerequisite, target, task, command/test, expected, failure/rollback, handoff가 있다.
-- [ ] Future red가 current missing implementation 때문에 실패한다는 점이 명시된다.
-- [ ] `Q-BENCH-02`, `C-17`, `Q-VAR-01`, multi-trip과 public schema를 임의 해소하지 않는다.
-- [ ] [Phase 00](phase-00-build-architecture-skeleton.md), [Phase 02](phase-02-prepared-travel-immutable-problem.md), [Master Plan](../master-realization-plan.md) 상대 링크가 canonical path를 가리킨다.
+- [ ] Live fingerprints = Phase A + Master + **Domain** + **Architecture** APPROVED + core 3; Final = historical only
+- [ ] **D1**: single canonical; multi-version ops MUST NOT; **`adapters/input`** one path
+- [ ] **`reqDate`** = 요청 시각; **`serviceStartTime ≤ reqDate` only**
+- [ ] **`servicePattern` only** `DELIVERY_ONLY` \| `PICKUP_DELIVERY`; no kind/REAL/Logical enum
+- [ ] Ownership: present DIRECT\|LEASE; **absent = unused**; no silent DIRECT
+- [ ] Vehicle **multi-zone** / 미입력=전 구역; zone 1개 강제 금지
+- [ ] Speed: present/absent; **default 45** = travel-prep policy; Phase 01 **does not fill 45**
+- [ ] Q-INFRA Lambda RESOLVED / `26/1/1` live 인용 없음; O1 OPEN · C-17 GATED 유지
+- [ ] Phase 00/01 review **REBASE_PENDING_REREVIEW**; implementation/acceptance **NOT_***; no win_poc promotion
+- [ ] Handoff terms: **`immutable solve snapshot`**; `ProblemInstance` ≠ full freeze
+- [ ] filename **KEEP** `phase-01-canonical-input-normalization`
+- [ ] Phase 00 evidence 부재를 구현 완료로 오인하지 않는다
+- [ ] Public/internal/proposed/test-only/open 구분; OPEN 수치 MUST 고정 금지
+- [ ] Partial artifact 금지; PII redaction; Phase 02 travel/snapshot 비범위
+- [ ] 다른 Phase 본문 미수정 (이 문서 작업 범위)
