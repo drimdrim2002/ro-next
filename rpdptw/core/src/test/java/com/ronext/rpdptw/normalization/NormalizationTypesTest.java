@@ -1,5 +1,6 @@
 package com.ronext.rpdptw.normalization;
 
+import com.ronext.rpdptw.input.RawInputDigest;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -63,7 +64,21 @@ class NormalizationTypesTest {
 
     @Test
     void testNormalizationResultTypes() {
-        NormalizedInputArtifact artifact = new NormalizedInputArtifact() {};
+        NormalizedPlanEnvelope plan = new NormalizedPlanEnvelope(
+                new com.ronext.rpdptw.input.ExternalPlanId("P"), "C", "P", "1.0", java.util.Optional.empty(), 0, 100, 100
+        );
+        RawInputDigest digest = new RawInputDigest(new byte[]{1});
+        CanonicalFingerprint fp = new CanonicalFingerprint("sem", "env");
+        com.ronext.rpdptw.input.InputProvenance prov = new com.ronext.rpdptw.input.InputProvenance(
+                new com.ronext.rpdptw.input.AdapterIdentity("A"),
+                new com.ronext.rpdptw.input.SchemaIdentity("S"),
+                List.of(), List.of()
+        );
+        NormalizationPolicySnapshot policy = new NormalizationPolicySnapshot("v1", "FLOOR", "3");
+
+        NormalizedInputArtifact artifact = new NormalizedInputArtifact(
+                plan, List.of(), List.of(), List.of(), List.of(), digest, fp, List.of(), prov, policy
+        );
         NormalizationResult accepted = new NormalizationResult.Accepted(artifact);
         assertInstanceOf(NormalizationResult.Accepted.class, accepted);
         assertEquals(artifact, ((NormalizationResult.Accepted) accepted).artifact());

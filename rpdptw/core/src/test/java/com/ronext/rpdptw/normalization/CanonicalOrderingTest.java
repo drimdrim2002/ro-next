@@ -1,5 +1,6 @@
 package com.ronext.rpdptw.normalization;
 
+import com.ronext.rpdptw.adapter.input.AdaptedCanonicalInput;
 import com.ronext.rpdptw.input.AdapterIdentity;
 import com.ronext.rpdptw.input.CanonicalBusinessInput;
 import com.ronext.rpdptw.input.CanonicalCompatibilityInput;
@@ -15,6 +16,7 @@ import com.ronext.rpdptw.input.ExternalPlanId;
 import com.ronext.rpdptw.input.ExternalRequestId;
 import com.ronext.rpdptw.input.ExternalVehicleId;
 import com.ronext.rpdptw.input.InputProvenance;
+import com.ronext.rpdptw.input.RawInputDigest;
 import com.ronext.rpdptw.input.SchemaIdentity;
 import com.ronext.rpdptw.input.ServicePattern;
 import org.junit.jupiter.api.Test;
@@ -220,5 +222,80 @@ class CanonicalOrderingTest {
         InputProblem p1 = new InputProblem.Reference(InputProblemCode.DANGLING_REFERENCE, new InputPath("requests[0].delivery.locationId"));
         InputProblem p2 = new InputProblem.Reference(InputProblemCode.DANGLING_REFERENCE, new InputPath("requests[1].delivery.locationId"));
         assertTrue(CanonicalOrdering.PROBLEM_COMPARATOR.compare(p1, p2) < 0);
+    }
+
+    @Test
+    void setPermutationKeepsSemanticFingerprint() {
+        CanonicalInputNormalizer normalizer = new DefaultCanonicalInputNormalizer();
+        NormalizationPolicySnapshot policy = new NormalizationPolicySnapshot("v1", "FLOOR", "3");
+
+        CanonicalPlanEnvelope plan = createSamplePlan();
+        CanonicalLocationInput loc1 = new CanonicalLocationInput(new ExternalLocationId("LOC-1"), Optional.empty());
+        CanonicalLocationInput loc2 = new CanonicalLocationInput(new ExternalLocationId("LOC-2"), Optional.empty());
+
+        CanonicalVehicleInput v1 = new CanonicalVehicleInput(
+                new ExternalVehicleId("V-1"), "S", Set.of(), Set.of(), Optional.empty(), Optional.empty(), true, false, Optional.empty(), Optional.empty()
+        );
+        CanonicalVehicleInput v2 = new CanonicalVehicleInput(
+                new ExternalVehicleId("V-2"), "S", Set.of(), Set.of(), Optional.empty(), Optional.empty(), true, false, Optional.empty(), Optional.empty()
+        );
+
+        // Input 1: vehicles [v1, v2]
+        CanonicalBusinessInput input1 = new CanonicalBusinessInput(
+                plan, List.of(v1, v2), List.of(loc1, loc2), List.of(), List.of(), createSampleProvenance()
+        );
+        // Input 2: vehicles [v2, v1] (permuted)
+        CanonicalBusinessInput input2 = new CanonicalBusinessInput(
+                plan, List.of(v2, v1), List.of(loc1, loc2), List.of(), List.of(), createSampleProvenance()
+        );
+
+        AdaptedCanonicalInput adapted1 = new AdaptedCanonicalInput(input1, new RawInputDigest("d1".getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        AdaptedCanonicalInput adapted2 = new AdaptedCanonicalInput(input2, new RawInputDigest("d2".getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+
+        NormalizedInputArtifact artifact1 = ((NormalizationResult.Accepted) normalizer.normalize(adapted1, policy)).artifact();
+        NormalizedInputArtifact artifact2 = ((NormalizationResult.Accepted) normalizer.normalize(adapted2, policy)).artifact();
+
+        assertEquals(artifact1.fingerprint().semanticFingerprint(), artifact2.fingerprint().semanticFingerprint());
+    }
+
+    @Test
+    void visitOrderChangesSemanticFingerprint() {
+        CanonicalInputNormalizer normalizer = new DefaultCanonicalInputNormalizer();
+        NormalizationPolicySnapshot policy = new NormalizationPolicySnapshot("v1", "FLOOR", "3");
+
+        CanonicalPlanEnvelope plan = createSamplePlan();
+        CanonicalLocationInput loc1 = new CanonicalLocationInput(new ExternalLocationId("LOC-1"), Optional.empty());
+
+        CanonicalItemInput itemA = new CanonicalItemInput("10.000", "0.500", 1, "0");
+        CanonicalItemInput itemB = new CanonicalItemInput("20.000", "1.000", 1, "0");
+
+        // Request 1: items [itemA, itemB]
+        CanonicalRequestInput req1 = new CanonicalRequestInput(
+                new ExternalRequestId("REQ-1"), ServicePattern.DELIVERY_ONLY, Optional.empty(), createService("LOC-1"),
+                List.of(itemA, itemB), new CanonicalCompatibilityInput(List.of("ALL"), Set.of()), Optional.empty(), Optional.empty()
+        );
+        // Request 2: items [itemB, itemA] (changed visit / item sequence order)
+        CanonicalRequestInput req2 = new CanonicalRequestInput(
+                new ExternalRequestId("REQ-1"), ServicePattern.DELIVERY_ONLY, Optional.empty(), createService("LOC-1"),
+                List.of(itemB, itemA), new CanonicalCompatibilityInput(List.of("ALL"), Set.of()), Optional.empty(), Optional.empty()
+        );
+
+        CanonicalBusinessInput input1 = new CanonicalBusinessInput(
+                plan, List.of(), List.of(loc1), List.of(req1), List.of(), createSampleProvenance()
+        );
+        CanonicalBusinessInput input2 = new CanonicalBusinessInput(
+                plan, List.of(), List.of(loc1), List.of(req2), List.of(), createSampleProvenance()
+        );
+
+        AdaptedCanonicalInput adapted1 = new AdaptedCanonicalInput(input1, new RawInputDigest("d1".getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        AdaptedCanonicalInput adapted2 = new AdaptedCanonicalInput(input2, new RawInputDigest("d1".getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+
+        NormalizedInputArtifact artifact1 = ((NormalizationResult.Accepted) normalizer.normalize(adapted1, policy)).artifact();
+        NormalizedInputArtifact artifact2 = ((NormalizationResult.Accepted) normalizer.normalize(adapted2, policy)).artifact();
+
+        org.junit.jupiter.api.Assertions.assertNotEquals(
+                artifact1.fingerprint().semanticFingerprint(),
+                artifact2.fingerprint().semanticFingerprint()
+        );
     }
 }
