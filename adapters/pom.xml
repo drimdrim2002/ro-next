@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.ronext</groupId>
+        <artifactId>ro-next</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <groupId>com.ronext.rpdptw</groupId>
+    <artifactId>rpdptw-adapters</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>rpdptw-adapters</name>
+    <description>Parent aggregator for RPDPTW adapter modules</description>
+
+    <modules>
+        <module>input</module>
+    </modules>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-target-banned-dependencies</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <dependencyConvergence/>
+                                <bannedDependencies>
+                                    <excludes>
+                                        <exclude>com.google.cloud:*</exclude>
+                                        <exclude>com.google.ortools:*</exclude>
+                                        <exclude>software.amazon.awssdk:*</exclude>
+                                        <exclude>com.amazonaws:*</exclude>
+                                        <exclude>com.azure:*</exclude>
+                                        <exclude>io.kubernetes:*</exclude>
+                                        <exclude>org.springframework.boot:*-data-jpa</exclude>
+                                        <exclude>redis.clients:jedis</exclude>
+                                        <exclude>io.lettuce:*</exclude>
+                                        <exclude>org.redisson:*</exclude>
+                                        <exclude>org.hibernate:*</exclude>
+                                        <exclude>jakarta.persistence:*</exclude>
+                                        <exclude>org.springframework.data:*</exclude>
+                                    </excludes>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
