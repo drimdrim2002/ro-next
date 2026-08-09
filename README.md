@@ -1,23 +1,22 @@
 # ro-next
 
-CVRPTW 최적화 서비스의 Java 25/AWS 기반 구현 시작점입니다. 설계 문서는 `docs/`에, 실행 가능한 서버 및 워커 기본 구조는 `src/`에 있습니다.
+배차 최적화(RPDPTW) 서비스. 규약 JSON을 접수해 ALNS로 배차안을 만들고, 독립 재검증을 통과한
+결과만 S3에 저장하는 **단일 Spring Boot 서비스** (AWS ECS Fargate)다.
 
 ## 설계 문서
 
 - **진입점:** [`docs/README.md`](docs/README.md)
-- **정본 (APPROVED):** [`docs/master-design.md`](docs/master-design.md) · [`docs/domain-design.md`](docs/domain-design.md) · [`docs/architecture-design.md`](docs/architecture-design.md)
-- 구 설계·질문 등록부·Phase B 핸드오프는 [`docs/deprecated/`](docs/deprecated/) (`SUPERSEDED` / `ARCHIVED`)
-- 구현 phase 문서 세트: [`docs/implementation/README.md`](docs/implementation/README.md)
+- 현행 4문서: [Master](docs/master-design.md) · [Domain](docs/domain-design.md) ·
+  [Architecture](docs/architecture-design.md) · [Implementation Plan](docs/implementation-plan.md)
+  (2026-08-09 확정)
+- 과거 설계는 전부 [`docs/deprecated/`](docs/deprecated/) — 효력 없음
 
-## 기술 기준
+## 기술 기준 (확정 설계)
 
-- Java 25: AWS Corretto `25.0.3-amzn` 런타임 컨테이너
-- Maven `3.9.14`
-- AWS Lambda / ECS: 공개 API 및 내부 ALNS worker
-- AWS Step Functions: ALNS batch 병렬화와 최적 후보 선택 오케스트레이션
-- Amazon S3: 입력 URI, 후보, 비동기 최적화 결과
-
-JDK와 Maven은 전역 설정이 아니라 저장소의 `.sdkmanrc`로 고정했습니다.
+- Java 25 (`.sdkmanrc`로 고정) · Maven 3.9+
+- 모듈 2개: `solver-core`(순수 Java, 의존성 0) + `app`(Spring Boot, ECS 배포 단위)
+- 저장: **Amazon S3만** (RDB·Redis 없음)
+- 배포: **AWS ECS Fargate** 단일 서비스 (Lambda·Step Functions 사용하지 않음)
 
 ```bash
 source "$HOME/.sdkman/bin/sdkman-init.sh"
@@ -25,22 +24,8 @@ sdk env
 mvn verify
 ```
 
-## 배포
+## 현재 코드 상태 (주의)
 
-컴포넌트 런타임은 AWS Corretto 25 컨테이너를 사용합니다. AWS Step Functions 및 Lambda (또는 ECS) 환경에 맞춰 배포됩니다.
-
-API는 `s3://` 입력 URI를 받고 Step Functions 실행을 시작합니다.
-
-```json
-{
-  "inputUri": "s3://my-optimization-inputs/instance-001.json",
-  "parameters": {
-    "parallelRuns": 8,
-    "iterationsPerRun": 5000,
-    "seed": 42
-  }
-}
-```
-
-최적화 코어의 현재 `AlnsBatchEngine`은 배포 흐름 검증을 위한 대체 구현입니다. 실제 CVRPTW 입력 파싱, 초기해, destroy/repair, local search는 인프라 어댑터 밖의 순수 Java 계층에 추가합니다.
-
+현 `src/`의 `AlnsBatchEngine` 등은 배포 흐름 확인용 placeholder이며 pom에는 과거 GCP 실험
+의존성이 남아 있다. 확정 설계와 다르며, [Implementation Plan Stage 0](docs/implementation-plan.md)에서
+정리·재구성한다. placeholder 동작은 솔버 완성의 근거가 아니다.
