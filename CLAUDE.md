@@ -9,7 +9,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 확정 설계와 같은 3모듈 구조다. 다만 **뼈대일 뿐 솔버 로직은 아직 0**이다.
 
 - **확정 설계**: AWS ECS Fargate 위 단일 Spring Boot 서비스, 저장은 S3만.
-- **현 코드**: 3모듈 + `package-info.java` 11개 + `RoNextApplication` + ArchUnit 룰 1개가 전부.
+- **현 코드**: 4개 pom + `package-info.java` 10개 + `RoNextApplication` + `application.yml` +
+  테스트 클래스 2개(메서드 3개)가 전부.
   `domain`·`problem`·`eval`·`solve`·`verify`·`profile`·`api`·`run`·`input`·`storage`는 **전부 빈 패키지**다
   — 도메인 타입을 grep해서 안 나오는 게 정상이고, 아직 안 만든 것이지 다른 데 있는 게 아니다.
 - **다음 작업은 Stage 1** (canonical 입력·정규화, solver-core). 구현 직전 상세는
@@ -24,7 +25,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 source "$HOME/.sdkman/bin/sdkman-init.sh" && sdk env   # Java 25.0.3-amzn · Maven 3.9.14 (.sdkmanrc)
 mvn verify                             # 3모듈 컴파일 + 테스트 + jar (app은 Boot repackage fat jar)
-mvn test -Dtest=ArchitectureRulesTest  # 단일 테스트 (solver-core 경계 룰)
+mvn test -pl solver-core -Dtest=ArchitectureRulesTest   # 단일 테스트 — 모듈(-pl)까지 지정할 것
 mvn spring-boot:run -pl app            # 앱 기동
 curl -s localhost:8080/actuator/health # {"groups":[...],"status":"UP"}
 ```
@@ -115,12 +116,15 @@ app/             com.ronext.rpdptw.app      api · run · input · storage — S
   그걸 죽인다 — 의존이 있든 없든 빈 출력이라 "GCP 0건·core 순수" 검사가 **무조건 통과처럼 보인다.**
   `-q` 없이 좌표를 grep한다 (위 명령 절). 검사가 살아 있는지는 scope 제한을 푼 대조군
   (`mvn dependency:list -pl solver-core | grep -cE '^\[INFO\]\s+\S+:\S+:\S+:'` → 0이 아니어야 함)으로 본다.
+- **루트에서 `mvn test -Dtest=X`는 BUILD FAILURE다.** 3모듈이 된 뒤로는 패턴이 안 맞는 모듈
+  (`solver-profile`은 테스트 0개)에서 surefire가 "No tests matching pattern"으로 죽는다.
+  `-pl <모듈>`을 같이 주거나 `-Dsurefire.failIfNoSpecifiedTests=false`를 붙인다.
 - `rpdptw/`·`adapters/`·`build/`·`apps/`·`gcp/`·`src/`·`.serverless/`·`node_modules/`·`Dockerfile` —
   **전부 삭제됐다** (Stage 0). 옛 문서·대화에서 이 경로가 보이면 지금은 존재하지 않는 것이다.
   Dockerfile은 Stage 7에서 새로 쓴다.
-- ArchUnit 룰(`verify ↛ solve`)은 대상 클래스가 0개라 지금은 공회전한다 (`allowEmptyShould(true)`).
-  룰 자체는 유효함을 확인해 뒀지만(위반 클래스 주입 시 BUILD FAILURE), **green이 곧 경계 준수의
-  근거는 아니다** — Stage 5까지는 그렇다.
+- ArchUnit 룰(`verify ↛ solve`)은 `verify`에 `solve`를 참조할 클래스가 아직 없어 지금은 공회전한다
+  (`allowEmptyShould(true)`). 룰 자체가 살아 있음은 확인해 뒀지만(위반 클래스를 넣으면 BUILD FAILURE),
+  **green이 곧 경계 준수의 근거는 아니다** — `verify` 구현이 생기는 Stage 5부터 의미가 붙는다.
 - `data/win_poc_case_floor.json` (주문 452·차량 31)이 1차 성공 기준의 실행 fixture다.
   규약 원본은 `data/ro_input_json_spec.pdf`, 비교 대상인 기존 엔진(Win) 결과는 `data/alns_result.csv`,
   거리표 소수 FLOOR 처리는 `scripts/floor_win_poc_matrix.py`가 했다.
