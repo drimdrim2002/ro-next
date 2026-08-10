@@ -11,6 +11,8 @@ sources:
 revisions:
   - 2026-08-09 최초 작성
   - 2026-08-10 `SolveOptions` → `DeliveryPolicy`, `Problem`에 profile 미보관 확정 (Domain §5)
+  - 2026-08-10 §7에 규모 테스트 T12 추가 (Plan Stage 2 규모 DoD 대응 — 453² 전 쌍 합성 입력의
+    Problem 생성 1회, 시간·메모리 기록). 다른 설계 무변경
 ---
 
 # Stage 2 — 이동표와 Problem 동결
@@ -282,6 +284,7 @@ Domain §4·§5의 규칙·경계값·오류 분류에서 뽑았다. "실패" = 
 | T9 | `ProblemFreezeTest.validatesReferencesAndPairs` | E10·E16·E17·E20 전부 `ProblemCreationException` | (Plan 범위 문장 "생성 시 참조 검증") |
 | T10 | `ProblemFreezeTest.freezesCompatibilityFacts` | E18: ∅ 포함, 결과가 `Compatibility.compatible` 전수 대조와 일치 | (Plan 범위 문장 — Domain §5 호환성 사실) |
 | T11 | `ProblemFreezeTest.travelCompleteAfterFreeze` | 희소 입력 후 n² 전 쌍 조회 성공 (완전성) | (Plan 범위 문장 "완전성 검증") |
+| T12 | `ProblemScaleTest.freezesFullScaleSyntheticProblem` | **규모 측정.** 실물과 같은 규모의 합성 입력(장소 453 = 주문 452 + 차고 1, 차량 31, 이동표 **453² = 205,209쌍을 전부 채워서**)으로 `TravelMatrix.prepare` + `Problem.freeze` 1회 → 예외 없이 완료. **소요 시간·힙 사용량을 출력해 기록한다.** 쌍을 비우면 Great Circle 보정이 대신 채워 측정이 무의미해지므로 전 쌍을 준다. 입력은 프로그램으로 조립한다 (fixture JSON 파싱 없음 — 위 서두 원칙, app 모듈 불필요) | Plan Stage 2 "**규모**" 문장 |
 
 T9–T11은 DoD 두 문장 밖이지만 Plan Stage 2 범위 문장("`Problem` 생성 시 참조·완전성 검증과
 동결")의 직접 검증이다 — 보고에서 DoD 보강을 제안한다.
@@ -301,6 +304,14 @@ T9–T11은 DoD 두 문장 밖이지만 Plan Stage 2 범위 문장("`Problem` �
 | multiRotation fixture 충돌 해소 | Stage 6 전 결정 | Stage 0 §11 Q2 |
 | depot.taskTime의 시간 계산 적용 (`Depot` 필드 보관만) | 보류 | Domain §2.5 |
 | 이동표 메모리 최적화(압축·공유 표현)의 확정 | 구현 재량 | §2.2 (요구는 불변+O(1)뿐) |
+| 시간창 전개(다일 근무창·차고 창)의 재계산·파생 색인 | **안 함 — 이 Stage는 무변경** | Domain §3.2 |
+
+**D4(다일 근무창 + 차고 시간창, 2026-08-10 확정)는 이 Stage를 바꾸지 않는다** — 음성 결과를
+남겨 둔다. 시간창은 정규화(Stage 1)가 이미 절대 창 목록으로 펼쳐 `Vehicle`·`Depot`·`RequestSide`
+안에 담아 오므로, `freeze(Plan)` 시그니처·검증 절차·`TravelMatrix`·조회 메서드가 모두 그대로다.
+창 목록은 그 record들과 함께 동결돼 탐색·재검증이 같은 값을 읽는다 (Domain §5). 창을 해석하는
+코드는 여기가 아니라 전파(Stage 3)·재검증(Stage 5)에 있고, 둘은 그것을 각자 구현한다
+(Stage 3 노트 N8).
 
 ---
 

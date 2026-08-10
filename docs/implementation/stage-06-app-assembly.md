@@ -16,6 +16,11 @@ revisions:
   - 2026-08-10 3계층 반영 — app→solver-profile 의존, profile resolve·전달을 app이 소유,
     탐색 예산(idle 포함) 설정 키 추가
   - 2026-08-10 Jackson 3 기준 정합 — `ObjectMapper` → `JsonMapper` (`tools.jackson`), Stage 0 §4.4
+  - 2026-08-10 §10 Q1을 Plan §2.1 D1으로, Q2·Q4·Q5를 D2(wire 협의)로 이관 — 포인터와
+    D1의 새 사실(규약 열거 정의 = 차고 복귀 횟수)만 반영. 설계·매핑표·테스트 무변경
+  - 2026-08-10 D4 확정 반영 — §4.2·§4.3·§4.4 매핑표의 "앵커링은 정규화"를 "전개는 정규화"로
+    (Domain §3.2), §10 Q5에 `driverRestTimeRatio` ≠ `interWorkWindowRestTime` 주의 추가.
+    adapter는 여전히 `LocalTime` 한 쌍을 넘길 뿐이라 매핑 구조·테스트 무변경
 ---
 
 # Stage 6 — 앱 조립
@@ -408,7 +413,7 @@ solveKey를 그대로 URL에 붙이면 된다. 최종 경로·필드명은 호�
 |---|---|---|
 | `locId` | `locId` | 부재 → null (좌표 기반 생성 — Stage 1 E22) |
 | `latitude` / `longitude` | `latText` / `lonText` | 필수, 원문 보존 |
-| `openTime` / `closeTime` | `openTime` / `closeTime` | 부재 → null (앵커링은 정규화) |
+| `openTime` / `closeTime` | `openTime` / `closeTime` | 부재 → null (**전개는 정규화** — Domain §3.2). 차고 창은 출발·복귀에 적용된다 (Domain §7.1) |
 | `taskTime` | `taskTimeSec` | 부재 → null. 시간 계산 미적용 보관 (Domain §2.5) |
 | `zoneId` | `zoneId` | 보관만 |
 | `locTcd` | 무시 | canonical 밖 (Stage 1 §8 인계 목록) |
@@ -420,7 +425,7 @@ solveKey를 그대로 URL에 붙이면 된다. 최종 경로·필드명은 호�
 | `orderId` | `orderId` | 필수 |
 | `locId` | `delivery.locId` | 부재 → null |
 | `latitude` / `longitude` | `delivery.latText` / `lonText` | 필수 |
-| `openTime` / `closeTime` | `delivery.openTime` / `closeTime` | 부재 → null |
+| `openTime` / `closeTime` | `delivery.openTime` / `closeTime` | 부재 → null (**전개는 정규화** — 주문 창도 날마다 반복, Domain §3.2) |
 | `duration` | `delivery.durationSec` | 부재 → null |
 | `reqDate` ▷ `dueDate` | `delivery.reqDate` | legacy `dueDate` 수용 (Domain §2.3). 부재 → null (→ planEnd) |
 | `zoneId` | `delivery.zoneId` | 부재 → null |
@@ -445,7 +450,7 @@ solveKey를 그대로 URL에 붙이면 된다. 최종 경로·필드명은 호�
 | `vehicleId` | `vehicleId` | 필수 |
 | `vehicleFeature` | `vehicleFeature` | 부재 → `"ALL"` (규약 default 열). 비교는 문자 그대로 (Stage 1 E26) |
 | `maxWeight` / `maxVolume` | `maxWeightKg` / `maxVolumeCbm` | 필수, BigDecimal |
-| `workStartTime` / `workEndTime` | `workStart` / `workEnd` | 부재 → null (앵커링은 정규화) |
+| `workStartTime` / `workEndTime` | `workStart` / `workEnd` | 부재 → null (**전개는 정규화** — 날마다 반복되는 근무창, Domain §3.2) |
 | `speed` | `speedKmH` | 정수만 — 소수 → `INVALID_INPUT` (Stage 1 §9 Q4 잠정 유지) |
 | `maxStopCnt` | `maxStopCnt` | 부재 → null |
 | `maxDriveTime` | `maxDriveTimeSec` | 부재 → null |
@@ -614,8 +619,8 @@ T1~T11·T14는 DoD 두 문장 밖이지만 Plan Stage 6 범위 문장의 직접 
 
 | # | 질문 | 잠정 처리 |
 |---|---|---|
-| Q1 | **multiRotation 값의 의미** (Stage 0 §11 Q2 → Stage 1 §9 Q1 인계): 두 fixture 모두 `multiRotation: "1"`이고, 이 값이 "차량이 도는 횟수"(1 = trip 1개 = 현재 지원)인지 "추가 회차 수"(1 = trip 2개 = 미지원)인지 미확정이라 최종 성공 기준 fixture(Plan §0)가 접수(§3.1-2)에서 422로 거부된다. **Stage 6 구현 착수 전 결정 필요.** 경로 — **(A) 호출 시스템 확인**: "1 = trip 1개"면 Domain §2.5의 지원 범위 판정식을 `> 1`로 바꾸는 것으로 끝난다 (코드 한 줄, 구조 무변경, T13 즉시 유효). **(B) fixture 교정**: 값을 `"0"`으로 수정(또는 필드 삭제 — default 0). 생성 스크립트(scripts/floor_win_poc_matrix.py)도 함께 확인. 어느 쪽이든 판정 규칙은 `PlanNormalizer`(Stage 1 절차 2)와 접수 게이트(§3.1-2)를 **같은 조건으로** 바꾼다 — adapter 단독 우회 금지 (의미 규칙은 solver-core 소유) | 본 문서는 현행 판정(`!= 0`)대로 설계 (E1·T4). T13은 결정 전 실행 불가로 명시 |
-| Q2 | **customerId의 wire 원천** (Stage 1 §9 Q6 인계): fixture에 plan `shprId="S3853"`와 주문 수준 `customerId="WINCOMMERCE"`가 공존한다. profile 선택 키·S3 key 세그먼트가 어느 쪽인지 협의 필요 (profile 레지스트리 키 명명에 직결) | Domain §2.2의 명시 대응(`shprId`)을 매핑 (§4.1). 주문 수준 customerId는 무시. 현재는 어느 쪽이든 default profile이라 동작 차이 없음 |
+| Q1 | **multiRotation** (Stage 0 §11 Q2 → Stage 1 §9 Q1 인계): 두 fixture 모두 `multiRotation: "1"`이라 최종 성공 기준 fixture(Plan §0)가 접수(§3.1-2)에서 422로 거부된다 | **[Plan §2.1 D1](../implementation-plan.md)으로 이관 (2026-08-10).** 값의 의미는 규약 PDF 열거 정의로 해소됐다 — 숫자는 **차고 복귀 횟수**이고 `"1"`은 지원 범위 밖이다. 따라서 옛 경로 A("1 = trip 1개면 판정식을 `> 1`로")는 규약 문면상 지지되지 않는다. 남은 것은 범위 결정이며 D1이 소유한다. **Stage 6 구현 착수 전 결정 필요**인 점은 그대로. 어느 쪽으로 닫히든 판정 규칙은 `PlanNormalizer`(Stage 1 절차 2)와 접수 게이트(§3.1-2)를 **같은 조건으로** 바꾼다 — adapter 단독 우회 금지 (의미 규칙은 solver-core 소유). 본 문서는 현행 판정(`!= 0`)대로 설계 (E1·T4). T13은 결정 전 실행 불가 |
+| Q2 | **customerId의 wire 원천** (Stage 1 §9 Q6 인계): fixture에 plan `shprId="S3853"`와 주문 수준 `customerId="WINCOMMERCE"`가 공존한다. profile 선택 키·S3 key 세그먼트가 어느 쪽인지 협의 필요 (profile 레지스트리 키 명명에 직결) | **[Plan §2.1 D2](../implementation-plan.md)(wire 협의)로 이관 (2026-08-10).** 그때까지 Domain §2.2의 명시 대응(`shprId`)을 매핑 (§4.1). 주문 수준 customerId는 무시. 현재는 어느 쪽이든 default profile이라 동작 차이 없음 |
 | Q3 | **접수 4xx의 깊이**: Domain §12는 "소수 거리·알 수 없는 vhclOwnTyp"을 접수 4xx(S3 저장 없음)로 분류하는데, Architecture §3.1은 "canonical 변환은 접수에서 하지 않고 의미 오류는 풀이 단계 FAILED"라 한다 — 두 정본이 충돌 | Architecture 문면을 따라 파싱 수준만 4xx, 정규화 오류는 FAILED (N1·E3). Domain §12대로 하려면 접수 절차 1 뒤에 `PlanNormalizer.normalize` 한 줄만 추가하면 된다(결과는 버림 — 비용 sub-second). 문서 정합 회복 시 어느 쪽이든 한 곳 수정 |
-| Q4 | **wire 최종 협의 부재**: 결과 JSON 필드명·시각 timezone 표기·단위 표현(§5), 조회 경로(§3.4), HTTP 상태 배정(§2.4) — Domain §11.2·Architecture §3.4가 "협의 확정"으로 열어 둠. 협의 상대가 현재 없음 | §5·§3.4의 잠정안으로 구현·테스트(T11 golden). 협의 후 변경은 wire 표기만 — 의미(Domain §11.1)는 불변 |
-| Q5 | **legacy 시간 필드의 처리**: 규약 샘플의 주문 수준 `taskTime`, `driverRestTimeRatio`(스펙 샘플 값 0.15) — canonical·serviceTime 공식에 자리가 없어 무시하면 호출 측 기대와 조용히 어긋날 수 있다 | 무시 (E19 — 공식 밖 입력 미사용). 0이 아닌 값을 거부(UNSUPPORTED_INPUT)로 바꿀지는 Domain 보완과 함께 결정 |
+| Q4 | **wire 최종 협의 부재**: 결과 JSON 필드명·시각 timezone 표기·단위 표현(§5), 조회 경로(§3.4), HTTP 상태 배정(§2.4) — Domain §11.2·Architecture §3.4가 "협의 확정"으로 열어 둠. 협의 상대가 현재 없음 | **[Plan §2.1 D2](../implementation-plan.md)로 이관 (2026-08-10).** "협의 상대를 찾는 것"이 D2의 첫 작업으로 올라갔다. 그때까지 §5·§3.4의 잠정안으로 구현·테스트(T11 golden). 협의 후 변경은 wire 표기만 — 의미(Domain §11.1)는 불변 |
+| Q5 | **legacy 시간 필드의 처리**: 규약 샘플의 주문 수준 `taskTime`, `driverRestTimeRatio`(스펙 샘플 값 0.15) — canonical·serviceTime 공식에 자리가 없어 무시하면 호출 측 기대와 조용히 어긋날 수 있다 | **[Plan §2.1 D2](../implementation-plan.md)로 이관 (2026-08-10)** — 호출 측이 이 값을 무엇으로 기대하는지가 답이라 협의 항목이다. 그때까지 무시 (E19 — 공식 밖 입력 미사용). 0이 아닌 값을 거부(UNSUPPORTED_INPUT)로 바꿀지는 협의 결과와 함께 결정. **주의: `driverRestTimeRatio`(운전 시간에 비례한 휴식)는 Domain §7.3의 `interWorkWindowRestTime`(근무창 사이의 야간 휴식)과 다른 개념이다** — D4가 후자를 실계산하게 됐다고 이 필드가 해소되는 것이 아니다 |

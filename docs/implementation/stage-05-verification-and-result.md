@@ -14,6 +14,13 @@ sources:
 revisions:
   - 2026-08-10 최초 작성
   - 2026-08-10 3계층 반영 — `profile`→`eval` 배치, profile 인자화, score 배열 대조 추가
+  - 2026-08-10 순서 개정 반영 — 재검증(§1~§3)을 Stage 4보다 먼저 만든다는 서두 한 문단 추가
+    (Stage 4 의존은 §8 T8과 서두 그림뿐). §2.3·§7 E8은 시간창 close를 Domain §7.1 확정 해석으로,
+    depot 창·복수 근무창은 Plan §2.1 D4 대기로 표기. 파일·클래스·시그니처·테스트 무변경
+  - 2026-08-10 **D4 확정 반영 — 설계 변경**: `VerifyViolation.Kind`에 `DEPOT_WINDOW` 추가 ·
+    §2.3 `RouteReplay`가 다일 근무창·차고 창을 재계산 · §3에 절차 5-a(창 포함 검사, Stage 3 N5 대체) ·
+    §4.3 절차 3의 bucket 설명 확장 · N1 공유 허용 목록에 "정규화된 창 목록" + 창 걷는 코드는 공유 금지 ·
+    E19~E22 신설 · T5에 다일 대조 추가, T12 신설 · §9 Q5(`departure` wire 노출) 신설
 ---
 
 # Stage 5 — 재검증과 결과
@@ -27,8 +34,18 @@ bestEvaluation + bestScore)를 그대로 잇는다 — 같은 개념에 새 이�
 **재검증은 탐색 예산을 보지 않는다** (Domain §2.5.1·§10.2 MUST NOT). `AlnsConfig`가 `solve`에
 있고 `verify ↛ solve`가 ArchUnit으로 막히므로, 시간·step·idle 한도는 애초에 도달 불가능하다.
 
+**순서 — 재검증(§1~§3)은 Stage 4보다 먼저 만든다** (Plan Stage 5, 2026-08-10). `SolutionVerifier.verify`의
+시그니처에 Stage 4 타입이 하나도 없어 Stage 3만 있으면 만들 수 있다 (§2.1). **Stage 4에 실제로
+의존하는 것은 §8 T8(`AlnsVerifyIntegrationTest.alnsBestAlwaysVerifies`) 하나뿐**이고, 아래 핵심
+구도의 `[AlnsResult (Stage 4)]` 입구는 **전방 참조**다 — 그 둘만 Stage 4 뒤로 미룬다.
+결과 모델(§4)은 Stage 4 뒤에 만들지만 이는 **의존이 아니라 집중을 위한 선택**이다
+(`ResultAssembler`도 `Pass` + `RunStamp`만 쓰므로 기술적으로는 Stage 4 없이 만들 수 있다).
+문서는 쪼개지 않는다 — 읽는 순서만 바뀐다.
+
 **DoD** ([Plan Stage 5](../implementation-plan.md)): 일부러 오염시킨 해(짝 분리·용량 초과·
-점수 불일치)가 전부 FAIL · ArchUnit 규칙 통과.
+점수 불일치)가 전부 FAIL · ArchUnit 규칙 통과. **두 문장 모두 재검증(§1~§3) 쪽이라 위 순서
+변경으로 DoD는 달라지지 않는다.** §6의 `SOLVE_MUST_NOT_DEPEND_ON_VERIFY` 규칙이 Stage 4보다
+먼저 심어지는 것은 덤이다 — Stage 4가 verify 코드를 끌어 쓰는 것을 작성 시점에 막는다.
 
 핵심 구도 — 검증을 통과한 값만이 결과의 재료가 된다 (Master §3-⑥ 유일한 발행 규칙):
 
@@ -138,6 +155,7 @@ public record VerifyViolation(Kind kind,
         ASSIGNED_AND_BANKED, NOT_ASSIGNED_NOT_BANKED, UNKNOWN_REQUEST,
         // hard 재계산 (Domain §6.2·§7) — solve.Violation과 같은 의미, 독립 구현
         TIME_WINDOW, REQ_DATE, WORK_WINDOW,
+        DEPOT_WINDOW,                     // 차고 창 밖 출발·복귀 (Domain §7.1, D4 신설)
         CAPACITY_WEIGHT, CAPACITY_VOLUME, END_LOAD_NOT_ZERO,
         MAX_STOP_COUNT, MAX_DRIVE_TIME, MAX_DRIVE_DIST,
         INCOMPATIBLE_VEHICLE, PROFILE_HARD,
@@ -155,9 +173,11 @@ final class RouteReplay {                               // package-private — v
         record Ok(RouteFacts facts) implements Outcome {}
         record Violated(VerifyViolation violation) implements Outcome {}
     }
-    /** Domain §7.1 공식을 처음부터: initialLoad → 출발(waitInDepot) → 방문 루프
-        (arrival→대기→시간창→reqDate→load 곡선) → endDepot → 근무창 → 한도 → 종료 load == 0.
-        이동은 problem.travel()만 (§4 MUST). solve.RoutePropagator 코드를 재사용하지 않는다. */
+    /** Domain §7.1 절차를 처음부터: initialLoad → 출발(근무창 ∩ startDepot 창, waitInDepot) →
+        방문 루프(arrival→대기→시간창→reqDate→load 곡선, 창을 넘으면 다음 창으로 미룸) →
+        endDepot 도착의 차고 창 → 휴식 계산 → 한도 → 종료 load == 0.
+        이동은 problem.travel()만 (§4 MUST). solve.RoutePropagator 코드를 재사용하지 않는다.
+        창을 걷는 코드(fitArc/fitService 상당)도 **여기서 따로 구현한다** (Stage 3 노트 N8). */
     static Outcome replay(Problem problem, VehicleId vehicleId, List<NodeId> visits);
 }
 ```
@@ -165,8 +185,15 @@ final class RouteReplay {                               // package-private — v
 - `RouteReplay`는 solve의 `RoutePropagator`와 **같은 의미를 독립 코드로** 다시 구현한다
   (Domain §10.1 — 탐색 코드 버그를 잡는 이중 기입). 공유하는 것은 `Problem`의 동결 사실과
   `profile`의 값 타입·공식(`RouteFacts.routeOperationalTimeSec()` 등)뿐이다 (노트 N2).
-- Stage 3이 잠정 확정한 해석(§9 Q1 serviceStart ≤ close, Q2 depot 창 미적용, Q3 단일
-  근무창·rest 0)을 **동일하게** 따른다 — 해석이 갈리면 두 구현의 값이 어긋나 T5가 실패한다.
+- 전파 해석은 Stage 3과 **동일하게** 따른다 — 갈리면 두 구현의 값이 어긋나 T5가 실패한다.
+  - 시간창 close = `serviceStart ≤ closeTime`: **Domain §7.1 확정 해석** (2026-08-10, Stage 3 §9 Q1 해소).
+    창이 여럿이면 "`serviceStart`가 **어느 창 안**인가"로 판정한다 — 마지막 창의 close 하나만 보면
+    창 사이 틈에서 시작하는 서비스를 통과시킨다 (Domain §7.1 MUST).
+  - **다일 근무창·차고 창: Domain §3.2·§7.1 확정 해석** (2026-08-10 D4, Stage 3 §9 Q2·Q3 해소).
+    창 목록은 정규화가 전개해 `Problem`에 동결된 **사실**이라 그대로 읽고, 그 목록을 해석해
+    시각을 정하는 **코드는 공유하지 않는다** (Stage 3 N8·아래 노트 N1).
+  - 시간 측정 규약(모든 소요 시간 = 두 시각의 차, Domain §3.2)을 여기서도 그대로 쓴다 —
+    한쪽만 "초를 세면" 창마다 1초씩 어긋나 T5가 원인 불명으로 실패한다.
 
 ---
 
@@ -188,10 +215,19 @@ final class RouteReplay {                               // package-private — v
 4. 관문    1–3 위반이 하나라도 있으면 여기서 Fail — 구조가 깨진 경로의 물리 재계산은
           무의미하다 (Domain §6.5의 순서: 구조 검사 → 정식 평가와 동형).
 5. 재전파  경로마다 RouteReplay.replay (§2.3) — 적재 곡선(0 ≤ load ≤ capacity, 종료 0),
-          시간창·reqDate·근무시간, maxStop·maxDrive 한도까지 전부 다시 계산.
+          시간창·reqDate·근무창·차고 창, maxStop·maxDrive 한도까지 전부 다시 계산.
           위반 경로는 기록하고 나머지 경로도 계속 검사한다 (원인을 최대한 모아 보고).
           "이동표 사용"(§10.2)은 검사 항목이 아니라 구조다 — replay가 problem.travel()
           밖의 어떤 이동값도 얻을 수 없다 (표는 모든 쌍 완비, Stage 2 §4 절차 5).
+5-a. 창 포함  재계산이 끝난 뒤 그 사실을 한 번 더 훑어 **창 안에 있는지 확인**한다
+          (Domain §10.2 — Stage 3 노트 N5를 대체하는 검사):
+          · 모든 이동 [departure, 다음 arrival]이 한 근무창 안 → 아니면 WORK_WINDOW
+          · 모든 서비스 [serviceStart, serviceEnd]가 한 근무창 안 → 아니면 WORK_WINDOW
+          · 차고 출발 순간이 startDepot 창 안, endDepot 도착 순간이 endDepot 창 안
+            → 아니면 DEPOT_WINDOW
+          replay가 옳게 배치했다면 산술적으로 통과하는 검사다 — END_LOAD_NOT_ZERO와 같은
+          성격의 자기 방어이며, 창 걷는 코드를 따로 구현했기 때문에(N8) 값이 아니라
+          **배치 자체**를 확인할 자리가 필요하다.
 6. 호환    경로가 소유한 각 RequestId에 대해 vehicleId ∈ problem.compatibleVehicles(id)
           (§3.4 동결 사실). 위반 → INCOMPATIBLE_VEHICLE (노트 N5).
 7. profile hard  profile.hardConstraints()의 각 h를 h.satisfied(problem, 재계산 RouteFacts)로 적용.
@@ -247,6 +283,7 @@ public record SolveResult(
                         LocationId locationId,
                         LocalDateTime arrival, LocalDateTime serviceStart, LocalDateTime serviceEnd,
                         long loadWeightMilliKg, long loadVolumeMilliCbm) {}  // 방문 처리 후 적재
+                        // `departure` 노출 여부는 wire 협의(Plan D2) — §9 Q5
 
     public record Unassigned(RequestId orderId, UnassignedReason reason) {}
 }
@@ -307,8 +344,10 @@ bank는 ID만 갖고 있으므로(§6.3 MUST NOT) 사유는 여기서 계산한�
    V₁ = ∅ → CAPACITY                               (호환 차량 전부가 혼자서도 실을 수 없음)
 3. V₂ = { v ∈ V₁ : RouteReplay.replay(problem, v, r만 있는 단독 경로) = Ok }
    단독 경로: DELIVERY_ONLY → [delivery NodeId], PICKUP_DELIVERY → [pickup, delivery].
-   V₂ = ∅ → TIME_WINDOW_INFEASIBLE                 (혼자 넣어도 시간창·reqDate·근무시간·
-                                                    maxDrive 등에서 불가 — §9 Q2 라벨 폭 주의)
+   V₂ = ∅ → TIME_WINDOW_INFEASIBLE                 (혼자 넣어도 시간창·reqDate·근무창·
+                                                    차고 창·maxDrive 등에서 불가 —
+                                                    DEPOT_WINDOW·WORK_WINDOW로 불가한 경우도
+                                                    이 bucket이다, §9 Q2 라벨 폭 주의)
 4. V₂ ≠ ∅ → NOT_PLACED                             (단독으로는 가능 — 탐색이 다른 배정과
                                                     함께 자리를 못 찾았을 뿐)
 ```
@@ -321,7 +360,7 @@ bank는 ID만 갖고 있으므로(§6.3 MUST NOT) 사유는 여기서 계산한�
 
 | # | 내용 |
 |---|---|
-| N1 | **의도적 중복**: `RouteReplay`·구조 검사·위반 enum은 solve의 `RoutePropagator`·`StructureCheck`·`Violation`과 같은 의미의 **별도 코드**다. 코드를 공유하면 같은 버그가 양쪽에 숨어 재검증이 무의미해진다 (Domain §10.1). 공유가 허용되는 것은 `Problem`의 동결 사실(이동표·호환성)·인자로 받은 같은 `Profile` 인스턴스(§10.2가 명시한 같은 입력)·core `eval`의 값 타입과 공식(`RouteFacts`·`Evaluation.aggregate`·`Scores.compare` — Stage 3 N1이 이 목적으로 배치)뿐이다. `profile.score`도 공유 대상이다 — 재검증의 목적은 "탐색이 그 profile의 목적식을 정직하게 계산했는가"이지 목적식 자체를 다시 정의하는 것이 아니다 |
+| N1 | **의도적 중복**: `RouteReplay`·구조 검사·위반 enum은 solve의 `RoutePropagator`·`StructureCheck`·`Violation`과 같은 의미의 **별도 코드**다. 코드를 공유하면 같은 버그가 양쪽에 숨어 재검증이 무의미해진다 (Domain §10.1). 공유가 허용되는 것은 `Problem`의 동결 사실(이동표·호환성·**정규화된 시간창 목록** — 근무창·차고 창·방문 시간창, Domain §3.2)·인자로 받은 같은 `Profile` 인스턴스(§10.2가 명시한 같은 입력)·core `eval`의 값 타입과 공식(`RouteFacts`·`Evaluation.aggregate`·`Scores.compare` — Stage 3 N1이 이 목적으로 배치)뿐이다. `profile.score`도 공유 대상이다 — 재검증의 목적은 "탐색이 그 profile의 목적식을 정직하게 계산했는가"이지 목적식 자체를 다시 정의하는 것이 아니다. **반대로, 그 창 목록을 걷는 코드(`fitArc`/`fitService` 상당)는 공유하지 않는다** — 목록은 사실이고 걷는 규칙은 해석이라, 해석을 공유하면 이중 기입이 무너진다 (Stage 3 노트 N8에 같은 문장) |
 | N2 | 위반 enum을 solve와 별도로 두는 것은 N1의 결과다 — `solve.Violation`을 쓰면 `verify → solve` 참조가 생겨 ArchUnit이 막는다. 이름은 의미가 같은 항목끼리 동일하게 맞춘다 (리뷰 용이) |
 | N3 | **중복 차량 경로는 verify에 도달하지 못한다**: 진입 타입이 `Map<VehicleId, …>`라 (Stage 3 N6 확정) 한 차량 두 경로는 표현 불가다. 호출자의 `toMap` 분해가 중복 키에서 던지는 예외가 곧 구조 결함 신호이며, Stage 6 executor는 이를 FAILED로 기록한다. ALNS 정상 경로에서는 Stage 4 N2(구조 위반 = 예외)가 이미 걸러 준다 |
 | N4 | **결과는 재계산본으로만 조립한다**: 탐색의 `bestRouteFacts`는 검증의 대조에도 결과 조립에도 쓰지 않는다. "탐색의 증분 캐시·내부 상태를 믿지 않는다"(§10.2)의 연장 — 결과 수치의 원천이 검증 코드 하나로 좁혀져, 검증된 해 ↔ 결과 일치가 구조적으로 따라온다 |
@@ -364,7 +403,7 @@ solve와 verify는 서로를 모른다.
 | E5 | DELIVERY_ONLY의 pickup NodeId가 경로에 | UNKNOWN_NODE (nodeRef 색인에 없음 — 구조적 강제) | §1.3 MUST NOT |
 | E6 | 구조 위반 존재 | 재전파·점수 대조 생략, Fail에는 구조 위반만 (관문 §3-4) | §6.5 순서 |
 | E7 | hard 위반 경로 여럿 | 경로별로 전부 수집해 보고 (첫 경로에서 멈추지 않음) | §12 원인 기록 |
-| E8 | serviceStart == close / == reqDate | 통과 — Stage 3 Q1 해석과 동일 공식 (두 구현이 같은 잠정 해석 공유, §2.3) | §2.3·Stage 3 §9 Q1 |
+| E8 | serviceStart == **그 창의** close / == reqDate | 통과 — 양끝 포함. **Domain §7.1 확정 해석**(`serviceStart`가 어느 창 안인가 — 마지막 창의 close 하나만 보지 않는다)을 solve와 verify가 같이 따른다 (§2.3) | Domain §7.1·§2.3 |
 | E9 | waitInDepot=Y 해 | replay도 같은 출발 규칙 (Stage 3 §3.3 절차 1) — 다르면 시각 전체가 어긋나 T5에서 검출 | §2.5 |
 | E10 | 종료 load ≠ 0 | pair 완비 구조에서는 산술적으로 불가 — 검사는 replay 자체 버그·모델 변화 방어 (END_LOAD_NOT_ZERO) | §6.2·Stage 3 N3 |
 | E11 | bank에 호환 0대 Request | 검증엔 무영향, 사유 NO_COMPATIBLE_VEHICLE | §3.4·§11.1 |
@@ -377,6 +416,10 @@ solve와 verify는 서로를 모른다.
 | E16 | routes 맵 값이 빈 목록 | EMPTY_ROUTE → FAIL (`Route`는 빈 visits를 못 만들지만 verify 입력은 raw 맵 — 방어) | Stage 3 E30 |
 | E17 | PD 결과의 같은 orderId 방문 2건 | Visit.pickup으로 구분 (§9 Q4) | §1.3 |
 | E18 | 시간 한도로 중단된 탐색의 best | 정상 입력 — verify는 출처를 모른다. hard만 재확인 | §12 "탐색 중단 = 정상" |
+| E19 | 다일 해 (근무창 여럿) | replay도 같은 미루기 규칙으로 재계산 — `interWorkWindowRestTimeSec`·방문별 `departureSec`가 solve와 일치해야 한다 (T5에서 대조). 두 구현이 창을 다르게 걸으면 여기서 드러난다 | Domain §3.2·§7.3 |
+| E20 | 창 밖에 배치된 이동·서비스가 섞인 오염 해 | 절차 5-a의 포함 검사에서 WORK_WINDOW → FAIL | Domain §10.2 |
+| E21 | endDepot 도착이 차고 창 밖인 해 | DEPOT_WINDOW → FAIL (미루지 않는다 — Stage 3 E36과 같은 해석) | Domain §7.1 |
+| E22 | 현행 fixture 모양(창 1개·차고 전일창·endDepot 없음) | `interWorkWindowRestTimeSec == 0`, `departureSec == serviceEndSec`, DEPOT_WINDOW 미발화 — D4 전과 같은 값 | Stage 3 E40 |
 
 ---
 
@@ -393,15 +436,16 @@ Problem은 Stage 1~3 경로로 손 조립한다 (fixture JSON 파싱은 Stage 6 
 | T2 | `SolutionVerifierTest.failsOnCapacityExceeded` | 수요 합 > maxWeight 경로 → CAPACITY_WEIGHT. volume 변형·출발 적재 초과(E4) 포함 | "용량 초과 … FAIL" |
 | T3 | `SolutionVerifierTest.failsOnScoreMismatch` | 유효 해 + reported `Evaluation` 4축 각각 ±1 조작 → 전부 SCORE_MISMATCH (E2). **그리고** `Evaluation`은 그대로 두고 `reportedScore`만 조작 → 역시 SCORE_MISMATCH (E17 길이 불일치 포함) | "점수 불일치 … FAIL" |
 | T4 | `ArchitectureRulesTest` 2규칙 green | verify 실제 클래스 존재 상태에서 `verify ↛ solve` + 신규 `solve ↛ verify` (§6) | "ArchUnit 규칙 통과" |
-| T5 | `SolutionVerifierTest.passesValidSolutionAndAgreesWithSolve` | Stage 3 §3.4 예제를 pair 완비로 확장한 유효 해 → `Pass`. 재계산 `RouteFacts`·`Evaluation`이 solve의 `Evaluator.evaluate(problem, profile, solution)` 결과와 record 동등이고, score는 `Arrays.equals` — **두 독립 구현의 합치** (E8·E9 경계 포함). `Feasible`/`Pass` 자체를 `equals`로 비교하지 않는다 (배열 필드 — Stage 3 §4.3 공통 규칙) | (오염 FAIL의 대조군 — 전부 FAIL이 "verify가 무조건 FAIL"이 아님의 증명) |
+| T5 | `SolutionVerifierTest.passesValidSolutionAndAgreesWithSolve` | Stage 3 §3.4 예제를 pair 완비로 확장한 유효 해 → `Pass`. 재계산 `RouteFacts`·`Evaluation`이 solve의 `Evaluator.evaluate(problem, profile, solution)` 결과와 record 동등이고, score는 `Arrays.equals` — **두 독립 구현의 합치** (E8·E9 경계 포함). **다일 케이스도 같은 방식으로 대조한다** (Stage 3 §3.5 예제 — `interWorkWindowRestTimeSec`·방문별 `departureSec`까지, E19). `Feasible`/`Pass` 자체를 `equals`로 비교하지 않는다 (배열 필드 — Stage 3 §4.3 공통 규칙) | (오염 FAIL의 대조군 — 전부 FAIL이 "verify가 무조건 FAIL"이 아님의 증명) |
 | T6 | `SolutionVerifierTest.failsOnXorViolations` | E1(위반 0)·ASSIGNED_AND_BANKED·NOT_ASSIGNED_NOT_BANKED·UNKNOWN_REQUEST·E16 | (Plan 범위 문장 "독립 재검증(전체 해)" — §10.2 검사 항목) |
 | T7 | `SolutionVerifierTest.failsOnIncompatibleAndProfileHard` | E14·E15 각각 정확한 Kind (같은 profile 인스턴스 사용 확인 포함) | 〃 |
 | T8 | `AlnsVerifyIntegrationTest.alnsBestAlwaysVerifies` | 소형 fixture × seed 여러 개로 `AlnsSolver.solve(problem, profile)` → `AlnsResult` 분해 → 같은 profile로 verify `Pass` + `Pass.evaluation` == `bestEvaluation` + `Arrays.equals(Pass.score, bestScore)` (Stage 4 T4의 verify판 — 파이프라인 전 구간 정합) | (§10 전체 흐름의 실증 — 캐시 없는 재계산과 탐색 보고값의 합치) |
 | T9 | `ResultAssemblerTest.resultMatchesVerifiedSolution` | 모든 problem request가 routes+unassigned에 정확히 1회 · Visit 시각(toWallClock 역변환)·적재·경로 지표가 `Pass.routeFacts`와 1:1 · metrics == `Pass.evaluation` · run 메타(profileId·verified=true·stamp 값·**deliveryPolicy와 searchBudget이 각각 별도 필드**) | (Plan 범위 문장 "검증된 해 ↔ 결과 일치 테스트") |
 | T10 | `ResultAssemblerTest.derivesUnassignedReasons` | 4사유 각 1건: 호환 0대 → NO_COMPATIBLE_VEHICLE / 전 호환 차량 용량 미달 → CAPACITY / 창 도달 불가 → TIME_WINDOW_INFEASIBLE (E12 포함) / 단독 가능 → NOT_PLACED | (Plan 범위 문장 "unassigned+reason") |
 | T11 | `ResultAssemblerTest.deterministicOrderingAndStatus` | routes·unassigned 정렬, 같은 입력 → 동등 `SolveResult`, status 항상 DONE | (Plan 범위 문장 "결과 모델" — §11.1 결정성) |
+| T12 | `SolutionVerifierTest.failsOnWorkAndDepotWindow` | **D4 확정분.** 유효한 다일 해에서 ① 한 이동이 근무창 틈에 걸치도록 오염 → WORK_WINDOW (E20, 절차 5-a) ② endDepot 도착이 차고 창 밖이 되도록 오염 → DEPOT_WINDOW (E21) ③ 오염 없는 대조군은 `Pass` | (Plan 범위 문장 "독립 재검증(전체 해)" — Domain §10.2 검사 항목) |
 
-T5~T11은 DoD 두 문장 밖이지만 Plan Stage 5 범위 문장("독립 재검증(전체 해, 캐시 없이),
+T5~T12는 DoD 두 문장 밖이지만 Plan Stage 5 범위 문장("독립 재검증(전체 해, 캐시 없이),
 결과 모델, 검증된 해 ↔ 결과 일치 테스트")의 직접 검증이다 — 보고에서 DoD 보강을 제안한다.
 
 ---
@@ -418,7 +462,7 @@ T5~T11은 DoD 두 문장 밖이지만 Plan Stage 5 범위 문장("독립 재검�
 | 미배정 사유 값 추가·세분 (예: 한도 전용 사유) | 안 함 — §11.1 예시 4개 유지 (§9 Q2) | Domain §11.1 |
 | `verify`의 별도 모듈 승격 | 안 함 (필요해지면 그때) | Architecture §2.1 |
 | fingerprint·provenance·lineage류 추적 | 안 함 (폐기 확정) | Domain §11.1·Master §3-⑪ |
-| depot 창·`depot.taskTime`의 재검증 적용 | Stage 3과 동일 보류 (탐색·검증 동일 해석 유지) | Stage 3 §9 Q2 |
+| `depot.taskTime`의 재검증 적용 | Stage 3과 동일 보류 (탐색·검증 동일 해석 유지) — **차고 창은 이제 적용한다** (D4 확정, §2.3·§3 절차 5-a·`DEPOT_WINDOW`). 상차 시간만 여전히 미적용이다 | Domain §2.5 · Stage 3 §9 Q2 |
 | 재검증 매 trial 실행·증분 재검증 | 안 함 — 저장 직전 1회 | Domain §10.2 |
 
 ---
@@ -430,6 +474,7 @@ T5~T11은 DoD 두 문장 밖이지만 Plan Stage 5 범위 문장("독립 재검�
 | # | 질문 | 잠정 처리 |
 |---|---|---|
 | Q1 | 결과 모델(Domain §11)의 패키지 자리 — Architecture §2 트리는 `verify`를 "독립 재검증 (Domain §10)"으로만 주석하고 §11의 소유 패키지를 정하지 않았다 | `verify`에 배치 (§1 말미의 근거). Architecture §2 주석을 "재검증 + 결과 모델 (Domain §10–11)"로 보완 제안 |
-| Q2 | 미배정 사유 목록이 "예:"로 열려 있고, maxDrive·maxStop 등 한도 때문에 단독 불가한 경우를 정확히 가리키는 값이 없다 | TIME_WINDOW_INFEASIBLE bucket에 포함 (§4.3 절차 3, E12). 새 값을 임의로 추가하지 않고, wire 협의(§11.2) 때 세분 여부를 결정 |
+| Q2 | 미배정 사유 목록이 "예:"로 열려 있고, maxDrive·maxStop 등 한도 때문에 단독 불가한 경우를 정확히 가리키는 값이 없다. **D4로 `DEPOT_WINDOW`·다일 `WORK_WINDOW`가 추가돼 이 bucket이 더 넓어졌다** | TIME_WINDOW_INFEASIBLE bucket에 포함 (§4.3 절차 3, E12). 새 값을 임의로 추가하지 않고, wire 협의([Plan §2.1 D2](../implementation-plan.md)) 때 세분 여부를 결정 |
 | Q3 | §11.1 status가 FAILED를 나열하지만 §10.2(FAIL 시 결과 미저장)·Architecture §3.3(result.json은 DONE일 때만)과 조합하면 FAILED 결과 JSON은 생산 경로가 없다 | enum 값은 유지하되 `assemble`은 항상 DONE (노트 N6). Domain §11.1 문구 정리 제안 |
 | Q4 | PD의 결과 visits에서 같은 orderId 방문 2건(픽업/배송)의 구분 필드가 §11.1에 없다 | `Visit.pickup` boolean을 모델에 추가 (구분 불가면 PD 결과가 무의미 — §1.3의 canonical PD 지원과 정합). 현 규약(전건 DELIVERY_ONLY)에는 무영향, wire 노출은 Stage 6 협의 |
+| Q5 | **`departure`를 결과 `Visit`에 노출할지** (2026-08-10 D4로 생긴 항목) — 다일 해에서는 방문의 출발 시각이 `serviceEnd`와 달라진다(밤을 새우고 다음 창에 출발). 결과에 없으면 야간 휴식이 결과에서 사라져 호출 측이 경로 시각을 재구성할 수 없다 | 내부 사실 `VisitFacts.departureSec`는 **지금 만든다** (Stage 3 §3.2). 결과 wire 노출은 **[Plan §2.1 D2](../implementation-plan.md)(wire 협의)**로 넘긴다 — 1일 입력에서는 `serviceEnd`와 같아 당장 정보 손실이 없다 |

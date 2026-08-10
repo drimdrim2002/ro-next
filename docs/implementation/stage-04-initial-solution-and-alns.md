@@ -14,6 +14,11 @@ revisions:
   - 2026-08-10 최초 작성
   - 2026-08-10 탐색 예산을 `AlnsConfig`가 소유 (Domain §2.5.1) — idle 종료 조건 추가,
     profile 인자화, 비교를 `Scores.compare`로
+  - 2026-08-10 §7에 규모 테스트 T11 추가 (Plan Stage 4 규모 DoD 대응 — Stage 2 T12와 같은
+    합성 문제로 ALNS 1회, 시간 한도 안의 반복 수 기록). 다른 설계 무변경
+  - 2026-08-10 D4 확정 반영 — §4.1 삽입 순서의 정렬 키를 "delivery의 **마지막** 창 close"로
+    명시 (시간창이 `List<TimeWindow>`가 됨, Domain §3.2). 창 1개 입력에서는 종전과 같은 값이라
+    연산자·acceptance·테스트는 무변경
 ---
 
 # Stage 4 — 초기해와 ALNS
@@ -235,7 +240,9 @@ public final class AdaptiveWeights {
 
 ```text
 1. 시작해 = Solution(routes = [], bank = 모든 RequestId).
-2. 삽입 순서: delivery 창 close 오름차순, 동률은 RequestId 문자열 순 (결정적 — rng 없음).
+2. 삽입 순서: delivery의 **마지막 창 close** 오름차순, 동률은 RequestId 문자열 순
+   (결정적 — rng 없음. 시간창이 목록이 됐으므로(Domain §3.2) 어느 close인지 정한다 —
+    "가장 늦게까지 받아 주는 시각"이 급한 정도를 나타내고, 창이 하나면 종전 값과 같다).
 3. 각 Request를 §4.3의 후보 탐색으로 최소 비용 위치에 삽입. 후보 0개면 bank에 남긴다.
 4. 반환. (이전 설계의 "초기해 ≤8개" 구조는 폐기 — 초기해는 1개다, Domain §9.3.)
 ```
@@ -395,6 +402,7 @@ jqwik류 property 라이브러리를 추가하지 않는다 (Stage 0 §4.2가 te
 | T8 | `InsertionOperatorsTest.usesOnlyCompatibleRealVehicles` | 비호환 차량 후보 없음(E12) · 새 경로는 실제 미사용 VehicleId(§9.1) · 호환 0대 Request는 bank 유지(E2) | 〃 |
 | T9 | `AlnsSolverTest.degenerateProblemsReturnValidResult` | E1(주문 0)·E2(차량 0) → 예외 없이 유효한 AlnsResult | (Plan 범위 문장 "초기해 생성") |
 | T10 | `AlnsSolverTest.stopsOnIdleLimits` | 넉넉한 시간 한도 + 작은 `idleSteps`(및 별도 케이스로 `idleSec`) → 한도 훨씬 전에 종료하고 `termination`이 IDLE_STEPS / IDLE_TIME. worse 수락이 일어나도 idle 카운터가 리셋되지 않음을 단언 (§4.2-f) | (본 개정에서 추가된 종료 조건의 직접 검증) |
+| T11 | `AlnsScaleTest.runsOnFullScaleSyntheticProblem` | **규모 측정.** Stage 2 T12와 **같은 합성 문제**(장소 453·주문 452·차량 31·이동표 453² 전 쌍)로 `AlnsSolver.solve` 1회 → 시간 한도 안에 정상 종료. **시간 한도 안에서 몇 번 반복했는지(`AlnsRunStats`의 반복·수락 수, `elapsedMillis`)를 출력해 기록한다.** 해의 품질·개선폭은 판정하지 않는다 (그건 Stage 8). 실물 JSON은 읽지 않는다 — 입력은 프로그램으로 조립한다 | Plan Stage 4 "**규모**" 문장 |
 
 T3–T10은 DoD 두 문장 밖이지만 Plan Stage 4 범위 문장("초기해 생성, destroy/repair(pair 단위),
 acceptance, 시간 한도 종료")의 직접 검증이다 — 보고에서 DoD 보강을 제안한다.

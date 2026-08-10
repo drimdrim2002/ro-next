@@ -11,6 +11,11 @@ sources:
 revisions:
   - 2026-08-09 최초 작성
   - 2026-08-10 `SolveOptions` → `DeliveryPolicy` (탐색 예산·TravelCalcMode 분리, Domain §2.5·§2.5.1)
+  - 2026-08-10 미해결 질문 포인터 정리 — Q1→Plan D1, Q2→Plan D4(미해소 유지), Q5→Plan D2,
+    E27에 D4 재검토 표시. 설계(파일·클래스·시그니처·테스트) 무변경
+  - 2026-08-10 **D4 확정 반영 (Q2 해소)** — 시간창을 `List<TimeWindow>`로 (Vehicle·Depot·RequestSide
+    셋 다, Domain §3.2) · `TimeBase.anchor` → `dailyWindows` · §4 절차 3·5·6을 "전개"로 ·
+    E27 뒤집기(자정 넘는 창 수용) + E27b\~E31 신설 · T14\~T16 신설 · §4에 1일 fixture 무영향 실측 추가
 ---
 
 # Stage 1 — canonical 입력과 정규화
@@ -120,7 +125,7 @@ public enum ServicePattern { DELIVERY_ONLY, PICKUP_DELIVERY }        // Domain �
 public enum VehicleOwnership { DIRECT, LEASE }                       // Domain §2.4
 public enum Trips { ONEWAY, ROUNDTRIP }                              // Domain §2.5
 
-public record TimeWindow(long openSec, long closeSec) {}             // 양끝 포함 (Domain §3.2)
+public record TimeWindow(long openSec, long closeSec) {}             // 양끝 포함, openSec ≤ closeSec (Domain §3.2)
 
 public record Location(LocationId id, double latitude, double longitude) {}
 
@@ -130,7 +135,7 @@ public record Item(String itemId, long weightMilliKg, long volumeMilliCbm,
 public record RequestSide(
     NodeId nodeId,
     LocationId locationId,
-    TimeWindow window,                 // 기본 00:00:00 / 23:59:59 앵커링 (Domain §2.3)
+    List<TimeWindow> windows,          // 기본 00:00:00 / 23:59:59. 날마다 반복 → 전개 목록 (Domain §3.2)
     long durationSec,                  // 방문 자체 시간 (item 작업시간과 별개)
     long serviceTimeSec,               // duration + Σ(taskTime×qty) — 정규화 시 확정 (Domain §3.3)
     long reqDateSec,                   // 기본 planEnd. serviceStart ≤ reqDate 전용 (Domain §2.3 MUST)
@@ -153,7 +158,8 @@ public record Vehicle(
     String vehicleFeature,             // 차급 코드 하나 (Domain §2.4)
     long maxWeightMilliKg,
     long maxVolumeMilliCbm,
-    TimeWindow workWindow,             // workStart/workEnd (기본 00:00:00/23:59:59)
+    List<TimeWindow> workWindows,      // workStart/workEnd (기본 00:00:00/23:59:59). 날마다 반복 →
+                                       // 전개 목록. 빈 목록 = 계획 기간에 못 쓰는 차량 (Domain §3.2)
     OptionalInt speedKmH,              // Stage 2의 U 보정 체인 입력 (Domain §4)
     OptionalInt effectiveMaxStopCount, // min(차량 한도, 전역 한도) 접기 결과 (Domain §2.6)
     OptionalLong maxDriveTimeSec,
@@ -166,7 +172,8 @@ public record Vehicle(
     Optional<LocationId> endDepot) {}  // trips 접기 결과 — §4.4 절차 5
 
 public record Depot(
-    NodeId nodeId, LocationId locationId, TimeWindow window,
+    NodeId nodeId, LocationId locationId,
+    List<TimeWindow> windows,          // 날마다 반복 → 전개 목록. 출발·복귀 순간에 적용 (Domain §7.1)
     long taskTimeSec,                  // 보관만. 시간 계산 미적용 (Domain §2.5)
     Optional<String> zoneId) {}
 
@@ -191,6 +198,13 @@ public record Plan(
     DeliveryPolicy deliveryPolicy) {}
 ```
 
+- **시간창은 전부 `List<TimeWindow>`다** (2026-08-10 — Domain §3.2, Plan D4). 규약이 주는 값은
+  날짜 없는 `HH:mm:ss` 한 쌍이고 그것이 계획 기간의 날마다 반복되므로, 정규화가 **절대 창 목록으로
+  펼쳐서** 확정한다 (§3 `TimeBase.dailyWindows`, §4 절차). 목록 불변식 (MUST): **open 오름차순 정렬 ·
+  서로 겹치지 않음 · 맞닿은 창 병합 완료.** 전파(Stage 3)와 재검증(Stage 5)이 이 순서를 믿고
+  포인터를 앞으로만 밀며 훑으므로 성능이 아니라 정합성 조건이다. **빈 목록은 오류가 아니다** —
+  그 차량·차고를 계획 기간에 쓸 수 없다는 뜻이고, 그것을 쓰는 경로가 불가가 될 뿐이다 (E30).
+  하루짜리 fixture에서는 목록 길이가 1이라 종전 단일 창과 값이 같다.
 - optional 축은 전부 `Optional*` 타입이다. **부재 = 그 축의 제약을 아예 적용하지 않음**이며,
   큰 수 sentinel로 채우지 않는다 (Domain §2.4 MUST·§2.6 MUST NOT).
 - 전역 `Optimizer.VehicleMaxStopCount`는 정규화에서 `effectiveMaxStopCount`로 접혀 소멸한다 —
@@ -241,10 +255,16 @@ public record ItemInput(
 ## 3. 정규화 유틸 시그니처
 
 ```java
-// Domain §3.2 — 시간 원점
+// Domain §3.2 — 시간 원점과 시간창 전개
 public record TimeBase(LocalDateTime origin) {
     public long toSeconds(LocalDateTime t);      // t − origin 경과 초. 음수 허용 (§6 E17)
-    public long anchor(LocalTime partial);       // origin '날짜'의 그 시각으로 고정한 경과 초 (§9 Q2)
+    /**
+     * 날마다 반복되는 창(open~close)을 계획 기간에 맞춰 절대 창 목록으로 펼친다 (Domain §3.2 규칙 1–5).
+     * 전날부터 planEnd 날짜까지 생성 → close < open이면 다음 날로 넘김 → [0, planEndSec − 1]로 자름
+     * → 정렬 후 맞닿은 창 병합. close == open이면 InputException(INVALID_INPUT) — §6 E27b.
+     * 결과가 빈 목록일 수 있다 (계획 기간에 못 쓰는 차량·차고 — 오류 아님, §6 E30).
+     */
+    public List<TimeWindow> dailyWindows(LocalTime open, LocalTime close, long planEndSec, String field);
     public LocalDateTime toWallClock(long sec);  // 결과 JSON 역변환용 (Domain §11, Stage 5·6 사용)
 }
 
@@ -290,13 +310,16 @@ public final class PlanNormalizer {
           결과: DeliveryPolicy(trips, waitInDepot, defaultSpeedKmH).
             multiRotation은 검증만 하고 보관하지 않는다 (지원 범위가 1뿐이라 담을 정보가 없다).
 3. 차고    1개 이상. LocationId = locId 또는 LocationId.generated(좌표 원문).
-          창 앵커링(기본 00:00:00/23:59:59), taskTime ≥ 0 (기본 0).
+          창 전개 = timeBase.dailyWindows(open, close, planEndSec) (기본 00:00:00/23:59:59,
+            Domain §3.2 규칙 1–5 — 날마다 반복·자정 넘김·클리핑·병합). taskTime ≥ 0 (기본 0).
           NodeId.depot 발급. 중복 LocationId → INVALID_INPUT.
 4. 장소    차고·모든 request side의 (LocationId, 좌표) 수집 → locations 맵.
           같은 LocationId에 서로 다른 좌표 → INVALID_INPUT (추측 금지).
           좌표 파싱 실패·범위(±90/±180) 밖 → INVALID_INPUT.
 5. 차량    중복 VehicleId → INVALID_INPUT.
-          maxWeight/maxVolume → Units.toMilli. 근무창 앵커링(기본 00:00:00/23:59:59).
+          maxWeight/maxVolume → Units.toMilli.
+          근무창 전개 = timeBase.dailyWindows(workStart, workEnd, planEndSec)
+            (기본 00:00:00/23:59:59. 빈 목록도 정상 — 그 차량은 계획 기간에 못 쓴다, §6 E30).
           optional 축(maxStopCnt·maxDrive*·치수·capabilities·zoneIds·speed):
             null → Optional.empty — sentinel 금지 (Domain §2.4 MUST·§2.6 MUST NOT).
             zoneIds가 '빈 집합'으로 오면 INVALID_INPUT (전 구역인지 금지인지 애매 — 추측 금지).
@@ -313,7 +336,9 @@ public final class PlanNormalizer {
           합산: total = Σ multiplyExact(개당 milli, qty) 를 addExact로 —
             overflow 시 INVALID_INPUT (Domain §3.1 overflow 검사).
           side별 (delivery는 필수, pickup은 있을 때만):
-            NodeId 발급. 창 앵커링(기본 00:00:00/23:59:59). duration null→0, 음수 → INVALID_INPUT.
+            NodeId 발급. 창 전개 = timeBase.dailyWindows(open, close, planEndSec)
+              (기본 00:00:00/23:59:59 — 주문 창도 날마다 반복한다, Domain §3.2).
+            duration null→0, 음수 → INVALID_INPUT.
             serviceTime = duration + Σ(taskTime × qty)   (Domain §3.3 — 개당 taskTime × 수량)
             reqDate null → planEnd (Domain §2.3 기본값). 각 side가 자기 reqDate만 갖는다 (대체 금지 MUST).
           vehicleFeatures: null 또는 정확히 ["ALL"] → Optional.empty (전 차급).
@@ -333,6 +358,22 @@ fixture 근거: `win_poc_case.json`의 `D: "310708.03"` 같은 소수 문자열�
 반면 두 fixture 모두 `multiRotation: "1"`이라 절차 2에서 거부된다 — Stage 0 §11 Q2로 이관된
 미결 사항이며 Stage 1은 Domain §2.5 MUST대로 구현한다 (§9 Q1).
 `"1"`이 "trip 1개"를 뜻한다고 확인되면 판정식 한 줄(`> 1`)만 바뀌고 나머지는 그대로다.
+
+**창 전개가 현행 fixture를 바꾸지 않는다는 근거** (2026-08-10 실측, `win_poc_case_floor.json`):
+`dateRange` = `2023-09-13 00:00:00` \~ `2023-09-14 00:00:00`(정확히 24h·자정 정렬)이므로
+`planEndSec = 86400`이고, 전개 규칙 1이 만드는 세 날짜(09-12·09-13·09-14) 중 앞뒤 둘은 규칙 4에서
+잘려 사라진다.
+
+| 대상 | 입력 (실측) | 전개 결과 |
+|---|---|---|
+| 차량 31대 **전원** | `workStartTime "00:00:00"` / `workEndTime "23:30:00"` | `[[0, 84600]]` — **창 1개** |
+| 차고 1개 (`WIN_0`) | `openTime "00:00:00"` / `closeTime "23:59:59"` | `[[0, 86399]]` — **창 1개** |
+| 주문 452건 | `05:45~10:30`(282건) · `05:45~13:30`(169건) · `05:45~17:30`(1건) | 각 **창 1개** |
+
+창이 하나면 병합·미루기·`interWorkWindowRestTime`이 모두 발생하지 않으므로 전개 전과 값이 같다.
+차고 창도 `[0, 86399]`라 출발 시각을 앞당기지도 늦추지도 않고, `trips: "oneway"` + 차량에
+`endDepot` 필드가 없어 복귀 검사 자체가 없다 → **`DEPOT_WINDOW`는 이 fixture에서 발화하지 않는다.**
+`planEnd`(86400)가 차량 `workEnd`(84600)보다 늦으므로 규칙 4의 클리핑도 무영향이다.
 
 ---
 
@@ -390,7 +431,12 @@ Domain의 optional 규칙·경계값·오류 분류(§2·§3·§12)에서 뽑았
 | E24 | 호환 차량 0대인 Request | 오류 아님 — 정규화 통과, 풀이 진행 | §3.4 |
 | E25 | 중복 orderId / vehicleId | INVALID_INPUT | §5의 ID 참조 무결성 전제 |
 | E26 | 차량 vehicleFeature가 `"ALL"` | 문자 그대로 비교 (목록에 `"ALL"`이 있어야 매칭) — §3.4 식을 벗어난 해석 금지 | §3.4 |
-| E27 | 시간창 close < open (앵커링 후) | INVALID_INPUT (잠정 — §9 Q2 확정 전까지) | §3.2 |
+| E27 | 시간창 close < open (예: 야간조 `22:00~06:00`) | **수용 — 자정을 넘는 창이다** (2026-08-10 D4 확정, 종전 INVALID_INPUT을 뒤집음). close를 다음 날짜의 그 시각으로 보고 전개한다. 계획 시작 '전날'에 시작한 창이 첫날 아침까지 이어지는 부분도 잘려 들어온다 | Domain §3.2 규칙 1·2 |
+| E27b | 시간창 close == open (예: `09:00~09:00`) | **INVALID_INPUT (신규)** — 1초짜리 창인지 24시간인지 애매하다 (추측 금지). E27을 수용하면서 생긴 구멍을 닫는다 | Domain §3.2 규칙 3·§2.1 |
+| E28 | 기본창 `00:00:00~23:59:59`, 3일 계획 | `[0,86399]`·`[86400,172799]`·`[172800,259199]`가 **병합돼 `[0,259199]` 하나**. 자정마다 1초 틈이 남으면 자정을 넘는 이동이 전부 막힌다 | Domain §3.2 규칙 5 |
+| E29 | planStart가 자정이 아님 (1일차 10:00) + 근무 `08:00~17:00` | 1일차 창이 앞에서 잘려 `[0(=10:00), 25200(=17:00)]`. 날짜 기준은 timezone 없는 벽시계 날짜다 (Domain §2.2) | Domain §3.2 규칙 1·4 |
+| E30 | 전개 결과가 **빈 목록**인 차량·차고 (예: 2시간 계획 `10:00~12:00`에 근무 `08:00~09:00`) | **오류 아님.** 그 차량·차고를 계획 기간에 쓸 수 없다는 뜻이고, 그것을 쓰는 경로가 불가가 될 뿐이다 (E24 "호환 차량 0대"와 같은 취급) | Domain §3.2·§3.4 |
+| E31 | planEnd가 `workEnd`보다 이름 (계획 18:00 종료, `workEnd` 23:59:59) | 근무창이 `[…, planEndSec − 1]`로 잘린다 — **하루짜리 계획에서도 동작이 바뀌는 지점**이다 (종전에는 planEnd를 넘겨 끝나는 경로를 아무도 막지 않았다). 근거는 규약 `dateRange` 설명 "Solver will create a plan in date range" | Domain §3.2 규칙 4 |
 
 ---
 
@@ -407,7 +453,7 @@ Domain의 optional 규칙·경계값·오류 분류(§2·§3·§12)에서 뽑았
 | T3 | `UnitsTest.rejectsFractionalDistanceAndTime` | E5 (fixture 실값) → INVALID_INPUT | "소수 거부" |
 | T4 | `PlanNormalizerTest.absentOptionalMeansNoConstraint` | E10·E13·E15: 부재 축 전부 `Optional.empty`, sentinel 부재 확인 | "optional 부재 = 제약 없음" |
 | T5 | `PlanNormalizerTest.rejectsMultiRotationNonZero` | E6: kind = UNSUPPORTED_INPUT. `0`은 통과 | "`multiRotation != 0` 거부 테스트" |
-| T6 | `TimeBaseTest.secondsFromPlanStart` | 원점 변환·`anchor`·`toWallClock` 왕복·E17 음수 | 경계값 (Domain §3.2) |
+| T6 | `TimeBaseTest.secondsFromPlanStart` | 원점 변환·`toWallClock` 왕복·E17 음수 | 경계값 (Domain §3.2) |
 | T7 | `PlanNormalizerTest.serviceTimeFormula` | duration + Σ(taskTime×qty) — qty 곱 포함 (Domain §3.3) | Stage 범위 문장 "serviceTime 공식" |
 | T8 | `PlanNormalizerTest.reqDateDefaultsToPlanEnd` | E16, side별 독립 reqDate (Domain §2.3 MUST) | Stage 범위 문장 |
 | T9 | `PlanNormalizerTest.foldsGlobalStopCount` | E11·E12 (min 접기) | 경계값 (Domain §2.6) |
@@ -415,9 +461,12 @@ Domain의 optional 규칙·경계값·오류 분류(§2·§3·§12)에서 뽑았
 | T11 | `PlanNormalizerTest.deliveryOnlyHasNoPickupSide` | pattern 확정 + pickup `Optional.empty` (Domain §1.3 MUST NOT) | Stage 범위 문장 "canonical 모델" |
 | T12 | `CompatibilityTest.axisTruthTable` | §3.4 네 식의 참/거짓 조합 + E23·E24·E26 | Stage 범위 문장 "호환성 판정" |
 | T13 | `PlanNormalizerTest.depotResolution` | E19·E20 (endDepot 접기·startDepot 단일 차고 확정) | 경계값 (Domain §2.5) |
+| T14 | `TimeBaseTest.expandsDailyWindows` | **창 전개 전수.** E28(기본창 3일 → 병합돼 1개) · E29(planStart 비자정 클리핑) · E31(planEnd 클리핑) · E30(빈 목록, 예외 없음) · Domain §3.2 예2(근무 08:00\~17:00 3일 → `[28800,61200]`·`[115200,147600]`·`[201600,234000]`) · 결과의 불변식(정렬·비겹침·병합 완료) | 경계값 (Domain §3.2) |
+| T15 | `TimeBaseTest.acceptsOvernightWindowAndRejectsZeroLength` | **야간조 케이스.** E27: `22:00~06:00` 3일 계획 → 전날에서 넘어온 `[0, 첫날 06:00]` + 날마다 `[22:00, 다음날 06:00]` · E27b: `09:00~09:00` → INVALID_INPUT | 경계값 (Domain §3.2 규칙 2·3) |
+| T16 | `PlanNormalizerTest.floorFixtureWindowsStayOneEach` | **1일 fixture 무영향 증명.** §4 말미 실측 표의 세 값(차량 `00:00:00~23:30:00` → `[[0,84600]]`, 차고 `00:00:00~23:59:59` → `[[0,86399]]`, 주문 `05:45~10:30` → 창 1개)을 `planEnd=86400`으로 손 조립해 **목록 길이가 전부 1**임을 단언 | 경계값 (Domain §3.2 — 회귀 방지) |
 
-T7·T8·T11·T12·T13은 DoD 두 문장 밖이지만 Plan Stage 1 범위 문장("canonical 모델, serviceTime 공식,
-호환성 판정, 오류 분류")의 직접 검증이다 — §8 보고에서 DoD 보강을 제안한다.
+T7·T8·T11\~T16은 DoD 두 문장 밖이지만 Plan Stage 1 범위 문장("canonical 모델, serviceTime 공식,
+호환성 판정, 오류 분류")과 Domain §3.2 시간창 전개의 직접 검증이다 — §8 보고에서 DoD 보강을 제안한다.
 
 ---
 
@@ -446,9 +495,9 @@ T7·T8·T11·T12·T13은 DoD 두 문장 밖이지만 Plan Stage 1 범위 문장(
 
 | # | 질문 | 잠정 처리 |
 |---|---|---|
-| Q1 | fixture 두 개 모두 `multiRotation: "1"` — 이 값이 "차량이 도는 횟수"(1 = trip 1개 = 지원)인지 "추가 회차 수"(1 = trip 2개 = 미지원)인지 미확정 (Stage 0 §11 Q2와 동일 사안) | Stage 1은 보수적으로 "0만 통과"를 구현·테스트(T5). 호출 시스템 확인 후 판정식 한 줄(`> 1`)만 바꾸면 되고, 타입·절차·다른 테스트는 영향 없음 |
-| Q2 | partial-time(openTime·closeTime·workStart·workEnd)의 다일(多日) 기간 의미 — Domain §3.2는 원점·근무창 규칙만 정의하고, 계획 기간이 24h를 넘거나 planStart가 자정이 아닐 때의 앵커링·자정 넘는 창(close < open)·일 반복 여부를 정하지 않았다 (§7.3 `interWorkWindowRestTime`은 복수 근무창을 암시) | `TimeBase.anchor`는 origin 날짜 고정. close < open은 INVALID_INPUT (E27). 현행 fixture(자정 시작 24h)는 영향 없음. Stage 3(전파) 전 Domain 보완 필요 |
+| Q1 | fixture 두 개 모두 `multiRotation: "1"` — 이 값이 무엇을 세는지 (Stage 0 §11 Q2와 동일 사안) | **[Plan §2.1 D1](../implementation-plan.md)으로 이관 (2026-08-10).** 규약 PDF의 열거 정의로 "차고 복귀 횟수"임이 확인돼, `"1"`은 지원 범위 밖이다 — 남은 것은 범위 결정(D1). Stage 1은 그대로 "0만 통과"를 구현·테스트한다(T5). 타입·절차·다른 테스트는 영향 없음 |
+| Q2 | partial-time(openTime·closeTime·workStart·workEnd)의 다일(多日) 기간 의미 — 앵커링·자정 넘는 창(close < open)·일 반복·복수 근무창 네 갈래 | **해소 (2026-08-10, [Plan §2.1 D4](../implementation-plan.md) 확정).** Domain §3.2가 시간창 전개 규칙을 정본화했다 — 세 종류 창(주문·차고·근무)이 **날마다 반복**되고, 정규화가 절대 창 목록으로 펼친다. 네 갈래의 답: 앵커링 = 날짜마다 생성 후 `[0, planEndSec − 1]`로 클리핑(E29·E31) · 자정 넘는 창 = **수용**(E27) · 일 반복 = **한다**(주문 창 포함) · 복수 근무창 = `List<TimeWindow>`로 **지원**. 이 문서 반영분: §2.2 세 record · §3 `dailyWindows` · §4 절차 3·5·6 · E27\~E31 · T14\~T16 |
 | Q3 | 차량 치수 한도(maxWidth 등, Domain §2.4)는 있는데 canonical item(§2.3)에 치수 필드가 없어 §3.4 치수 축의 검사 대상이 없다 | Vehicle에 필드만 보관(adapter 값 유실 방지), Compatibility에 치수 축 없음. **처리 경로는 확정됐다** — 3D 적재 고객이 확정되면 Domain §2.1.1에 따라 `Item`에 optional 치수 3필드를 추가하고, 판정은 그 고객 profile의 `HardConstraint`가 한다. 고객별 canonical·`Problem` 분기는 하지 않는다 |
 | Q4 | speed의 소수 입력 — 규약 PDF는 double, Domain §3.1 소수 거부 목록엔 거리·시간만 있다 | 정수만 수용(`Integer`), 소수 speed는 INVALID_INPUT (fixture는 정수 `"45"`). Domain 확인 후 완화 가능 |
-| Q5 | `item.taskTime` 해석 — Domain §3.3은 `× qty`로 확정(MUST 준수)인데, 규약 PDF는 "taskTime is calculated by item type not quantity"라고 반대로 적음 | Domain이 권위 — ×qty로 구현(T7). fixture는 taskTime=0이라 당장 무영향. Stage 8 Win 비교 때 taskTime≠0 케이스면 지표 차이 요인으로 기억 |
+| Q5 | `item.taskTime` 해석 — Domain §3.3은 `× qty`로 확정(MUST 준수)인데, 규약 PDF는 "taskTime is calculated by item type not quantity"라고 반대로 적음 | **[Plan §2.1 D2](../implementation-plan.md)(wire 협의)로 이관 (2026-08-10)** — 규약 문면과의 충돌이라 호출 시스템에 물어야 닫힌다. 그때까지 Domain이 권위 — ×qty로 구현(T7). fixture는 taskTime=0이라 당장 무영향. Stage 8 Win 비교 때 taskTime≠0 케이스면 지표 차이 요인으로 기억 |
 | Q6 | plan `customerId`의 wire 원천 — Domain §2.2가 "`shprId`(또는 협의 필드)"로 열어 둠. fixture는 plan `shprId="S3853"`와 order별 `customerId="WINCOMMERCE"`가 공존 | canonical은 `Optional<String>` 하나만 보유. 어느 wire 필드를 쓸지는 Stage 6 adapter에서 협의 확정. 부재 시 default profile (Domain §8.4) |
