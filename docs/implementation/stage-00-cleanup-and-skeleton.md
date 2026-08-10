@@ -13,6 +13,10 @@ revisions:
     §6 근거 절 보정, Q2에 e2e 선행 조건 추가. 검토 노트 절은 본문 흡수 후 삭제
   - 2026-08-10 Jackson 3 전 문서 기준 확정 · Dockerfile C4/Plan 동기화(Q1 해소) · C4 포인터 보정
   - 2026-08-10 구현 모호성 제거 — 버전 숫자·전체 POM·소스·테스트·README·작업 순서를 본문에 고정
+  - 2026-08-10 Boot 4.1 구현 반영 — `TestRestTemplate`을 `spring-boot-resttestclient` +
+    `@AutoConfigureTestRestTemplate`로 수정 (§4.4·§5.5; starter-test에서 분리됨)
+  - 2026-08-10 §8 V2·V4 검증 명령 수정 — `-q`가 `dependency:list`의 INFO 출력을 통째로 죽여
+    두 검사가 **항상 빈 출력 = 통과**로 보이던 문제. `-q` 제거 + 좌표 grep·V4 대조군 추가
 ---
 
 # Stage 0 — 정리와 뼈대
@@ -393,6 +397,16 @@ profile SPI·기본 구현이 여기 있다. **고객 정책은 여기 없다** 
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-resttestclient</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-restclient</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -417,6 +431,9 @@ profile SPI·기본 구현이 여기 있다. **고객 정책은 여기 없다** 
 - data·jpa·redis·cloud 스타터 **금지**. S3 SDK는 Stage 6.
 - JSON은 starter-web → starter-json의 **Jackson 3**. 별도 jackson 의존·`spring-boot-jackson2` **금지**.
 - app이 core를 직접 선언하는 것은 방향 위반이 아니다 (transitive 의존 금지).
+- Boot 4에서 `TestRestTemplate`은 `spring-boot-starter-test`에 포함되지 않는다.
+  app pom에 **test scope** `spring-boot-resttestclient` + `spring-boot-restclient`
+  (`RestTemplateBuilder`)를 추가한다 (§5.5).
 
 **왜 Boot 3이 아니라 4.1.0인가**
 
@@ -602,12 +619,14 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.resttestclient.TestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureTestRestTemplate
 class RoNextApplicationTest {
 
     @Autowired
@@ -632,6 +651,8 @@ class RoNextApplicationTest {
 
 - T2 = `contextLoads`, T3 = `healthEndpointRespondsUp`. 메서드 이름·단언을 바꾸지 않는다.
 - AssertJ는 `spring-boot-starter-test`가 제공한다.
+- Boot 4: 패키지 `org.springframework.boot.resttestclient`, 주입에 `@AutoConfigureTestRestTemplate` 필요.
+  app pom test scope: `spring-boot-resttestclient` + `spring-boot-restclient` (§4.4).
 
 ---
 
@@ -715,22 +736,34 @@ curl -s localhost:8080/actuator/health
 | T2 | `RoNextApplicationTest.contextLoads` | app | `app` 기동 | 예외 없이 통과 |
 | T3 | `RoNextApplicationTest.healthEndpointRespondsUp` | app | health 응답 | HTTP 200 · body `status` == `"UP"` |
 | V1 | 루트에서 `mvn verify` | 루트 | `mvn verify` 통과 | 세 모듈 BUILD SUCCESS · T1–T3 green |
-| V2 | GCP 0 | 빌드 | GCP 의존성 0 | enforcer 통과 + `mvn -q dependency:list -DincludeGroupIds=com.google.cloud` 출력 비어 있음 (또는 매칭 0) |
+| V2 | GCP 0 | 빌드 | GCP 의존성 0 | enforcer 통과 + 아래 V2 명령에 `com.google.cloud` 좌표 0건 |
 | V3 | 수동 1회 | 로컬 | 기동 후 health | `mvn spring-boot:run -pl app` 기동 후 `curl -s localhost:8080/actuator/health` 에 `"status":"UP"` |
-| V4 | core 순수성 | 빌드 | Architecture §2.1 | `mvn -q dependency:list -pl solver-core -DincludeScope=compile` 에 외부 compile 좌표 없음 (로컬 프로젝트 좌표만 허용; Stage 0에서는 compile 의존 자체가 없음) |
+| V4 | core 순수성 | 빌드 | Architecture §2.1 | 아래 V4 명령에 외부 compile 좌표 없음 (로컬 프로젝트 좌표만 허용; Stage 0에서는 compile 의존 자체가 없음) · 대조군은 0이 아니어야 함 |
+
+**`-q`를 붙이지 않는다.** `dependency:list`는 결과를 INFO로 출력하므로 `-q`를 붙이면 의존이
+있든 없든 **출력이 항상 비어** 두 검사가 무조건 통과한 것처럼 보인다. 아래 명령을 그대로 쓴다.
 
 V2 확인 명령 (고정):
 
 ```bash
-mvn -q dependency:list -DincludeGroupIds=com.google.cloud
-# 기대: 빈 출력 (의존 없음). enforcer bannedDependencies가 이미 빌드를 막는다.
+mvn dependency:list -DincludeGroupIds=com.google.cloud \
+  | grep -E '^\[INFO\]\s+\S+:\S+:\S+:' || echo "PASS — com.google.cloud 좌표 0건"
+# 기대: PASS 줄만 출력. 좌표가 한 줄이라도 찍히면 FAIL.
+# enforcer bannedDependencies가 이미 빌드를 막지만, 이 명령은 그것과 독립으로 확인한다.
+# 참고: com.vaadin.external.google:android-json (starter-test의 JSONassert 전이, test scope)은
+#       groupId가 달라 여기에 잡히지 않으며 금지 대상이 아니다.
 ```
 
-V4 확인 명령 (고정):
+V4 확인 명령 (고정 — 본 검사 + 대조군 2줄을 모두 실행):
 
 ```bash
-mvn -q dependency:list -pl solver-core -DincludeScope=compile
-# 기대: com.ronext:ro-next-solver-core 자신 외 compile 의존 없음
+mvn dependency:list -pl solver-core -DincludeScope=compile \
+  | grep -E '^\[INFO\]\s+\S+:\S+:\S+:' || echo "PASS — compile 의존 0건"
+
+# 대조군: 명령·grep이 살아 있다는 증거. scope 제한을 풀면 test 의존이 보여야 한다.
+mvn dependency:list -pl solver-core | grep -cE '^\[INFO\]\s+\S+:\S+:\S+:'
+# 기대: 본 검사는 PASS 줄만, 대조군은 0이 아닌 수(2026-08-10 구현 시점 15).
+# 대조군이 0이면 검사 자체가 고장난 것이므로 V4를 통과로 판정하지 않는다.
 ```
 
 ---
