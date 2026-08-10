@@ -8,13 +8,14 @@
 - **진입점:** [`docs/README.md`](docs/README.md)
 - 현행 4문서: [Master](docs/master-design.md) · [Domain](docs/domain-design.md) ·
   [Architecture](docs/architecture-design.md) · [Implementation Plan](docs/implementation-plan.md)
-  (2026-08-09 확정)
+  (2026-08-09 확정 · 2026-08-10 3계층 개정)
 - 과거 설계는 전부 [`docs/deprecated/`](docs/deprecated/) — 효력 없음
 
 ## 기술 기준 (확정 설계)
 
 - Java 25 (`.sdkmanrc`로 고정) · Maven 3.9+
-- 모듈 2개: `solver-core`(순수 Java, 의존성 0) + `app`(Spring Boot, ECS 배포 단위)
+- 모듈 3개 (3계층): `solver-core`(순수 Java, 의존성 0) + `solver-profile`(고객별 정책) +
+  `app`(**Spring Boot 4.1**, ECS 배포 단위) · JSON은 **Jackson 3** (`JsonMapper`)
 - 저장: **Amazon S3만** (RDB·Redis 없음)
 - 배포: **AWS ECS Fargate** 단일 서비스 (Lambda·Step Functions 사용하지 않음)
 

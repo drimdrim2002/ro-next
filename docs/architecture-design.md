@@ -1,10 +1,15 @@
 ---
 title: RO-Next Architecture Design
 status: CONFIRMED
-date: 2026-08-09
+date: 2026-08-10
 supersedes: docs/deprecated/2026-07-31-phase-b-architecture-design.md
 master: docs/master-design.md
 domain: docs/domain-design.md
+revisions:
+  - 2026-08-09 최초 확정 (ECS Fargate·2모듈)
+  - 2026-08-10 3계층 확정 — 모듈 3개(core·profile·app), Profile을 Problem에서 분리,
+    comparator → long[] score, 배송정책/탐색설정 분리
+  - 2026-08-10 app 툴체인 — Spring Boot 4.1 + Jackson 3 (`JsonMapper` / `tools.jackson`)
 ---
 
 # RO-Next Architecture Design
@@ -15,6 +20,10 @@ domain: docs/domain-design.md
 확정 인프라: **AWS ECS Fargate 위의 단일 Spring Boot 서비스, 저장은 S3만** (2026-08-09).
 이전 문서의 Lambda/ECS 미결정, Step Functions 오케스트레이션, 분산 라운드(champion) 구조,
 YAML 2층 카탈로그, 십수 개 Maven 모듈은 모두 폐기했다.
+
+확정 코드 구조: **3계층 = core · profile · app** (2026-08-10). 계층마다 변하는 속도와
+허용 의존이 다르다 — core는 거의 안 변하고 외부 의존이 0, profile은 고객이 늘 때마다
+늘어나며 외부 라이브러리를 쓸 수 있고, app은 인프라 설정만 안다.
 
 ## 1. 한 장 그림
 
@@ -40,36 +49,60 @@ YAML 2층 카탈로그, 십수 개 Maven 모듈은 모두 폐기했다.
 - 호출 시스템은 응답의 `solveKey`로 진행·결과를 확인한다 — 조회 API가 기본이고,
   S3 권한이 있으면 직접 읽어도 된다.
 
-## 2. 모듈 구조 — 2개 (확정)
+## 2. 모듈 구조 — 3개 (확정)
 
 ```text
 ro-next/
-├── pom.xml                        # parent (modules: solver-core, app)
-├── solver-core/                   # 순수 Java — 외부 라이브러리 의존 0
+├── pom.xml                        # parent (modules: solver-core, solver-profile, app)
+│
+├── solver-core/                   # 순수 Java — 외부 라이브러리 의존 0. 거의 안 변함
 │   └── com.ronext.rpdptw
-│       ├── domain/                # canonical 입력 모델·정규화·이동표 (Domain §1–4)
+│       ├── domain/                # canonical 입력 모델·정규화·배송정책 (Domain §1–4)
 │       ├── problem/               # Problem 동결·검증 (Domain §5)
-│       ├── solve/                 # Solution·전파·평가·ALNS (Domain §6–9)
-│       ├── profile/               # profile SPI + default/고객 구현 + 레지스트리 (Domain §8.4)
+│       ├── eval/                  # 평가 계약 + profile SPI + 기본 구현 (Domain §7.3·§8)
+│       ├── solve/                 # Solution·전파·ALNS·탐색설정 (Domain §6–9)
 │       └── verify/                # 독립 재검증 (Domain §10)
+│
+├── solver-profile/                # 고객 정책만. 외부 라이브러리는 여기서만 허용
+│   └── com.ronext.rpdptw.profile
+│       ├── ProfileRegistry        # customerId → Profile (미등록 → default)
+│       └── (고객별 패키지)          # 현재 0개
+│
 └── app/                           # Spring Boot — 배포 단위 (ECS 이미지 1개)
     └── com.ronext.rpdptw.app
         ├── api/                   # REST 컨트롤러 (접수·조회)
         ├── run/                   # SolveExecutor: 비동기 풀이 실행·상태 갱신
-        ├── input/                 # 규약 JSON ↔ canonical adapter (Jackson 사용)
+        ├── input/                 # 규약 JSON ↔ canonical adapter (Jackson 3 / JsonMapper)
         └── storage/               # SolveStore 인터페이스 + S3 구현 + 로컬 fake
 ```
+
+**모듈 의존** — `app → solver-profile → solver-core` (한 방향, 역방향은 컴파일 불가)
+
+**core 내부 패키지 의존** — 순환 없음
+
+```text
+domain  ──▶ (없음)
+problem ──▶ domain
+eval    ──▶ domain, problem
+solve   ──▶ domain, problem, eval
+verify  ──▶ domain, problem, eval        # solve 금지 (ArchUnit)
+```
+
+`eval`이 `problem`을 볼 수 있는 이유는 `Problem`이 `Profile`을 담지 않기 때문이다 (§2.2).
+그래서 profile hard 제약·score가 차급·구역·치수 같은 **문제 사실을 직접 읽을 수 있다.**
 
 ### 2.1 경계 규칙과 강제 수단
 
 | 규칙 | 강제 수단 |
 |---|---|
 | `solver-core`에 Spring/AWS SDK/Jackson 유입 금지 | **컴파일 차단** — solver-core pom에 해당 의존성이 없음 (test scope 제외) |
+| `solver-core`가 고객 구현을 참조 금지 | **컴파일 차단** — Maven 의존이 `solver-profile → solver-core` 한 방향 |
+| 고객 전용 외부 라이브러리(3D packing 등)가 core로 유입 금지 | 〃 — 그 의존은 `solver-profile` pom에만 선언 |
 | `verify`가 `solve` 내부(캐시·탐색 상태)를 참조 금지 | **ArchUnit 테스트** — `verify.. → solve..` 참조 시 빌드 실패 |
-| `app` → `solver-core` 한 방향만 | Maven 의존 방향 (역방향은 컴파일 불가) |
+| 재검증이 **탐색 예산**(시간·step·idle 한도)을 읽는 것 금지 | 〃 — `AlnsConfig`가 `solve`에 있으므로 위 규칙이 그대로 막는다 (§2.3) |
 | core에 고객명 분기 금지 | profile SPI (Domain §8.4) + 코드 리뷰 |
 
-- `verify`는 `domain`·`problem`·`profile`의 공개 타입만 사용해 처음부터 재계산한다.
+- `verify`는 `domain`·`problem`·`eval`의 공개 타입만 사용해 처음부터 재계산한다.
   `solve`의 결과 객체(최종 `Solution`)는 값으로 전달받는다 — 구현체 내부를 들여다보지 않는다.
 - 나중에 컴파일 수준 차단이 정말 필요해지면 `verify` 패키지를 모듈로 승격한다 (지금은 하지 않음).
 - solver-core의 테스트 의존성(JUnit, ArchUnit)은 test scope로만 허용.
@@ -77,24 +110,58 @@ ro-next/
 ### 2.2 profile 연결 (코드 레지스트리)
 
 ```java
-// solver-core/profile — 개념 스케치
-public interface Profile {
-    List<HardConstraint> hardConstraints();
-    Comparator<Evaluation> comparator();   // 사전식 비교 구성
+// solver-core/eval — 계약과 기본 구현 (core 소유)
+public interface HardConstraint {
     String id();
+    boolean satisfied(Problem problem, RouteFacts route);
 }
 
+public interface Profile {
+    String id();
+    List<HardConstraint> hardConstraints();
+    /** 이 profile의 목적식 축. 전부 "작을수록 좋다". 같은 profile은 항상 같은 길이 */
+    long[] score(Problem problem, Evaluation metrics, Collection<RouteFacts> routes);
+}
+
+public class DefaultProfile implements Profile { /* 상속 대상 — final 아님 */ }
+
+public final class Scores {
+    /** 사전식 비교. < 0 이면 a가 더 좋다 */
+    public static int compare(long[] a, long[] b);
+}
+```
+
+```java
+// solver-profile — 고객 정책 (모듈 분리)
 public final class ProfileRegistry {
     private final Map<String, Profile> byCustomerId;  // 코드에서 구성
     private final Profile defaultProfile;
-    public Profile resolve(String customerId) {       // 미등록 → default (MUST)
-        return byCustomerId.getOrDefault(customerId, defaultProfile);
+    public Profile resolve(Optional<String> customerId) {   // 미등록·부재 → default (MUST)
+        ...
     }
 }
 ```
 
 - YAML/설정 파일 없음. 신규 고객 특화는 `Profile` 구현 클래스 추가 + 맵 한 줄 등록.
-- 탐색과 재검증은 `Problem`에 동결된 **같은 profile 인스턴스**를 쓴다 (Domain §8.4).
+- **`Profile`은 `Problem`에 담기지 않는다** (2026-08-10 변경). 담으면 `eval → problem`이
+  순환이 되어 profile이 문제 사실을 영영 못 읽는다. 대신 executor가 한 번 resolve해
+  **탐색과 재검증에 같은 인스턴스를 인자로 넘긴다** (Domain §8.4 MUST를 이 방식으로 지킨다).
+- 비교기 SPI는 없다. 비교는 `Scores.compare` 하나뿐이고, 무엇을 비교할지는 `score()`가 정한다.
+  고정 가중치·Big-M으로 축을 한 숫자에 뭉개는 구현은 **만들 수 없다** (Domain §8.3이 구조로 강제).
+
+### 2.3 계층이 나뉘는 기준
+
+값이나 코드를 어디에 둘지 헷갈리면 이 두 질문으로 정한다.
+
+| 질문 | 예 → 배치 | 아니오 → 배치 |
+|---|---|---|
+| 이 값을 바꾸면 **유효한 답의 집합**이 바뀌는가? | `domain`의 배송정책 → `Problem`에 동결, 재검증이 읽음 | `solve`의 `AlnsConfig` → `Problem` 밖, 재검증이 못 봄 |
+| 이 개념이 **다른 고객에게도 의미**가 있는가? | canonical에 optional 필드 (Domain §2.1) | 그 고객 전용 데이터 경로 — 실제로 필요해질 때 결정 |
+
+- 배송정책(창고 복귀·회전 수·`waitInDepot`·기본 속도)은 유효한 답을 바꾸므로 `Problem` 쪽이다.
+- 탐색 예산(시간·step·idle 한도·seed)은 답이 **달라질 뿐 무효가 되지 않으므로** `Problem` 밖이다.
+  "언제 멈출지"가 "무엇이 옳은 답인지"에 섞이면 재검증의 의미가 무너진다.
+- 두 값을 하나의 `Rule` 타입으로 묶지 않는다 (묶는 순간 이 구분이 사라진다).
 
 ## 3. 실행 흐름과 상태
 
@@ -174,13 +241,17 @@ public interface SolveStore {
 
 ## 4. Spring Boot 사용 규칙 — 최소한만 (확정)
 
+라인: **Spring Boot 4.1.x** (Java 17–26, OSS 지원 2027-07-31까지). 선택 근거·patch 정책은
+[Stage 0 §4.4](implementation/stage-00-cleanup-and-skeleton.md).
+
 | 항목 | 규칙 |
 |---|---|
 | 스타터 | `spring-boot-starter-web` (+ actuator health 정도). **data·jpa·redis·cloud 스타터 금지** |
-| DI | `app` 모듈 조립에만 사용. `solver-core`는 Spring 어노테이션 없는 평범한 Java |
+| JSON | **Jackson 3** 기본 (`tools.jackson`, 매퍼 `JsonMapper`). starter-json이 제공. **Jackson 2**(`ObjectMapper`·`com.fasterxml.jackson`·`spring-boot-jackson2`) **금지** |
+| DI | `app` 모듈 조립에만 사용. `solver-core`·`solver-profile`은 Spring 어노테이션 없는 평범한 Java |
 | executor | Spring `@Async` 또는 직접 만든 `ExecutorService` 중 단순한 쪽. 분산 스케줄러 금지 |
 | AWS | `software.amazon.awssdk:s3` 하나만, `storage` 패키지 안에서만 |
-| 설정 | `application.yml`: 버킷·동시 실행 수·시간 한도 기본값 등 운영 설정만. 점수·제약 로직 넣기 금지 |
+| 설정 | `application.yml`: 버킷·동시 실행 수·탐색 예산 기본값(시간·step·idle 한도)·seed 등 운영 설정만. 점수·제약 로직 넣기 금지 |
 
 ## 5. 배포 (ECS Fargate)
 
@@ -209,7 +280,7 @@ ECS Fargate 서비스 1개 · 태스크 1개(기본) · ALB 또는 내부 엔드
 
 | 현재 (placeholder) | 목표 |
 |---|---|
-| 단일 pom, `com.ronext.optimizer`, 수제 HTTP 서버 | 2모듈, `com.ronext.rpdptw`, Spring Boot |
+| 단일 pom, `com.ronext.optimizer`, 수제 HTTP 서버 | 3모듈, `com.ronext.rpdptw`, Spring Boot |
 | pom에 GCP 의존성 (Cloud Storage·Workflows) | 제거 → `awssdk:s3`만 |
 | `gcp/`, `.serverless/`, 빈 모듈 디렉터리 잔재 | 삭제 |
 | `AlnsBatchEngine` (합성 데모) | solver-core의 실제 ALNS로 대체. 데모 코드는 완료 근거가 아님 |
@@ -221,8 +292,13 @@ ECS Fargate 서비스 1개 · 태스크 1개(기본) · ALB 또는 내부 엔드
 
 - 컨트롤러·executor에 S3 SDK 직접 호출 (→ `storage`만)
 - `solver-core`에 Spring/Jackson/AWS import (→ 컴파일이 막지만, 의존성 추가로 뚫지 말 것)
+- app에서 Jackson 2 API·`spring-boot-jackson2` 사용 (→ Boot 4.1 기본은 Jackson 3, §4)
+- 고객 전용 라이브러리를 `solver-core` pom에 추가 (→ `solver-profile`에만)
 - `verify`에서 `solve` 내부 참조 (→ ArchUnit이 막음)
 - core/solve에 `if (customerId == …)` (→ profile)
+- `Problem`에 `Profile`·탐색 예산 담기 (→ 둘 다 인자로 전달, §2.2·§2.3)
+- 여러 축을 가중합·Big-M으로 한 숫자에 뭉개기 (→ `long[]` 사전식, Domain §8.3)
+- 고객마다 별도 `Problem`·별도 adapter 만들기 (→ canonical에 optional 필드, Domain §2.1)
 - 접수 HTTP 안에서 ALNS 완주 대기
 - RDB·Redis·SQS·Step Functions 도입 (필요해지면 설계 변경으로 결정)
 - 결과 JSON을 재검증 없이 저장

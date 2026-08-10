@@ -63,7 +63,7 @@ related:
 | 7 | **고객 차이는 profile** | 점수·제약의 고객별 차이는 core 코드 분기(`if (customerId…)`)가 아니라 profile 구현 교체로. 연결은 코드 레지스트리(`customerId → profile` 맵), 미등록 고객은 default |
 | 8 | **저장은 S3만** | 입력·진행 상태·결과 전부 S3 객체. RDB·Redis 사용하지 않음 |
 | 9 | **단일 Spring Boot 서비스** | 접수 API와 풀이 executor가 한 앱. AWS **ECS Fargate** 배포. Lambda·Step Functions·SQS 사용하지 않음 |
-| 10 | **모듈 2개** | `solver-core`(순수 Java, 의존성 0) + `app`(Spring Boot). 경계는 컴파일 의존 + ArchUnit 테스트로 강제 |
+| 10 | **모듈 3개** | `solver-core`(순수 Java, 의존성 0) + `solver-profile`(고객 정책·고객 전용 라이브러리) + `app`(Spring Boot). 의존은 `app → solver-profile → solver-core` 한 방향. 경계는 컴파일 의존 + ArchUnit 테스트로 강제 (Architecture §2) |
 
 ## 4. 범위
 

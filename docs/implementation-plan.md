@@ -1,9 +1,12 @@
 ---
 title: RO-Next Implementation Plan
 status: CONFIRMED
-date: 2026-08-09
+date: 2026-08-10
 supersedes: docs/deprecated/implementation-15phase/ (ARCHIVED)
 master: docs/master-design.md
+revisions:
+  - 2026-08-09 최초 확정
+  - 2026-08-10 Spring Boot 4.1 · Stage 0 코드 정리에 구 Dockerfile 삭제 명시
 ---
 
 # RO-Next Implementation Plan
@@ -27,8 +30,8 @@ master: docs/master-design.md
 
 | 작업 | 내용 |
 |---|---|
-| 코드 정리 | GCP 의존성 제거(pom), `gcp/`·`.serverless/`·빈 모듈 잔재(`rpdptw/`·`adapters/`·`apps/`·`build/` 디렉터리)·구 `src/`(placeholder) 삭제 |
-| 뼈대 | parent pom + `solver-core`(의존 0) + `app`(Spring Boot 3, starter-web) 2모듈 구성 |
+| 코드 정리 | GCP 의존성 제거(pom), 구 `Dockerfile` 삭제(단일 모듈·`src/` shade 전용 — Stage 0 이후 빌드 불가), `gcp/`·`.serverless/`·빈 모듈 잔재(`rpdptw/`·`adapters/`·`apps/`·`build/` 디렉터리)·구 `src/`(placeholder) 삭제. 새 Dockerfile은 Stage 7 |
+| 뼈대 | parent pom + `solver-core`(의존 0) + `solver-profile`(고객 정책) + `app`(**Spring Boot 4.1**, starter-web) **3모듈** 구성 (Architecture §2). Boot 3.5는 2026-06-30 OSS EOL — 라인 선택 근거는 [Stage 0 §4.4](implementation/stage-00-cleanup-and-skeleton.md) |
 | 경계 테스트 | ArchUnit: `verify.. ↛ solve..` 규칙 (빈 패키지 상태로도 룰 파일 먼저) |
 | README | 루트 README를 확정 설계에 맞게 갱신 |
 
@@ -40,7 +43,7 @@ Domain §1–§3. canonical 모델(`Request`·`Vehicle`·`Plan`), 단위 정규�
 시간 원점(planStart 기준 초), serviceTime 공식, 호환성 판정, 입력 오류·`UNSUPPORTED_INPUT` 분류.
 
 **DoD**: 단위·경계값(FLOOR, 소수 거부, optional 부재 = 제약 없음) 단위 테스트.
-`multiRotation != 0` 거부 테스트.
+`multiRotation`이 core 지원 범위를 넘으면 거부하는 테스트 (현행 판정 `!= 0` — Domain §2.5).
 
 ### Stage 2 — 이동표와 Problem 동결 (solver-core)
 
@@ -52,8 +55,9 @@ Domain §4–§5. `LocationId` 기반 이동표(D/U, 누락 보정: Great Circle
 ### Stage 3 — Solution·전파·평가 (solver-core)
 
 Domain §6–§8. 경로/bank 상태와 XOR, 적재 부호 규칙(initialLoad 포함), 전파 루프
-(arrival→대기→서비스→`reqDate`→load→hard), 기록 값(§7.3), metric, 사전식 comparator,
-default profile + `ProfileRegistry`.
+(arrival→대기→서비스→`reqDate`→load→hard), 기록 값(§7.3), metric(`Evaluation`),
+profile의 score 축(`long[]`)과 사전식 비교(`Scores.compare`), `DefaultProfile`(core `eval`) +
+`ProfileRegistry`(solver-profile 모듈).
 
 **DoD**: Domain §7.2 숫자 예를 그대로 재현하는 테스트. XOR 위반·hard 위반 검출 테스트.
 미등록 customerId → default profile 테스트.
