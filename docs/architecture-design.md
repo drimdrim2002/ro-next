@@ -10,6 +10,8 @@ revisions:
   - 2026-08-10 3계층 확정 — 모듈 3개(core·profile·app), Profile을 Problem에서 분리,
     comparator → long[] score, 배송정책/탐색설정 분리
   - 2026-08-10 app 툴체인 — Spring Boot 4.1 + Jackson 3 (`JsonMapper` / `tools.jackson`)
+  - 2026-08-10 D1 확정 반영 — §3.1-2 접수 게이트 문면을 `multiRotation != 0`에서
+    `{0,1} 밖`으로 (Domain §2.5). 흐름·모듈·경계 규칙 무변경
 ---
 
 # RO-Next Architecture Design
@@ -170,7 +172,7 @@ public final class ProfileRegistry {
 ```text
 POST /solves  (body = 규약 JSON)
   1. 규약 스키마·필수값 검증          실패 → 4xx (S3에 아무것도 남기지 않음)
-  2. multiRotation != 0 등 미지원 → 4xx UNSUPPORTED_INPUT
+  2. multiRotation이 {0,1} 밖 등 미지원 → 4xx UNSUPPORTED_INPUT
   3. solveKey 생성 (§3.3)
   4. S3 put: {solveKey}/input.json + status.json(state=RECEIVED)
   5. executor 큐에 등록 (in-process)

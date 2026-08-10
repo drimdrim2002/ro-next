@@ -13,6 +13,8 @@ revisions:
   - 2026-08-10 `SolveOptions` → `DeliveryPolicy`, `Problem`에 profile 미보관 확정 (Domain §5)
   - 2026-08-10 §7에 규모 테스트 T12 추가 (Plan Stage 2 규모 DoD 대응 — 453² 전 쌍 합성 입력의
     Problem 생성 1회, 시간·메모리 기록). 다른 설계 무변경
+  - 2026-08-10 D1 확정 반영 — §8 "multiRotation fixture 충돌 해소" 행을 해소 표시로
+    (바퀴 수 확정, fixture 원본 통과). 이 Stage의 설계·파일·테스트는 무변경
 ---
 
 # Stage 2 — 이동표와 Problem 동결
@@ -301,7 +303,7 @@ T9–T11은 DoD 두 문장 밖이지만 Plan Stage 2 범위 문장("`Problem` �
 | 미배정 사유 산출 (`NO_COMPATIBLE_VEHICLE` 등 — 호환성 ∅ 사실은 여기서 동결만) | Stage 5 | Domain §11 |
 | wire `distanceMatrix`(F/T/D/U/C, 문자열·정수 혼재) 파싱 → `TravelEntryInput` 매핑 | Stage 6 adapter | Architecture §2, Stage 1 §8 |
 | `ProblemCreationException` → status FAILED 기록 | Stage 6 executor | Architecture §3.2 |
-| multiRotation fixture 충돌 해소 | Stage 6 전 결정 | Stage 0 §11 Q2 |
+| ~~multiRotation fixture 충돌 해소~~ | **해소 — 결정 불필요** | Plan §2.1 D1 (2026-08-10): 바퀴 수 확정으로 fixture `"1"`이 그대로 통과. 판정은 Stage 1이 소유 |
 | depot.taskTime의 시간 계산 적용 (`Depot` 필드 보관만) | 보류 | Domain §2.5 |
 | 이동표 메모리 최적화(압축·공유 표현)의 확정 | 구현 재량 | §2.2 (요구는 불변+O(1)뿐) |
 | 시간창 전개(다일 근무창·차고 창)의 재계산·파생 색인 | **안 함 — 이 Stage는 무변경** | Domain §3.2 |

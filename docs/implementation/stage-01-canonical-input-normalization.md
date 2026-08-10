@@ -16,6 +16,13 @@ revisions:
   - 2026-08-10 **D4 확정 반영 (Q2 해소)** — 시간창을 `List<TimeWindow>`로 (Vehicle·Depot·RequestSide
     셋 다, Domain §3.2) · `TimeBase.anchor` → `dailyWindows` · §4 절차 3·5·6을 "전개"로 ·
     E27 뒤집기(자정 넘는 창 수용) + E27b\~E31 신설 · T14\~T16 신설 · §4에 1일 fixture 무영향 실측 추가
+  - 2026-08-10 **D1 확정 반영 (Q1 해소) + 차량별 `trips`** — ① `multiRotation` 판정 반전:
+    §4 절차 2를 집합 판정(통과 = `{0,1}`, `-1`·`2 이상` = UNSUPPORTED_INPUT, `≤ -2` =
+    INVALID_INPUT, `> 1` 비교식 금지)으로 · E6 뒤집고 E6b·E6c 신설 · T5 개명·재정의
+    (`rejectsMultiRotationNonZero` → `acceptsOneRotationRejectsMultiTrip`) · DoD 문장 갱신.
+    ② 차량별 `trips`: §2.3 `VehicleInput`에 `trips`(nullable) 추가 · §4 절차 5에
+    `차량 trips ▷ options.trips` 체인과 오값 검증 추가 · E19b\~E19e 신설 · T13 확장.
+    canonical `Vehicle`에 `trips`는 남지 않는다(접기 유지) — 타입 변경은 raw 운반체 한 곳뿐
 ---
 
 # Stage 1 — canonical 입력과 정규화
@@ -25,7 +32,8 @@ solver-core의 `domain` 패키지에 canonical 모델(`Plan`·`Request`·`Vehicl
 패키지 좌표는 [Stage 0 §3.1](stage-00-cleanup-and-skeleton.md)의 이름 기준을 그대로 잇는다.
 
 **DoD** ([Plan Stage 1](../implementation-plan.md)): 단위·경계값(FLOOR, 소수 거부,
-optional 부재 = 제약 없음) 단위 테스트 · `multiRotation != 0` 거부 테스트.
+optional 부재 = 제약 없음) 단위 테스트 · `multiRotation`이 지원 범위 `{0, 1}` 밖이면 거부하는
+테스트 · 차량별 `trips` 접기 테스트.
 
 핵심 구도 — 두 층과 한 관문:
 
@@ -242,7 +250,11 @@ public record ItemInput(
 - `RequestInput(String orderId, SideInput pickup /*nullable*/, SideInput delivery, List<ItemInput> items, List<String> vehicleFeatures /*nullable*/, Set<String> requiredCapabilities /*nullable*/)`
   — pickup side가 있으면 `PICKUP_DELIVERY`, 없으면 `DELIVERY_ONLY`로 정규화된다 (Domain §1.3).
 - `SideInput(String locId /*nullable*/, String latText, String lonText, LocalTime openTime, LocalTime closeTime, Long durationSec, LocalDateTime reqDate, String zoneId)` — 시각류 전부 nullable.
-- `VehicleInput(String vehicleId, String vehicleFeature, BigDecimal maxWeightKg, BigDecimal maxVolumeCbm, LocalTime workStart, LocalTime workEnd, Integer speedKmH, Integer maxStopCnt, Long maxDriveTimeSec, Long maxDriveDistMeter, Long maxWidthMm, Long maxHeightMm, Long maxLengthMm, Set<String> capabilities, Set<String> zoneIds, String vhclOwnTyp, String startDepotLocId, String endDepotLocId)`
+- `VehicleInput(String vehicleId, String vehicleFeature, BigDecimal maxWeightKg, BigDecimal maxVolumeCbm, LocalTime workStart, LocalTime workEnd, Integer speedKmH, Integer maxStopCnt, Long maxDriveTimeSec, Long maxDriveDistMeter, Long maxWidthMm, Long maxHeightMm, Long maxLengthMm, Set<String> capabilities, Set<String> zoneIds, String vhclOwnTyp, String startDepotLocId, String endDepotLocId, String trips /*nullable — 부재면 options.trips*/)`
+  — `trips`는 **차량별 운행 형태**다 (Domain §2.4·§2.5, 2026-08-10 확정). 현행 규약에는 이
+  필드가 없고(차량 키는 `vehicleId`·`vehicleFeature`·`maxWeight`·`maxVolume`·`workStartTime`·
+  `workEndTime`·`speed`뿐 — fixture 실측) 앞으로 올 수 있는 확장이라, adapter는 "있으면 읽는다"로만
+  채운다. 지금 입력에서는 언제나 null이므로 동작이 바뀌지 않는다.
 - `DepotInput(String locId, String latText, String lonText, LocalTime openTime, LocalTime closeTime, Long taskTimeSec, String zoneId)`
 - `OptionsInput(String trips, Integer multiRotation, String waitInDepot, Integer defaultSpeedKmH, Integer globalVehicleMaxStopCount)`
   — `distanceTimeCalculate`·`searchTimeLimitSec` 필드는 **없다** (§2.2). 탐색 예산이 canonical에
@@ -303,12 +315,16 @@ public final class PlanNormalizer {
 1. 봉투    planId non-blank. planStart < planEnd (아니면 INVALID_INPUT).
           timeBase = TimeBase(planStart), planEndSec = toSeconds(planEnd).
 2. 정책    규약 default 채움: trips→"oneway", multiRotation→0, waitInDepot→"N".
-          multiRotation이 core 지원 범위(trip 1개) 초과 → UNSUPPORTED_INPUT (Domain §2.5 MUST).
-            판정식은 §9 Q1 확정 후 확정한다 — 값의 의미가 미확정이므로 지금은
-            "0만 통과, 그 외 거부"로 구현하고 T5가 그 동작을 고정한다.
+          multiRotation 판정 (Domain §2.5 MUST — 숫자는 차량이 도는 바퀴 수):
+            통과는 집합 {0, 1} 둘뿐이다 (0 = 미설정 = 1바퀴로 취급).
+            -1(무제한 복귀) 또는 2 이상  → UNSUPPORTED_INPUT.
+            -2 이하 (규약이 "greater than -1"로 금지) → INVALID_INPUT.
+            비교식 `> 1`로 쓰지 않는다 — -1이 게이트를 통과해 버린다 (MUST NOT).
           trips ∉ {oneway,roundtrip} / waitInDepot ∉ {Y,N} → INVALID_INPUT.
           결과: DeliveryPolicy(trips, waitInDepot, defaultSpeedKmH).
-            multiRotation은 검증만 하고 보관하지 않는다 (지원 범위가 1뿐이라 담을 정보가 없다).
+            여기의 trips는 **전체 기본값**이다 — 차량이 자기 값을 가지면 절차 5가 덮어쓴다.
+            multiRotation은 검증만 하고 보관하지 않는다 (통과한 0·1이 둘 다 "1바퀴"라
+            담을 정보가 없다). Vehicle에 multiRotation 필드를 만들지 않는다 (Domain §2.5).
 3. 차고    1개 이상. LocationId = locId 또는 LocationId.generated(좌표 원문).
           창 전개 = timeBase.dailyWindows(open, close, planEndSec) (기본 00:00:00/23:59:59,
             Domain §3.2 규칙 1–5 — 날마다 반복·자정 넘김·클리핑·병합). taskTime ≥ 0 (기본 0).
@@ -328,8 +344,14 @@ public final class PlanNormalizer {
             둘 다 없으면 Optional.empty (Domain §2.6).
           startDepot: 명시 → depots에 존재 검증(없으면 INVALID_INPUT).
             부재 → 차고가 정확히 1개면 그 차고, 여러 개면 INVALID_INPUT (§6 E20).
-          endDepot 접기 (Domain §2.5): 명시 → 존재 검증 후 그 값 (oneway여도 유지 — "있으면 그것 우선").
+          effectiveTrips = 차량 trips ▷ options.trips   (Domain §2.5 — 차량 값이 전체 기본값을 덮어쓴다)
+            차량 trips가 있는데 ∉ {oneway,roundtrip} → INVALID_INPUT
+              ("있으면 읽는다"가 "있으면 믿는다"는 아니다 — options.trips와 같은 검증).
+            현행 규약에 차량별 trips 필드가 없어 지금은 언제나 options.trips가 쓰인다.
+          endDepot 접기 (Domain §2.5) — effectiveTrips로 판정한다:
+            명시 → 존재 검증 후 그 값 (oneway여도 유지 — "있으면 그것 우선").
             부재 + roundtrip → startDepot. 부재 + oneway → Optional.empty.
+            접은 뒤 canonical Vehicle에 trips 필드는 남지 않는다 (Domain §2.5 접기 유지 판단).
 6. 주문    중복 RequestId → INVALID_INPUT. items 없음·빈 배열 → INVALID_INPUT (Domain §3.3).
           item별: qty null→1, qty < 1 → INVALID_INPUT (Domain §3.1 양의 정수).
             weight/volume → Units.toMilli (개당). taskTime null→0, 음수 → INVALID_INPUT.
@@ -355,9 +377,8 @@ public final class PlanNormalizer {
 
 fixture 근거: `win_poc_case.json`의 `D: "310708.03"` 같은 소수 문자열은 절차 7에서 거부된다 —
 그래서 최종 실행 fixture가 정수화된 [win_poc_case_floor.json](../../data/win_poc_case_floor.json)이다.
-반면 두 fixture 모두 `multiRotation: "1"`이라 절차 2에서 거부된다 — Stage 0 §11 Q2로 이관된
-미결 사항이며 Stage 1은 Domain §2.5 MUST대로 구현한다 (§9 Q1).
-`"1"`이 "trip 1개"를 뜻한다고 확인되면 판정식 한 줄(`> 1`)만 바뀌고 나머지는 그대로다.
+반면 `multiRotation`은 절차 2를 **통과한다** — 규약 원본 값 `"1"`은 1바퀴라 지원 범위 안이다
+(2026-08-10 D1 확정, §9 Q1 해소). 통과 집합이 `{0, 1}`이므로 이 필드로 거부되는 fixture는 없다.
 
 **창 전개가 현행 fixture를 바꾸지 않는다는 근거** (2026-08-10 실측, `win_poc_case_floor.json`):
 `dateRange` = `2023-09-13 00:00:00` \~ `2023-09-14 00:00:00`(정확히 24h·자정 정렬)이므로
@@ -410,7 +431,9 @@ Domain의 optional 규칙·경계값·오류 분류(§2·§3·§12)에서 뽑았
 | E3 | weight `0.0009` kg | FLOOR → `0` (합법 — 0 허용) | §3.1 |
 | E4 | weight/volume 음수 | INVALID_INPUT | §3.1 |
 | E5 | 거리 `310708.03` / 시간 `17265.5` | INVALID_INPUT (소수 거부) | §3.1·§4 |
-| E6 | `multiRotation`이 core 지원 범위 초과 — 잠정 판정 `!= 0` (fixture의 `"1"` 포함) | UNSUPPORTED_INPUT | §2.5 MUST·§12, §9 Q1 |
+| E6 | `multiRotation` = `0`·`1` (fixture 실값 `"1"` 포함) | **통과** — 둘 다 1바퀴 (D1 확정) | §2.5 MUST |
+| E6b | `multiRotation` = `2` 이상, 또는 `-1`(무제한 복귀) | UNSUPPORTED_INPUT — 차고 재방문은 범위 밖 | §2.5 MUST·§12 |
+| E6c | `multiRotation` = `-2` 이하 | INVALID_INPUT — 규약이 "greater than -1"로 금지한 값 | §2.5·§12 |
 | E7 | qty 0·음수 | INVALID_INPUT. null → 1 | §3.1 |
 | E8 | items 부재·빈 배열 (order 수준 taskTime만 있는 형태 포함) | INVALID_INPUT | §3.3 |
 | E9 | 합산 overflow (Σ item×qty) | INVALID_INPUT (`multiplyExact`/`addExact`) | §3.1 |
@@ -424,6 +447,10 @@ Domain의 optional 규칙·경계값·오류 분류(§2·§3·§12)에서 뽑았
 | E17 | reqDate < planStart | 수용 (음수 초로 정규화) — 실행 불가능성은 탐색·미배정의 일 | §2.3·§3.4 유추 |
 | E18 | planStart ≥ planEnd | INVALID_INPUT | §2.2 |
 | E19 | roundtrip + endDepot 부재 | endDepot := startDepot. oneway + endDepot 명시 → 그 값 유지 | §2.5 |
+| E19b | `options.trips = oneway`인데 **차량** `trips = roundtrip` | 그 차량만 roundtrip — endDepot 부재면 `startDepot`. 차량 값이 전체 기본값을 덮어쓴다 (차량별 지정의 실효) | §2.5 |
+| E19c | 차량 `trips = oneway` + 차량 `endDepot` 명시 | 명시된 endDepot 유지 (E19의 "있으면 그것 우선"이 그대로 적용 — 차량별 지정이 이 규칙을 바꾸지 않는다) | §2.5 |
+| E19d | 차량 `trips`가 `{oneway, roundtrip}` 밖 (예: `"ONEWAY "`·`"loop"`) | INVALID_INPUT — `options.trips`와 같은 검증. "있으면 읽는다"가 "있으면 믿는다"는 아니다 | §2.5·§2.1 추측 금지 |
+| E19e | 차량 `trips` 부재 (**현행 규약 전 차량**) | `options.trips` 사용 — 지금 입력에서는 동작이 하나도 바뀌지 않는다 | §2.4 optional |
 | E20 | 차량 startDepot 부재 (fixture 전 차량) + 차고 1개 | 그 차고로 확정. 차고 여러 개면 INVALID_INPUT | §2.5·§2.1 |
 | E21 | 같은 LocationId에 다른 좌표 | INVALID_INPUT | §2.1 추측 금지 |
 | E22 | locId 부재 | `LocationId.generated(좌표 원문)` — 같은 좌표 원문 = 같은 장소 | §2.3 |
@@ -452,7 +479,7 @@ Domain의 optional 규칙·경계값·오류 분류(§2·§3·§12)에서 뽑았
 | T2 | `UnitsTest.rejectsNegative` | E4 → INVALID_INPUT | 단위·경계값 |
 | T3 | `UnitsTest.rejectsFractionalDistanceAndTime` | E5 (fixture 실값) → INVALID_INPUT | "소수 거부" |
 | T4 | `PlanNormalizerTest.absentOptionalMeansNoConstraint` | E10·E13·E15: 부재 축 전부 `Optional.empty`, sentinel 부재 확인 | "optional 부재 = 제약 없음" |
-| T5 | `PlanNormalizerTest.rejectsMultiRotationNonZero` | E6: kind = UNSUPPORTED_INPUT. `0`은 통과 | "`multiRotation != 0` 거부 테스트" |
+| T5 | `PlanNormalizerTest.acceptsOneRotationRejectsMultiTrip` | **통과 집합 고정.** E6: `0`·`1` 통과(fixture 실값 `"1"` 포함) · E6b: `2`·`5`·`-1` → UNSUPPORTED_INPUT · E6c: `-2` → INVALID_INPUT. **`-1` 케이스가 이 테스트의 핵심**이다 — 판정을 `> 1` 비교식으로 쓰면 여기서만 깨진다 | "`multiRotation` 지원 범위 `{0,1}` 밖 거부 테스트" |
 | T6 | `TimeBaseTest.secondsFromPlanStart` | 원점 변환·`toWallClock` 왕복·E17 음수 | 경계값 (Domain §3.2) |
 | T7 | `PlanNormalizerTest.serviceTimeFormula` | duration + Σ(taskTime×qty) — qty 곱 포함 (Domain §3.3) | Stage 범위 문장 "serviceTime 공식" |
 | T8 | `PlanNormalizerTest.reqDateDefaultsToPlanEnd` | E16, side별 독립 reqDate (Domain §2.3 MUST) | Stage 범위 문장 |
@@ -460,7 +487,7 @@ Domain의 optional 규칙·경계값·오류 분류(§2·§3·§12)에서 뽑았
 | T10 | `PlanNormalizerTest.rejectsAmbiguousInput` | E8·E13·E14·E18·E21·E25 → INVALID_INPUT | 경계값·오류 분류 |
 | T11 | `PlanNormalizerTest.deliveryOnlyHasNoPickupSide` | pattern 확정 + pickup `Optional.empty` (Domain §1.3 MUST NOT) | Stage 범위 문장 "canonical 모델" |
 | T12 | `CompatibilityTest.axisTruthTable` | §3.4 네 식의 참/거짓 조합 + E23·E24·E26 | Stage 범위 문장 "호환성 판정" |
-| T13 | `PlanNormalizerTest.depotResolution` | E19·E20 (endDepot 접기·startDepot 단일 차고 확정) | 경계값 (Domain §2.5) |
+| T13 | `PlanNormalizerTest.depotResolution` | E19·E20 (endDepot 접기·startDepot 단일 차고 확정) + **차량별 trips**: E19b(options=oneway·차량=roundtrip → endDepot := startDepot) · E19c(차량 oneway + endDepot 명시 → 유지) · E19d(차량 trips 오값 → INVALID_INPUT) · E19e(차량 trips 부재 → options 값) | 경계값 (Domain §2.4·§2.5) |
 | T14 | `TimeBaseTest.expandsDailyWindows` | **창 전개 전수.** E28(기본창 3일 → 병합돼 1개) · E29(planStart 비자정 클리핑) · E31(planEnd 클리핑) · E30(빈 목록, 예외 없음) · Domain §3.2 예2(근무 08:00\~17:00 3일 → `[28800,61200]`·`[115200,147600]`·`[201600,234000]`) · 결과의 불변식(정렬·비겹침·병합 완료) | 경계값 (Domain §3.2) |
 | T15 | `TimeBaseTest.acceptsOvernightWindowAndRejectsZeroLength` | **야간조 케이스.** E27: `22:00~06:00` 3일 계획 → 전날에서 넘어온 `[0, 첫날 06:00]` + 날마다 `[22:00, 다음날 06:00]` · E27b: `09:00~09:00` → INVALID_INPUT | 경계값 (Domain §3.2 규칙 2·3) |
 | T16 | `PlanNormalizerTest.floorFixtureWindowsStayOneEach` | **1일 fixture 무영향 증명.** §4 말미 실측 표의 세 값(차량 `00:00:00~23:30:00` → `[[0,84600]]`, 차고 `00:00:00~23:59:59` → `[[0,86399]]`, 주문 `05:45~10:30` → 창 1개)을 `planEnd=86400`으로 손 조립해 **목록 길이가 전부 1**임을 단언 | 경계값 (Domain §3.2 — 회귀 방지) |
@@ -495,7 +522,7 @@ T7·T8·T11\~T16은 DoD 두 문장 밖이지만 Plan Stage 1 범위 문장("cano
 
 | # | 질문 | 잠정 처리 |
 |---|---|---|
-| Q1 | fixture 두 개 모두 `multiRotation: "1"` — 이 값이 무엇을 세는지 (Stage 0 §11 Q2와 동일 사안) | **[Plan §2.1 D1](../implementation-plan.md)으로 이관 (2026-08-10).** 규약 PDF의 열거 정의로 "차고 복귀 횟수"임이 확인돼, `"1"`은 지원 범위 밖이다 — 남은 것은 범위 결정(D1). Stage 1은 그대로 "0만 통과"를 구현·테스트한다(T5). 타입·절차·다른 테스트는 영향 없음 |
+| Q1 | fixture 두 개 모두 `multiRotation: "1"` — 이 값이 무엇을 세는지 (Stage 0 §11 Q2와 동일 사안) | **해소 (2026-08-10, [Plan §2.1 D1](../implementation-plan.md) 확정).** 숫자는 **차량이 도는 바퀴 수**다 — `1` = 1바퀴 = 지원 범위 안이고, `0`은 미설정이라 `1`과 같게 본다. **판정이 반전됐다**: `!= 0` 거부 → **통과 = `{0, 1}`**, `-1`·`2 이상` = UNSUPPORTED_INPUT, `≤ -2` = INVALID_INPUT (§4 절차 2·E6\~E6c·T5). fixture는 원본 그대로 통과한다. 주의: **규약 PDF 문면은 이 숫자를 복귀 횟수로 읽게 적혀 있어 그대로 구현하면 판정이 반대로 나온다** — 정본은 Domain §2.5다 |
 | Q2 | partial-time(openTime·closeTime·workStart·workEnd)의 다일(多日) 기간 의미 — 앵커링·자정 넘는 창(close < open)·일 반복·복수 근무창 네 갈래 | **해소 (2026-08-10, [Plan §2.1 D4](../implementation-plan.md) 확정).** Domain §3.2가 시간창 전개 규칙을 정본화했다 — 세 종류 창(주문·차고·근무)이 **날마다 반복**되고, 정규화가 절대 창 목록으로 펼친다. 네 갈래의 답: 앵커링 = 날짜마다 생성 후 `[0, planEndSec − 1]`로 클리핑(E29·E31) · 자정 넘는 창 = **수용**(E27) · 일 반복 = **한다**(주문 창 포함) · 복수 근무창 = `List<TimeWindow>`로 **지원**. 이 문서 반영분: §2.2 세 record · §3 `dailyWindows` · §4 절차 3·5·6 · E27\~E31 · T14\~T16 |
 | Q3 | 차량 치수 한도(maxWidth 등, Domain §2.4)는 있는데 canonical item(§2.3)에 치수 필드가 없어 §3.4 치수 축의 검사 대상이 없다 | Vehicle에 필드만 보관(adapter 값 유실 방지), Compatibility에 치수 축 없음. **처리 경로는 확정됐다** — 3D 적재 고객이 확정되면 Domain §2.1.1에 따라 `Item`에 optional 치수 3필드를 추가하고, 판정은 그 고객 profile의 `HardConstraint`가 한다. 고객별 canonical·`Problem` 분기는 하지 않는다 |
 | Q4 | speed의 소수 입력 — 규약 PDF는 double, Domain §3.1 소수 거부 목록엔 거리·시간만 있다 | 정수만 수용(`Integer`), 소수 speed는 INVALID_INPUT (fixture는 정수 `"45"`). Domain 확인 후 완화 가능 |

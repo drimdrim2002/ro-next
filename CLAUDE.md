@@ -135,6 +135,8 @@ app/             com.ronext.rpdptw.app      api · run · input · storage — S
 
 ## 범위 밖 (하지 않기로 확정)
 
-multi-trip(`multiRotation != 0`은 접수 거부) · MIP 재조합 · RDB·Redis·SQS·Step Functions·Lambda ·
+multi-trip(`multiRotation`이 `2` 이상·`-1`이면 접수 거부. **`0`·`1`은 1바퀴라 통과** — 숫자는
+바퀴 수를 센다. 규약 PDF 문면은 복귀 횟수로 읽히니 주의, Domain §2.5) · MIP 재조합 ·
+RDB·Redis·SQS·Step Functions·Lambda ·
 입력 스키마 다중 버전 운영 · 고객별로 갈라진 canonical·`Problem`·adapter ·
 탐색 파라미터의 문서 확정(Stage 4·8에서 실험으로 정한다).

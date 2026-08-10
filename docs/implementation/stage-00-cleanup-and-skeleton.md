@@ -18,6 +18,8 @@ revisions:
   - 2026-08-10 §8 V2·V4 검증 명령 수정 — `-q`가 `dependency:list`의 INFO 출력을 통째로 죽여
     두 검사가 **항상 빈 출력 = 통과**로 보이던 문제. `-q` 제거 + 좌표 grep·V4 대조군 추가
   - 2026-08-10 §11 Q2(multiRotation)를 Plan §2.1 D1으로 이관 — 포인터만 변경, 설계 무변경
+  - 2026-08-10 **D1 확정 반영 — §11 Q2 해소**: `multiRotation` = 바퀴 수이므로 fixture의 `"1"`은
+    지원 범위 안(통과 = `{0,1}`). Q3 문면도 "2회전 = 값 2"로 정합. 파일 목록·DoD 무변경
 ---
 
 # Stage 0 — 정리와 뼈대
@@ -812,7 +814,7 @@ mvn dependency:list -pl solver-core | grep -cE '^\[INFO\]\s+\S+:\S+:\S+:'
 | # | 질문 | 현재 처리 |
 |---|---|---|
 | Q1 | ~~Dockerfile 삭제(C4)가 Plan에 없었음~~ | **해소.** Plan Stage 0 코드 정리에 반영. C4 그대로 |
-| Q2 | fixture `multiRotation = "1"` 의미 미확정 | **[Plan §2.1 D1](../implementation-plan.md)으로 이관 (2026-08-10).** 이 항목의 정본은 이제 D1이고, 여기서는 추적하지 않는다. Stage 0 비차단인 점은 그대로 — Stage 1–5는 잠정 `!= 0`으로 구현하고, Plan §0 e2e(Stage 6+)는 D1이 닫힌 뒤에만 DoD다 |
-| Q3 | 2회전 고객 확인됨 | **구현하지 않음.** 구조 변경. Domain §2.5 지원 범위 = 1 |
+| Q2 | fixture `multiRotation = "1"` 의미 미확정 | **해소 (2026-08-10, [Plan §2.1 D1](../implementation-plan.md) 확정).** 숫자는 **차량이 도는 바퀴 수**이고 `"1"` = 1바퀴 = **지원 범위 안**이다 — fixture는 원본 그대로 접수된다. 판정은 `!= 0` 거부에서 **통과 = `{0, 1}`**로 반전됐다 (정본 Domain §2.5). Stage 0 파일 목록·DoD에는 여전히 무영향 |
+| Q3 | 2회전 고객 확인됨 | **구현하지 않음.** 2회전 = `multiRotation` `2` = 차고 재방문(multi-trip)이라 구조 변경이다. Domain §2.5 지원 범위 = 1바퀴 |
 
 Q2·Q3는 Stage 0 파일 목록·DoD에 영향을 주지 않는다.

@@ -17,6 +17,12 @@ revisions:
     §7.1 출발·방문·종료 절차 재작성(창 밖이면 다음 창으로 미룸, 차고 창 적용, `DEPOT_WINDOW`) ·
     §7.2.1 다일 숫자 예 신설 · §7.3 대기 3종 정의와 항등식 · §2.3·§2.4·§2.5·§6.2·§7.5·§10.2·§12
     문장 정합 · §13 체크리스트 17·18 추가. 시간창 close 기준(§7.1 MUST)은 그대로 보존한다
+  - 2026-08-10 **D1 확정 — `multiRotation` = 바퀴 수, 차량별 `trips`**: §2.5 판정 반전
+    (통과 = `{0,1}`, `-1`·`2 이상` = `UNSUPPORTED_INPUT`, `≤ -2` = `INVALID_INPUT` —
+    `> 1` 비교식 금지) · 규약 PDF 문면 어긋남을 §2.5에 기록(열거 정의는 복귀 횟수로 읽히나
+    `multirotation 2` 예시 그림은 바퀴 수와 일치) · `trips`를 차량별 지정 가능으로
+    (§2.4 optional 행 신설, §2.5 `차량 trips ▷ options.trips` 우선순위와 접기 유지 판단) ·
+    §12 오류 분류 두 행 갱신. 차량별 `multiRotation`은 multi-trip 개방 시점으로 이관(Master §6)
 ---
 
 # RO-Next Domain Design
@@ -212,6 +218,7 @@ revisions:
 | `capabilities` | 특수 능력(설치 기술 등). 규약 `driverSkill` 대응 |
 | `zoneIds` (복수) | 운행 가능 구역. **미입력 = 전 구역 가능** |
 | `endDepot` | 도착 차고. 있으면 start와 달라도 됨. 없으면 마지막 고객에서 종료 |
+| `trips` | 이 차량의 운행 형태(`oneway`\|`roundtrip`). **부재 = `options.trips`(전체 기본값)를 쓴다** — 다른 optional 필드와 달리 "제약 없음"이 아니라 "기본값 사용"이다. 값이 있으면 그 차량만 기본값을 덮어쓴다 (§2.5) |
 | `vhclOwnTyp` | 소유 구분. 값이 있으면 정확히 `DIRECT`\|`LEASE`만 허용, 그 외 non-empty는 오류. 미입력 = 소유 축 미사용 (DIRECT로 채우기 금지) |
 
 ### 2.5 차고·운행 형태 — 배송정책 (MUST)
@@ -222,8 +229,8 @@ revisions:
 | 규칙 | 내용 |
 |---|---|
 | 차고 여러 개 | 가능. 차량마다 `startDepot` 지정, `endDepot`은 optional |
-| `trips` | `oneway` = 도착 차고 없음(차량에 `endDepot` 있으면 그것 우선). `roundtrip` = `endDepot` 미지정 차량은 `startDepot`으로 복귀 |
-| `multiRotation` | **core 지원 범위 = 경로당 trip 1개** (차고 재방문 없음). 입력이 이 범위를 넘으면 `UNSUPPORTED_INPUT`으로 거부 (MUST) — 아래 주석 |
+| `trips` | `oneway` = 도착 차고 없음(차량에 `endDepot` 있으면 그것 우선). `roundtrip` = `endDepot` 미지정 차량은 `startDepot`으로 복귀. **차량마다 지정할 수 있다** — `options.trips`는 전체 기본값이고, 차량에 `trips` 값이 있으면 **그 차량은 자기 값을 쓴다**(덮어쓰기, §2.4). 아래 주석 |
+| `multiRotation` | **차량이 도는 바퀴 수**를 센다. **core 지원 범위 = 경로당 trip 1개**(= 1바퀴, 차고 재방문 없음)이므로 **통과하는 값은 `{0, 1}` 둘뿐**이다 — `0`은 미설정(규약 기본값)이고 `1`과 같게 취급한다. `-1`(무제한 복귀)·`2` 이상은 범위를 넘으므로 `UNSUPPORTED_INPUT`으로 거부 (MUST). `-2` 이하는 규약 자체가 금지한 값이라 `INVALID_INPUT`. 아래 주석 |
 | `waitInDepot` | `Y` = 첫 방문 시간창에 맞춰 차고에서 늦게 출발 가능. `N` = **근무 시작과 차고 개장 중 늦은 쪽에 즉시 출발** |
 | `depot.openTime`/`closeTime` | 차고 시간창. **출발·복귀 두 순간에 적용**한다 (§7.1). 날마다 반복 (§3.2). 위반은 `DEPOT_WINDOW` |
 | `depot.taskTime` | 현재 시간 계산에 **미적용** (trip이 1개뿐이라 상차 시간 개념 보류) |
@@ -234,10 +241,65 @@ revisions:
 필드 추가가 아니라 **구조 변경**(경로 = trip 목록 → 전파·연산자·재검증·결과 JSON 전부)이므로,
 실제 필요가 확인되기 전에는 구현하지 않는다.
 
-> **미확정 (호출 시스템 확인 대기):** 규약의 `multiRotation` 값이 무엇을 세는지 —
-> "차량이 도는 횟수"(1 = trip 1개 = 현재 지원)인지 "추가 회차 수"(1 = trip 2개 = 미지원)인지.
-> fixture 두 개가 모두 `"1"`이므로 해석에 따라 접수 통과 여부가 갈린다.
-> §2.1의 "adapter는 추측하지 않는다"에 따라 임의 해석 금지.
+**`multiRotation`의 의미 — 확정 (2026-08-10, 시스템 소유자)**
+
+숫자는 **차량이 도는 바퀴 수**를 센다. 차고에서 출발해 한 바퀴 돌면 `1`이고, 이것이 지금
+지원하는 전부다. `2`부터가 차고로 돌아왔다가 다시 나가는 multi-trip이라 범위 밖이다.
+`0`은 "값을 안 줬다"는 뜻이므로 `1`과 같게 본다 — 규약 기본값이 `0`이라, 이 필드를 아예
+안 보낸 입력이 자연스럽게 통과해야 하기 때문이다.
+
+| 값 | 뜻 | 처리 |
+|---|---|---|
+| `0` | 미설정 (규약 기본값) = 1바퀴 | **통과** |
+| `1` | 1바퀴 | **통과** |
+| `2` 이상 | 2바퀴 이상 = 차고 재방문 (multi-trip) | `UNSUPPORTED_INPUT` |
+| `-1` | 무제한 복귀 (규약이 정의한 값) | `UNSUPPORTED_INPUT` — 규약상 유효한 값이지만 우리가 지원하지 않는다 |
+| `-2` 이하 | 규약이 "greater than -1"로 금지한 범위 | `INVALID_INPUT` — 형식 오류 (§12 입력 오류) |
+
+**판정은 비교식이 아니라 집합으로 쓴다 (MUST): 통과 = `{0, 1}`.** `> 1`로 적으면 `-1`이
+게이트를 그냥 통과해 무제한 multi-trip이 솔버로 들어간다 — 지금 고치려는 것보다 나쁜 버그다.
+
+> **규약 PDF 문면과 다르다 — 구현자가 반드시 읽을 것.**
+> [ro_input_json_spec.pdf](../data/ro_input_json_spec.pdf) 4페이지의 열거 정의는 이 숫자를
+> **차고 복귀 횟수**로 읽게 적혀 있다:
+> `-1 : vehicles can return to depot multiple times (unlimited)` /
+> `0 : vehicles can't return to depot` / `1>= : vehicles can return to depot designated multi rotation times`.
+> 1바퀴 = 복귀 0회이므로 이 문면은 확정된 의미와 **한 칸 어긋난다**.
+> **PDF만 보고 구현하면 판정이 정확히 반대로 나온다** (`"1"`을 거부하게 된다).
+> 시스템 소유자의 확정이 정본이고, PDF 문면은 부정확한 것으로 본다.
+>
+> 다만 PDF 전체가 틀린 것은 아니다 — 같은 페이지를 뜯어 보면 두 곳은 확정 의미와 맞는다:
+> ① `0 : can't return to depot`는 "0 = 1바퀴 = 복귀 없음"과 일치한다.
+> ② `multirotation 2` 예시 그림(`depot(start) → 1st → 2nd → depot(2nd visit) → 3rd`)은
+> **2를 2바퀴(복귀 1회)로 그린다** — 바퀴 수 해석 그대로다.
+> 어긋나는 것은 `1>= : ... designated multi rotation times` 한 줄뿐이다.
+
+**`trips`의 차량별 지정 (2026-08-10 확정)**
+
+`trips`는 원래 `options`에만 있던 전체 설정이지만, 차량마다 운행 형태가 다를 수 있으므로
+**차량 값이 전체 기본값을 덮어쓴다**. 우선순위는 `차량 trips ▷ options.trips` 하나뿐이다.
+
+- **현행 규약(wire)에는 차량별 `trips` 필드가 없다** — 실물 fixture의 차량 키는 `vehicleId`·
+  `vehicleFeature`·`maxWeight`·`maxVolume`·`workStartTime`·`workEndTime`·`speed`뿐이다.
+  앞으로 올 수 있는 확장이므로 adapter는 §2.1.1의 원칙 그대로 **"있으면 읽는다"**로 만든다
+  (없으면 그냥 `options.trips`가 쓰인다 — 지금 입력의 동작은 하나도 바뀌지 않는다).
+- **"있으면 읽는다"가 "있으면 믿는다"는 아니다**: 차량 `trips` 값도 `{oneway, roundtrip}`
+  밖이면 `options.trips`와 똑같이 `INVALID_INPUT`이다 (§2.1 추측 금지).
+- **core는 사실상 바뀌지 않는다.** 정규화가 `trips`를 **차량마다 `endDepot`이 있냐 없냐로 접어**
+  없애기 때문이다(위 표의 `trips` 행 = 접기 규칙). canonical `Vehicle`은 이미 차량별을
+  표현하고 있었고, 이번에 붙는 것은 접기 직전 한 단계(차량 값 ▷ options 값)뿐이다.
+- **접기를 유지한다 (설계 판단):** canonical `Vehicle`에 `trips` 필드를 남기지 않는다.
+  전파·지표·재검증이 필요로 하는 것은 "복귀 지점이 있는가/어디인가"뿐이고 그것은 `endDepot`
+  하나로 완전히 표현된다. 접기로 잃는 것은 **원인 정보**다 — `endDepot`이 있을 때 그것이
+  roundtrip 때문인지 명시된 도착 차고 때문인지 구분되지 않는다(`Optional.empty`만 oneway로
+  단정할 수 있다). 이는 진단·설명용 정보이지 계산에 쓰이는 값이 아니므로, `multiRotation`을
+  검증만 하고 보관하지 않는 것과 같은 취급으로 둔다. 운영자에게 "이 차량은 oneway였다"를
+  보여줄 필요가 생기면 그때 결과 run 메타에 원문을 싣는다 (canonical 확장이 아니다).
+
+**`multiRotation`의 차량별 지정은 지금 하지 않는다.** 통과하는 값이 `{0, 1}`뿐이라 모든 차량이
+1바퀴여서 차량마다 달라질 여지가 없다. 장기적으로는 필요하다는 요구가 있으므로,
+**multi-trip(`2` 이상)을 여는 시점에 `trips`와 같은 방식(차량 값 ▷ options 값)으로 함께 다룬다**
+(Master §6 향후 옵션). 그 전에 `Vehicle`에 `multiRotation` 필드를 미리 만들지 않는다.
 
 ### 2.5.1 탐색설정 — 배송정책이 아니다 (MUST)
 
@@ -841,8 +903,8 @@ metrics: unassignedCount, usedVehicleCount, totalDistance, totalRouteOperational
 
 | 분류 | 예 | 처리 |
 |---|---|---|
-| 입력 오류 | 스키마 위반, 소수 거리, 알 수 없는 `vhclOwnTyp`, `close == open`인 시간창(§3.2) | 접수 시 4xx (S3 저장 없음) |
-| 미지원 입력 | `multiRotation`이 core 지원 범위 초과 (§2.5) | `UNSUPPORTED_INPUT` — 접수 거부 |
+| 입력 오류 | 스키마 위반, 소수 거리, 알 수 없는 `vhclOwnTyp`, `close == open`인 시간창(§3.2), `multiRotation ≤ -2`(규약이 금지한 값, §2.5) | 접수 시 4xx (S3 저장 없음) |
+| 미지원 입력 | `multiRotation`이 `{0, 1}` 밖 — 즉 `-1` 또는 `2` 이상 (§2.5) | `UNSUPPORTED_INPUT` — 접수 거부 |
 | Problem 생성 실패 | ID 참조 깨짐, 이동표 불완전 | FAILED 상태 + 원인 |
 | 탐색 중단 | 시간 한도 도달 | 그 시점 best로 재검증 진행 (정상) |
 | 구조 결함 | pair 분리, XOR 위반, 캐시≠재계산 | 버그. 재검증 FAIL → 결과 미저장 |

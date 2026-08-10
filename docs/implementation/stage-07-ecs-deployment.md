@@ -13,6 +13,9 @@ revisions:
   - 2026-08-10 Dockerfile 스케치에 solver-profile 모듈 반영 (3모듈 reactor)
   - 2026-08-10 §4 사전 준비와 §9 Q2·Q3을 Plan §2.1 D3(AWS 사전 준비)으로, §9 Q1을 D1로 이관
     — 포인터만 변경. Dockerfile·태스크 정의·IAM·절차 무변경
+  - 2026-08-10 **D1 확정 반영 (§9 Q1 해소)** — `multiRotation` = 바퀴 수로 `"1"`이 통과하게 되어
+    DoD의 선행 조건 문장과 §7 V6의 "Q1 해소 선행" 조건을 해제, V5의 스모크 값 주석 정합.
+    Dockerfile·태스크 정의·IAM·배포 절차는 무변경
 ---
 
 # Stage 7 — ECS 배포
@@ -25,7 +28,8 @@ Stage 6까지 조립된 앱(`ro-next-app`)을 Docker 이미지 하나로 만들�
 
 **DoD** ([Plan Stage 7](../implementation-plan.md)): 배포 환경에서 실제 S3로 §0 시나리오
 (win_poc_case_floor.json 접수 → 재검증 통과 → 결과 JSON) 1회 성공.
-단, §0 fixture는 multiRotation 충돌(Stage 6 §10 Q1) 해소가 선행돼야 접수된다 (§9 Q1).
+**선행 조건은 없다** — 종전 §0 fixture 접수를 막던 multiRotation 충돌은 [Plan §2.1 D1](../implementation-plan.md)이
+닫았다 (2026-08-10: 값은 바퀴 수, `"1"` = 1바퀴라 원본 그대로 접수. §9 Q1).
 
 핵심 구도 — Architecture §5의 한 줄(`mvn package → app jar → 이미지 1개 → Fargate 서비스 1개`)을
 절차로 편다:
@@ -284,8 +288,8 @@ V1~V5는 그 전제의 단계적 확인이다.
 | V2 | (선택) LocalStack e2e | §5 — `S3SolveStore` 실 SDK 경로 1회 | Plan "선택: 배포 전 LocalStack e2e 1회" |
 | V3 | 서비스 기동 | 태스크 RUNNING 유지(재시작 루프 없음) + health UP (§4-6) | 〃 전제 |
 | V4 | CloudWatch 로그 | `/ecs/ro-next` 스트림에 앱 기동·접수 로그 확인 | Plan 범위 문장 "CloudWatch 로그" |
-| V5 | 실제 S3 스모크 | 소형 규약 JSON(multiRotation 0) POST → DONE → GET result → S3 3객체(input/status/result) 실물 확인 (§4-7) | "실제 S3로 … 성공"의 인프라 결선 부분 (Q1과 무관하게 실행 가능) |
-| V6 | **§0 시나리오** | win_poc_case_floor.json POST → 폴링(한도 600초 — 최대 ~11분, Stage 6 T13과 동일) → DONE → GET result: `verified: true`·metrics·routes 확인 + S3 result.json 실물 | **"배포 환경에서 실제 S3로 §0 시나리오 1회 성공"** (§9 Q1 해소 선행) |
+| V5 | 실제 S3 스모크 | 소형 규약 JSON(multiRotation 0 또는 1 — 둘 다 1바퀴로 통과) POST → DONE → GET result → S3 3객체(input/status/result) 실물 확인 (§4-7) | "실제 S3로 … 성공"의 인프라 결선 부분 |
+| V6 | **§0 시나리오** | win_poc_case_floor.json POST → 폴링(한도 600초 — 최대 ~11분, Stage 6 T13과 동일) → DONE → GET result: `verified: true`·metrics·routes 확인 + S3 result.json 실물 | **"배포 환경에서 실제 S3로 §0 시나리오 1회 성공"** (선행 조건 해제됨 — §9 Q1 해소) |
 
 ---
 
@@ -311,6 +315,6 @@ V1~V5는 그 전제의 단계적 확인이다.
 
 | # | 질문 | 잠정 처리 |
 |---|---|---|
-| Q1 | **multiRotation fixture 충돌** (Stage 0 §11 Q2 → Stage 6 §10 Q1 인계): 두 fixture 모두 `multiRotation: "1"`이라 §0 fixture가 접수(422)에서 거부된다 — **V6(DoD)이 이 결정에 선행 의존**한다 | **[Plan §2.1 D1](../implementation-plan.md)으로 이관 (2026-08-10).** 배포·인프라 검증(V1~V5)은 D1과 무관하게 전부 진행 가능하도록 절차를 분리했다 (§4-7). V6만 결정 대기 |
+| Q1 | **multiRotation fixture 충돌** (Stage 0 §11 Q2 → Stage 6 §10 Q1 인계): 두 fixture 모두 `multiRotation: "1"`이라 §0 fixture가 접수(422)에서 거부된다 — **V6(DoD)이 이 결정에 선행 의존**한다 | **해소 (2026-08-10, [Plan §2.1 D1](../implementation-plan.md) 확정).** 값은 **바퀴 수**이고 `"1"` = 1바퀴 = 지원 범위 안이라 fixture가 원본 그대로 접수된다 — **V6의 선행 의존이 해제됐다.** V1~V5를 D1과 분리해 둔 절차(§4-7)는 그대로 두어도 무해하다 (인프라 검증을 §0 시나리오와 나눠 보는 이점은 남는다) |
 | Q2 | **엔드포인트 노출 방식**: Architecture §5는 "ALB 또는 내부 엔드포인트"로 열어 두었고, 호출 시스템의 네트워크 위치(같은 VPC인지, 온프레미스인지)가 미정이라 확정할 수 없다 | **[Plan §2.1 D3](../implementation-plan.md)으로 이관 (2026-08-10).** DoD 확인은 최소 구성(예: 보안그룹을 확인자 위치로 좁힌 접근)으로 수행. 상시 노출 방식은 호출 시스템과 협의 후 배포 설정으로 확정 (D2 wire 협의와 같은 상대) |
 | Q3 | **환경 구분·계정·리전**: `ro-next-solves-{env}`의 `{env}` 명명, 배포 계정·리전이 어느 문서에도 없다 | **[Plan §2.1 D3](../implementation-plan.md)으로 이관 (2026-08-10).** 배포 설정 (Architecture §3.3 문면 그대로). DoD는 단일 환경(예: dev) 1개로 수행하면 충분하다 |

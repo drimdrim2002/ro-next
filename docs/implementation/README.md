@@ -20,4 +20,4 @@
 | 5 | [stage-05-verification-and-result.md](stage-05-verification-and-result.md) | 독립 재검증(구조·재전파·점수 대조, verify 두 번째 구현)과 결과 모델(routes/unassigned+사유/metrics/run 메타) (solver-core) | 작성됨 |
 | 6 | [stage-06-app-assembly.md](stage-06-app-assembly.md) | 앱 조립: 규약 JSON adapter(wire 매핑표)·SolveStore(S3/local)·접수/조회 API·SolveExecutor(상태 전이·heartbeat·STALE)·result.json wire 잠정안 (app) | 작성됨 |
 | 7 | [stage-07-ecs-deployment.md](stage-07-ecs-deployment.md) | ECS Fargate 배포: Dockerfile 재작성(멀티스테이지·app jar)·태스크 정의/롤(S3 최소 권한)·환경변수→설정 키 매핑·CloudWatch·배포 절차·선택 LocalStack e2e | 작성됨 |
-| 8 | [stage-08-benchmark-comparison.md](stage-08-benchmark-comparison.md) | Win 벤치마크 비교: 지표 정의·대응, 비교 실행 절차, 실행 조건 기록 양식(benchmark-results.md), 파라미터 조정 실험 방식 — multiRotation 해소가 선행 조건 (Win 결과는 data/alns_result.csv 입수됨) | 작성됨 |
+| 8 | [stage-08-benchmark-comparison.md](stage-08-benchmark-comparison.md) | Win 벤치마크 비교: 지표 정의·대응, 비교 실행 절차, 실행 조건 기록 양식(benchmark-results.md), 파라미터 조정 실험 방식 — 선행 조건 없음 (multiRotation은 2026-08-10 해소, Win 결과는 data/alns_result.csv 입수됨) | 작성됨 |
