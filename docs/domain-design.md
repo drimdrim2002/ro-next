@@ -8,6 +8,15 @@ revisions:
   - 2026-08-09 최초 확정
   - 2026-08-10 §2.1 canonical 확장 기준 추가 · §2.5 배송정책/탐색설정 분리 ·
     §5 profile 동결 제거 · §8.3 long[] 사전식 비교 · §8.4 확장 지점 3종
+  - 2026-08-10 §7.1 시간창 close 판정을 serviceStart 기준으로 정본화 (Stage 3 §9 Q1 해소 —
+    탐색과 재검증이 같은 규칙을 각각 구현하므로 해석이 갈리면 두 코드의 판정이 어긋난다).
+    **§3.2 근무창과 차고 시간창은 이번 개정 대상이 아니다** — Plan §2.1 D4(다일 근무창 +
+    차고 창)가 소유하며, D4가 확정되면 §3.2·§7.1을 함께 개정한다
+  - 2026-08-10 **D4 확정 — 다일 근무창 + 차고 시간창** (바로 위 줄이 예고한 개정의 이행):
+    §3.2 시간창 전개 규칙 신설(날마다 반복·자정 넘는 창·병합·planEnd 클리핑·시간 측정 규약) ·
+    §7.1 출발·방문·종료 절차 재작성(창 밖이면 다음 창으로 미룸, 차고 창 적용, `DEPOT_WINDOW`) ·
+    §7.2.1 다일 숫자 예 신설 · §7.3 대기 3종 정의와 항등식 · §2.3·§2.4·§2.5·§6.2·§7.5·§10.2·§12
+    문장 정합 · §13 체크리스트 17·18 추가. 시간창 close 기준(§7.1 MUST)은 그대로 보존한다
 ---
 
 # RO-Next Domain Design
@@ -23,7 +32,7 @@ revisions:
 |---|---|
 | §1 | 용어·식별자·pair 규칙 |
 | §2 | 입력 계약 (규약 ↔ canonical) |
-| §3 | 정규화 (단위·시간·서비스 시간·호환성) |
+| §3 | 정규화 (단위·시간·시간창 전개·서비스 시간·호환성) |
 | §4 | 이동표 준비 |
 | §5 | `Problem` — 동결된 문제 |
 | §6 | `Solution` — 배차안 (경로·bank·XOR·시도) |
@@ -149,7 +158,7 @@ revisions:
 | canonical 항목 | 뜻 | 규약 대응 |
 |---|---|---|
 | `planId` | 풀이 식별자 | `planId` |
-| `planStart` / `planEnd` | 계획 기간 `[planStart, planEnd)` — 끝 미포함 | `dateRange.from/to` |
+| `planStart` / `planEnd` | 계획 기간 `[planStart, planEnd)` — 끝 미포함. **여러 날 가능** (시간창 전개는 §3.2) | `dateRange.from/to` |
 | `customerId` | 어느 고객 요청인지 (profile 선택에 사용, §8.4) | `shprId`(또는 협의 필드) |
 | depots | 차고 목록 (여러 개 가능) | `depot[]` |
 | requests | 일감 목록 | `orders[]` |
@@ -167,7 +176,7 @@ revisions:
 | 필드 | 뜻 | 비고 |
 |---|---|---|
 | `locationId` | 방문 장소 | 규약 `locId` (없으면 좌표로 생성) |
-| `openTime` / `closeTime` | 시간창 (양끝 포함) | 기본 00:00:00 / 23:59:59 |
+| `openTime` / `closeTime` | 시간창 (양끝 포함). **계획 기간의 날마다 반복** (§3.2) | 기본 00:00:00 / 23:59:59 |
 | `duration` | 방문 자체에 드는 시간(주차 등, 초) | item 작업시간과 별개 |
 | `reqDate` | 고객 요청 시각 (아래 권위 정의) | 규약 `reqDate`/legacy `dueDate` |
 | `zoneId` | 방문 장소의 구역 | 차량 `zoneIds`와 대조 |
@@ -191,6 +200,10 @@ revisions:
 **공통(대부분 존재)**: `vehicleId`, `maxWeight`, `maxVolume`, `vehicleFeature`(차급 코드 하나),
 `workStart`/`workEnd`, `speed`(km/h), `maxStopCnt`, `maxDriveTime`(초), `maxDriveDist`(m), `startDepot`.
 
+- `workStart`/`workEnd`는 **날마다 반복되는 근무창**이다 (§3.2). 계획 기간이 여러 날이면 날짜마다
+  같은 시간대의 창이 하나씩 생긴다. `maxDriveTime`·`maxDriveDist`·`maxStopCnt`는 **경로 전체 합계**의
+  한도이며 하루치 한도가 아니다 (규약이 기간을 말하지 않는다 — 하루 한도가 필요해지면 그때 축을 더한다).
+
 **Optional — 없으면 그 축의 제약을 아예 적용하지 않는다 (MUST: 몰래 기본값을 채우지 않는다)**
 
 | 필드 | 뜻 |
@@ -211,7 +224,8 @@ revisions:
 | 차고 여러 개 | 가능. 차량마다 `startDepot` 지정, `endDepot`은 optional |
 | `trips` | `oneway` = 도착 차고 없음(차량에 `endDepot` 있으면 그것 우선). `roundtrip` = `endDepot` 미지정 차량은 `startDepot`으로 복귀 |
 | `multiRotation` | **core 지원 범위 = 경로당 trip 1개** (차고 재방문 없음). 입력이 이 범위를 넘으면 `UNSUPPORTED_INPUT`으로 거부 (MUST) — 아래 주석 |
-| `waitInDepot` | `Y` = 첫 방문 시간창에 맞춰 차고에서 늦게 출발 가능. `N` = 근무 시작 즉시 출발 |
+| `waitInDepot` | `Y` = 첫 방문 시간창에 맞춰 차고에서 늦게 출발 가능. `N` = **근무 시작과 차고 개장 중 늦은 쪽에 즉시 출발** |
+| `depot.openTime`/`closeTime` | 차고 시간창. **출발·복귀 두 순간에 적용**한다 (§7.1). 날마다 반복 (§3.2). 위반은 `DEPOT_WINDOW` |
 | `depot.taskTime` | 현재 시간 계산에 **미적용** (trip이 1개뿐이라 상차 시간 개념 보류) |
 | `defaultSpeed` | 이동표 준비 규칙에 사용 (§4) |
 
@@ -266,7 +280,7 @@ revisions:
 - `double`로 먼저 근사한 뒤 변환하지 않는다 (MUST NOT). item 단위로 먼저 환산 후 합산한다.
 - 소수 거리·시간 입력은 거부한다.
 
-### 3.2 시간 원점
+### 3.2 시간 원점과 시간창 전개
 
 ```text
 origin = planStart
@@ -274,8 +288,70 @@ normalizedTime = origin 기준 경과 초 (long)
 ```
 
 - 계획 기간 `[planStart, planEnd)`. 시간창 open/close는 양끝 포함.
-- 근무 구간 규칙: 한 이동(arc)은 통째로 한 근무창 안에 들어가야 한다.
-  "오늘 운전하다 내일 이어서"식 분할 금지 (MUST NOT).
+- **모든 소요 시간은 두 시각의 차(b − a)로 잰다 (MUST). "그 구간 안의 초 개수"를 세지 않는다.**
+  창이 양끝 포함이라 `[0, 86399]` 같은 창에서 초를 세면 창마다 1초가 어긋난다. 예를 들어 23:30에
+  닫히고 다음 날 00:00에 여는 창 사이의 휴식은 **차로 재면 1800초**이고 초를 세면 1799초다 —
+  탐색(§9)과 재검증(§10)이 각각 구현하므로, 재는 방법이 다르면 두 코드의 숫자가 조용히 갈린다.
+
+#### 시간창은 날마다 반복된다 (MUST)
+
+규약이 주는 시각은 **날짜 없는 `HH:mm:ss`(partial-time) 하나뿐**이다 — 주문의
+`openTime`/`closeTime`, 차고의 `openTime`/`closeTime`, 차량의 `workStart`/`workEnd` 셋 다 그렇다
+(날짜가 붙는 것은 계획 기간 `dateRange`와 `reqDate`뿐이다). 그래서 "2일차만 다른 시간대"는
+규약으로 **표현할 방법이 없고**, 계획 기간이 여러 날일 때 가능한 해석은 **매일 같은 시간대의
+반복** 하나뿐이다. 규약 문면도 세 창에 똑같이 "닫혀 있으면 **다음 열림 시각**까지 기다린다"
+(*"If then, they must wailt until next opening time."* — 원문 표기 그대로)로 적어 반복을 전제한다.
+
+주문 창도 같이 반복시킨다 (MUST). 주문 창만 1일차에 고정하면 3일 계획에서 기본창
+(00:00:00\~23:59:59) 주문조차 1일차에만 서비스할 수 있어, 다일 근무창이 "차고에 늦게 돌아오는"
+기능으로만 남는다. 어느 날에 서비스할지를 좁히는 값은 `reqDate`(§2.3) 하나다.
+
+정규화는 이 반복을 **계획 기간에 맞춘 절대 창 목록**으로 펼친다. canonical에서
+차량의 근무창·차고의 창·방문 쪽의 시간창은 전부 **목록**이다.
+
+전개 규칙 (MUST — 세 종류 창에 똑같이 적용):
+
+```text
+1. planStart 날짜의 '하루 전'부터 planEnd 날짜까지, 날짜마다 창 하나를 만든다.
+     (하루 전까지 보는 이유는 규칙 2 — 전날 밤에 시작한 창이 계획 첫날 아침까지 이어질 수 있다.)
+2. close < open이면 그 창은 자정을 넘는다 — close를 '다음 날짜'의 그 시각으로 한다.
+     예: 야간조 22:00~06:00 → 그 날 22:00부터 다음 날 06:00까지.
+3. close == open은 입력 오류다 — 1초짜리 창인지 24시간인지 애매하다 (§2.1 추측 금지).
+4. 각 창을 계획 기간 [0, planEndSec − 1]로 자른다. 남는 부분이 없으면 버린다.
+     (planEnd는 기간에 포함되지 않고 시간 단위가 초이므로, 계획의 마지막 초는 planEndSec − 1이다.)
+5. open 순으로 정렬하고, 맞닿거나 겹치는 창(앞.close + 1 ≥ 뒤.open)을 하나로 합친다.
+```
+
+전개 결과의 불변식 (MUST): **정렬돼 있고, 서로 겹치지 않으며, 맞닿은 창이 남아 있지 않다.**
+전파는 이 순서를 믿고 포인터를 앞으로만 밀며 훑는다 (§7.1) — 정렬·병합은 성능이 아니라
+정합성 조건이다. 목록이 비면 그 차량(또는 차고)은 계획 기간에 쓸 수 없다 — **입력 오류가 아니다**
+(§3.4의 "호환 차량 0대인 Request"와 같은 취급이며, 그 차량을 쓰는 경로가 불가가 될 뿐이다).
+
+```text
+예1  기본창 00:00:00~23:59:59, 3일 계획
+     [0,86399] · [86400,172799] · [172800,259199] → 규칙 5로 합쳐져 [0,259199] 하나.
+     (합치지 않으면 자정마다 1초짜리 틈이 남아 자정을 넘는 이동이 전부 막힌다.)
+예2  근무 08:00~17:00, 3일 계획 (planStart가 1일차 자정)
+     [28800,61200] · [115200,147600] · [201600,234000] — 창 사이 간격은 15시간씩.
+예3  근무 08:00~17:00인데 planStart가 1일차 10:00
+     1일차 창은 [0(=10:00), 25200(=17:00)]으로 앞이 잘린다.
+예4  야간조 22:00~06:00
+     계획 시작 '전날'에 시작한 창이 [0, 첫날 06:00]으로 잘려 들어온다 (규칙 1·2).
+```
+
+**규칙 4(planEnd 클리핑)는 새 경계다 (2026-08-10 확정).** 지금까지는 planEnd를 넘겨 끝나는
+경로를 아무도 막지 않았다. 이제 창이 계획 기간에서 잘리므로 **어떤 경로도 planEnd를 넘겨
+끝나지 않는다.** 하루짜리 계획이라도 planEnd가 차량의 `workEnd`보다 이르면 동작이 바뀐다
+(예: planEnd 18:00, `workEnd` 23:59:59 → 근무창이 `[…, 17:59:59]`로 잘린다). 근거는 규약의
+`dateRange` 설명 *"Solver will create a plan in date range."*이다.
+
+#### 근무 구간 규칙 (MUST / MUST NOT)
+
+- 한 이동(arc)은 통째로 한 근무창 안에 들어가야 한다. "오늘 운전하다 내일 이어서"식 분할
+  금지 (MUST NOT).
+- 한 방문의 **서비스도** 통째로 한 근무창 안에 들어가야 한다 (같은 이유).
+- 창 끝을 넘는 이동·서비스는 **다음 창으로 미룬다** — 불가로 판정하지 않는다. 남은 창이
+  없을 때만 불가다 (§7.1). 미룬 만큼이 `interWorkWindowRestTime`이다 (§7.3).
 
 ### 3.3 방문 서비스 시간
 
@@ -374,7 +450,7 @@ Problem (고정)                          Solution (탐색이 바꿈)
 | `servicePattern` | `DELIVERY_ONLY`는 delivery 방문만 (가짜 픽업 방문 금지) |
 | 적재 | 모든 구간에서 `0 ≤ load ≤ capacity`. 아래 부호 규칙 |
 | 이동 | 준비된 이동표만 사용 |
-| hard | 시간창·근무시간·`reqDate`·maxStop·maxDrive 등 전부 충족 |
+| hard | 시간창·근무창·**차고 창**·`reqDate`·maxStop·maxDrive 등 전부 충족 |
 | 차고 재방문 | 경로 중간의 depot 재방문 금지 (multi-trip 비범위) |
 
 **적재 부호 규칙 (MUST)**
@@ -432,17 +508,66 @@ bank는 **`RequestId`만** 담는다. 실패 사유·에러 메시지·비용을
 방문 순서가 주어졌을 때 앞에서 뒤로 한 번 훑으며 **도착·대기·서비스·적재·주행 사실**을 계산하는
 단계다. 점수·선호 판단은 하지 않는다 (그건 §8).
 
-### 7.1 방문마다 하는 일
+### 7.1 출발·방문·종료 절차
+
+전제: 차량의 근무창 목록, 출발 차고의 창 목록, (있으면) 도착 차고의 창 목록은 전부 §3.2로
+전개·병합된 목록이다. 경로를 따라 시각은 줄지 않으므로 각 목록은 포인터를 앞으로만 밀며 훑는다.
 
 ```text
+0. 출발
+   spanStart = 첫 근무창의 open                      // 경로 시간의 기준점 (§7.3)
+   departure = 아래를 모두 만족하는 가장 이른 시각
+       · 어느 근무창 안                                (근무 중에만 움직인다)
+       · 어느 startDepot 창 안                         (차고가 열려 있을 때만 나간다)
+       · 첫 이동이 그 근무창 안에 통째로 들어간다       (§3.2)
+     그런 시각이 없으면 → 근무창이 원인이면 WORK_WINDOW, 차고 창이 원인이면 DEPOT_WINDOW
+   waitInDepot = Y면 위 조건을 지키는 범위에서 첫 방문 serviceStart에 맞춰 늦출 수 있다
+     (늦추기만 한다 — serviceStart 시각들은 N과 같고, 대기의 귀속만 옮겨진다)
+
 1. arrival        = 직전 출발 시각 + 이동표[직전 장소 → 이번 장소]
-2. serviceStart   = max(arrival, openTime)          // 이르면 대기
+                    (이동을 통째로 담는 창을 골라 출발했으므로 arrival은 항상 근무창 안이다)
+2. serviceStart   = arrival 이상이면서 아래를 모두 만족하는 가장 이른 시각
+                    · 그 방문의 시간창 중 하나 안                   // 이르면 대기
+                    · 서비스 전체 [t, t + serviceTime]이 한 근무창 안 // 닫혔으면 다음 창까지 쉼
+                    시간창이 먼저 소진되면 TIME_WINDOW, 근무창이 먼저 소진되면 WORK_WINDOW
 3. serviceEnd     = serviceStart + serviceTime      // §3.3
 4. reqDate 검사    : serviceStart ≤ reqDate          // §2.3. serviceEnd는 조건 아님
 5. load 갱신       : 픽업 +, 배송 −                   // §6.2 부호 규칙
-6. hard 검사       : 용량·시간창·근무시간·한도
-7. departure      = serviceEnd
+6. hard 검사       : 용량·시간창(serviceStart ≤ closeTime)·근무창·차고 창·한도
+                    (시간창·근무창은 절차 2·7이, 차고 창은 절차 0·8이 판정한다)
+7. departure      = serviceEnd 이상이면서 다음 이동을 통째로 담는 가장 이른 시각
+                    창 끝을 넘으면 다음 창으로 미룬다. 남은 창이 없으면 WORK_WINDOW
+                    (근무창이 하나뿐이면 항상 departure = serviceEnd다 — 종전과 같다)
+
+8. 종료
+   endDepot 없음 : routeEnd = 마지막 serviceEnd
+   endDepot 있음 : routeEnd = endDepot 도착 시각.
+                   그 시각이 endDepot 창 어느 것에도 들어가지 않으면 DEPOT_WINDOW
 ```
+
+- **시간창 close 판정 기준은 `serviceStart`다 (MUST).** 그 방문에서 `serviceStartTime ≤ closeTime`이면
+  통과이고, 서비스가 창을 넘겨 끝나는 것(`serviceEndTime > closeTime`)은 위반이 아니다 —
+  `serviceEndTime`을 조건에 넣지 않는다 (MUST NOT). `reqDate` 규칙(§2.3)과 같은 형태다.
+  같은 규칙을 탐색(§9)과 재검증(§10)이 각각 따로 구현하므로, 두 곳이 다른 식을 쓰면 같은 배차안을
+  두고 가능/불가가 갈린다.
+  **시간창이 여럿이면(§3.2) 판정은 "`serviceStart`가 어느 창 안인가"다** — 그 창에서
+  `open ≤ serviceStart ≤ close`. 창 **사이의 틈은 창 안이 아니므로** 그때는 다음 창까지 기다린다
+  (마지막 창의 close 하나만 보는 구현은 틈에서 시작하는 서비스를 통과시킨다 — 금지). 남은 창이
+  없으면 `TIME_WINDOW`다. 어느 경우에도 `serviceEnd`는 조건이 아니다.
+  (**근무창은 이와 다르다** — 서비스는 근무창을 넘겨 끝날 수 없다. 고객의 close는 "언제까지
+  받아 주는가"이고, 근무창은 "언제까지 일할 수 있는가"라 성격이 다르다.)
+- **차고 창은 출발·복귀 두 순간에 적용한다 (MUST).** 규약이 *"All vehicles must **depart and
+  arrive** between opening time and closing time of depot."*로 정의한다. 차고 창도 날마다
+  반복되므로(§3.2) 판정은 "어느 창 안인가"이지 "어느 하루의 close 이하인가"가 아니다.
+- **복귀는 미루지 않는다** (2026-08-10 확정). 도착 시각이 차고 창 밖이면 그대로 `DEPOT_WINDOW`이며,
+  "문 열 때까지 기다렸다 들어간다"로 미루지 않는다 — 경로는 거기서 끝나므로 미뤄 봐야 마지막
+  고객 지점에서 하루를 버릴 뿐이다. 나중에 완화하더라도 canonical은 그대로이고 전파 규칙만
+  느슨해지는 **순수 완화**다.
+- 근무창·차고 창 검사는 **별도의 양 끝점 비교가 아니다.** 절차가 이동·서비스를 창 안에
+  배치하고, 배치할 창이 없을 때만 위반이다. 재검증은 배치 결과가 실제로 창 안에 있는지
+  한 번 더 훑어 확인한다 (§10.2).
+- 어떤 이동·서비스가 **어느 창에도 들어갈 수 없으면**(예: 9시간 창에 12시간짜리 이동) 남은 창을
+  아무리 넘겨도 통과하지 못하므로 `WORK_WINDOW`다.
 
 ### 7.2 숫자 예 (단위 분·kg, V1 capacity 30)
 
@@ -463,9 +588,29 @@ bank는 **`RequestId`만** 담는다. 실패 사유·에러 메시지·비용을
 만약 serviceStart가 16:00이고 reqDate가 15:00이면 `16:00 ≤ 15:00` 거짓 → 그 경로는 **불가**.
 전파는 가능/불가 **사실**만 알려주고, 점수로 덮지 않는다.
 
+이 예는 근무창이 하나인 하루짜리 계획이다. 창이 하나뿐이면 미루기가 일어날 수 없고
+`interWorkWindowRestTime`은 0이므로, **위 숫자는 §3.2 전개 규칙이 생기기 전과 똑같다.**
+
+### 7.2.1 숫자 예 — 다일 (창을 넘길 때)
+
+```text
+계획: 3일 (planStart 1일차 00:00, planEnd 4일차 00:00)
+근무: 매일 08:00~17:00 → 전개하면 [28800,61200] · [115200,147600] · [201600,234000]  (§3.2 예2)
+```
+
+| 상황 | 계산 | 결과 |
+|---|---|---|
+| 2일차 **16:30**(=145800)에 90분(5400초) 이동을 시작하려 함 | `145800 + 5400 = 151200 > 147600`(2일차 17:00) → 그 창에 통째로 안 들어감 | 다음 창(**3일차 08:00** = 201600)으로 **미룬다** |
+| 미룬 시간 | `201600 − 145800 = 55800초` | `interWorkWindowRestTime += 15시간 30분` |
+| 도착 | `201600 + 5400 = 207000` | 3일차 **09:30** |
+| 만약 2일차 **16:00**(=144000)에 서비스가 끝나고 같은 이동을 한다면 | 출발까지 57600초를 기다린다. 그중 **근무 시간에 걸친 3600초**(16:00\~17:00)는 고객 지점에서의 대기, **창 사이 54000초**는 휴식 | `customerWaitingTime += 3600`, `interWorkWindowRestTime += 54000` (§7.3) |
+
+이동이 어느 창에도 통째로 들어갈 수 없으면(예: 9시간 창에 12시간 이동) 미뤄도 소용없으므로
+`WORK_WINDOW` 위반이다.
+
 ### 7.3 기록하는 값 (재검증이 같은 공식으로 재합산할 수 있어야 함)
 
-`arrival`, `serviceStartTime`, `serviceEndTime`, `loadWeight`, `loadVolume`,
+`arrival`, `serviceStartTime`, `serviceEndTime`, **`departure`**, `loadWeight`, `loadVolume`,
 `distance`, `driveTime`, `customerWaitingTime`, `depotWaitingTime`, `serviceTime`,
 `interWorkWindowRestTime`, `stopCount`,
 
@@ -473,6 +618,31 @@ bank는 **`RequestId`만** 담는다. 실패 사유·에러 메시지·비용을
 routeOperationalTime = driveTime + customerWaitingTime + depotWaitingTime
                      + serviceTime + interWorkWindowRestTime
 ```
+
+방문의 `departure`는 지금까지 `serviceEnd`와 항상 같아 따로 기록하지 않았다. 근무창이 여럿이면
+둘이 달라지므로(다음 창까지 쉬고 출발 — §7.1 절차 7) **별도로 기록한다.**
+
+**대기 3종의 정의 (MUST)** — 경로 시간 중 **근무창 사이의 틈에 있는 시간은 전부**
+`interWorkWindowRestTime`이고, 근무 시간 중 기다린 것만 고객·차고 대기다:
+
+```text
+spanStart               = 첫 근무창의 open                       // §7.1 절차 0
+customerWaitingTime     = Σ 방문마다 [(serviceStart − arrival) + (departure − serviceEnd)]
+                          중 근무창에 걸친 부분     // 방문 지점에서 근무 시간 중 기다린 시간
+depotWaitingTime        = [spanStart, 출발 시각] 중 근무창에 걸친 부분
+interWorkWindowRestTime = (routeEnd − spanStart) − (그 구간 중 근무창에 걸친 시간)
+```
+
+이동과 서비스는 창 하나 안에 통째로 들어가므로(§3.2) 틈에 걸칠 수 없다. 따라서 위 다섯 성분이
+경로 시간을 빠짐없이·겹치지 않게 나누고, 다음 **항등식**이 성립한다 — 탐색과 재검증이 어긋났는지
+보는 가장 싼 검사다:
+
+```text
+routeOperationalTime = routeEnd − spanStart          // routeEnd = §7.1 절차 8
+```
+
+근무창이 하나면 `interWorkWindowRestTime = 0`, `departure = serviceEnd`,
+`depotWaitingTime = 출발 시각 − 근무 시작`이 되어 **종전 정의와 값이 같다.**
 
 ### 7.4 stopCount와 주행 (기존 유지)
 
@@ -486,6 +656,7 @@ driveTime = Σ 실제 지난 U (second)     // 대기·서비스·휴식은 불�
 ### 7.5 하면 안 되는 것 (MUST NOT)
 
 - hard 위반을 "감점하고 통과"시키기 — hard가 깨지면 그 경로는 불가다.
+- 이동·서비스를 근무창 경계에서 쪼개기 ("17:00까지 운전하고 나머지는 내일") — §3.2 위반.
 - 전파 중 문제·이동표 수정 (§5 위반).
 - 전파 단계에서 점수·고객 선호 판단 (§8의 일).
 
@@ -619,7 +790,7 @@ profile (고객별)                     ✅ 추가 hard 제약, score 축 구성
 |---|---|
 | 시점 | 결과 저장 직전 1회 (매 trial마다 돌리지 않는다) |
 | 입력 | 최종 `Solution` 전체 + 같은 `Problem` + **같은 profile 인스턴스** (§8.4) |
-| 검사 | 모든 경로에 대해: pair·XOR(§6.3), 선행, 적재 곡선, 시간창·`reqDate`·근무시간, 이동표 사용, profile hard. 그리고 metric(③)과 score 축(④)을 각각 재계산해 탐색이 보고한 값과 대조 |
+| 검사 | 모든 경로에 대해: pair·XOR(§6.3), 선행, 적재 곡선, 시간창·`reqDate`·**근무창(다일)·차고 창**, 이동표 사용, profile hard. 근무창·차고 창은 재계산한 시각이 실제로 창 안에 있는지 훑어 확인한다 (모든 이동·서비스가 한 근무창 안, 차고 출발·복귀 순간이 차고 창 안 — §7.1). 그리고 metric(③)과 score 축(④)을 각각 재계산해 탐색이 보고한 값과 대조 |
 | 범위 | 바뀐 경로만이 아니라 **해 전체** (bank 포함) |
 | 독립성 | 탐색의 증분 캐시·내부 상태를 믿지 않는다. 코드도 `verify` 패키지로 분리, 탐색 내부 참조 금지 (Architecture §2) |
 | 예산 무관 | 탐색 예산(§2.5.1)을 읽지 않는다 (MUST NOT). 시간·step 한도와 무관하게 해 전체를 검사한다 |
@@ -646,6 +817,8 @@ run   : inputKey(접수 시 S3 key), 접수·시작·종료 시각, 사용한 pr
 routes: 차량별로 —
   vehicleId
   visits[]: orderId(RequestId), locationId, arrival, serviceStart, serviceEnd, load
+            (방문의 `departure`(§7.3)는 계산·기록되지만 결과 노출 여부는 wire 협의 항목이다 —
+             다일 계획에서는 `serviceEnd`와 달라진다)
   경로 지표: driveDist, driveTime, stopCount, routeOperationalTime
 unassigned[]: orderId + reason (예: NO_COMPATIBLE_VEHICLE, TIME_WINDOW_INFEASIBLE, CAPACITY, NOT_PLACED)
 metrics: unassignedCount, usedVehicleCount, totalDistance, totalRouteOperationalTime
@@ -668,7 +841,7 @@ metrics: unassignedCount, usedVehicleCount, totalDistance, totalRouteOperational
 
 | 분류 | 예 | 처리 |
 |---|---|---|
-| 입력 오류 | 스키마 위반, 소수 거리, 알 수 없는 `vhclOwnTyp` | 접수 시 4xx (S3 저장 없음) |
+| 입력 오류 | 스키마 위반, 소수 거리, 알 수 없는 `vhclOwnTyp`, `close == open`인 시간창(§3.2) | 접수 시 4xx (S3 저장 없음) |
 | 미지원 입력 | `multiRotation`이 core 지원 범위 초과 (§2.5) | `UNSUPPORTED_INPUT` — 접수 거부 |
 | Problem 생성 실패 | ID 참조 깨짐, 이동표 불완전 | FAILED 상태 + 원인 |
 | 탐색 중단 | 시간 한도 도달 | 그 시점 best로 재검증 진행 (정상) |
@@ -697,3 +870,5 @@ metrics: unassignedCount, usedVehicleCount, totalDistance, totalRouteOperational
 | 14 | 재검증이 시간·step·idle 한도를 참조하지 않는가? | 예 (§2.5.1·§10.2) |
 | 15 | 여러 축을 한 숫자로 뭉개는 비교가 없는가? | 예 — 사전식 비교 하나뿐 (§8.3) |
 | 16 | 고객별로 갈라진 canonical·`Problem`·adapter가 없는가? | 예 (§2.1.1) |
+| 17 | 모든 이동·서비스가 한 근무창 안에 통째로 들어가는가? | 예 — 창을 넘으면 다음 창으로 미룬다 (§3.2·§7.1) |
+| 18 | 차고 창을 출발·복귀 **둘 다**에 적용했는가? | 예 (§7.1 — 위반은 `DEPOT_WINDOW`) |

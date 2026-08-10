@@ -96,7 +96,7 @@ app/             com.ronext.rpdptw.app      api · run · input · storage — S
 
 ## 기본으로 어기기 쉬운 불변식
 
-전체 16항목은 Domain §13 체크리스트. 특히:
+전체 18항목은 Domain §13 체크리스트. 특히:
 
 - 배정·제거의 원자 단위는 `Request`(pair) 전체 — pickup만 빼는 연산은 없다.
 - 모든 Request는 경로 또는 bank에 **정확히 하나**(XOR). bank에는 ID만 담고 사유 문자열을 넣지 않는다.
@@ -109,6 +109,10 @@ app/             com.ronext.rpdptw.app      api · run · input · storage — S
   (유일한 발행 규칙).
 - 접수 HTTP 요청 안에서 ALNS 완주를 기다리지 않는다.
 - 단위: 무게·부피는 ×1000 FLOOR한 `long`, 거리 meter·시간 초 정수. double로 근사한 뒤 변환 금지.
+- 시간창(주문·차고·근무)은 **날마다 반복**되고 정규화가 절대 창 목록(`List<TimeWindow>`)으로 펼친다
+  (Domain §3.2, 2026-08-10 D4). 이동·서비스는 통째로 한 근무창 안에 들어가야 하고, 창 끝을 넘으면
+  **다음 창으로 미룬다**(불가 판정이 아니다). 차고 창은 출발·복귀 두 순간에 적용 → `DEPOT_WINDOW`.
+  모든 소요 시간은 **두 시각의 차**로 잰다 — 초를 세면 창마다 1초 어긋난다.
 
 ## 작업 트리의 함정
 
