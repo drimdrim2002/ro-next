@@ -2,38 +2,42 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## 이 저장소의 성격 — 설계가 본체, 코드는 폐기 예정 placeholder
+## 이 저장소의 성격 — 설계가 본체, 코드는 아직 빈 뼈대
 
-배차 최적화(RPDPTW) 서비스. **확정 설계와 디스크의 코드가 서로 다르다.** `src/`를 읽고 그 방식을
-따라가면 안 된다.
+배차 최적화(RPDPTW) 서비스. **Stage 0 완료 (2026-08-10)** — 구 placeholder(`com.ronext.optimizer`,
+수제 `HttpServer`, 합성 데모 `AlnsBatchEngine`)와 GCP 잔재는 삭제됐고, 디스크의 코드는 이제
+확정 설계와 같은 3모듈 구조다. 다만 **뼈대일 뿐 솔버 로직은 아직 0**이다.
 
 - **확정 설계**: AWS ECS Fargate 위 단일 Spring Boot 서비스, 저장은 S3만.
-- **현 코드**: GCP Cloud Run/Workflows 실험 잔재 (`com.ronext.optimizer`, 수제 `HttpServer`,
-  합성 데모 `AlnsBatchEngine`). Stage 0에서 전부 삭제·재구성한다. placeholder가 도는 것은
-  솔버가 동작한다는 근거가 아니다.
+- **현 코드**: 3모듈 + `package-info.java` 11개 + `RoNextApplication` + ArchUnit 룰 1개가 전부.
+  `domain`·`problem`·`eval`·`solve`·`verify`·`profile`·`api`·`run`·`input`·`storage`는 **전부 빈 패키지**다
+  — 도메인 타입을 grep해서 안 나오는 게 정상이고, 아직 안 만든 것이지 다른 데 있는 게 아니다.
+- **다음 작업은 Stage 1** (canonical 입력·정규화, solver-core). 구현 직전 상세는
+  `docs/implementation/stage-01-canonical-input-normalization.md`.
 - 문서·커밋 메시지는 한국어다. 용어(`Request`/pair/`Problem`/`Solution`/bank/profile/재검증/
   solveKey)는 문서 표기를 그대로 쓴다 — 같은 개념에 새 이름을 붙이지 않는다.
 
 ## 명령
 
-현재 저장소 상태(단일 모듈 placeholder)에서 실제로 동작하는 것:
+아래 전부 현재 동작한다 (Stage 0 완료 상태). DoD 판정은 항상 **루트 실행** 기준이다.
 
 ```bash
 source "$HOME/.sdkman/bin/sdkman-init.sh" && sdk env   # Java 25.0.3-amzn · Maven 3.9.14 (.sdkmanrc)
-mvn verify                             # 컴파일 + 테스트 + shade jar (의존성 캐시됨 — mvn -o 도 동작)
-mvn test -Dtest=AlnsBatchEngineTest    # 단일 테스트
+mvn verify                             # 3모듈 컴파일 + 테스트 + jar (app은 Boot repackage fat jar)
+mvn test -Dtest=ArchitectureRulesTest  # 단일 테스트 (solver-core 경계 룰)
+mvn spring-boot:run -pl app            # 앱 기동
+curl -s localhost:8080/actuator/health # {"groups":[...],"status":"UP"}
 ```
 
-Stage 0 이후에도 같은 `mvn verify`가 그대로 쓰이며, 그때는 3모듈 전체를 돈다
-(DoD 판정은 항상 **루트 실행** 기준).
+`mvn -o`(오프라인)도 동작한다 — 의존성은 캐시돼 있다. shade 플러그인은 Stage 0에서 제거됐다.
 
-아래는 **Stage 0(3모듈 재구성) 이후에야 존재하는** 명령이다 — 지금은 `app` 모듈도
-Spring Boot도 없으므로 실패한다:
+의존성 점검(Stage 0 DoD V2·V4)은 **`-q`를 붙이지 않는다** — 아래 함정 절 참고:
 
 ```bash
-mvn spring-boot:run -pl app            # 앱 기동
-curl localhost:8080/actuator/health
-mvn dependency:list -pl solver-core    # compile/runtime 의존이 0건이어야 함
+mvn dependency:list -DincludeGroupIds=com.google.cloud \
+  | grep -E '^\[INFO\]\s+\S+:\S+:\S+:' || echo "PASS — GCP 0건"
+mvn dependency:list -pl solver-core -DincludeScope=compile \
+  | grep -E '^\[INFO\]\s+\S+:\S+:\S+:' || echo "PASS — core compile 의존 0건"
 ```
 
 ## 설계 문서 = 권위
@@ -46,12 +50,14 @@ mvn dependency:list -pl solver-core    # compile/runtime 의존이 0건이어야
 | 2 | `docs/domain-design.md` | 배차 규칙의 **의미** (입력·정규화·이동표·전파·평가·ALNS·재검증·결과) |
 | 3 | `docs/architecture-design.md` | 모듈·경계 규칙·앱 구조·S3 배치·ECS 배포 |
 | 4 | `docs/implementation-plan.md` | Stage 0–8과 단계별 DoD |
-| 5 | `docs/implementation/stage-NN-*.md` | Stage별 구현 직전 상세(파일·클래스·시그니처·테스트). 아직 미추적 작업본 |
+| 5 | `docs/implementation/stage-NN-*.md` | Stage별 구현 직전 상세(파일·클래스·시그니처·테스트). Stage 0–8 전부 추적됨 |
 
-**이 우선순위의 예외 하나 (중요):** 모듈 개수는 **3개**(`solver-core`·`solver-profile`·`app`)가
-현행이다. 2026-08-10 3계층 개정 때 Architecture·Plan·루트 README만 갱신되고
-Master §3 결정 #10과 `docs/README.md`는 "모듈 2개"로 남았다. 이 항목에 한해 Master가 아니라
-Architecture를 따른다.
+Stage 문서는 **구현 계약**이다 — 표·코드 블록에 없는 선택(다른 좌표·버전·추가 파일)은 하지 않고,
+바꿔야 하면 **문서를 먼저 개정**한 뒤 구현한다(각 문서 frontmatter `revisions`에 한 줄).
+
+**이 우선순위의 예외 하나:** 모듈 개수는 **3개**(`solver-core`·`solver-profile`·`app`)가 현행이다.
+2026-08-10 3계층 개정 때 Master 결정 #10·Architecture·Plan·루트 README는 갱신됐으나
+`docs/README.md`(§3 행 설명)만 "모듈(2개)"로 남아 있다. 이 항목은 `docs/README.md`가 틀린 것이다.
 
 `docs/deprecated/`는 **효력 없음** — 결정 등록부(A\*/D\*/O\*), gate/evidence 완료 판정,
 YAML 2층 카탈로그, 15-phase 구현 세트는 전부 폐기된 체계다. 현행 문서와 충돌하면 항상 현행이 이긴다.
@@ -71,7 +77,7 @@ GET /solves/{solveKey}[/result] → S3에서 상태·결과 조회
 S3 배치: `solves/{customerId}/{planId}/{runId}/` 가 solveKey이고 그 아래 `input.json`·
 `status.json`·`result.json`. key 조립 규칙은 `storage` 한 곳에만 둔다.
 
-## 목표 모듈 구조 (Stage 0 이후)
+## 모듈 구조 (현행 — Stage 0에서 세워짐, 패키지는 아직 비어 있음)
 
 ```text
 solver-core/     com.ronext.rpdptw          순수 Java, compile 의존 0 (Spring/Jackson/AWS 금지)
@@ -105,10 +111,16 @@ app/             com.ronext.rpdptw.app      api · run · input · storage — S
 
 ## 작업 트리의 함정
 
-- `rpdptw/`·`adapters/`·`build/`·`apps/` — **소스가 없다.** 폐기된 다중 모듈 시도의 `target/` jar와
-  surefire 리포트만 남은 미추적 디렉터리다. grep에 잡히면 노이즈이고 Stage 0에서 삭제한다.
-- `gcp/`(추적됨)·pom `<description>`의 "Cloud Run and Google Cloud Workflows" — 폐기된 GCP 실험.
-- `.serverless/`·`node_modules/` — 옛 Serverless Framework(Lambda) 실험 잔재. Node 프로젝트가 아니다.
+- **`mvn -q dependency:list`는 항상 빈 출력이다.** `dependency:list`는 결과를 INFO로 찍는데 `-q`가
+  그걸 죽인다 — 의존이 있든 없든 빈 출력이라 "GCP 0건·core 순수" 검사가 **무조건 통과처럼 보인다.**
+  `-q` 없이 좌표를 grep한다 (위 명령 절). 검사가 살아 있는지는 scope 제한을 푼 대조군
+  (`mvn dependency:list -pl solver-core | grep -cE '^\[INFO\]\s+\S+:\S+:\S+:'` → 0이 아니어야 함)으로 본다.
+- `rpdptw/`·`adapters/`·`build/`·`apps/`·`gcp/`·`src/`·`.serverless/`·`node_modules/`·`Dockerfile` —
+  **전부 삭제됐다** (Stage 0). 옛 문서·대화에서 이 경로가 보이면 지금은 존재하지 않는 것이다.
+  Dockerfile은 Stage 7에서 새로 쓴다.
+- ArchUnit 룰(`verify ↛ solve`)은 대상 클래스가 0개라 지금은 공회전한다 (`allowEmptyShould(true)`).
+  룰 자체는 유효함을 확인해 뒀지만(위반 클래스 주입 시 BUILD FAILURE), **green이 곧 경계 준수의
+  근거는 아니다** — Stage 5까지는 그렇다.
 - `data/win_poc_case_floor.json` (주문 452·차량 31)이 1차 성공 기준의 실행 fixture다.
   규약 원본은 `data/ro_input_json_spec.pdf`, 비교 대상인 기존 엔진(Win) 결과는 `data/alns_result.csv`,
   거리표 소수 FLOOR 처리는 `scripts/floor_win_poc_matrix.py`가 했다.
