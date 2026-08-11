@@ -12,6 +12,10 @@ revisions:
   - 2026-08-10 app 툴체인 — Spring Boot 4.1 + Jackson 3 (`JsonMapper` / `tools.jackson`)
   - 2026-08-10 D1 확정 반영 — §3.1-2 접수 게이트 문면을 `multiRotation != 0`에서
     `{0,1} 밖`으로 (Domain §2.5). 흐름·모듈·경계 규칙 무변경
+  - 2026-08-11 접수 깊이 확정 — §3.1을 "파싱 + 정규화 검증까지 접수에서 실행, 의미 오류도 4xx"로
+    개정. Domain §12와 충돌하던 "형식 수준만 검증" 문면 폐기 (Domain이 정본 — Stage 6 §10 Q3 결정)
+  - 2026-08-11 §3.1 접수 4xx 예시에서 `vhclOwnTyp` 제거 — 그 필드를 읽지 않기로 해
+    (Domain §2.4 유예 표) 예시로 성립하지 않는다. 접수 검증 범위는 무변경
 ---
 
 # RO-Next Architecture Design
@@ -171,7 +175,8 @@ public final class ProfileRegistry {
 
 ```text
 POST /solves  (body = 규약 JSON)
-  1. 규약 스키마·필수값 검증          실패 → 4xx (S3에 아무것도 남기지 않음)
+  1. 규약 파싱 + 정규화 검증 (canonical 변환을 실행하고 결과는 버림)
+                                     실패 → 4xx (S3에 아무것도 남기지 않음 — Domain §12)
   2. multiRotation이 {0,1} 밖 등 미지원 → 4xx UNSUPPORTED_INPUT
   3. solveKey 생성 (§3.3)
   4. S3 put: {solveKey}/input.json + status.json(state=RECEIVED)
@@ -179,8 +184,11 @@ POST /solves  (body = 규약 JSON)
   6. 200 + { solveKey }
 ```
 
-- canonical 변환·Problem 동결은 접수에서 하지 않는다 — 무거운 작업은 전부 executor에서.
-  (접수 검증은 "규약에 맞는 JSON인가" 수준. 의미 오류는 풀이 단계에서 FAILED로 남는다.)
+- Problem 동결·이동표 준비는 접수에서 하지 않는다 — 무거운 작업은 executor에서.
+  접수 검증은 **정규화까지**다 (2026-08-11 확정): 소수 거리·빈 `zoneIds`·
+  `close == open` 같은 의미 오류도 접수에서 4xx로 돌려주고 S3에 남기지 않는다 (Domain §12의
+  분류 그대로 — 종전의 "형식 수준만" 문면은 Domain과 충돌해 폐기). 정규화 1회는 sub-second라
+  동기 응답에 문제없고, executor는 저장본을 같은 코드로 다시 파싱·정규화한다 (최종 방어).
 
 ### 3.2 풀이 (비동기, in-process executor)
 

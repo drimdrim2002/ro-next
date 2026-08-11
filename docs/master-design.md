@@ -7,6 +7,12 @@ related:
   - docs/domain-design.md
   - docs/architecture-design.md
   - docs/implementation-plan.md
+revisions:
+  - 2026-08-09 최초 확정
+  - 2026-08-11 §6 — "미리 필드를 만들어 두지 않는다"를 차량별 `multiRotation` 한 항목에서
+    **전 항목 원칙으로 승격**하고, 유예 항목 등재부(Stage Extra)로의 포인터 추가.
+    차량별 `multiRotation` 문단이 근거로 삼던 "이미 `trips`가 쓰는 방식" 참조도 제거했다
+    (차량별 `trips`가 같이 유예돼 존재하지 않는 선례를 가리키게 됐다). 범위(§4)는 불변
 ---
 
 # RO-Next Master Design
@@ -102,9 +108,18 @@ related:
 
 **차량별 `multiRotation`** — 지금은 통과하는 값이 `{0, 1}`뿐이라 모든 차량이 1바퀴여서
 차량마다 다를 수가 없다. 그러나 "차량마다 회전 수를 다르게 주고 싶다"는 요구가 있으므로,
-**multi-trip(`2` 이상)을 여는 그 시점에 함께 다룬다** — 이미 `trips`가 쓰는 방식
-(차량 값이 `options` 기본값을 덮어씀, Domain §2.5)을 그대로 적용하면 된다.
-그 전에 미리 필드를 만들어 두지 않는다.
+**multi-trip(`2` 이상)을 여는 그 시점에 함께 다룬다** — 차량 값이 `options` 기본값을 덮어쓰는
+규칙(Domain §2.5)을 적용하면 된다. 그 전에 미리 필드를 만들어 두지 않는다.
+
+**이 원칙을 전 항목에 적용했다 (2026-08-11).** 위 문단의 "그 전에 미리 필드를 만들어 두지
+않는다"는 차량별 `multiRotation`에만 적용되던 규칙이었는데, Stage 1 검토에서 같은 성격의
+선제 구현이 더 있는 것이 확인돼(wire에 없는 차량별 `trips`·치수 축·차량 소유 구분) 전부
+유예했다. 판단 기준은 "지금 안 쓰는가"가 아니라 **"나중에 넣는 비용이 지금 넣는 비용과
+같은가"**다 — 같으면(순수 add-only) 미루고, 다르면(타입 모양이 바뀌거나 여러 Stage를 동시에
+고쳐야 하면) 지금 만든다. 다일 시간창·정수 단위 체계가 후자라 그대로 남았다.
+지운 항목·근거·트리거·되살릴 지점은
+[Stage Extra](implementation/stage-extra-deferred-features.md) 등재부에 있고,
+작업 목록 등재는 [Plan §1 말미](implementation-plan.md)다.
 
 그 외: 규약의 PICKUP_DELIVERY 확장(canonical은 이미 지원, wire 규약 협의 필요), multi-depot 확대,
 분산 병렬 탐색(여러 워커 경쟁)은 필요해질 때 각각 별도 결정으로 연다.

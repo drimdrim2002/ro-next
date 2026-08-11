@@ -1,0 +1,168 @@
+---
+title: Stage Extra — 유예 항목 (트리거 대기)
+stage: extra
+date: 2026-08-11
+plan: ../implementation-plan.md
+sources:
+  - ../master-design.md (§4 범위, §6 향후 옵션)
+  - ../domain-design.md (§2.1.1 canonical 확장 기준, §2.4 차량, §2.5 배송정책)
+  - stage-01-canonical-input-normalization.md (유예 항목이 원래 있던 자리)
+revisions:
+  - 2026-08-11 최초 작성 — Stage 1 오버엔지니어링 검토에서 유예된 3묶음(E1~E3) 등재
+---
+
+# Stage Extra — 유예 항목
+
+지금 구현하지 않기로 했지만 **조건이 되면 한다**고 정한 항목의 등재부다.
+"까먹고 안 하는 것"을 막는 것이 이 문서의 유일한 목적이다.
+
+## 0. 이 문서의 성격 — 다른 Stage 문서와 다르게 쓴다
+
+Stage 0–8 문서는 **구현 직전 계약**이라 파일·클래스·시그니처·테스트까지 고정한다.
+**이 문서는 그렇게 쓰지 않는다.** 트리거가 발동하지도 않은 항목을 미리 설계하는 것이야말로
+이 문서를 만들게 한 원인(선제 구현)의 재발이기 때문이다.
+
+> **깊이 기준: 되살릴 수 있을 만큼만.**
+> 항목마다 ① 지운 것 ② 지운 근거 ③ 트리거 ④ 되살릴 때 손댈 지점 — 네 가지뿐이다.
+> 설계·시그니처·테스트는 **트리거가 발동한 뒤에** 정식 Stage 문서에서 쓴다 (§5 승격 절차).
+
+세 문서의 역할이 겹치지 않는다:
+
+| 문서 | 답하는 질문 |
+|---|---|
+| [Master §4·§6](../master-design.md) | "무엇이 **범위 밖**인가" — 범위 선언 |
+| **이 문서** | "무엇을 **지웠고 어떻게 되살리나**" — 작업 기록 |
+| [Plan §1](../implementation-plan.md) | "이 항목이 **작업 목록에 등재돼 있나**" — 포인터 |
+
+**여기 두지 않는 것**: Win과의 지표 차이 요인은
+[Stage 8 §6](stage-08-benchmark-comparison.md)의 W 표다 — 그건 벤치마크 해석의 문제이지
+구현 작업 항목이 아니다. 이 문서와 섞지 않는다.
+
+---
+
+## 1. 항목 요약
+
+| # | 묶음 | 트리거 | 되살리는 비용 |
+|---|---|---|---|
+| **E1** | multi-trip을 열 때 함께 | `multiRotation` ≥ 2 지원 결정, 또는 wire에 차량별 `trips` 등장 | 개별 필드는 **소**, multi-trip 본체는 **대**(구조 변경) |
+| **E2** | 3D 적재 (치수 축) | 3D 적재 고객 확정 + wire 협의 | **중** — canonical optional 필드 + profile 판정 |
+| **E3** | 차량 소유 구분 | 소유 구분이 점수 축·hard 제약이 될 때 | 필드만이면 **소**, 점수 축이면 **중** |
+
+전부 **순수 add-only**다 — 지금 넣든 나중에 넣든 비용이 같아서 미뤘다.
+반대로 나중에 넣을 수 없는 것(정수 단위 체계·`List<TimeWindow>` 다일 시간창·pair 원자성 등)은
+Stage 1에 그대로 남겼다. 판단 기준은 "지금 안 쓰는가"가 아니라
+**"나중에 넣는 비용이 지금 넣는 비용과 같은가"**다.
+
+---
+
+## 2. E1 — multi-trip을 열 때 함께
+
+### 지운 것
+
+| 대상 | 원래 자리 |
+|---|---|
+| `domain/input/VehicleInput.trips` (String, nullable) | Stage 1 §2.3 |
+| `effectiveTrips = 차량 trips ▷ options.trips` 체인 + 오값 검증 | Stage 1 §4 절차 5 |
+| Edge case E19b·E19c·E19d·E19e (차량별 trips 4종) | Stage 1 §6 |
+| T13의 차량별 trips 4케이스 | Stage 1 §7 |
+| `domain/Depot.taskTimeSec` · `domain/input/DepotInput.taskTimeSec` | Stage 1 §2.2·§2.3 |
+| 차량별 `multiRotation` | (애초에 안 만듦 — [Master §6](../master-design.md)에 기등재) |
+
+### 지운 근거
+
+- **차량별 `trips`는 wire에 없다.** floor fixture 차량 31대의 키는 7개뿐이다 (2026-08-11 실측):
+  `vehicleId` · `vehicleFeature` · `maxWeight` · `maxVolume` · `workStartTime` ·
+  `workEndTime` · `speed`. 이 필드로만 도달하는 테스트 4개는 자기가 만든 값을 자기가 검증했다.
+- **`depot.taskTime`은 복귀 선적 시간이다** (2026-08-11 시스템 소유자 확정).
+  `multiRotation`이 `{0, 1}` = 1바퀴뿐인 현재 범위에서는 **차고 복귀 자체가 없으므로**
+  선적도 일어나지 않는다. Domain §2.5가 "trip이 1개뿐이라 상차 시간 개념 보류"라고
+  괄호로 추측해 둔 것이 정확했다.
+- Master §6이 차량별 `multiRotation` 항목에서 이미
+  *"그 전에 미리 필드를 만들어 두지 않는다"*고 정책화해 둔 것과 같은 사안이다.
+
+### 되살릴 때 손댈 지점
+
+1. **Domain §2.5** — `trips` 행에 차량별 지정 규칙(차량 값이 `options` 기본값을 덮어씀) 복원 ·
+   `depot.taskTime` 행을 "미적용"에서 적용 규칙으로 전환
+2. **Stage 1** — §2.2 `Depot` · §2.3 `VehicleInput`·`DepotInput` · §4 절차 3·5 · §6 · §7
+3. **Stage 3 전파** — §3.3 절차 1(출발)·3(종료)에 선적 시간 반영. **Stage 5 재검증도 같이** —
+   두 구현이 같은 Domain 문장을 각각 읽어야 한다 (한쪽을 보고 맞추면 재검증의 독립성이 무너진다)
+4. **multi-trip 본체는 구조 변경이다** — Domain §2.5 주석대로 경로가 trip 목록이 되면
+   전파·연산자·재검증·결과 JSON이 전부 바뀐다. 필드 추가와 같은 급으로 다루지 않는다
+
+---
+
+## 3. E2 — 3D 적재 (치수 축)
+
+### 지운 것
+
+| 대상 | 원래 자리 |
+|---|---|
+| `domain/Vehicle`의 `maxWidthMm` · `maxHeightMm` · `maxLengthMm` | Stage 1 §2.2 |
+| `domain/input/VehicleInput`의 대응 3필드 | Stage 1 §2.3 |
+| `Item`의 치수 3필드 | (애초에 없었음) |
+
+### 지운 근거
+
+wire 차량 7키에 치수가 없고, `Item`에도 대응 필드가 없어
+**Domain §3.4 치수 축의 검사 대상 자체가 존재하지 않았다.** 구 Stage 1 Q3이
+"검사 대상이 없다"고 자인하면서도 필드는 "adapter 값 유실 방지"로 남겨 뒀는데,
+**유실할 값이 wire에 없으므로** 그 근거가 성립하지 않았다.
+
+### 되살릴 때 손댈 지점
+
+[Domain §2.1.1](../domain-design.md)이 **이미 이 항목을 예시로 경로를 써 뒀다** — 그대로 따른다:
+
+```text
+wire       item에 width/height/length 추가          ← 호출 시스템 협의가 먼저
+canonical  Item에 optional 치수 3필드 추가            ← core 변경은 이것뿐
+판정       그 고객 profile의 HardConstraint          ← core Compatibility에 치수 축을 만들지 않는다
+```
+
+차량 쪽 한도 3필드도 같은 시점에 되살린다. 고객별로 갈라진 canonical·`Problem`·adapter는
+만들지 않는다 (Domain §2.1.1 MUST NOT).
+
+---
+
+## 4. E3 — 차량 소유 구분
+
+### 지운 것
+
+| 대상 | 원래 자리 |
+|---|---|
+| `domain/VehicleOwnership.java` (enum 파일 전체) | Stage 1 §1.1·§2.2 |
+| `domain/Vehicle.ownership` | Stage 1 §2.2 |
+| `domain/input/VehicleInput.vhclOwnTyp` | Stage 1 §2.3 |
+| Edge case E13 (`"OWN"` → INVALID_INPUT 등) | Stage 1 §6 |
+
+### 지운 근거
+
+wire에 `vhclOwnTyp`가 없고(차량 7키), **Stage 2·3·5 문서 전체에 이 개념이 한 번도
+등장하지 않는다** — 호환성 판정에도, 점수 축에도, 재검증에도 소비처가 없다.
+값을 읽어서 어디에도 쓰지 않는 필드였다.
+
+### 되살릴 때 손댈 지점
+
+1. **Domain §2.4** — 소유 축이 무엇을 결정하는지부터 쓴다 (예: 자차 우선 배정)
+2. **Stage 1** — canonical 필드 + raw 필드 + 오값 거부 edge case
+3. **점수 축이 되면 profile까지** — `long[]` 축 하나가 늘면 재검증의 점수 재계산도 같이 바뀐다.
+   "필드 하나"로 끝나지 않을 수 있는 유일한 항목이다
+
+---
+
+## 5. 승격 절차 — 트리거가 발동하면
+
+순서를 지킨다. 코드부터 만들지 않는다 (CLAUDE.md: 문서를 먼저 개정한 뒤 구현).
+
+```text
+1. 안건 등록   Plan §2의 결정 표(D*)에 "트리거 발동" 안건으로 올린다.
+              wire 협의가 필요한 항목(E2)은 여기서 호출 시스템과 닫는다.
+2. 의미 확정   Domain에 규칙을 먼저 쓴다 — Domain이 배차 규칙의 정본이다.
+3. 계약 작성   기존 Stage 문서를 개정하거나, 규모가 크면(E1의 multi-trip 본체)
+              stage-NN 문서를 신설한다. 파일·시그니처·테스트는 여기서 처음 고정된다.
+4. 구현        Stage 문서의 테스트 표가 완료 기준이다 (Plan §1 원칙).
+5. 등재 해제   이 문서에서 해당 절을 삭제하고 revisions에 한 줄 남긴다.
+```
+
+한 묶음이 통째로 발동할 필요는 없다 — 예컨대 E1에서 `depot.taskTime`만 필요해질 수도 있다.
+그 경우 해당 항목만 승격하고 나머지는 이 문서에 남긴다.
