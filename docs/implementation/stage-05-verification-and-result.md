@@ -21,6 +21,12 @@ revisions:
     §2.3 `RouteReplay`가 다일 근무창·차고 창을 재계산 · §3에 절차 5-a(창 포함 검사, Stage 3 N5 대체) ·
     §4.3 절차 3의 bucket 설명 확장 · N1 공유 허용 목록에 "정규화된 창 목록" + 창 걷는 코드는 공유 금지 ·
     E19~E22 신설 · T5에 다일 대조 추가, T12 신설 · §9 Q5(`departure` wire 노출) 신설
+  - 2026-08-11 검토 반영 — §4.1 `RouteResult`에 경로 시각 2종(depotDeparture·depotReturn) 추가
+    (Domain §11.1 개정 이행 — wire 노출은 Plan D2) · §4.2 절차 1·T9 동기 · §7 표의 중복 번호
+    E16/E17을 E23/E24로 개번(T6 참조 갱신) · §9 Q3 해소(Domain §11.1 문구 정리 완료) ·
+    §8 말미 문구를 Plan §1 DoD 편입으로 갱신
+  - 2026-08-11 Stage 1 유예 반영 — §8 `depot.taskTime` 행(canonical에 없어 읽을 값이 없다).
+    차고 창 재검증은 무변경
 ---
 
 # Stage 5 — 재검증과 결과
@@ -275,8 +281,12 @@ public record SolveResult(
                                long seed, String termination) {}
 
     public record RouteResult(VehicleId vehicleId, List<Visit> visits,   // visits = 방문 순서
+                              LocalDateTime depotDeparture,              // 차고 출발 (§7.1 절차 0 = RouteFacts.departureSec)
+                              Optional<LocalDateTime> depotReturn,       // 도착 차고 도착 (§7.1 절차 8 = endDepotArrivalSec).
+                                                                         // 부재 = endDepot 없는 경로
                               long driveDistMeter, long driveTimeSec,
                               int stopCount, long routeOperationalTimeSec) {}
+                              // 경로 시각 2종은 Domain §11.1의 2026-08-11 추가분 — wire 필드명·노출 형식은 D2 협의
 
     public record Visit(RequestId orderId,               // 식별자는 규약과 같은 이름 (§11.1)
                         boolean pickup,                  // PD의 같은 orderId 방문 2건 구분 (§9 Q4)
@@ -315,7 +325,8 @@ public final class ResultAssembler {
 
 ```text
 1. routes    pass.routeFacts()를 VehicleId 문자열 순으로. RouteResult 필드는 전부
-            재계산 RouteFacts에서: 경로 지표 4개(§11.1) + 방문별 Visit
+            재계산 RouteFacts에서: 경로 지표 4개(§11.1) + 경로 시각 2종(depotDeparture·
+            depotReturn — toWallClock, 2026-08-11) + 방문별 Visit
             (VisitFacts의 requestId·pickup·locationId·시각 3종 toWallClock·처리 후 적재).
 2. unassigned  pass.bank()를 RequestId 문자열 순으로, 사유는 §4.3 절차로 산출.
 3. metrics   = pass.evaluation() (재계산 값 — 탐색 보고값이 아니라).
@@ -413,8 +424,8 @@ solve와 verify는 서로를 모른다.
 | E15 | 항상-false profile hard | PROFILE_HARD → FAIL (탐색·검증이 같은 profile이므로 정상 경로에선 탐색도 못 만든 해) | §8.4 |
 | E16 | 호출자가 탐색과 **다른** profile 인스턴스를 넘김 | verify는 알아챌 수 없다 — 인자를 믿는다. 이 결선은 Stage 6의 단일 지점이 보장하고 그 테스트가 지킨다 | §8.4 MUST |
 | E17 | `reportedScore`와 재계산 score의 길이가 다름 | SCORE_MISMATCH (같은 profile이면 길이가 같아야 한다 — Stage 3 E31) | §8.3 |
-| E16 | routes 맵 값이 빈 목록 | EMPTY_ROUTE → FAIL (`Route`는 빈 visits를 못 만들지만 verify 입력은 raw 맵 — 방어) | Stage 3 E30 |
-| E17 | PD 결과의 같은 orderId 방문 2건 | Visit.pickup으로 구분 (§9 Q4) | §1.3 |
+| E23 | routes 맵 값이 빈 목록 | EMPTY_ROUTE → FAIL (`Route`는 빈 visits를 못 만들지만 verify 입력은 raw 맵 — 방어) — 2026-08-11 개번, 종전 번호 E16이 중복이었다 | Stage 3 E30 |
+| E24 | PD 결과의 같은 orderId 방문 2건 | Visit.pickup으로 구분 (§9 Q4) — 2026-08-11 개번, 종전 번호 E17이 중복이었다 | §1.3 |
 | E18 | 시간 한도로 중단된 탐색의 best | 정상 입력 — verify는 출처를 모른다. hard만 재확인 | §12 "탐색 중단 = 정상" |
 | E19 | 다일 해 (근무창 여럿) | replay도 같은 미루기 규칙으로 재계산 — `interWorkWindowRestTimeSec`·방문별 `departureSec`가 solve와 일치해야 한다 (T5에서 대조). 두 구현이 창을 다르게 걸으면 여기서 드러난다 | Domain §3.2·§7.3 |
 | E20 | 창 밖에 배치된 이동·서비스가 섞인 오염 해 | 절차 5-a의 포함 검사에서 WORK_WINDOW → FAIL | Domain §10.2 |
@@ -437,16 +448,17 @@ Problem은 Stage 1~3 경로로 손 조립한다 (fixture JSON 파싱은 Stage 6 
 | T3 | `SolutionVerifierTest.failsOnScoreMismatch` | 유효 해 + reported `Evaluation` 4축 각각 ±1 조작 → 전부 SCORE_MISMATCH (E2). **그리고** `Evaluation`은 그대로 두고 `reportedScore`만 조작 → 역시 SCORE_MISMATCH (E17 길이 불일치 포함) | "점수 불일치 … FAIL" |
 | T4 | `ArchitectureRulesTest` 2규칙 green | verify 실제 클래스 존재 상태에서 `verify ↛ solve` + 신규 `solve ↛ verify` (§6) | "ArchUnit 규칙 통과" |
 | T5 | `SolutionVerifierTest.passesValidSolutionAndAgreesWithSolve` | Stage 3 §3.4 예제를 pair 완비로 확장한 유효 해 → `Pass`. 재계산 `RouteFacts`·`Evaluation`이 solve의 `Evaluator.evaluate(problem, profile, solution)` 결과와 record 동등이고, score는 `Arrays.equals` — **두 독립 구현의 합치** (E8·E9 경계 포함). **다일 케이스도 같은 방식으로 대조한다** (Stage 3 §3.5 예제 — `interWorkWindowRestTimeSec`·방문별 `departureSec`까지, E19). `Feasible`/`Pass` 자체를 `equals`로 비교하지 않는다 (배열 필드 — Stage 3 §4.3 공통 규칙) | (오염 FAIL의 대조군 — 전부 FAIL이 "verify가 무조건 FAIL"이 아님의 증명) |
-| T6 | `SolutionVerifierTest.failsOnXorViolations` | E1(위반 0)·ASSIGNED_AND_BANKED·NOT_ASSIGNED_NOT_BANKED·UNKNOWN_REQUEST·E16 | (Plan 범위 문장 "독립 재검증(전체 해)" — §10.2 검사 항목) |
+| T6 | `SolutionVerifierTest.failsOnXorViolations` | E1(위반 0)·ASSIGNED_AND_BANKED·NOT_ASSIGNED_NOT_BANKED·UNKNOWN_REQUEST·E23 | (Plan 범위 문장 "독립 재검증(전체 해)" — §10.2 검사 항목) |
 | T7 | `SolutionVerifierTest.failsOnIncompatibleAndProfileHard` | E14·E15 각각 정확한 Kind (같은 profile 인스턴스 사용 확인 포함) | 〃 |
 | T8 | `AlnsVerifyIntegrationTest.alnsBestAlwaysVerifies` | 소형 fixture × seed 여러 개로 `AlnsSolver.solve(problem, profile)` → `AlnsResult` 분해 → 같은 profile로 verify `Pass` + `Pass.evaluation` == `bestEvaluation` + `Arrays.equals(Pass.score, bestScore)` (Stage 4 T4의 verify판 — 파이프라인 전 구간 정합) | (§10 전체 흐름의 실증 — 캐시 없는 재계산과 탐색 보고값의 합치) |
-| T9 | `ResultAssemblerTest.resultMatchesVerifiedSolution` | 모든 problem request가 routes+unassigned에 정확히 1회 · Visit 시각(toWallClock 역변환)·적재·경로 지표가 `Pass.routeFacts`와 1:1 · metrics == `Pass.evaluation` · run 메타(profileId·verified=true·stamp 값·**deliveryPolicy와 searchBudget이 각각 별도 필드**) | (Plan 범위 문장 "검증된 해 ↔ 결과 일치 테스트") |
+| T9 | `ResultAssemblerTest.resultMatchesVerifiedSolution` | 모든 problem request가 routes+unassigned에 정확히 1회 · Visit 시각(toWallClock 역변환)·적재·경로 지표·경로 시각 2종(depotDeparture·depotReturn)이 `Pass.routeFacts`와 1:1 · metrics == `Pass.evaluation` · run 메타(profileId·verified=true·stamp 값·**deliveryPolicy와 searchBudget이 각각 별도 필드**) | (Plan 범위 문장 "검증된 해 ↔ 결과 일치 테스트") |
 | T10 | `ResultAssemblerTest.derivesUnassignedReasons` | 4사유 각 1건: 호환 0대 → NO_COMPATIBLE_VEHICLE / 전 호환 차량 용량 미달 → CAPACITY / 창 도달 불가 → TIME_WINDOW_INFEASIBLE (E12 포함) / 단독 가능 → NOT_PLACED | (Plan 범위 문장 "unassigned+reason") |
 | T11 | `ResultAssemblerTest.deterministicOrderingAndStatus` | routes·unassigned 정렬, 같은 입력 → 동등 `SolveResult`, status 항상 DONE | (Plan 범위 문장 "결과 모델" — §11.1 결정성) |
 | T12 | `SolutionVerifierTest.failsOnWorkAndDepotWindow` | **D4 확정분.** 유효한 다일 해에서 ① 한 이동이 근무창 틈에 걸치도록 오염 → WORK_WINDOW (E20, 절차 5-a) ② endDepot 도착이 차고 창 밖이 되도록 오염 → DEPOT_WINDOW (E21) ③ 오염 없는 대조군은 `Pass` | (Plan 범위 문장 "독립 재검증(전체 해)" — Domain §10.2 검사 항목) |
 
-T5~T12는 DoD 두 문장 밖이지만 Plan Stage 5 범위 문장("독립 재검증(전체 해, 캐시 없이),
-결과 모델, 검증된 해 ↔ 결과 일치 테스트")의 직접 검증이다 — 보고에서 DoD 보강을 제안한다.
+T5~T12는 Plan DoD 요약 문장 밖이지만 Plan Stage 5 범위 문장("독립 재검증(전체 해, 캐시 없이),
+결과 모델, 검증된 해 ↔ 결과 일치 테스트")의 직접 검증이다 — Plan §1의 편입(2026-08-11)에 따라
+이 표 전부가 완료 기준이다.
 
 ---
 
@@ -462,7 +474,7 @@ T5~T12는 DoD 두 문장 밖이지만 Plan Stage 5 범위 문장("독립 재검�
 | 미배정 사유 값 추가·세분 (예: 한도 전용 사유) | 안 함 — §11.1 예시 4개 유지 (§9 Q2) | Domain §11.1 |
 | `verify`의 별도 모듈 승격 | 안 함 (필요해지면 그때) | Architecture §2.1 |
 | fingerprint·provenance·lineage류 추적 | 안 함 (폐기 확정) | Domain §11.1·Master §3-⑪ |
-| `depot.taskTime`의 재검증 적용 | Stage 3과 동일 보류 (탐색·검증 동일 해석 유지) — **차고 창은 이제 적용한다** (D4 확정, §2.3·§3 절차 5-a·`DEPOT_WINDOW`). 상차 시간만 여전히 미적용이다 | Domain §2.5 · Stage 3 §9 Q2 |
+| `depot.taskTime`의 재검증 적용 | **canonical에 없어 읽을 값이 없다** (2026-08-11 — 복귀 선적 시간이라 1바퀴엔 미발생, Domain §2.5). 차고 **창**은 적용한다 (D4 확정, §2.3·§3 절차 5-a·`DEPOT_WINDOW`) | Stage Extra E1 |
 | 재검증 매 trial 실행·증분 재검증 | 안 함 — 저장 직전 1회 | Domain §10.2 |
 
 ---
@@ -475,6 +487,6 @@ T5~T12는 DoD 두 문장 밖이지만 Plan Stage 5 범위 문장("독립 재검�
 |---|---|---|
 | Q1 | 결과 모델(Domain §11)의 패키지 자리 — Architecture §2 트리는 `verify`를 "독립 재검증 (Domain §10)"으로만 주석하고 §11의 소유 패키지를 정하지 않았다 | `verify`에 배치 (§1 말미의 근거). Architecture §2 주석을 "재검증 + 결과 모델 (Domain §10–11)"로 보완 제안 |
 | Q2 | 미배정 사유 목록이 "예:"로 열려 있고, maxDrive·maxStop 등 한도 때문에 단독 불가한 경우를 정확히 가리키는 값이 없다. **D4로 `DEPOT_WINDOW`·다일 `WORK_WINDOW`가 추가돼 이 bucket이 더 넓어졌다** | TIME_WINDOW_INFEASIBLE bucket에 포함 (§4.3 절차 3, E12). 새 값을 임의로 추가하지 않고, wire 협의([Plan §2.1 D2](../implementation-plan.md)) 때 세분 여부를 결정 |
-| Q3 | §11.1 status가 FAILED를 나열하지만 §10.2(FAIL 시 결과 미저장)·Architecture §3.3(result.json은 DONE일 때만)과 조합하면 FAILED 결과 JSON은 생산 경로가 없다 | enum 값은 유지하되 `assemble`은 항상 DONE (노트 N6). Domain §11.1 문구 정리 제안 |
+| Q3 | §11.1 status가 FAILED를 나열하지만 §10.2(FAIL 시 결과 미저장)·Architecture §3.3(result.json은 DONE일 때만)과 조합하면 FAILED 결과 JSON은 생산 경로가 없다 | **해소 (2026-08-11).** Domain §11.1이 문구를 정리했다 — FAILED는 열거 호환용이고 result.json은 언제나 DONE, 실패는 status.json에만 남는다. enum 값 유지, `assemble`은 항상 DONE (노트 N6 그대로) |
 | Q4 | PD의 결과 visits에서 같은 orderId 방문 2건(픽업/배송)의 구분 필드가 §11.1에 없다 | `Visit.pickup` boolean을 모델에 추가 (구분 불가면 PD 결과가 무의미 — §1.3의 canonical PD 지원과 정합). 현 규약(전건 DELIVERY_ONLY)에는 무영향, wire 노출은 Stage 6 협의 |
 | Q5 | **`departure`를 결과 `Visit`에 노출할지** (2026-08-10 D4로 생긴 항목) — 다일 해에서는 방문의 출발 시각이 `serviceEnd`와 달라진다(밤을 새우고 다음 창에 출발). 결과에 없으면 야간 휴식이 결과에서 사라져 호출 측이 경로 시각을 재구성할 수 없다 | 내부 사실 `VisitFacts.departureSec`는 **지금 만든다** (Stage 3 §3.2). 결과 wire 노출은 **[Plan §2.1 D2](../implementation-plan.md)(wire 협의)**로 넘긴다 — 1일 입력에서는 `serviceEnd`와 같아 당장 정보 손실이 없다 |

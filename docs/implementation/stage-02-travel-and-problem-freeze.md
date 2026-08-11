@@ -15,6 +15,10 @@ revisions:
     Problem 생성 1회, 시간·메모리 기록). 다른 설계 무변경
   - 2026-08-10 D1 확정 반영 — §8 "multiRotation fixture 충돌 해소" 행을 해소 표시로
     (바퀴 수 확정, fixture 원본 통과). 이 Stage의 설계·파일·테스트는 무변경
+  - 2026-08-11 정리 — N4에 비대각 D=9999 1건 기록(실거리/결측 여부 확인은 Plan D2 안건),
+    §7 말미 문구를 Plan §1 DoD 편입으로 갱신. 설계 무변경
+  - 2026-08-11 Stage 1 유예 반영 — §4 절차 2에서 차고 NodeId 중복 검사 제거(차고는 NodeId를
+    갖지 않는다) · §8 `depot.taskTime` 행을 "보류"에서 "canonical에 없음"으로. 설계 무변경
 ---
 
 # Stage 2 — 이동표와 Problem 동결
@@ -204,7 +208,8 @@ Stage 1 §2.2). 결과 run 메타에 남길지는 Stage 6 재량이며, 그 경�
 ```text
 1. 복사   depots/requests/vehicles/locations를 방어 복사 (List.copyOf 등).
          이후 원본 Plan을 고쳐도 Problem은 변하지 않는다 (§7 T8).
-2. ID    RequestId·VehicleId 중복 없음. 전 NodeId(차고 + 모든 side) 중복 없음.
+2. ID    RequestId·VehicleId 중복 없음. 전 NodeId(모든 side) 중복 없음.
+         (차고는 NodeId를 갖지 않는다 — Stage 1 §2.2, Stage 3 §4.4)
          위반 → 실패 (Domain §5 "ID 참조").
 3. 참조   pair 참조 (Domain §5·§1.3):
          - pattern == PICKUP_DELIVERY ⇔ pickup side 존재. 불일치 → 실패.
@@ -234,7 +239,7 @@ Stage 1 §2.2). 결과 run 메타에 남길지는 Stage 6 재량이며, 그 경�
 | N1 | `distanceTimeCalculate` 비분기 — §3 끝 문단. Domain §2.5.1이 canonical 제거로 확정 (§9 Q3 해소) |
 | N2 | 예외 번역 seam: `domain`(TravelMatrix)이 `problem`의 예외를 던지면 역방향 패키지 참조가 생긴다. 그래서 prepare는 `IllegalArgumentException`, freeze가 `ProblemCreationException`으로 감싼다. 패키지 의존은 `problem → domain` 한 방향 유지 |
 | N3 | 부분 항목(D만 있고 U 없음)은 Stage 2에 도달하지 않는다 — Stage 1 `TravelEntry`가 두 필드 필수 int라서다. wire가 부분 항목을 주면 Stage 6 adapter의 일 (Stage 1 절차 7 단위 검증에서 거부 권고) |
-| N4 | fixture 사실 (2026-08-09 확인): floor fixture 행렬은 453 장소 완전 정방(453² = 205,209행, 중복 0)이라 보정이 한 번도 안 돈다. self arc 453건 전부 D=9999·U=0. 전 차량 speed "45", `Optimizer.DefaultSpeed` "45", `distanceTimeCalculate` "GreatCircle". `C` 열(O/G)은 Stage 1이 구조적으로 배제 |
+| N4 | fixture 사실 (2026-08-09 확인): floor fixture 행렬은 453 장소 완전 정방(453² = 205,209행, 중복 0)이라 보정이 한 번도 안 돈다. self arc 453건 전부 D=9999·U=0. 전 차량 speed "45", `Optimizer.DefaultSpeed` "45", `distanceTimeCalculate` "GreatCircle". `C` 열(O/G)은 Stage 1이 구조적으로 배제. **비대각 arc 1건이 D=9999다** (`WIN_2306→WIN_3225`, U=991 — 2026-08-11 실측): 대각 sentinel과 같은 값이라 결측 표시의 누출이 의심되나, 규칙상 실거리 9999 m로 그대로 쓰인다. 실거리/결측 확인은 Plan D2 안건 (Stage 8 W16) |
 
 ---
 
@@ -288,8 +293,8 @@ Domain §4·§5의 규칙·경계값·오류 분류에서 뽑았다. "실패" = 
 | T11 | `ProblemFreezeTest.travelCompleteAfterFreeze` | 희소 입력 후 n² 전 쌍 조회 성공 (완전성) | (Plan 범위 문장 "완전성 검증") |
 | T12 | `ProblemScaleTest.freezesFullScaleSyntheticProblem` | **규모 측정.** 실물과 같은 규모의 합성 입력(장소 453 = 주문 452 + 차고 1, 차량 31, 이동표 **453² = 205,209쌍을 전부 채워서**)으로 `TravelMatrix.prepare` + `Problem.freeze` 1회 → 예외 없이 완료. **소요 시간·힙 사용량을 출력해 기록한다.** 쌍을 비우면 Great Circle 보정이 대신 채워 측정이 무의미해지므로 전 쌍을 준다. 입력은 프로그램으로 조립한다 (fixture JSON 파싱 없음 — 위 서두 원칙, app 모듈 불필요) | Plan Stage 2 "**규모**" 문장 |
 
-T9–T11은 DoD 두 문장 밖이지만 Plan Stage 2 범위 문장("`Problem` 생성 시 참조·완전성 검증과
-동결")의 직접 검증이다 — 보고에서 DoD 보강을 제안한다.
+T9–T11은 Plan DoD 요약 문장 밖이지만 Plan Stage 2 범위 문장("`Problem` 생성 시 참조·완전성 검증과
+동결")의 직접 검증이다 — Plan §1의 편입(2026-08-11)에 따라 이 표 전부가 완료 기준이다.
 
 ---
 
@@ -304,7 +309,7 @@ T9–T11은 DoD 두 문장 밖이지만 Plan Stage 2 범위 문장("`Problem` �
 | wire `distanceMatrix`(F/T/D/U/C, 문자열·정수 혼재) 파싱 → `TravelEntryInput` 매핑 | Stage 6 adapter | Architecture §2, Stage 1 §8 |
 | `ProblemCreationException` → status FAILED 기록 | Stage 6 executor | Architecture §3.2 |
 | ~~multiRotation fixture 충돌 해소~~ | **해소 — 결정 불필요** | Plan §2.1 D1 (2026-08-10): 바퀴 수 확정으로 fixture `"1"`이 그대로 통과. 판정은 Stage 1이 소유 |
-| depot.taskTime의 시간 계산 적용 (`Depot` 필드 보관만) | 보류 | Domain §2.5 |
+| depot.taskTime | **canonical에 없다** — 복귀 선적 시간이라 1바퀴엔 미발생 (Domain §2.5, 2026-08-11) | Stage Extra E1 |
 | 이동표 메모리 최적화(압축·공유 표현)의 확정 | 구현 재량 | §2.2 (요구는 불변+O(1)뿐) |
 | 시간창 전개(다일 근무창·차고 창)의 재계산·파생 색인 | **안 함 — 이 Stage는 무변경** | Domain §3.2 |
 

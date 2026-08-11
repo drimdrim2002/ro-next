@@ -20,6 +20,12 @@ revisions:
     `VisitFacts`에 `departureSec`, `RouteFacts`에 `spanStartSec`·`routeEndSec()` 추가 ·
     §3.3 전파 절차 재작성(창 목록 위 배치·미루기·차고 창·휴식 계산, 근무창 양 끝점 검사 삭제) ·
     §3.5 다일 대응표 신설 · N5 폐기·N8 신설 · E23 개정, E34~E40 신설 · T13~T16 신설
+  - 2026-08-11 정정 — §3.5·T13의 미룬 시간 귀속을 Domain §7.3 공식과 일치시킴(55800 전액 휴식
+    → 대기 1800 + 휴식 54000. §3.3 절차 2의 집계 규칙과도 모순이었다 — Domain §7.2.1 동시 정정) ·
+    E37 문구 동기 · §4.4의 사실과 다른 "Stage 2 §8 인계" 참조 정정 · §7 말미 문구를 Plan §1
+    DoD 편입으로 갱신
+  - 2026-08-11 Stage 1 유예 반영 — §8 `depot.taskTime`(복귀 선적 시간이라 1바퀴엔 미발생) ·
+    §4.3 소유 비용축 · §4.4 3D profile 예시 주석. 전파 절차·차고 창 적용은 무변경
 ---
 
 # Stage 3 — Solution·전파·평가
@@ -384,7 +390,7 @@ Domain §7.2.1(3일 계획, 매일 08:00\~17:00)을 canonical 초로 옮긴 값�
 |---|---|
 | 2일차 16:30에 90분 이동 시작 시도 | `fitArc(W, 145800, 5400)` → 2일차 창에 안 들어감(`151200 > 147600`) |
 | 3일차 08:00으로 미룸 | `departureSec = 201600` (그 방문의 `VisitFacts.departureSec`) |
-| 미룬 15시간 30분 | `interWorkWindowRestTimeSec += 55800` |
+| 미룬 15시간 30분의 귀속 (Domain §7.3·§3.3 절차 2) | `customerWaitingTimeSec += 1800` (근무창에 걸친 16:30\~17:00) · `interWorkWindowRestTimeSec += 54000` (창 사이 틈. 2026-08-11 정정 — 전액 휴식은 §7.3 공식과 모순) |
 | 도착 3일차 09:30 | `arrivalSec = 207000` |
 | 2일차 16:00에 서비스가 끝난 변형 | `serviceEndSec=144000`, `departureSec=201600`, 그중 근무 시간 3600초는 `customerWaitingTimeSec += 3600`, 창 사이 54000초는 `interWorkWindowRestTimeSec += 54000` |
 | 9시간 창에 12시간 이동 | `fitArc` 전부 실패 → `Infeasible(WORK_WINDOW, at=그 방문)` |
@@ -513,7 +519,8 @@ false가 나온다. 어디서든 score 대조는 `Arrays.equals`로 한다 (탐�
 - **비교기 SPI는 없다.** 고정 가중치·Big-M 합산 금지(§8.3)가 관례가 아니라 구조로 지켜진다 —
   비교 수단이 `Scores.compare` 하나뿐이라 가중합 비교기를 만들 자리가 없다.
 - 크게 만들고 싶은 축은 부호를 뒤집어 넣는다 (전 축 최소화 규칙을 깨지 않는다).
-- `vhclOwnTyp` 부재 입력·default profile에서는 LEASE/DIRECT 축을 아예 쓰지 않는다 (§8.3).
+- 소유(LEASE/DIRECT) 축은 **지금 없다** — canonical에 소유 필드를 담지 않기 때문이다
+  (2026-08-11 유예, Domain §2.4 유예 표 · Stage Extra E3).
 
 #### 고객 구현 예 (Stage 3 범위 밖 — SPI가 충분한지 보이는 용도)
 
@@ -535,13 +542,13 @@ public final class AcmeProfile extends DefaultProfile {
 public final class BoxFitConstraint implements HardConstraint {
     public String id() { return "BOX_FIT"; }
     public boolean satisfied(Problem p, RouteFacts route) {
-        Vehicle v = p.vehicle(route.vehicleId());        // maxWidthMm·maxHeightMm·maxLengthMm
-        return pack(v, itemsOf(p, route.visits()));      // item 치수는 canonical optional 필드
+        Vehicle v = p.vehicle(route.vehicleId());        // 치수 한도 3필드 (Stage Extra E2로 유예 중)
+        return pack(v, itemsOf(p, route.visits()));      // item 치수도 같이 되살린다 (Domain §2.1.1)
     }
 }
 ```
 
-### 4.4 `Problem` 확장 — `nodeRef` 색인만 (Stage 2 §8 인계 이행)
+### 4.4 `Problem` 확장 — `nodeRef` 색인만 (Stage 2 §2.3의 `Problem`에 조회 메서드 1개 추가)
 
 ```java
 public final class Problem {
@@ -626,7 +633,7 @@ Domain §6–§8의 optional 규칙·경계값·오류 분류에서 뽑았다.
 | E34 | 차고가 근무 시작보다 늦게 엶 (근무 06:00\~, 차고 08:00\~) | waitInDepot=**N**이어도 출발 = 08:00, `depotWaitingTimeSec = 7200` (종전 "N이면 0"은 거짓이 된다) | Domain §2.5·§7.1 절차 0 |
 | E35 | 차고 창 밖에만 출발 가능한 상황 (근무창 ∩ 차고 창 = ∅) | DEPOT_WINDOW (at 부재 — 출발 전 위반) | Domain §7.1 절차 0 |
 | E36 | endDepot 도착이 차고 창 사이의 틈 | DEPOT_WINDOW — 문 열 때까지 기다렸다 들어가는 것으로 **미루지 않는다** | Domain §7.1 절차 8 |
-| E37 | 이동이 현재 창 끝을 넘음, 다음 창 있음 | 위반 아님 — 다음 창으로 미룬다. 미룬 만큼 `interWorkWindowRestTimeSec` 증가 (§3.5) | Domain §3.2·§7.1-7 |
+| E37 | 이동이 현재 창 끝을 넘음, 다음 창 있음 | 위반 아님 — 다음 창으로 미룬다. 미룬 시간 중 창 사이 틈은 `interWorkWindowRestTimeSec`, 근무창에 걸친 부분은 `customerWaitingTimeSec` (§3.5, Domain §7.3) | Domain §3.2·§7.1-7 |
 | E38 | 서비스가 창 끝을 넘음 (`serviceStart + serviceTime > close`) | serviceStart를 다음 창으로 미룬다. 그 때문에 방문 시간창을 넘기면 TIME_WINDOW, 근무창이 소진되면 WORK_WINDOW | Domain §7.1-2 |
 | E39 | `workWindows`가 빈 목록인 차량 | WORK_WINDOW (그 차량을 쓰는 경로는 전부 불가. 정규화에서는 오류가 아니었다 — Stage 1 E30) | Domain §3.2 |
 | E40 | 근무창이 1개뿐인 입력 (현행 fixture) | 미루기·휴식이 한 번도 일어나지 않아 **D4 전과 값이 동일**. `departureSec == serviceEndSec`, `interWorkWindowRestTimeSec == 0` | §3.4 |
@@ -664,13 +671,14 @@ Stage 6 — Stage 1 §7과 동일 원칙).
 | T10 | `RoutePropagatorTest.waitInDepotRelocatesFirstWait` | E20·E21·**E34**: Y/N에서 serviceStart 동일, 대기 귀속만 이동, routeOperationalTime 불변. 차고가 늦게 여는 케이스에서 **N인데도 depotWaiting > 0** | (Plan 범위 문장 "전파 루프·기록 값 §7.3") |
 | T11 | `RoutePropagatorTest.stopCountAndDriveAggregation` | E18·E19·E22: 같은 장소 연속·depot 미산입·endDepot 포함 driveDist/Time | (Plan 범위 문장 "기록 값 §7.3") |
 | T12 | `EvaluatorTest.hardConstraintReadsProblemFacts` | 차급(`vehicleFeature`)을 보고 판정하는 테스트 `HardConstraint` → `problem` 인자로 그 값에 도달함을 확인 (§4.3 고객 구현 예의 전제) | (노트 N2 — 이번 변경의 목적 자체) |
-| T13 | `RoutePropagatorTest.deferSToNextWorkWindow` | **다일 전파.** §3.5 대응표의 전 셀 — 2일차 16:30 90분 이동이 3일차 08:00으로 미뤄지고 `interWorkWindowRestTimeSec = 55800`, 도착 207000 (E37) · 서비스가 창을 넘는 변형 (E38) · 대기가 근무 시간/틈으로 갈리는 변형 (customerWaiting 3600 + rest 54000) | (Domain §7.2.1 재현 — D4 확정분) |
+| T13 | `RoutePropagatorTest.deferSToNextWorkWindow` | **다일 전파.** §3.5 대응표의 전 셀 — 2일차 16:30 90분 이동이 3일차 08:00으로 미뤄지고 `customerWaitingTimeSec += 1800`·`interWorkWindowRestTimeSec += 54000`(2026-08-11 정정 — 종전 목표값 "rest 55800"은 §7.3 공식과 모순), 도착 207000 (E37) · 서비스가 창을 넘는 변형 (E38) · 대기가 근무 시간/틈으로 갈리는 변형 (customerWaiting 3600 + rest 54000) | (Domain §7.2.1 재현 — D4 확정분) |
 | T14 | `RoutePropagatorTest.depotWindowAppliesToDepartureAndReturn` | **차고 창.** E35(출발 불가 → DEPOT_WINDOW, at 부재) · E36(복귀가 창 틈 → DEPOT_WINDOW, 미루지 않음) · 차고 창이 전일이면 종전과 동일 | (Domain §7.1 — D4 확정분) |
 | T15 | `RoutePropagatorTest.routeOperationalTimeIdentityHolds` | **항등식.** 단일 창·다일·waitInDepot Y/N·endDepot 유무 네 조합에서 `routeOperationalTimeSec() == routeEndSec() − spanStartSec()` (Domain §7.3). 성분 정의가 어긋나면 여기서 먼저 깨진다 | (Domain §7.3 — 두 구현 대조의 전제) |
 | T16 | `RoutePropagatorTest.singleWindowMatchesPreD4Values` | **회귀 방지.** 현행 fixture 모양(창 1개·차고 전일창·endDepot 없음)에서 `departureSec == serviceEndSec`(전 방문)·`interWorkWindowRestTimeSec == 0`·`depotWaitingTimeSec == 0` (E40) — D4가 1일 입력의 값을 바꾸지 않았다는 증명 | (Domain §3.2 — D4 무영향 근거) |
 
 T9–T16은 DoD 세 문장 밖이지만 Plan Stage 3 범위 문장("적재 부호 규칙, 전파 루프, 기록 값(§7.3),
-metric, 사전식 비교")과 Domain §3.2·§7.1(D4 확정분)의 직접 검증이다 — 보고에서 DoD 보강을 제안한다.
+metric, 사전식 비교")과 Domain §3.2·§7.1(D4 확정분)의 직접 검증이다 — Plan §1의 편입(2026-08-11)에
+따라 이 표 전부가 완료 기준이다.
 
 ---
 
@@ -684,7 +692,7 @@ metric, 사전식 비교")과 Domain §3.2·§7.1(D4 확정분)의 직접 검증
 | 미배정 **사유** 산출 (`NO_COMPATIBLE_VEHICLE` 등 — bank는 ID만) | Stage 5 | Domain §6.3·§11 |
 | 결과 JSON·run 메타 | Stage 5·6 | Domain §11 |
 | 고객 특화 `Profile` 구현·레지스트리 등록 (현재 default 하나) | 필요 시 별도 | Domain §8.4 |
-| `depot.taskTime` 시간 계산 적용 | 보류 (기존 유지 — **창만 적용하고 상차 시간은 여전히 미적용**) | Domain §2.5 |
+| `depot.taskTime` 시간 계산 적용 | **canonical에 없다** — 복귀 선적 시간이고 1바퀴엔 발생하지 않는다 (Domain §2.5, 2026-08-11 확정). 차고 **창**은 적용한다 | Stage Extra E1 |
 | 하루 단위 운전·정차 한도 (`maxDriveTime` 등을 날마다 나누기) | 안 함 — 경로 전체 합계 (§9 Q4) | Domain §2.4 |
 | LEASE/DIRECT 비용 축·cost metric (현 입력·default profile 미사용) | 필요 시 profile 추가 | Domain §8.3 |
 | ArchUnit 규칙 추가 (`verify ↛ solve`는 Stage 0에 이미 존재) | Stage 5 | Stage 0 §6 |

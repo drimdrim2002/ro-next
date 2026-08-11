@@ -19,6 +19,7 @@ revisions:
   - 2026-08-10 D4 확정 반영 — §4.1 삽입 순서의 정렬 키를 "delivery의 **마지막** 창 close"로
     명시 (시간창이 `List<TimeWindow>`가 됨, Domain §3.2). 창 1개 입력에서는 종전과 같은 값이라
     연산자·acceptance·테스트는 무변경
+  - 2026-08-11 정리 — §7 말미 문구를 Plan §1 DoD 편입으로 갱신. 설계 무변경
 ---
 
 # Stage 4 — 초기해와 ALNS
@@ -404,8 +405,9 @@ jqwik류 property 라이브러리를 추가하지 않는다 (Stage 0 §4.2가 te
 | T10 | `AlnsSolverTest.stopsOnIdleLimits` | 넉넉한 시간 한도 + 작은 `idleSteps`(및 별도 케이스로 `idleSec`) → 한도 훨씬 전에 종료하고 `termination`이 IDLE_STEPS / IDLE_TIME. worse 수락이 일어나도 idle 카운터가 리셋되지 않음을 단언 (§4.2-f) | (본 개정에서 추가된 종료 조건의 직접 검증) |
 | T11 | `AlnsScaleTest.runsOnFullScaleSyntheticProblem` | **규모 측정.** Stage 2 T12와 **같은 합성 문제**(장소 453·주문 452·차량 31·이동표 453² 전 쌍)로 `AlnsSolver.solve` 1회 → 시간 한도 안에 정상 종료. **시간 한도 안에서 몇 번 반복했는지(`AlnsRunStats`의 반복·수락 수, `elapsedMillis`)를 출력해 기록한다.** 해의 품질·개선폭은 판정하지 않는다 (그건 Stage 8). 실물 JSON은 읽지 않는다 — 입력은 프로그램으로 조립한다 | Plan Stage 4 "**규모**" 문장 |
 
-T3–T10은 DoD 두 문장 밖이지만 Plan Stage 4 범위 문장("초기해 생성, destroy/repair(pair 단위),
-acceptance, 시간 한도 종료")의 직접 검증이다 — 보고에서 DoD 보강을 제안한다.
+T3–T10은 Plan DoD 요약 문장 밖이지만 Plan Stage 4 범위 문장("초기해 생성, destroy/repair(pair 단위),
+acceptance, 시간 한도 종료")의 직접 검증이다 — Plan §1의 편입(2026-08-11)에 따라 이 표 전부가
+완료 기준이다.
 
 ---
 
