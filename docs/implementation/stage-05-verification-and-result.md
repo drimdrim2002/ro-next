@@ -27,6 +27,18 @@ revisions:
     §8 말미 문구를 Plan §1 DoD 편입으로 갱신
   - 2026-08-11 Stage 1 유예 반영 — §8 `depot.taskTime` 행(canonical에 없어 읽을 값이 없다).
     차고 창 재검증은 무변경
+  - 2026-08-12 감사 후속 인터뷰 정합 — §4.3 미배정 사유 절차가 Domain §11.1 **판정 규칙
+    정본**으로 승격됨(내용 무변경 — 순서·bucket 변경은 Domain 선개정) ·
+    `AlnsResult.bestRouteFacts` 삭제(Stage 4) 반영 — 관련 4곳 문구 정리
+  - 2026-08-13 감사 후속 인터뷰 정합 — §3에 둘째 관문(7-a) 추가: 5~7 위반 시 8·9 생략
+    (위반 해의 부분 facts 대조가 만드는 가짜 SCORE_MISMATCH 차단 — 절차 4와 동형) ·
+    존재하지 않는 `Master §3-⑪` 인용 2곳(§8 표)을 Domain §11.1로 교체
+  - 2026-08-13 감사 결함 정정 (분할 7 F2·F5·F8, 통합 §2) — 서두 "ArchUnit으로 도달 불가능"
+    거짓 인과 교정(값의 차단은 verify 시그니처 — §2.1) · `SearchBudget.termination` 삭제
+    (종료 사유는 stage-04 `AlnsRunStats` 소유의 실행 통계고, Domain §11.1 run 항목은
+    배송정책·탐색 예산뿐 — record 주석·§9 행과의 삼중 모순 해소) · §2.3 공유 목록의
+    `RouteFacts` 오귀속 교정(profile 아닌 core `eval` — N1과 통일) · §2.3에 Domain §7.1
+    위반 귀속 규약(두 창 축 동시 소진 시) 전파
 ---
 
 # Stage 5 — 재검증과 결과
@@ -37,8 +49,12 @@ solver-core의 `verify` 패키지에 탐색과 분리된 독립 재검증(`Solut
 (`VisitFacts`·`RouteFacts`·`Evaluation`·`Scores`)과 Stage 4의 `AlnsResult`(best +
 bestEvaluation + bestScore)를 그대로 잇는다 — 같은 개념에 새 이름을 짓지 않는다.
 
-**재검증은 탐색 예산을 보지 않는다** (Domain §2.5.1·§10.2 MUST NOT). `AlnsConfig`가 `solve`에
-있고 `verify ↛ solve`가 ArchUnit으로 막히므로, 시간·step·idle 한도는 애초에 도달 불가능하다.
+**재검증은 탐색 예산을 보지 않는다** (Domain §2.5.1·§10.2 MUST NOT). 이를 지키는 장치는
+두 겹이되 역할이 다르다 — `verify ↛ solve` ArchUnit 규칙은 `AlnsConfig` 등 **타입 참조**를
+차단할 뿐이고, 예산 **값**이 검사 로직에 들어오는 것의 차단은 `SolutionVerifier.verify`
+시그니처에 예산 인자가 없다는 것(§2.1)이 담당한다. 예산 값 자체는 결과 기록용
+`SearchBudget`(§4.1)으로 verify 패키지에 존재하므로, ArchUnit green이 곧 "예산 무관 검증"의
+증거는 아니다.
 
 **순서 — 재검증(§1~§3)은 Stage 4보다 먼저 만든다** (Plan Stage 5, 2026-08-10). `SolutionVerifier.verify`의
 시그니처에 Stage 4 타입이 하나도 없어 Stage 3만 있으면 만들 수 있다 (§2.1). **Stage 4에 실제로
@@ -141,8 +157,9 @@ public sealed interface VerificationResult {
   `Solution`(record)이 정확히 이 분해값을 노출하므로 변환은 자명하다 (Stage 3 N6).
   분해 시 `toMap`이 중복 `VehicleId`에서 던지는 예외는 버그 신호로 그대로 둔다 (노트 N3).
 - `reportedEvaluation`·`reportedScore` = `AlnsResult.bestEvaluation`·`bestScore` (Stage 4 §3.2 —
-  best 승격 시점의 정식 평가값). 탐색의 `bestRouteFacts`는 verify가 받지 않는다 — 대조 대상은
-  이 두 값뿐이다 (§10.2, §8).
+  best 승격 시점의 정식 평가값). 탐색 쪽 경로 facts는 verify가 받지 않는다 — 대조 대상은
+  이 두 값뿐이다 (§10.2, §8. 이를 운반하던 `bestRouteFacts` 필드 자체가 소비자 없음으로
+  2026-08-12 삭제됐다 — Stage 4).
 - **`long[]` 대조는 `Arrays.equals`로 한다** — Stage 3 §4.3의 전 Stage 공통 규칙.
   `Pass`/`AlnsResult`/`Feasible`의 자동 생성 `equals`에 기대면 안 된다.
 
@@ -189,8 +206,9 @@ final class RouteReplay {                               // package-private — v
 ```
 
 - `RouteReplay`는 solve의 `RoutePropagator`와 **같은 의미를 독립 코드로** 다시 구현한다
-  (Domain §10.1 — 탐색 코드 버그를 잡는 이중 기입). 공유하는 것은 `Problem`의 동결 사실과
-  `profile`의 값 타입·공식(`RouteFacts.routeOperationalTimeSec()` 등)뿐이다 (노트 N2).
+  (Domain §10.1 — 탐색 코드 버그를 잡는 이중 기입). 공유하는 것은 `Problem`의 동결 사실 ·
+  인자로 받은 같은 `Profile` 인스턴스 · core `eval`의 값 타입과 공식
+  (`RouteFacts.routeOperationalTimeSec()` 등 — Stage 3 N1이 이 목적으로 배치)뿐이다 (노트 N1).
 - 전파 해석은 Stage 3과 **동일하게** 따른다 — 갈리면 두 구현의 값이 어긋나 T5가 실패한다.
   - 시간창 close = `serviceStart ≤ closeTime`: **Domain §7.1 확정 해석** (2026-08-10, Stage 3 §9 Q1 해소).
     창이 여럿이면 "`serviceStart`가 **어느 창 안**인가"로 판정한다 — 마지막 창의 close 하나만 보면
@@ -198,6 +216,10 @@ final class RouteReplay {                               // package-private — v
   - **다일 근무창·차고 창: Domain §3.2·§7.1 확정 해석** (2026-08-10 D4, Stage 3 §9 Q2·Q3 해소).
     창 목록은 정규화가 전개해 `Problem`에 동결된 **사실**이라 그대로 읽고, 그 목록을 해석해
     시각을 정하는 **코드는 공유하지 않는다** (Stage 3 N8·아래 노트 N1).
+  - **위반 귀속 (Domain §7.1, 2026-08-11)**: 한 지점에서 두 창 축이 **같은 시각에 함께
+    소진**되면 절차 문장에 먼저 적힌 쪽을 기록한다 — 절차 0(출발)은 `WORK_WINDOW`,
+    절차 2(서비스)는 `TIME_WINDOW`. 가능/불가 판정은 달라지지 않지만, 탐색과 재검증이
+    FAILED 원인 종류까지 같게 내기 위한 규약이다 (Stage 3 §3.3 절차 1·2와 같은 문장).
   - 시간 측정 규약(모든 소요 시간 = 두 시각의 차, Domain §3.2)을 여기서도 그대로 쓴다 —
     한쪽만 "초를 세면" 창마다 1초씩 어긋나 T5가 원인 불명으로 실패한다.
 
@@ -239,6 +261,10 @@ final class RouteReplay {                               // package-private — v
 7. profile hard  profile.hardConstraints()의 각 h를 h.satisfied(problem, 재계산 RouteFacts)로 적용.
           위반 → PROFILE_HARD (detail에 h.id()). 인자로 받은 profile을 쓸 뿐 verify가
           따로 고르지 않는다 — 탐색과 같은 인스턴스인지는 호출자가 보장한다 (§8.4 MUST).
+7-a. 관문  5~7 위반이 하나라도 있으면 여기서 Fail — 8·9를 실행하지 않는다 (2026-08-13 확정).
+          위반 해의 부분 facts로 하는 점수 대조는 가짜 SCORE_MISMATCH만 만들어 진짜 원인을
+          가린다. 점수 대조(8·9)는 "정상 해에서 캐시 = 재계산"의 검증이다 — 절차 4와 동형의
+          관문이고, FAILED 원인 보고에는 5~7이 모은 실제 위반만 남는다.
 8. metric  recomputed = Evaluation.aggregate(재계산 facts 전부, bank.size()).
           reportedEvaluation과 record 비교로 다르면 SCORE_MISMATCH (detail에 두 값).
 9. score   recomputedScore = profile.score(problem, recomputed, 재계산 facts 전부).
@@ -275,10 +301,13 @@ public record SolveResult(
                       DeliveryPolicy deliveryPolicy,       // 유효한 답을 정한 값 (Domain §2.5)
                       SearchBudget searchBudget) {}        // 언제 멈췄나 (Domain §2.5.1) — 따로!
 
-    /** AlnsConfig의 예산 부분만 결과용으로 옮긴 값. 알고리즘 튜닝 파라미터는 담지 않는다. */
+    /** AlnsConfig의 예산 부분만 결과용으로 옮긴 값 (Domain §2.5.1의 시간·step·idle·seed).
+        알고리즘 튜닝 파라미터를 담지 않고, 종료 사유(termination) 등 실행 통계도 담지 않는다
+        — 그건 `AlnsRunStats`(Stage 4 §3.2)의 몫이고 run 메타에 실리지 않는다 (Domain §11.1,
+        §9. 종전 `String termination` 필드는 2026-08-13 삭제 — stats 배제 원칙과의 모순). */
     public record SearchBudget(long timeLimitSec, OptionalLong maxSteps,
                                OptionalLong idleSteps, OptionalLong idleSec,
-                               long seed, String termination) {}
+                               long seed) {}
 
     public record RouteResult(VehicleId vehicleId, List<Visit> visits,   // visits = 방문 순서
                               LocalDateTime depotDeparture,              // 차고 출발 (§7.1 절차 0 = RouteFacts.departureSec)
@@ -337,14 +366,16 @@ public final class ResultAssembler {
 5. 반환      SolveResult(problem.planId(), Status.DONE, run, routes, unassigned, metrics).
 ```
 
-탐색의 `bestRouteFacts`는 조립에 쓰지 않는다 — 결과의 모든 수치는 verify의 재계산본에서만
-나온다 (노트 N4). "검증된 해 ↔ 결과 JSON 일치"는 별도 실행 단계가 아니라 테스트 T9가
+탐색 쪽 경로 facts는 조립에 쓰지 않는다 (운반 필드 `bestRouteFacts`는 2026-08-12 삭제 —
+Stage 4) — 결과의 모든 수치는 verify의 재계산본에서만 나온다 (노트 N4). "검증된 해 ↔ 결과 JSON 일치"는 별도 실행 단계가 아니라 테스트 T9가
 보장한다 (Domain §10.2 — 2단 verifier 폐기 결정의 이행).
 
 ### 4.3 미배정 사유 산출 절차
 
 bank는 ID만 갖고 있으므로(§6.3 MUST NOT) 사유는 여기서 계산한다 (§11.1). 축을 차례로
 좁히는 결정적 절차다 — 혼합 원인의 모호함이 생기지 않는다 (§5.3 노트).
+이 절차는 2026-08-12 Domain §11.1에 **판정 규칙 정본**으로 승격됐다 — 순서·bucket 정의를
+바꾸려면 Domain을 먼저 개정한다.
 
 ```text
 각 r ∈ pass.bank()에 대해:
@@ -374,7 +405,7 @@ bank는 ID만 갖고 있으므로(§6.3 MUST NOT) 사유는 여기서 계산한�
 | N1 | **의도적 중복**: `RouteReplay`·구조 검사·위반 enum은 solve의 `RoutePropagator`·`StructureCheck`·`Violation`과 같은 의미의 **별도 코드**다. 코드를 공유하면 같은 버그가 양쪽에 숨어 재검증이 무의미해진다 (Domain §10.1). 공유가 허용되는 것은 `Problem`의 동결 사실(이동표·호환성·**정규화된 시간창 목록** — 근무창·차고 창·방문 시간창, Domain §3.2)·인자로 받은 같은 `Profile` 인스턴스(§10.2가 명시한 같은 입력)·core `eval`의 값 타입과 공식(`RouteFacts`·`Evaluation.aggregate`·`Scores.compare` — Stage 3 N1이 이 목적으로 배치)뿐이다. `profile.score`도 공유 대상이다 — 재검증의 목적은 "탐색이 그 profile의 목적식을 정직하게 계산했는가"이지 목적식 자체를 다시 정의하는 것이 아니다. **반대로, 그 창 목록을 걷는 코드(`fitArc`/`fitService` 상당)는 공유하지 않는다** — 목록은 사실이고 걷는 규칙은 해석이라, 해석을 공유하면 이중 기입이 무너진다 (Stage 3 노트 N8에 같은 문장) |
 | N2 | 위반 enum을 solve와 별도로 두는 것은 N1의 결과다 — `solve.Violation`을 쓰면 `verify → solve` 참조가 생겨 ArchUnit이 막는다. 이름은 의미가 같은 항목끼리 동일하게 맞춘다 (리뷰 용이) |
 | N3 | **중복 차량 경로는 verify에 도달하지 못한다**: 진입 타입이 `Map<VehicleId, …>`라 (Stage 3 N6 확정) 한 차량 두 경로는 표현 불가다. 호출자의 `toMap` 분해가 중복 키에서 던지는 예외가 곧 구조 결함 신호이며, Stage 6 executor는 이를 FAILED로 기록한다. ALNS 정상 경로에서는 Stage 4 N2(구조 위반 = 예외)가 이미 걸러 준다 |
-| N4 | **결과는 재계산본으로만 조립한다**: 탐색의 `bestRouteFacts`는 검증의 대조에도 결과 조립에도 쓰지 않는다. "탐색의 증분 캐시·내부 상태를 믿지 않는다"(§10.2)의 연장 — 결과 수치의 원천이 검증 코드 하나로 좁혀져, 검증된 해 ↔ 결과 일치가 구조적으로 따라온다 |
+| N4 | **결과는 재계산본으로만 조립한다**: 탐색 쪽 경로 facts는 검증의 대조에도 결과 조립에도 쓰지 않는다 (이를 운반하던 `AlnsResult.bestRouteFacts`는 소비자가 없어 2026-08-12 삭제). "탐색의 증분 캐시·내부 상태를 믿지 않는다"(§10.2)의 연장 — 결과 수치의 원천이 검증 코드 하나로 좁혀져, 검증된 해 ↔ 결과 일치가 구조적으로 따라온다 |
 | N5 | Domain §10.2 검사 목록에 호환성(§3.4)이 명시돼 있지 않으나, 호환성은 독립 hard 축이고(§3.4) Master §2-③이 "hard 규칙 전부 확인"을 요구하므로 검사에 포함한다. 누락으로 읽으면 비호환 배정이 결과로 새는 구멍이 생긴다 |
 | N6 | `Status.FAILED`는 현재 생산 경로가 없다: 재검증 FAIL이면 결과를 저장하지 않고(§10.2) result.json은 DONE일 때만 존재한다(Architecture §3.3). §11.1이 status에 FAILED를 나열하므로 enum 값은 두되, `assemble`은 항상 DONE이다 (§9 Q3) |
 | N7 | `Run.verified`도 같은 이유로 항상 true다. §11.1 run 항목("재검증 통과 여부")의 문자적 이행이며, 결과를 직접 읽는 호출 시스템에 대한 자기 서술 값이다 |
@@ -468,12 +499,12 @@ T5~T12는 Plan DoD 요약 문장 밖이지만 Plan Stage 5 범위 문장("독립
 |---|---|---|
 | result.json 직렬화(Jackson **3** `JsonMapper`)·wire 필드명·시각 문자열 포맷·단위 표현(milli→kg) 확정 | Stage 6 (§11.2 협의) | Domain §11.2, Architecture §2.1·§4, Stage 0 §4.4 |
 | verify 호출 결선(executor 흐름)·`Solution → Map` 분해 코드·`RunStamp` 값 채움·FAIL → status FAILED 기록·S3 저장 | Stage 6 | Architecture §3.2·§3.3 |
-| 탐색 `bestRouteFacts`와 재계산 facts의 경로별 대조 | 안 함 — §10.2의 대조 대상은 점수뿐 (노트 N4) | Domain §10.2 |
+| 탐색 쪽 경로 facts와 재계산 facts의 경로별 대조 | 안 함 — §10.2의 대조 대상은 점수뿐 (노트 N4. 운반 필드 `bestRouteFacts` 자체가 2026-08-12 삭제됨) | Domain §10.2 |
 | result-integrity 별도 실행 단계 (2단 verifier) | 안 함 — 테스트 T9로 보장 (폐기 결정) | Domain §10.2·Master §5 |
-| run 메타에 `AlnsRunStats`(반복·수락 수) 포함 | 안 함 — §11.1 run 항목 그대로 (Stage 4 Q2 해소: stats는 로그·실험용으로만) | Domain §11.1·Master §3-⑪ |
+| run 메타에 `AlnsRunStats`(반복·수락 수) 포함 | 안 함 — §11.1 run 항목 그대로 (Stage 4 Q2 해소: stats는 로그·실험용으로만) | Domain §11.1 |
 | 미배정 사유 값 추가·세분 (예: 한도 전용 사유) | 안 함 — §11.1 예시 4개 유지 (§9 Q2) | Domain §11.1 |
 | `verify`의 별도 모듈 승격 | 안 함 (필요해지면 그때) | Architecture §2.1 |
-| fingerprint·provenance·lineage류 추적 | 안 함 (폐기 확정) | Domain §11.1·Master §3-⑪ |
+| fingerprint·provenance·lineage류 추적 | 안 함 (폐기 확정) | Domain §11.1 |
 | `depot.taskTime`의 재검증 적용 | **canonical에 없어 읽을 값이 없다** (2026-08-11 — 복귀 선적 시간이라 1바퀴엔 미발생, Domain §2.5). 차고 **창**은 적용한다 (D4 확정, §2.3·§3 절차 5-a·`DEPOT_WINDOW`) | Stage Extra E1 |
 | 재검증 매 trial 실행·증분 재검증 | 안 함 — 저장 직전 1회 | Domain §10.2 |
 

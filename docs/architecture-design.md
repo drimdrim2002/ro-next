@@ -16,6 +16,12 @@ revisions:
     개정. Domain §12와 충돌하던 "형식 수준만 검증" 문면 폐기 (Domain이 정본 — Stage 6 §10 Q3 결정)
   - 2026-08-11 §3.1 접수 4xx 예시에서 `vhclOwnTyp` 제거 — 그 필드를 읽지 않기로 해
     (Domain §2.4 유예 표) 예시로 성립하지 않는다. 접수 검증 범위는 무변경
+  - 2026-08-13 전수 감사 기계적 정정 — §2 profile 예시의 치수에 유예 명시 · §2.1 verify 입력
+    문면 교정(`Solution` 값 전달 → 호출자가 분해값 전달, stage-05 §2 정합) · §2.2 "만들 수
+    없다" 과잉 단언 완화(가중합 축은 구조가 못 막는다 — Domain §8.3 MUST NOT·리뷰 대상) ·
+    §2 `input/` 주석·§3.2 흐름의 adapter 산출물을 canonical → raw 운반체로 · §3.4 result
+    404/409 구분 명시 · §7 마이그레이션 표를 Stage 0 완료(2026-08-10)형으로 ·
+    §3.1 절차 2의 multiRotation 거부를 UNSUPPORTED/INVALID 구분으로 (Domain §2.5·§12)
 ---
 
 # RO-Next Architecture Design
@@ -78,7 +84,7 @@ ro-next/
     └── com.ronext.rpdptw.app
         ├── api/                   # REST 컨트롤러 (접수·조회)
         ├── run/                   # SolveExecutor: 비동기 풀이 실행·상태 갱신
-        ├── input/                 # 규약 JSON ↔ canonical adapter (Jackson 3 / JsonMapper)
+        ├── input/                 # 규약 JSON ↔ raw 운반체 adapter — canonical 확정은 core 정규화 (Jackson 3 / JsonMapper)
         └── storage/               # SolveStore 인터페이스 + S3 구현 + 로컬 fake
 ```
 
@@ -95,7 +101,8 @@ verify  ──▶ domain, problem, eval        # solve 금지 (ArchUnit)
 ```
 
 `eval`이 `problem`을 볼 수 있는 이유는 `Problem`이 `Profile`을 담지 않기 때문이다 (§2.2).
-그래서 profile hard 제약·score가 차급·구역·치수 같은 **문제 사실을 직접 읽을 수 있다.**
+그래서 profile hard 제약·score가 차급·구역 같은 **문제 사실을 직접 읽을 수 있다**
+(치수 축은 2026-08-11 유예 — Stage Extra E2 승격 후 같은 방식이다).
 
 ### 2.1 경계 규칙과 강제 수단
 
@@ -109,7 +116,8 @@ verify  ──▶ domain, problem, eval        # solve 금지 (ArchUnit)
 | core에 고객명 분기 금지 | profile SPI (Domain §8.4) + 코드 리뷰 |
 
 - `verify`는 `domain`·`problem`·`eval`의 공개 타입만 사용해 처음부터 재계산한다.
-  `solve`의 결과 객체(최종 `Solution`)는 값으로 전달받는다 — 구현체 내부를 들여다보지 않는다.
+  최종 해는 호출자(executor)가 (routes 맵, bank)로 **분해해** 넘긴다 — `Solution`은 `solve`
+  소유 타입이라 verify가 받을 수 없다 (stage-05 §2).
 - 나중에 컴파일 수준 차단이 정말 필요해지면 `verify` 패키지를 모듈로 승격한다 (지금은 하지 않음).
 - solver-core의 테스트 의존성(JUnit, ArchUnit)은 test scope로만 허용.
 
@@ -153,7 +161,9 @@ public final class ProfileRegistry {
   순환이 되어 profile이 문제 사실을 영영 못 읽는다. 대신 executor가 한 번 resolve해
   **탐색과 재검증에 같은 인스턴스를 인자로 넘긴다** (Domain §8.4 MUST를 이 방식으로 지킨다).
 - 비교기 SPI는 없다. 비교는 `Scores.compare` 하나뿐이고, 무엇을 비교할지는 `score()`가 정한다.
-  고정 가중치·Big-M으로 축을 한 숫자에 뭉개는 구현은 **만들 수 없다** (Domain §8.3이 구조로 강제).
+  구조가 막는 것은 **비교기 교체**까지다 — `score()`가 축 하나에 가중합을 담는 것까지 구조가
+  막아 주지는 않으므로, 고정 가중치·Big-M으로 축을 뭉개지 않는 것은 Domain §8.3 MUST NOT이고
+  리뷰로 지킨다.
 
 ### 2.3 계층이 나뉘는 기준
 
@@ -177,7 +187,8 @@ public final class ProfileRegistry {
 POST /solves  (body = 규약 JSON)
   1. 규약 파싱 + 정규화 검증 (canonical 변환을 실행하고 결과는 버림)
                                      실패 → 4xx (S3에 아무것도 남기지 않음 — Domain §12)
-  2. multiRotation이 {0,1} 밖 등 미지원 → 4xx UNSUPPORTED_INPUT
+  2. multiRotation이 {0,1} 밖이면 거부 — `-1`·`2` 이상은 UNSUPPORTED_INPUT,
+     `-2` 이하(규약 금지 값)는 INVALID_INPUT — 둘 다 4xx (Domain §2.5·§12 구분 유지)
   3. solveKey 생성 (§3.3)
   4. S3 put: {solveKey}/input.json + status.json(state=RECEIVED)
   5. executor 큐에 등록 (in-process)
@@ -195,7 +206,7 @@ POST /solves  (body = 규약 JSON)
 ```text
 SolveExecutor (고정 크기 스레드풀, 동시 실행 수 = 설정값, 기본 1~2)
   RECEIVED → RUNNING (status.json 갱신)
-  input.json 로드 → adapter → canonical → Problem 동결
+  input.json 로드 → adapter(raw 운반체) → 정규화(canonical) → Problem 동결
   → 초기해 → ALNS (시간 한도 = 입력 옵션 또는 설정)
   → 재검증 (Domain §10)
   → PASS: result.json 저장 → status DONE
@@ -227,7 +238,7 @@ solves/{customerId}/{planId}/{runId}/     ← 이 prefix가 solveKey
 
 ```text
 GET /solves/{solveKey}          → status.json 내용 (+ STALE 판정)
-GET /solves/{solveKey}/result   → result.json (DONE 아니면 404/409)
+GET /solves/{solveKey}/result   → result.json (solve 미존재 404, DONE 전 409 — stage-06 §3.4)
 ```
 
 와이어 경로·필드명은 호출 시스템과 협의해 확정한다 (Domain §11.2와 동일 원칙).
@@ -286,9 +297,12 @@ ECS Fargate 서비스 1개 · 태스크 1개(기본) · ALB 또는 내부 엔드
 
 - LocalStack은 **선택 도구**다. 일상 개발·CI는 fake로 충분하다 (2026-08-09 확정).
 
-## 7. 현재 코드와의 차이 (마이그레이션 메모)
+## 7. 구 코드와의 차이 (마이그레이션 메모 — **Stage 0에서 정리 완료, 2026-08-10**)
 
-| 현재 (placeholder) | 목표 |
+아래 "정리 전" 상태는 더 이상 디스크에 없다 — Stage 0이 전부 정리했다
+(상세 인벤토리는 [stage-00](implementation/stage-00-cleanup-and-skeleton.md)).
+
+| 정리 전 (placeholder) | 정리 후 (현행) |
 |---|---|
 | 단일 pom, `com.ronext.optimizer`, 수제 HTTP 서버 | 3모듈, `com.ronext.rpdptw`, Spring Boot |
 | pom에 GCP 의존성 (Cloud Storage·Workflows) | 제거 → `awssdk:s3`만 |
@@ -296,7 +310,7 @@ ECS Fargate 서비스 1개 · 태스크 1개(기본) · ALB 또는 내부 엔드
 | `AlnsBatchEngine` (합성 데모) | solver-core의 실제 ALNS로 대체. 데모 코드는 완료 근거가 아님 |
 | 루트 README의 Lambda/Step Functions 서술 | ECS Fargate 단일 서비스로 갱신 |
 
-정리 순서·단계는 [Implementation Plan](implementation-plan.md)이 정한다.
+정리 순서·단계는 [Implementation Plan](implementation-plan.md) Stage 0이 정했다.
 
 ## 8. 하지 말 것 (요약)
 

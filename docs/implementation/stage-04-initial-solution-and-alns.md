@@ -20,6 +20,19 @@ revisions:
     명시 (시간창이 `List<TimeWindow>`가 됨, Domain §3.2). 창 1개 입력에서는 종전과 같은 값이라
     연산자·acceptance·테스트는 무변경
   - 2026-08-11 정리 — §7 말미 문구를 Plan §1 DoD 편입으로 갱신. 설계 무변경
+  - 2026-08-12 전수 감사 치명 결함 수선 — §4.2 초기해 처리 분리: StructureCheck 위반만
+    `IllegalStateException`(버그)이고, Evaluator Infeasible(profile hard)은 **빈 해로 강등**한다.
+    "초기해는 실패할 수 없다" 단언 폐기 — 빌더의 후보 검증(§4.3)은 경로 단위 전파뿐이라
+    profile hard(§8.4)를 모른다. §5 N8 · §6 E16/E16b · §7 T12 추가, E10 문구 보완
+  - 2026-08-12 감사 후속 인터뷰 정합 — `AlnsResult.bestRouteFacts` **삭제** (실측: stage-05
+    수령 거부·stage-06 무소비 — 소비자 없는 선제 필드, Master §6 원칙 이행). 서두 그림·
+    §1 파일 표·§2 record·§3.2 주석·§4.2 f/종료 정리
+  - 2026-08-13 감사 후속 인터뷰 정합 — 존재하지 않는 `Master §3-⑪` 인용 2곳(§1 표·§3.2)을
+    실제 근거인 **Domain §11.1**로 교체 (추적 장치 폐기 결정의 실소재)
+  - 2026-08-13 감사 결함 정정 (분할 7 F2·F7, C-7·C-8) — 서두 "ArchUnit이 예산 도달 불가를
+    강제" 거짓 인과 교정(ArchUnit은 타입 참조 차단, 값의 차단은 verify 시그니처 —
+    Stage 5 §2와 정합) · §9 Q2를 해소로 갱신(stats는 run 메타에 안 실린다 — Domain §11.1,
+    Stage 5 §9)하고 §3.2·§8의 같은 잔재 문구 동기. 설계 무변경
 ---
 
 # Stage 4 — 초기해와 ALNS
@@ -32,8 +45,11 @@ solver-core의 `solve` 패키지에 초기해 생성과 ALNS 탐색(destroy/repa
 같은 개념에 새 이름을 짓지 않는다.
 
 **탐색 예산은 `AlnsConfig`가 전부 소유한다** (Domain §2.5.1). `Problem`에는 시간·step·idle
-한도가 없다 — 그래서 재검증(Stage 5)이 이 값들에 도달할 수 없고, `verify ↛ solve` ArchUnit
-규칙이 그것을 강제한다 (Architecture §2.1).
+한도가 없다. 재검증(Stage 5)이 이 값들을 판정에 쓰지 못하게 막는 장치는 두 겹이되 역할이
+다르다 — `verify ↛ solve` ArchUnit 규칙(Architecture §2.1)은 `AlnsConfig` 등 **타입 참조**를
+차단할 뿐이고, 예산 **값**의 차단은 `SolutionVerifier.verify` 시그니처에 예산 인자가 없다는
+것(Stage 5 §2.1)이 담당한다 (예산 값 자체는 결과 기록용 `SearchBudget`으로 verify 패키지에
+존재한다 — Stage 5 §4.1. ArchUnit green이 곧 "예산 무관 검증"의 증거는 아니다).
 
 **DoD** ([Plan Stage 4](../implementation-plan.md)): 소형 fixture에서 초기해 대비 개선 확인 ·
 pair·XOR 불변식이 탐색 중 유지되는 property 테스트 (예: 랜덤 스텝 N회 후 구조 검사).
@@ -50,7 +66,7 @@ pair·XOR 불변식이 탐색 중 유지되는 property 테스트 (예: 랜덤 �
       │        ─acceptance(Scores.compare)─▶ current/best 갱신            │
       └──────────────────────────────────────────────────────────────────┘
                                                       ▼
-              [AlnsResult: best + Evaluation(③) + score(④) + RouteFacts]  → Stage 5 재검증
+              [AlnsResult: best + Evaluation(③) + score(④)]  → Stage 5 재검증
 ```
 
 ---
@@ -86,8 +102,8 @@ Solution·전파·평가·ALNS", Stage 0 §3.1). 하위 패키지를 만들지 �
 |---|---|---|
 | `solve/AlnsSolver.java` | ALNS 본체: 반복 루프·acceptance·종료·best 관리 | Domain §9 |
 | `solve/AlnsConfig.java` | **탐색 예산**(시간·step·idle 한도·seed) + 알고리즘 튜닝 (§3.3) | Domain §2.5.1·§9.3 |
-| `solve/AlnsResult.java` | 탐색 산출: best + `Evaluation`(③) + `long[] score`(④) + `RouteFacts` + 통계 | Domain §9·§10.2 |
-| `solve/AlnsRunStats.java` | 간단한 실행 통계 (반복·수락·경과·종료 사유) — 추적 장치 아님 | Master §3-⑪ |
+| `solve/AlnsResult.java` | 탐색 산출: best + `Evaluation`(③) + `long[] score`(④) + 통계 | Domain §9·§10.2 |
+| `solve/AlnsRunStats.java` | 간단한 실행 통계 (반복·수락·경과·종료 사유) — 추적 장치 아님 | Domain §11.1 |
 | `solve/InitialSolutionBuilder.java` | 결정적 greedy 초기해 1개 생성 | Domain §9.3 재량 |
 | `solve/DestroyOperator.java` | destroy SPI: pair 단위로 빼서 bank로 | Domain §9.1 |
 | `solve/RepairOperator.java` | repair SPI: bank의 Request를 pair 삽입 | Domain §9.1 |
@@ -152,7 +168,6 @@ public record AlnsResult(
     Solution best,
     Evaluation bestEvaluation,               // 층 ③ — Stage 5 재검증의 대조 대상 (§10.2)
     long[] bestScore,                        // 층 ④ — 〃 (Arrays.equals로 대조)
-    Map<VehicleId, RouteFacts> bestRouteFacts,
     Evaluation initialEvaluation,            // DoD "초기해 대비 개선"의 기준값
     long[] initialScore,                     // 〃 (개선 판정은 score로 — Scores.compare)
     AlnsRunStats stats) {}
@@ -165,11 +180,14 @@ public record AlnsRunStats(
 public enum Termination { TIME_LIMIT, MAX_STEPS, IDLE_STEPS, IDLE_TIME }
 ```
 
-- `bestEvaluation`·`bestScore`·`bestRouteFacts`는 마지막에 새로 계산한 값이 아니라 **best
-  승격 시점의 정식 평가 결과**를 그대로 보관한 것이다. 재검증(Stage 5)이 "탐색이 보고한
-  값"(§10.2)으로 이 둘을 대조한다 — 캐시 ≠ 재계산이면 버그 (§6.4, 테스트 T4).
-- `AlnsRunStats`는 로그·실험용 카운터다. 결과 JSON의 run 메타(Domain §11.1)에 넣을지는
-  Stage 5·6 결정이다 (§9 Q2). fingerprint·lineage류 추적 장치는 만들지 않는다 (Master §3-⑪).
+- `bestEvaluation`·`bestScore`는 마지막에 새로 계산한 값이 아니라 **best 승격 시점의
+  정식 평가 결과**를 그대로 보관한 것이다. 재검증(Stage 5)이 "탐색이 보고한 값"(§10.2)으로
+  이 둘을 대조한다 — 캐시 ≠ 재계산이면 버그 (§6.4, 테스트 T4). (경로 facts를 운반하던
+  `bestRouteFacts`는 2026-08-12 삭제 — verify 수령 거부·앱 무소비로 소비자가 없는 선제
+  필드였다, Master §6.)
+- `AlnsRunStats`는 로그·실험용 카운터다. 결과 JSON의 run 메타(Domain §11.1)에는 **넣지
+  않는다** — run 항목은 배송정책·탐색 예산만이다 (§9 Q2 해소, Stage 5 §9).
+  fingerprint·lineage류 추적 장치는 만들지 않는다 (Domain §11.1).
 
 ### 3.3 설정 (전부 재량 — Domain §9.3)
 
@@ -259,10 +277,15 @@ public final class AdaptiveWeights {
           lastBestStep = 0, lastBestAt = now.          // idle 카운터 기준점
           weights = destroy·repair 각각 AdaptiveWeights (초기 가중치 균등).
 2. 초기해  initial = InitialSolutionBuilder.build(problem).
-          StructureCheck 위반 or Evaluator Infeasible → IllegalStateException (버그 — §12 구조 결함.
-          초기해는 경로 단위 전파를 통과한 삽입만 했으므로 실패할 수 없다).
-          current = best = initial. currentEval = bestEval = initialEval.
-          currentScore = bestScore = initialScore.
+          StructureCheck 위반 → IllegalStateException (버그 — §12 구조 결함).
+          Evaluator Infeasible → 빈 해(전 Request bank)로 강등하고 다시 평가한다
+          (2026-08-12 확정 — 버그가 아니다. 빌더의 후보 검증(§4.3)은 경로 단위 전파뿐이라
+           profile hard(§8.4)를 모르므로, hard 제약 profile 고객에서는 greedy 초기해의 첫
+           평가가 Infeasible일 수 있다. 빈 해는 유효한 해고(§9.1) 채우는 것은 repair의
+           일이다(N5) — 루프의 Infeasible draft 폐기(e·E10)와 같은 취급. 노트 N8).
+          빈 해마저 Infeasible → IllegalStateException (profile 구성 결함 — E16b).
+          current = best = initial(강등 시 빈 해). currentEval = bestEval = 그 해의 평가.
+          currentScore = bestScore = 그 해의 score.
 3. 반복    while (종료 조건 미충족):
         종료 조건 = now ≥ deadline                                    → TIME_LIMIT
                  | maxSteps 존재 ∧ iterations ≥ maxSteps             → MAX_STEPS
@@ -278,10 +301,10 @@ public final class AdaptiveWeights {
       Infeasible → 폐기, infeasibleDiscarded++, 다음 반복 (연산자가 경로 단위로 사전
       검증하므로 드물어야 정상 — §6 E10).
    f. acceptance (§4.5): 수락이면 current = draft', currentEval·currentScore = 평가 결과.
-      Scores.compare(score, bestScore) < 0 이면 best = draft', bestEval·bestScore·bestFacts 갱신,
+      Scores.compare(score, bestScore) < 0 이면 best = draft', bestEval·bestScore 갱신,
       bestImproved++, lastBestStep = iterations, lastBestAt = now.   // ← idle 리셋은 여기서만
    g. 두 연산자에 결과 보상 기록, weights.endIteration().
-4. 종료    AlnsResult(best, bestEval, bestScore, bestFacts, initialEval, initialScore, stats) 반환.
+4. 종료    AlnsResult(best, bestEval, bestScore, initialEval, initialScore, stats) 반환.
           어느 조건으로 멈췄든 정상 종료다 — 그 시점 best로 재검증 진행 (Domain §12).
           반복 0회(한도가 이미 지남)면 initial이 곧 best다.
 ```
@@ -357,6 +380,7 @@ best 갱신은 항상 strict: Scores.compare(draftScore, bestScore) < 0 일 때�
 | N5 | **초기해 = 빈 해의 repair**: `InitialSolutionBuilder`는 §4.3 후보 탐색을 결정적 순서로 쓰는 특수 사례다. 삽입 루틴을 하나만 구현·검증하면 된다 |
 | N6 | **Stage 5 인계**: 재검증 진입값은 `AlnsResult.best`(분해는 Stage 3 N6 — routes/bank가 곧 domain 타입 분해값)와 `bestEvaluation`(점수 대조 대상, §10.2)이다. verify가 `solve` 타입을 직접 받을 수 없으므로(ArchUnit) 변환 어댑팅은 Stage 5가 정의한다 |
 | N7 | **경로 단위 전파는 근사가 아니다**: `RoutePropagator`는 그 경로의 정확한 물리·hard 판정이다(§7). 다만 호환성·profile hard·해 전체 집계는 `Evaluator`만 하므로, 수락 직전의 전체 정식 평가는 생략할 수 없다 (§4.2-e가 항상 돈다) |
+| N8 | **초기해 Infeasible은 버그가 아니라 profile hard의 정상 경로다** (2026-08-12): N7이 말하듯 profile hard는 `Evaluator`만 안다 — `build(problem)`은 profile을 받지 않으므로 그 제약을 지킬 방법이 없고, "전파를 통과했으니 Feasible"은 default profile에서만 참이다. 그래서 §4.2-2는 Infeasible 초기해를 예외가 아니라 **빈 해 강등**으로 처리한다(§9.1). 빌더에 profile을 넘겨 삽입 때부터 hard를 보는 개선(초기 품질·폐기율)은 §9.3 재량 — Stage 8 실험에서 필요가 확인되면 그때 |
 
 ---
 
@@ -373,7 +397,7 @@ best 갱신은 항상 strict: Scores.compare(draftScore, bestScore) < 0 일 때�
 | E7 | PD 삽입 위치 | (i ≤ j) 쌍만 생성 — 픽업 선행이 규칙으로 보장. i = j는 pickup 바로 뒤 delivery | §1.4 |
 | E8 | 동점 (cmp == 0) | current 교체 수락, best는 불변 (strict <) | §8.3·Stage 3 E27 인계 |
 | E9 | 시간 한도가 초기해 생성 중 지남 | 반복 0회, initial = best 반환 — FAILED 아님 | §12 "탐색 중단 = 정상" |
-| E10 | draft'가 Evaluator Infeasible | 폐기 + 카운트. 연산자는 경로 전파로 사전 검증하므로 빈발하면 연산자 버그 신호 (로그로 관찰) | §8.1 (hard 감점 통과 금지) |
+| E10 | draft'가 Evaluator Infeasible | 폐기 + 카운트. 연산자는 경로 전파로 사전 검증하므로 default profile에서 빈발하면 연산자 버그 신호 — profile hard가 있는 고객은 버그 없이도 잦을 수 있다 (N8. 로그로 관찰) | §8.1 (hard 감점 통과 금지) |
 | E11 | 한 trial이 deadline을 넘겨 끝남 | 다음 반복 조건에서 종료 — 약간의 초과는 허용 (연산자는 deadline을 모른다) | §12·재량 |
 | E11b | idle 한도와 시간 한도가 동시에 걸림 | 검사 순서대로 첫 번째 것을 `termination`에 기록 (TIME_LIMIT 우선). 어느 쪽이든 정상 종료 | §3.3 |
 | E12 | 연산자가 비호환 차량에 삽입 | 정상 경로에선 불가능(§4.3 사전 필터). 뚫리면 Evaluator INCOMPATIBLE_VEHICLE → 폐기 | §3.4·Stage 3 §4.2 |
@@ -381,6 +405,8 @@ best 갱신은 항상 strict: Scores.compare(draftScore, bestScore) < 0 일 때�
 | E13b | `idleSteps`·`idleSec` 둘 다 부재 | 정상 — 시간·step 한도만으로 종료 (기존 동작과 동일) | §3.3 |
 | E14 | 같은 seed·같은 Problem 재실행 | 동일한 AlnsResult (노트 N3) | 재량이되 계약화 |
 | E15 | destroy가 removeCount보다 덜 뺌 (RouteRemoval 등) | 허용 — removeCount는 힌트 (§3.1) | §9.3 재량 |
+| E16 | 초기해 평가가 Infeasible (profile hard) | 빈 해(전 Request bank)로 강등해 재평가 후 진행 — 예외 아님 (§4.2-2·N8) | §8.4·§9.1 |
+| E16b | 빈 해 평가마저 Infeasible | IllegalStateException — 빈 해를 거부하는 hard(최소 배정량 등)는 이 루프가 탐색할 수 없다(Infeasible엔 score가 없어 acceptance 불능). 그런 요구는 hard가 아니라 점수 축으로 정의한다 — profile 구성 결함으로 즉시 드러낸다 | §8.1·§8.3·N2 |
 
 ---
 
@@ -404,6 +430,7 @@ jqwik류 property 라이브러리를 추가하지 않는다 (Stage 0 §4.2가 te
 | T9 | `AlnsSolverTest.degenerateProblemsReturnValidResult` | E1(주문 0)·E2(차량 0) → 예외 없이 유효한 AlnsResult | (Plan 범위 문장 "초기해 생성") |
 | T10 | `AlnsSolverTest.stopsOnIdleLimits` | 넉넉한 시간 한도 + 작은 `idleSteps`(및 별도 케이스로 `idleSec`) → 한도 훨씬 전에 종료하고 `termination`이 IDLE_STEPS / IDLE_TIME. worse 수락이 일어나도 idle 카운터가 리셋되지 않음을 단언 (§4.2-f) | (본 개정에서 추가된 종료 조건의 직접 검증) |
 | T11 | `AlnsScaleTest.runsOnFullScaleSyntheticProblem` | **규모 측정.** Stage 2 T12와 **같은 합성 문제**(장소 453·주문 452·차량 31·이동표 453² 전 쌍)로 `AlnsSolver.solve` 1회 → 시간 한도 안에 정상 종료. **시간 한도 안에서 몇 번 반복했는지(`AlnsRunStats`의 반복·수락 수, `elapsedMillis`)를 출력해 기록한다.** 해의 품질·개선폭은 판정하지 않는다 (그건 Stage 8). 실물 JSON은 읽지 않는다 — 입력은 프로그램으로 조립한다 | Plan Stage 4 "**규모**" 문장 |
+| T12 | `AlnsSolverTest.infeasibleInitialFallsBackToEmptySolution` | 테스트 전용 hard 제약 profile(greedy 초기해의 삽입 결과를 거부하되 빈 해는 통과시키는 것 — 예: "경로당 방문 1개 초과 금지")로 solve → 예외 없이 진행, `initialEvaluation`이 빈 해 기준, 결과 유효 (E16). 별도 케이스: 빈 해도 거부하는 hard → `IllegalStateException` (E16b) | (§4.2-2 강등 규칙의 직접 검증) |
 
 T3–T10은 Plan DoD 요약 문장 밖이지만 Plan Stage 4 범위 문장("초기해 생성, destroy/repair(pair 단위),
 acceptance, 시간 한도 종료")의 직접 검증이다 — Plan §1의 편입(2026-08-11)에 따라 이 표 전부가
@@ -416,7 +443,7 @@ acceptance, 시간 한도 종료")의 직접 검증이다 — Plan §1의 편입
 | 안 하는 것 | 담당 | 근거 |
 |---|---|---|
 | 재검증(`verify`)·점수 대조 실행·미배정 사유(`NO_COMPATIBLE_VEHICLE` 등) | Stage 5 | Domain §10–§11 |
-| 결과 JSON·run 메타 확정 (stats 포함 여부 포함) | Stage 5·6 | Domain §11, §9 Q2 |
+| 결과 JSON·run 메타 확정 (stats는 미포함으로 종결 — §9 Q2) | Stage 5·6 | Domain §11, §9 Q2 |
 | wire `Termination.secondsSpentLimit` 파싱·executor의 전체 시간 관리·config 주입 | Stage 6 | Architecture §3.2, Stage 1 §2.2 |
 | 탐색 파라미터 튜닝·Win 지표 비교 (§3.3 기본값의 실측 조정) | Stage 8 | Plan §1 Stage 8 |
 | 증분 평가·삽입 캐시의 실제 도입 | 재량 (필요 시) | Domain §9.2, 노트 N4 |
@@ -430,9 +457,10 @@ acceptance, 시간 한도 종료")의 직접 검증이다 — Plan §1의 편입
 
 ## 9. 미해결 질문
 
-확정 문서로 답이 안 나오는 것만 남긴다. Stage 4 구현은 각 항목의 "잠정 처리"로 진행한다.
+닫힌 질문은 해소 표시를 달아 남긴다 ([README](README.md) 공통 규칙, 2026-08-13) —
+이 절의 미결은 Q1 하나다. Stage 4 구현은 각 항목의 "잠정 처리"로 진행한다.
 
 | # | 질문 | 잠정 처리 |
 |---|---|---|
 | Q1 | wire `Termination.secondsSpentLimit`의 적용 범위 — ALNS 루프만인지, 초기해·Problem 동결·재검증까지 포함한 전체 풀이인지 어느 문서도 정의하지 않았다 | `AlnsSolver`는 자기 예산(초기해 + 반복 루프)에만 적용. 전체 풀이 타임박스가 필요하면 Stage 6 executor에서 별도 결정 (Architecture §3.2 "시간 한도 = 입력 옵션 또는 설정"과 정합) |
-| Q2 | `AlnsRunStats`(반복·수락 수 등)를 결과 JSON run 메타에 넣을지 | **부분 해소 (2026-08-10).** Domain §11.1이 run에 "적용된 배송정책과 탐색 예산을 따로 기록"을 요구하므로 `AlnsConfig`는 기록한다. 반복·수락 카운터까지 넣을지는 Stage 5·6에서 wire 협의(§11.2)와 함께 결정 |
+| Q2 | `AlnsRunStats`(반복·수락 수 등)를 결과 JSON run 메타에 넣을지 | **해소 (2026-08-11, Stage 5 §9).** 넣지 않는다 — Domain §11.1 run 항목은 배송정책·탐색 예산(§2.5.1의 시간·step·idle·seed)만 따로 기록하고, stats(반복·수락 카운터·종료 사유)는 로그·실험용으로만 남는다 (§3.2 주석 동기) |

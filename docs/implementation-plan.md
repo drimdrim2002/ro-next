@@ -27,6 +27,17 @@ revisions:
   - 2026-08-11 Stage 설명 보강 — VRPTW 배경·CS 배경 약한 독자용. 읽는 법·개념→Stage 표
     추가, Stage 0–8을 동일 템플릿(배차/시스템 관점·만드는 것·순서·안 하는 것·평문 DoD·
     용어 메모)으로 풀어 씀. 설계·DoD 판정 자체는 불변. Domain 규칙 본문은 복제하지 않음
+  - 2026-08-12 Domain 2026-08-12 개정(self arc sentinel·startDepot 부재 규칙·수치 number
+    인코딩) 정합 — Stage 1 설명의 "문자열" 표현 정리(문자열 수치 = INVALID_INPUT), D1 칸·
+    [fixture 실측] 행의 fixture 수치 인용을 number 표기로. 순서·DoD 판정 무변경
+  - 2026-08-12 감사 후속 인터뷰 정합 — D2에서 `driverRestTimeRatio` 종결
+    (무시 확정, 0 아닌 값도 거부 안 함 — Domain §2.5)
+  - 2026-08-13 전수 감사 기계적 정정 — Stage 0 절에 완료(2026-08-10) 표시 · Stage 5 DoD
+    ArchUnit 문면 교정("`solve`의 ALNS 쪽" → `solve` 패키지 전체) · Stage 6 그림 "형식 검증" →
+    "형식·정규화 검증"(2026-08-11 접수 깊이 확정 정합) · §2.1 말미 차량별 `trips` 문단 시제
+    교정(구현 반영 → 2026-08-11 유예, Stage Extra E1) · §2.1 "어느 Stage도 막고 있지 않다"
+    전칭 완화 · Stage Extra 절 "§5 승격 절차"의 소속 문서 명시 · Stage 1 DoD 소수 규칙
+    문구 분리(무게·부피 FLOOR / 거리·시간 거부, optional 부재 = 제약 없음·기본값 구분)
 ---
 
 # RO-Next Implementation Plan
@@ -85,6 +96,9 @@ revisions:
 
 ### Stage 0 — 정리와 뼈대
 
+**완료 (2026-08-10)** — 아래 DoD 전부 충족 (3모듈 뼈대·`mvn verify`·health 응답·GCP 의존 0건).
+다음 착수는 Stage 1이다.
+
 **시스템 관점 (한 줄)**  
 배차 로직을 쓰기 **전에**, 코드가 들어갈 방 3개와 “빌드·기동·경계 검사” 통로를 만든다.
 
@@ -134,7 +148,9 @@ revisions:
   외부 규약 JSON을 읽는 쪽은 Stage 6 adapter다.
 
 VRPTW instance의 개념(요청, 차량, TW, capacity)은 그대로다. 달라지는 것은 **표현**이다 —
-문자열·소수·날짜 없는 시각을, 솔버가 비교·연산할 수 있는 정수 체계로 확정한다.
+소수·날짜 없는 시각을, 솔버가 비교·연산할 수 있는 정수 체계로 확정한다.
+(문자열로 인코딩된 수치는 정규화 대상이 아니라 `INVALID_INPUT`이다 — Domain §3.1,
+2026-08-12 확정. 수치 필드의 JSON 인코딩은 number다.)
 
 **왜 이 순서인가**  
 이동표·전파·탐색은 모두 “이미 정규화된 입력”을 전제로 한다.
@@ -146,8 +162,10 @@ VRPTW instance의 개념(요청, 차량, TW, capacity)은 그대로다. 달라�
 **완료 기준 (DoD)**  
 통과하면 다음이 보장된다.
 
-- 무게·부피 등은 **버림(FLOOR)·정수 규칙**을 따르고, 소수를 조용히 반올림하지 않는다.
-  optional 필드가 없으면 “그 축 제약 없음”이다.
+- 무게·부피는 소수를 받아 **×1000 FLOOR**하고, **거리·시간 소수는 거부**한다 (표기 기준 —
+  Domain §3.1). 소수를 조용히 반올림하지 않는다. optional 부재는 한도·용량 축이면
+  “그 축 제약 없음”, `speed`·`trips`·`multiRotation`·`startDepot`이면 규칙으로 정해진
+  기본값이다 (Domain §2.4·§2.6·§3.1).
 - `multiRotation`이 core 지원 범위를 넘으면 거부한다 (통과 = `{0, 1}`,
   `-1`·`2 이상` → `UNSUPPORTED_INPUT`, `≤ -2` → `INVALID_INPUT` — Domain §2.5, §2.1 D1 확정).
   즉 multi-trip 요청은 여기서 걸린다.
@@ -338,7 +356,8 @@ HTTP 응답 형식의 최종 협의(D2), S3 업로드(Stage 6).
 **완료 기준 (DoD)**  
 - 일부러 오염시킨 해(짝 분리·용량 초과·점수 불일치)가 **전부 FAIL**.  
 - FAIL인 해는 결과로 저장하지 않는 규칙이 코드·테스트로 고정된다.  
-- ArchUnit: 재검증이 탐색(`solve`의 ALNS 쪽)을 참조하지 않는다.
+- ArchUnit: 재검증이 `solve` **패키지 전체**를 참조하지 않는다 — ALNS만이 아니라
+  `Solution` 등 solve 소유 타입 전부다 (stage-05 §2).
 
 **용어 메모**
 
@@ -359,7 +378,7 @@ HTTP 응답 형식의 최종 협의(D2), S3 업로드(Stage 6).
 **이 단계에서 만드는 것** (Architecture §3)
 
 ```text
-POST /solves  → 형식 검증 → 저장 → 200 + solveKey     ← 여기까지 동기 (ALNS 대기 안 함)
+POST /solves  → 형식·정규화 검증 → 저장 → 200 + solveKey   ← 여기까지 동기 (ALNS 대기 안 함)
        ↓ (비동기 executor)
   adapter → 정규화 → … → ALNS → 재검증 → 결과 저장 / FAILED
 GET /solves/{solveKey}[/result]  → 상태·결과 조회
@@ -471,7 +490,7 @@ W 표다 — 벤치마크 해석의 문제이지 구현 작업 항목이 아니�
 **범위 선언**(무엇이 범위 밖인가)은 [Master §4·§6](master-design.md)이다.
 
 **완료 기준 (DoD)**  
-없다 — 완료되는 Stage가 아니다. 트리거가 발동하면 §5 승격 절차를 거쳐
+없다 — 완료되는 Stage가 아니다. 트리거가 발동하면 Stage Extra 문서의 §5 승격 절차를 거쳐
 정식 Stage로 옮겨지고 등재부에서 빠진다.
 
 **상세 설계**: [stage-extra-deferred-features.md](implementation/stage-extra-deferred-features.md)
@@ -490,8 +509,8 @@ Stage 순서와 별개로 **지금 착수할 수 있고, 늦어지면 뒤 Stage�
 
 | # | 결정 | 지금 아는 것 / 남은 일 | 막고 있는 것 |
 |---|---|---|---|
-| **D1** | **`multiRotation` 값 의미와 범위** — **완료 (2026-08-10 확정)** | 문제였던 것: 이 숫자가 무엇을 세는지 몰라 fixture의 `"1"`이 통과인지 거부인지 갈렸고, 그 탓에 §0 최종 성공 기준 fixture가 접수에서 거부돼 Stage 6·7·8이 통째로 막혀 있었다.<br>**확정 내용 (시스템 소유자)** — 정본은 **Domain §2.5**다: 숫자는 **차량이 도는 바퀴 수**를 센다. `1` = 1바퀴 = 차고에서 출발해 한 번 도는 것 = **지원 범위 안**이고, `2`부터가 차고 재방문(multi-trip)이라 범위 밖이다. `0`은 미설정으로 보아 `1`과 같게 취급한다 (규약 기본값이 `0`이므로 값을 안 준 입력이 자연스럽게 통과해야 한다).<br>**판정이 반전됐다**: 종전 `!= 0` 거부(0만 통과) → **통과 = `{0, 1}`**. `-1`(무제한 복귀)·`2` 이상 = `UNSUPPORTED_INPUT`, `≤ -2`(규약이 "greater than -1"로 금지) = `INVALID_INPUT`. **비교식 `> 1`로 쓰지 않는다** — `-1`이 게이트를 그냥 통과해 버린다.<br>**규약 PDF 문면과 어긋난다 (기록):** PDF 4페이지 열거 정의(`0 : can't return to depot` / `1>= : ... designated multi rotation times`)는 숫자를 **차고 복귀 횟수**로 읽게 만들어 확정 의미와 한 칸 어긋난다 — PDF만 보고 구현하면 판정이 정확히 반대로 나온다. 종전 이 칸은 "열거 정의가 권위이고 `multirotation 2` 예시 그림이 부주의"라고 적었는데 **그 판단이 뒤집혔다**: 그 그림(`depot(start) → 1st → 2nd → depot(2nd visit) → 3rd`)은 2를 2바퀴(복귀 1회)로 그려 **바퀴 수 해석과 일치**하고, 어긋나는 것은 `1>=` 한 줄뿐이다. 소유자 확정이 정본이고 PDF 문면이 부정확한 것으로 본다.<br>**연쇄로 풀린 것들** — ① **fixture 교정(옛 경로 B)이 불필요해졌다.** `data/win_poc_case_floor.json`은 `multiRotation: "1"` **원본 그대로 접수된다**. 원본과의 차이를 추적할 일도 없다. ② 옛 경로 A(호출 시스템 확인)도 소유자 확정으로 닫혔다 — Stage 8 §6 W1의 "무엇을 비교하는가" 물음이 해소된다(양쪽 다 1바퀴). ③ Stage 6 T13·Stage 7 V6·Stage 8 P1의 선행 조건이 전부 해제됐다 | (해제됨) Stage 6 e2e·Stage 7 DoD·Stage 8 전체가 이제 진행 가능하다. 반영된 문서: Master §4·§6 · Domain §2.4·§2.5·§12 · Architecture §3.1 · Stage 0·1·2·6·7·8 |
-| **D2** | **wire 협의** | 결과 JSON 필드명·시각 표기·단위 표현 · 조회 경로와 HTTP 상태 · `customerId`의 wire 원천(`shprId` vs 주문 수준 `customerId`) · legacy 시간 필드(주문 수준 `taskTime`·`driverRestTimeRatio`)의 처리 · ~~`item.taskTime × qty` 해석~~ **종결 (2026-08-11, 시스템 소유자)** — `taskTime`·`weight`·`volume` **전부 × qty**가 맞고 규약 PDF 문면("not quantity")이 부정확하다. Domain §3.1·§3.3이 정본이고 설계 변경 없음. floor fixture는 qty 전건 `1`·order당 item 1개(실측)라 무영향 · 결과의 경로 시각 2종(`depotDeparture`·`depotReturn` — Domain §11.1, 2026-08-11 추가)과 방문 `departure`(Stage 5 §9 Q5)의 wire 노출 · 이동표의 비대각 `D=9999` 1건(`WIN_2306→WIN_3225`, U=991 — Stage 2 N4)이 실거리인지 결측 표시인지 확인. **첫 작업은 협의 상대를 찾는 것이다** — Stage 6 §10 Q4가 "협의 상대가 현재 없음"으로 멈춰 있다. 의미(Domain §11.1)는 협의 대상이 아니고 이름·형태만 정한다 | Stage 6 result.json wire 확정 (잠정안으로 구현은 가능하나, 협의 후 바뀌면 golden 테스트를 다시 쓴다) |
+| **D1** | **`multiRotation` 값 의미와 범위** — **완료 (2026-08-10 확정)** | 문제였던 것: 이 숫자가 무엇을 세는지 몰라 fixture의 `"1"`이 통과인지 거부인지 갈렸고, 그 탓에 §0 최종 성공 기준 fixture가 접수에서 거부돼 Stage 6·7·8이 통째로 막혀 있었다.<br>**확정 내용 (시스템 소유자)** — 정본은 **Domain §2.5**다: 숫자는 **차량이 도는 바퀴 수**를 센다. `1` = 1바퀴 = 차고에서 출발해 한 번 도는 것 = **지원 범위 안**이고, `2`부터가 차고 재방문(multi-trip)이라 범위 밖이다. `0`은 미설정으로 보아 `1`과 같게 취급한다 (규약 기본값이 `0`이므로 값을 안 준 입력이 자연스럽게 통과해야 한다).<br>**판정이 반전됐다**: 종전 `!= 0` 거부(0만 통과) → **통과 = `{0, 1}`**. `-1`(무제한 복귀)·`2` 이상 = `UNSUPPORTED_INPUT`, `≤ -2`(규약이 "greater than -1"로 금지) = `INVALID_INPUT`. **비교식 `> 1`로 쓰지 않는다** — `-1`이 게이트를 그냥 통과해 버린다.<br>**규약 PDF 문면과 어긋난다 (기록):** PDF 4페이지 열거 정의(`0 : can't return to depot` / `1>= : ... designated multi rotation times`)는 숫자를 **차고 복귀 횟수**로 읽게 만들어 확정 의미와 한 칸 어긋난다 — PDF만 보고 구현하면 판정이 정확히 반대로 나온다. 종전 이 칸은 "열거 정의가 권위이고 `multirotation 2` 예시 그림이 부주의"라고 적었는데 **그 판단이 뒤집혔다**: 그 그림(`depot(start) → 1st → 2nd → depot(2nd visit) → 3rd`)은 2를 2바퀴(복귀 1회)로 그려 **바퀴 수 해석과 일치**하고, 어긋나는 것은 `1>=` 한 줄뿐이다. 소유자 확정이 정본이고 PDF 문면이 부정확한 것으로 본다.<br>**연쇄로 풀린 것들** — ① **fixture 교정(옛 경로 B)이 불필요해졌다.** `data/win_poc_case_floor.json`은 `multiRotation: 1` **값 그대로 접수된다** (표기는 2026-08-12 number 인코딩 정정 반영 — Domain §3.1). 값 차이를 추적할 일도 없다. ② 옛 경로 A(호출 시스템 확인)도 소유자 확정으로 닫혔다 — Stage 8 §6 W1의 "무엇을 비교하는가" 물음이 해소된다(양쪽 다 1바퀴). ③ Stage 6 T13·Stage 7 V6·Stage 8 P1의 선행 조건이 전부 해제됐다 | (해제됨) Stage 6 e2e·Stage 7 DoD·Stage 8 전체가 이제 진행 가능하다. 반영된 문서: Master §4·§6 · Domain §2.4·§2.5·§12 · Architecture §3.1 · Stage 0·1·2·6·7·8 |
+| **D2** | **wire 협의** | 결과 JSON 필드명·시각 표기·단위 표현 · 조회 경로와 HTTP 상태 · `customerId`의 wire 원천(`shprId` vs 주문 수준 `customerId`) · legacy 시간 필드(주문 수준 `taskTime`)의 처리 · ~~`driverRestTimeRatio`~~ **종결 (2026-08-12, 시스템 소유자)** — 무시 확정, 0이 아닌 값도 거부하지 않는다 (Domain §2.5) · ~~`item.taskTime × qty` 해석~~ **종결 (2026-08-11, 시스템 소유자)** — `taskTime`·`weight`·`volume` **전부 × qty**가 맞고 규약 PDF 문면("not quantity")이 부정확하다. Domain §3.1·§3.3이 정본이고 설계 변경 없음. floor fixture는 qty 전건 `1`·order당 item 1개(실측)라 무영향 · 결과의 경로 시각 2종(`depotDeparture`·`depotReturn` — Domain §11.1, 2026-08-11 추가)과 방문 `departure`(Stage 5 §9 Q5)의 wire 노출 · 이동표의 비대각 `D=9999` 1건(`WIN_2306→WIN_3225`, U=991 — Stage 2 N4)이 실거리인지 결측 표시인지 확인. **첫 작업은 협의 상대를 찾는 것이다** — Stage 6 §10 Q4가 "협의 상대가 현재 없음"으로 멈춰 있다. 의미(Domain §11.1)는 협의 대상이 아니고 이름·형태만 정한다 | Stage 6 result.json wire 확정 (잠정안으로 구현은 가능하나, 협의 후 바뀌면 golden 테스트를 다시 쓴다) |
 | **D3** | **AWS 사전 준비** | 배포 계정·리전 · 버킷 이름(`ro-next-solves-{env}`의 `{env}`) · 태스크 롤·실행 롤 · ECR 리포지터리 · ECS 클러스터 · 로그 그룹, 그리고 **엔드포인트 노출 방식**(ALB인지 내부 엔드포인트인지 — 호출 시스템의 네트워크 위치에 달렸다). 전부 Architecture §5가 "배포 시 결정"으로 열어 둔 것이고 코드와 무관하다 | Stage 7 전체 (환경당 1회 준비 — Stage 7 §4) |
 | **D4** | **다일 근무창 + 차고 시간창 설계** — **완료 (2026-08-10 확정)** | 문제였던 것: 현행 모델이 다일 계획의 근무 시간대를 표현하지 못했고(`Vehicle.workWindow` 하나·시작일 고정), 차고의 `openTime`/`closeTime`이 전파에서 아예 읽히지 않았다. 둘 다 전파 절차를 바꾸므로 한 설계로 묶었다.<br>**확정 내용** — 정본은 **Domain §3.2(시간창 전개)·§7.1(출발·방문·종료 절차)·§7.3(대기 3종·항등식)**이다: ① **canonical 표현** = 정규화가 **날마다 반복되는 창을 절대 창 목록으로 펼친다** (`List<TimeWindow>` — 근무창·차고 창·**주문 시간창** 셋 다. 규약이 세 창을 전부 날짜 없는 partial-time으로 주므로 반복 말고 다른 해석이 없다) ② **정규화** = 전날부터 planEnd 날짜까지 생성 → `close < open`은 자정 넘김으로 **수용**(`close == open`은 신규 INVALID_INPUT) → `[0, planEndSec − 1]`로 **클리핑**(계획 기간을 넘겨 끝나는 경로가 사라지는 **새 경계**) → 정렬·인접 병합 ③ **전파** = 창 끝을 넘는 이동·서비스는 **다음 창으로 미룬다**(불가 판정이 아니다). 남은 창이 없을 때만 `WORK_WINDOW` ④ **차고 창** = 출발은 "근무창 ∩ startDepot 창 안"(다일이라 상한이 생긴다), 복귀는 "어느 endDepot 창 안"이며 **미루지 않는다** → `DEPOT_WINDOW` ⑤ **`interWorkWindowRestTime`** = 경로 시간 중 근무창 사이의 틈에 있는 시간 전부. 항등식 `routeOperationalTime = routeEnd − spanStart` ⑥ 모든 소요 시간은 **두 시각의 차**로 잰다 (초를 세면 창마다 1초 어긋난다).<br>**현행 fixture(1일)에서는 값이 하나도 바뀌지 않는다** — 근거는 Stage 1 §4 말미의 실측 표 | (해제됨) Stage 3·Stage 5가 이제 Domain의 같은 문장을 보고 구현한다. 반영된 문서: Domain · Stage 1·3·4·5·6·8 |
 
@@ -500,16 +519,19 @@ Stage 순서와 별개로 **지금 착수할 수 있고, 늦어지면 뒤 Stage�
 끝났다** — D4는 Domain §3.2·§7.1 개정(§7.2.1·§7.3·§13 포함)과 Stage 1·3·4·5·6·8 갱신으로,
 D1은 시스템 소유자의 의미 확정(바퀴 수)과 그에 따른 판정 반전으로 닫혔다.
 
-**남은 미결은 D2·D3 둘뿐이고, 어느 Stage도 막고 있지 않다.** D2(wire 협의)는 잠정안으로
+**남은 미결은 D2·D3 둘뿐이고, 지금 착수를 막는 것은 없다.** D2(wire 협의)는 잠정안으로
 구현이 가능하고(협의 후 바뀌는 것은 golden 테스트뿐), D3(AWS 사전 준비)은 Stage 7 배포
 시점에 필요한 준비물이다. **D1이 닫히면서 §0 최종 성공 기준까지 막고 있던 것이 없어졌다** —
 Stage 1부터 8까지 순서대로 진행하면 된다.
 
 **차량별 `trips`도 같은 날 함께 확정됐다** (2026-08-10). D 항목으로 올리지 않은 이유는 이것이
 기다릴 답이 아니라 곧바로 반영 가능한 설계 결정이었기 때문이다 — `options.trips`가 전체
-기본값이고 차량에 값이 있으면 그 차량이 자기 값을 쓴다. 정본은 Domain §2.4·§2.5이고,
-구현 반영은 Stage 1(§2.3·§4 절차 5·E19·T13)·Stage 6(§4.4·§4.6)이다. core는 사실상 무변경이다 —
-정규화가 `trips`를 이미 차량별 `endDepot`으로 접고 있어서, 접기 체인 앞에 한 단계가 붙을 뿐이다.
+기본값이고 차량에 값이 있으면 그 차량이 자기 값을 쓴다. 다만 **구현은 2026-08-11 Stage Extra
+신설로 유예됐다** — 의미(차량 값 우선)는 확정된 채
+[Stage Extra E1](implementation/stage-extra-deferred-features.md)에 기록돼 있고, 현행 wire에
+그 필드가 없어 Stage 1·6에는 반영돼 있지 않다 (Domain §2.5 유예 주석). 되살릴 때도 core는
+사실상 무변경이다 — 정규화가 `trips`를 이미 차량별 `endDepot`으로 접고 있어서, 접기 체인
+앞에 한 단계가 붙을 뿐이다.
 
 ### 2.2 순서와 병행
 
@@ -524,7 +546,7 @@ Stage 1부터 8까지 순서대로 진행하면 된다.
 
 | 칸 | 무엇 |
 |---|---|
-| **[fixture 실측]** | 실물 fixture의 크기·값을 **미리 재서** Stage 2·4의 규모 DoD 목표 숫자를 고정한다. 세는 것뿐이라 코드가 없다. 2026-08-10 실측(`data/win_poc_case_floor.json`): 주문 452 · 차량 31 · 차고 1 · 장소 **453** · 이동표 **205,209쌍 = 453² (전 쌍이 입력에 주어짐, 희소하지 않다)** · `multiRotation "1"`(**D1 확정 후 이 값은 그대로 접수 통과한다** — 1바퀴, 교정 불필요) · `Termination.secondsSpentLimit "600"` · `Optimizer.VehicleMaxStopCount "28"` · `Optimizer.DefaultSpeed "45"` |
+| **[fixture 실측]** | 실물 fixture의 크기·값을 **미리 재서** Stage 2·4의 규모 DoD 목표 숫자를 고정한다. 세는 것뿐이라 코드가 없다. 2026-08-10 실측(`data/win_poc_case_floor.json`): 주문 452 · 차량 31 · 차고 1 · 장소 **453** · 이동표 **205,209쌍 = 453² (전 쌍이 입력에 주어짐, 희소하지 않다)** · `multiRotation 1`(**D1 확정 후 이 값은 그대로 접수 통과한다** — 1바퀴, 교정 불필요) · `Termination.secondsSpentLimit 600` · `Optimizer.VehicleMaxStopCount 28` · `Optimizer.DefaultSpeed 45` (수치 표기는 2026-08-12 number 인코딩 정정 반영 — Domain §3.1) |
 | **[Domain 해석 확정]** | **완료 (2026-08-10).** 전파 규칙의 해석을 Domain에 올려 Stage 3·5가 **같은 문장**을 보고 구현하게 했다. 시간창 close 기준(Domain §7.1)과 차고 창·다일 근무창(**D4** → Domain §3.2·§7.1·§7.3) 둘 다 확정됐다 |
 | **5-재검증 / 5-결과** | Stage 5 문서를 쪼개지 않는다. 그 문서는 이미 §1~§3이 재검증, §4가 결과 모델이라 **읽는 순서만** 바뀐다 (Stage 5 절 참고) |
 

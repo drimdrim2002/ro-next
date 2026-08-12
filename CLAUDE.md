@@ -56,17 +56,13 @@ mvn dependency:list -pl solver-core -DincludeScope=compile \
 Stage 문서는 **구현 계약**이다 — 표·코드 블록에 없는 선택(다른 좌표·버전·추가 파일)은 하지 않고,
 바꿔야 하면 **문서를 먼저 개정**한 뒤 구현한다(각 문서 frontmatter `revisions`에 한 줄).
 
-**이 우선순위의 예외 하나:** 모듈 개수는 **3개**(`solver-core`·`solver-profile`·`app`)가 현행이다.
-2026-08-10 3계층 개정 때 Master 결정 #10·Architecture·Plan·루트 README는 갱신됐으나
-`docs/README.md`(§3 행 설명)만 "모듈(2개)"로 남아 있다. 이 항목은 `docs/README.md`가 틀린 것이다.
-
 `docs/deprecated/`는 **효력 없음** — 결정 등록부(A\*/D\*/O\*), gate/evidence 완료 판정,
 YAML 2층 카탈로그, 15-phase 구현 세트는 전부 폐기된 체계다. 현행 문서와 충돌하면 항상 현행이 이긴다.
 
 ## 한 건의 요청이 흐르는 길
 
 ```text
-POST /solves → 규약 JSON 형식 검증 → S3에 input.json 저장 → 200 + solveKey   ← 동기는 여기까지
+POST /solves → 규약 JSON 형식·정규화 검증 → S3에 input.json 저장 → 200 + solveKey   ← 동기는 여기까지
              ↓ 같은 프로세스의 executor (비동기)
   adapter(규약→canonical) → 정규화 → 이동표 준비 → Problem 동결
   → 초기해 → ALNS(destroy/repair) → 최선 Solution
@@ -131,7 +127,9 @@ app/             com.ronext.rpdptw.app      api · run · input · storage — S
   **green이 곧 경계 준수의 근거는 아니다** — `verify` 구현이 생기는 Stage 5부터 의미가 붙는다.
 - `data/win_poc_case_floor.json` (주문 452·차량 31)이 1차 성공 기준의 실행 fixture다.
   규약 원본은 `data/ro_input_json_spec.pdf`, 비교 대상인 기존 엔진(Win) 결과는 `data/alns_result.csv`,
-  거리표 소수 FLOOR 처리는 `scripts/floor_win_poc_matrix.py`가 했다.
+  거리표 소수 FLOOR 처리는 `scripts/floor_win_poc_matrix.py`가 했다. 수치 필드의 문자열→number
+  정정(2,813필드, Domain §3.1 2026-08-12 확정)은 `scripts/numify_win_poc_fixture.py`가 했다 —
+  원본 `win_poc_case.json`은 문자열 그대로다(수신 원형 보존, 미접수 입력).
 
 ## 범위 밖 (하지 않기로 확정)
 

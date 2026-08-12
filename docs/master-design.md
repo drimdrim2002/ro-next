@@ -13,6 +13,10 @@ revisions:
     **전 항목 원칙으로 승격**하고, 유예 항목 등재부(Stage Extra)로의 포인터 추가.
     차량별 `multiRotation` 문단이 근거로 삼던 "이미 `trips`가 쓰는 방식" 참조도 제거했다
     (차량별 `trips`가 같이 유예돼 존재하지 않는 선례를 가리키게 됐다). 범위(§4)는 불변
+  - 2026-08-13 전수 감사 기계적 정정 — §2-① "형식 검증"을 "형식·정규화 검증"으로
+    (2026-08-11 접수 깊이 확정 정합 — 정본은 Architecture §3.1) · §3 결정 #10 "의존성 0"에
+    compile scope 명시 · §6 차량별 multiRotation 문단의 덮어쓰기 규칙 참조에 유예 상태 명시 ·
+    §7 "과거 문서는 전부 deprecated/에" 문구를 아카이브 표 참조로 교정
 ---
 
 # RO-Next Master Design
@@ -36,7 +40,7 @@ revisions:
 ```text
 ① 접수 (동기 — HTTP 한 요청)
    호출 시스템 → POST (규약 JSON: 주문·차량·거리표·옵션)
-   → 형식 검증 → S3에 입력 저장 → 200 + solveKey 응답
+   → 형식·정규화 검증 → S3에 입력 저장 → 200 + solveKey 응답
    (여기서 배차 계산을 기다리지 않는다. 잘못된 입력이면 4xx, S3 저장 없음)
 
 ② 풀이 (비동기 — 같은 앱 내부 executor)
@@ -69,7 +73,7 @@ revisions:
 | 7 | **고객 차이는 profile** | 점수·제약의 고객별 차이는 core 코드 분기(`if (customerId…)`)가 아니라 profile 구현 교체로. 연결은 코드 레지스트리(`customerId → profile` 맵), 미등록 고객은 default |
 | 8 | **저장은 S3만** | 입력·진행 상태·결과 전부 S3 객체. RDB·Redis 사용하지 않음 |
 | 9 | **단일 Spring Boot 서비스** | 접수 API와 풀이 executor가 한 앱. AWS **ECS Fargate** 배포. Lambda·Step Functions·SQS 사용하지 않음 |
-| 10 | **모듈 3개** | `solver-core`(순수 Java, 의존성 0) + `solver-profile`(고객 정책·고객 전용 라이브러리) + `app`(Spring Boot). 의존은 `app → solver-profile → solver-core` 한 방향. 경계는 컴파일 의존 + ArchUnit 테스트로 강제 (Architecture §2) |
+| 10 | **모듈 3개** | `solver-core`(순수 Java, compile 의존 0 — test scope 제외) + `solver-profile`(고객 정책·고객 전용 라이브러리) + `app`(Spring Boot). 의존은 `app → solver-profile → solver-core` 한 방향. 경계는 컴파일 의존 + ArchUnit 테스트로 강제 (Architecture §2) |
 
 ## 4. 범위
 
@@ -109,7 +113,8 @@ revisions:
 **차량별 `multiRotation`** — 지금은 통과하는 값이 `{0, 1}`뿐이라 모든 차량이 1바퀴여서
 차량마다 다를 수가 없다. 그러나 "차량마다 회전 수를 다르게 주고 싶다"는 요구가 있으므로,
 **multi-trip(`2` 이상)을 여는 그 시점에 함께 다룬다** — 차량 값이 `options` 기본값을 덮어쓰는
-규칙(Domain §2.5)을 적용하면 된다. 그 전에 미리 필드를 만들어 두지 않는다.
+규칙을 적용하면 된다 (그 규칙 자체도 지금은 유예 상태다 — Domain §2.5 유예 주석과
+Stage Extra E1이 복원 지점이다). 그 전에 미리 필드를 만들어 두지 않는다.
 
 **이 원칙을 전 항목에 적용했다 (2026-08-11).** 위 문단의 "그 전에 미리 필드를 만들어 두지
 않는다"는 차량별 `multiRotation`에만 적용되던 규칙이었는데, Stage 1 검토에서 같은 성격의
@@ -134,7 +139,8 @@ revisions:
 | [Implementation Plan](implementation-plan.md) | 구현 단계·순서·단계별 완료 기준, 기존 코드 정리 |
 
 읽는 순서: Master → Domain → Architecture → Implementation Plan.
-과거 문서는 전부 [docs/deprecated/](deprecated/)에 있으며 참고용일 뿐 효력이 없다.
+과거 문서는 [docs/deprecated/](deprecated/) 등 아카이브에 있으며(전체 목록은
+[docs/README.md](README.md)의 아카이브 표) 참고용일 뿐 효력이 없다.
 
 ## 8. 용어 최소 사전
 

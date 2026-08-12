@@ -39,6 +39,23 @@ revisions:
     적용되는 것으로 읽었다 — 문서 결함). 규칙 변경은 **없다**: 무게·부피는 종전대로 소수를
     받아 ×1000 FLOOR하고, 거리·시간만 거부한다 (Domain §3.1). 손댄 곳은 DoD 문장 · §3
     `Units` 세 메서드 주석 · §2.3 `TravelEntryInput`의 `BigDecimal` 사유 셋뿐이다
+  - 2026-08-12 Domain 2026-08-12 개정(self arc sentinel·startDepot 부재 규칙·수치 number
+    인코딩) 정합 — §4 절차 7에 self arc 행 배제(단위 검증 대상 아님)·sentinel 표기, 절차 5·
+    E20·T13에 `startDepot` 부재 규칙의 정본을 Domain §2.4로, fixture 수치 인용을 number
+    표기로(§서두·E6·T5·§7·Q4), §4 말미 fixture 근거 문단에 문자열 수치 INVALID_INPUT 반영
+  - 2026-08-12 감사 후속 인터뷰 ①·⑥ 정합 — ① 소수 거부 = **표기 기준**(Domain §3.1 확정) 반영:
+    §서두 주의문·`Units` 계약(scale > 0 거부)·E5·T3에 정수값 소수 표기(`15.0`) 거부 명시 ·
+    ⑥ 차량 `vehicleFeature` 부재·"ALL" = 전 차급 와일드카드(Domain §3.4 확정) —
+    canonical `Vehicle.vehicleFeature`를 `Optional<String>`로, 절차 5에 접기 추가, E26 반전 ·
+    탐색 예산 운반 = Stage 6 parse 반환 봉투(`ParseResult`) 확정 반영(§2.2 표·§8 범위 표)
+  - 2026-08-13 감사 후속 인터뷰 정합 — `Depot.nodeId`를 유예 목록에서 분리해 **설계 확정
+    삭제**로 분류(§2.1 말미 — Stage Extra 등재 주장은 거짓이었다, 분할 5 #5 수선) ·
+    §9의 "닫힌 질문은 남기지 않는다"를 README 공통 규칙(표시하고 남김)으로 대체
+  - 2026-08-13 감사 결함 정정 (분할 5 #1·#3·#4) — §2.3 `depot.taskTime` 사유의 거짓 전제
+    교정("복귀가 없어" → "복귀 후 다음 바퀴 선적이 없어" — roundtrip이면 복귀는 있다,
+    Domain §2.5·§7.1 정합) · §2.3 "규약 차량 키 7개"의 규약↔fixture 어휘 분리 ·
+    §5·T12의 capability/zone 축 "항상 참" 논거 분리(zone은 차량 부재, capability는 주문
+    요구 부재). 설계 무변경
 ---
 
 # Stage 1 — canonical 입력과 정규화
@@ -54,10 +71,12 @@ solver-core의 `domain` 패키지에 canonical 모델(`Plan`·`Request`·`Vehicl
 > **소수 규칙은 차원마다 반대다 (Domain §3.1 — 혼동 주의).**
 > **무게·부피는 소수를 받는다** — 규약이 `decimal kg`/`decimal CBM`으로 정의하고,
 > 정규화가 `×1000` 후 3자리 FLOOR로 `long`을 만든다 (E1\~E3·T1).
-> **거리·시간만 소수를 거부한다** (E5·T3).
+> **거리·시간만 소수를 거부한다** (E5·T3). 거부의 판정은 **표기 기준**이다 — number 토큰에
+> 소수점이 있으면 값과 무관하게 거부한다 (`15.0`도 거부. Domain §3.1, 2026-08-12 확정).
 > fixture 실측이 이 비대칭을 강제한다: item 452건 중 weight 436건·volume 449건이 소수이고
-> (`"26.2"`·`"0.21"`), 차량 `maxVolume`도 `"5.95"`다 — 무게·부피까지 거부하면 fixture가
-> 한 건도 통과하지 못한다.
+> (`26.2`·`0.21`), 차량 `maxVolume`도 `5.95`다 — 무게·부피까지 거부하면 fixture가
+> 한 건도 통과하지 못한다. (수치의 JSON 인코딩은 number다 — Domain §3.1, 2026-08-12 확정.
+> 문자열 수치는 INVALID_INPUT이고, floor fixture는 2026-08-12 number로 정정 완료.)
 
 핵심 구도 — 두 층과 한 관문:
 
@@ -124,9 +143,12 @@ app 모듈의 `app.input`(규약 JSON adapter, Stage 6)과 다른 패키지다 �
 테스트 파일은 §7. `package-info.java`(Stage 0 생성)는 유지한다.
 
 **여기 없는 것 — 2026-08-11 유예.** `VehicleOwnership.java`(파일 전체) · `Vehicle`의 치수
-3필드 · 차량별 `trips` · `Depot`의 `nodeId`·`taskTimeSec`은 **wire에 없거나 소비처가 없어서**
+3필드 · 차량별 `trips` · `Depot`의 `taskTimeSec`은 **wire에 없거나 소비처가 없어서**
 만들지 않는다. 전부 순수 add-only라 필요해지는 시점에 필드 하나씩 되살리면 되고, 근거·트리거·
 되살릴 지점은 [Stage Extra](stage-extra-deferred-features.md)에 등재돼 있다.
+`Depot`의 `nodeId`는 유예가 아니라 **설계 확정 삭제**다 (2026-08-13 분류 확정) — 차고는 방문
+노드가 아니므로 NodeId 자체가 없고(Stage 3 §4.4), 되살아날 유일한 경로인 multi-trip 개방 시의
+노드 표현 재설계는 Stage Extra E1 본체에 딸려 있다 (별도 등재 항목이 아니다).
 
 ---
 
@@ -190,7 +212,8 @@ public record Request(
 
 public record Vehicle(
     VehicleId id,
-    String vehicleFeature,             // 차급 코드 하나 (Domain §2.4)
+    Optional<String> vehicleFeature,   // 차급 코드 하나. empty = 전 차급 — 부재·"ALL" 접힘
+                                       // (Domain §3.4, 2026-08-12 확정)
     long maxWeightMilliKg,
     long maxVolumeMilliCbm,
     List<TimeWindow> workWindows,      // workStart/workEnd (기본 00:00:00/23:59:59). 날마다 반복 →
@@ -253,7 +276,7 @@ public record Plan(
 
 | 값 | 이유 | 어디로 |
 |---|---|---|
-| `searchTimeLimitSec` (`Termination.secondsSpentLimit`) | 탐색 예산이다. 유효한 답의 집합을 바꾸지 않으므로 `Problem`에 동결되면 안 된다 | Stage 6 adapter가 wire에서 직접 읽어 `AlnsConfig`(Stage 4)로 넘긴다 |
+| `searchTimeLimitSec` (`Termination.secondsSpentLimit`) | 탐색 예산이다. 유효한 답의 집합을 바꾸지 않으므로 `Problem`에 동결되면 안 된다 | Stage 6 adapter의 parse 반환 봉투 `ParseResult.secondsSpentLimit`(2026-08-12 확정)로 나와 `AlnsConfig`(Stage 4)로 간다 |
 | `distanceTimeCalculate` (`TravelCalcMode`) | 이동표 준비 동작을 분기시키지 않는 죽은 값이었다 (Stage 2 §9 Q3) | canonical에서 제거. 결과 run 메타에 남길지는 Stage 6 재량 |
 
 두 값 모두 `domain`에서 사라진다 — `TravelCalcMode` enum도 만들지 않는다.
@@ -282,12 +305,17 @@ public record ItemInput(
   — pickup side가 있으면 `PICKUP_DELIVERY`, 없으면 `DELIVERY_ONLY`로 정규화된다 (Domain §1.3).
 - `SideInput(String locId /*nullable*/, String latText, String lonText, LocalTime openTime, LocalTime closeTime, Long durationSec, LocalDateTime reqDate, String zoneId)` — 시각류 전부 nullable.
 - `VehicleInput(String vehicleId, String vehicleFeature, BigDecimal maxWeightKg, BigDecimal maxVolumeCbm, LocalTime workStart, LocalTime workEnd, Integer speedKmH, Integer maxStopCnt, Long maxDriveTimeSec, Long maxDriveDistMeter, Set<String> capabilities, Set<String> zoneIds, String startDepotLocId, String endDepotLocId)`
-  — 차량별 `trips`·`vhclOwnTyp`·치수 3필드는 **없다** (2026-08-11 유예). 현행 규약 차량 키는
-  `vehicleId`·`vehicleFeature`·`maxWeight`·`maxVolume`·`workStartTime`·`workEndTime`·`speed`
-  7개뿐이라(fixture 실측) 읽을 값 자체가 없다 — [Stage Extra E1·E2·E3](stage-extra-deferred-features.md).
+  — 차량별 `trips`·`vhclOwnTyp`·치수 3필드는 **없다** (2026-08-11 유예). 이 셋은 **규약 차량
+  표에도 없고**(PDF 정의는 10종 + 예시 `driverSkill` — 셋 다 미정의), 실물 wire(floor fixture)의
+  차량 키도 `vehicleId`·`vehicleFeature`·`maxWeight`·`maxVolume`·`workStartTime`·`workEndTime`·
+  `speed` 7개뿐이라(실측) 읽을 값 자체가 없다 — [Stage Extra E1·E2·E3](stage-extra-deferred-features.md).
+  반대로 위 시그니처에 남긴 optional 필드(`maxStopCnt`·`maxDrive*`·`capabilities`(규약
+  `driverSkill` 대응)·`zoneIds`·depot 2필드)는 **규약이 정의하는 키**라 fixture에 없어도 유지한다.
 - `DepotInput(String locId, String latText, String lonText, LocalTime openTime, LocalTime closeTime, String zoneId)`
   — `taskTime`은 받지 않는다. 그 값은 **복귀 선적 시간**이고(Domain §2.5, 2026-08-11 확정)
-  1바퀴에는 복귀가 없어 발생하지 않는다 — multi-trip을 열 때 함께 되살린다 (Stage Extra E1).
+  1바퀴에는 **복귀 후 다음 바퀴 선적**이 없어 발생하지 않는다 (roundtrip이면 복귀 자체는
+  있다 — 차고 창 검사는 그대로 적용된다, Domain §7.1) — multi-trip을 열 때 함께 되살린다
+  (Stage Extra E1).
 - `OptionsInput(String trips, Integer multiRotation, String waitInDepot, Integer defaultSpeedKmH, Integer globalVehicleMaxStopCount)`
   — `distanceTimeCalculate`·`searchTimeLimitSec` 필드는 **없다** (§2.2). 탐색 예산이 canonical에
   들어올 자리를 타입에서부터 없앤다.
@@ -295,7 +323,7 @@ public record ItemInput(
   — fixture의 `F`/`T`/`D`/`U` 대응. `C` 등 기타 열은 필드 자체가 없다 (Domain §4 MUST NOT의 구조적 강제).
   **거부 대상인데도 `BigDecimal`인 이유**: 거부하려면 먼저 소수임을 **봐야** 한다.
   `Long`으로 받으면 파싱 단계에서 죽어(`field` 경로 없는 형식 오류) 또는 조용히 잘려
-  (`"310708.03"` → `310708` 통과) 둘 다 나쁘다. 원시값은 정확히 옮기고 거부 판단은
+  (`310708.03` → `310708` 통과) 둘 다 나쁘다. 원시값은 정확히 옮기고 거부 판단은
   core가 한다 — "의미 변환은 전부 `PlanNormalizer`"(§서두).
 
 ---
@@ -318,8 +346,10 @@ public record TimeBase(LocalDateTime origin) {
 
 // Domain §3.1 — 단위. 실패 시 InputException(INVALID_INPUT)
 // 세 메서드의 소수 정책이 서로 반대다 — 무게·부피는 받고(FLOOR), 거리·시간은 거부한다.
+// 거부는 표기 기준: BigDecimal scale > 0이면 값이 정수라도 거부한다 ("15.0" 거부 —
+// Domain §3.1, 2026-08-12 확정. Jackson이 원문 표기를 scale로 보존하므로 토큰 검사와 같다).
 public final class Units {
-    /** 무게·부피 전용. 소수를 **받아서** ×1000 후 3자리 FLOOR (fixture weight "26.2" → 26200). 음수 거부 */
+    /** 무게·부피 전용. 소수를 **받아서** ×1000 후 3자리 FLOOR (fixture weight 26.2 → 26200). 음수 거부 */
     public static long toMilli(BigDecimal value, Supplier<String> field);
     /** 거리 전용. 소수는 **거부** — 규약이 integer meter다 (Domain §3.1·§4) */
     public static int  toWholeMeters(BigDecimal value, Supplier<String> field);
@@ -387,12 +417,15 @@ floor fixture의 이동표는 205,209줄이고 줄마다 D·U 두 번 호출하�
           effectiveMaxStopCount = min(존재하는 것만: maxStopCnt, optionsInput.globalVehicleMaxStopCount).
             둘 다 없으면 Optional.empty (Domain §2.6).
           startDepot: 명시 → depots에 존재 검증(없으면 INVALID_INPUT).
-            부재 → 차고가 정확히 1개면 그 차고, 여러 개면 INVALID_INPUT (§6 E20).
+            부재 → 차고가 정확히 1개면 그 차고, 여러 개면 INVALID_INPUT
+            (Domain §2.4 부재 규칙, 2026-08-12 확정 — §6 E20).
           endDepot 접기 (Domain §2.5) — 절차 2의 options.trips로 판정한다
             (차량별 trips는 wire에 없어 유예 — Stage Extra E1):
             명시 → 존재 검증 후 그 값 (oneway여도 유지 — "있으면 그것 우선").
             부재 + roundtrip → startDepot. 부재 + oneway → Optional.empty.
             접은 뒤 canonical Vehicle에 trips 필드는 남지 않는다 (Domain §2.5 접기 유지 판단).
+          vehicleFeature: 부재 또는 "ALL" → Optional.empty (전 차급 와일드카드 —
+            Domain §3.4, 2026-08-12 확정. §6 E26).
 6. 주문    중복 RequestId → INVALID_INPUT. items 없음·빈 배열 → INVALID_INPUT (Domain §3.3).
           item별: qty null→1, qty < 1 → INVALID_INPUT (Domain §3.1 양의 정수).
             weight/volume → Units.toMilli (개당). taskTime null→0, 음수 → INVALID_INPUT.
@@ -409,16 +442,22 @@ floor fixture의 이동표는 205,209줄이고 줄마다 D·U 두 번 호출하�
           requiredCapabilities: null → 빈 집합 (미요구, Domain §3.4).
           pattern: pickup side 존재 여부로 확정 (Domain §1.3).
 7. 이동표  entry별: from/to non-blank.
+          from == to (self arc) 행은 값을 읽지 않고 버린다 — 단위 검증(소수 거부)의 검사
+            대상도 아니다 (Domain §4, 2026-08-12 확정. 실물 wire는 self arc 453건 전부
+            D=9999·U=0을 보낸다).
           D → Units.toWholeMeters, U → Units.toWholeSeconds — 소수·음수 거부 (Domain §3.1·§4).
-          여기서는 단위 검증만 한다. self arc = 0 강제·완전성·누락 보정(Great Circle,
-          ceil(D×3.6/speed))·조회 키 구성은 전부 Stage 2 (Domain §4·§5).
+          여기서는 단위 검증만 한다. self arc sentinel(D=999,000·U=86,400) 강제·완전성·
+          누락 보정(Great Circle, ceil(D×3.6/speed))·조회 키 구성은 전부 Stage 2 (Domain §4·§5).
 8. 조립    Plan 반환. 호환성 사실의 사전 계산·ID 참조 그래프 검증은 하지 않는다 —
           그것은 Problem 생성(Stage 2, Domain §5) 몫이다.
 ```
 
-fixture 근거: `win_poc_case.json`의 `D: "310708.03"` 같은 소수 문자열은 절차 7에서 거부된다 —
-그래서 최종 실행 fixture가 정수화된 [win_poc_case_floor.json](../../data/win_poc_case_floor.json)이다.
-반면 `multiRotation`은 절차 2를 **통과한다** — 규약 원본 값 `"1"`은 1바퀴라 지원 범위 안이다
+fixture 근거: 원본 `win_poc_case.json`은 수치 대부분이 문자열 인코딩이라 이제 그것만으로도
+INVALID_INPUT이고(Domain §3.1, 2026-08-12 확정 — 수신 원형으로 문자열 그대로 보존한다),
+`D: 310708.03` 같은 소수 거리는 number로 와도 절차 7에서 거부된다 — 그래서 최종 실행 fixture가
+number·정수화된 [win_poc_case_floor.json](../../data/win_poc_case_floor.json)이다
+(2026-08-12 number 정정 완료).
+반면 `multiRotation`은 절차 2를 **통과한다** — floor fixture 값 `1`은 1바퀴라 지원 범위 안이다
 ([Plan §2.1 D1](../implementation-plan.md) 확정). 통과 집합이 `{0, 1}`이므로 이 필드로
 거부되는 fixture는 없다.
 
@@ -458,9 +497,12 @@ public final class Compatibility {
   Domain §2.4 optional 원칙과 동일).
 - 치수 축은 **만들지 않는다** — canonical `Item`에도 `Vehicle`에도 치수 필드가 없어 검사
   대상이 없다 (2026-08-11 유예, [Stage Extra E2](stage-extra-deferred-features.md)).
-- `capability`·`zone` 두 축은 **현행 wire에서 항상 참이다** — 차량에 `capabilities`·`zoneIds`가
-  없기 때문이다(fixture 차량 7키). 식은 Domain §3.4가 정의하므로 그대로 만들되, 테스트는
-  도달 가능한 조합만 다룬다 (§7 T12).
+- `capability`·`zone` 두 축은 **현행 wire에서 항상 참이지만, 이유가 서로 다르다** —
+  zone 축은 **차량** `zoneIds` 부재(= 전 구역)로, capability 축은 **주문** 쪽 요구 필드가
+  wire에 없어서(= 미요구) 참이다. 차량 capabilities 부재(빈 집합 = 능력 없음)는 요구가
+  있으면 축을 **거짓**으로 만드는 조건이고, 규약 차량 예시에는 `driverSkill`이 실재하므로
+  "차량에 필드가 없어서"로 뭉치면 안 된다 (Domain §2.4 — 두 부재의 의미가 정반대).
+  식은 Domain §3.4가 정의하므로 그대로 만들되, 테스트는 도달 가능한 조합만 다룬다 (§7 T12).
 - 호환 차량이 0대인 Request는 오류가 아니다. 정규화·판정 어디서도 던지지 않고, 풀이 후
   미배정+사유(`NO_COMPATIBLE_VEHICLE`)로 남는다 (Domain §3.4, 사유 기록은 Stage 5).
 
@@ -476,8 +518,8 @@ Domain의 optional 규칙·경계값·오류 분류(§2·§3·§12)에서 뽑았
 | E2 | weight `1.23456` kg | FLOOR → `1234` milli | §3.1 FLOOR |
 | E3 | weight `0.0009` kg | FLOOR → `0` (합법 — 0 허용) | §3.1 |
 | E4 | weight/volume 음수 | INVALID_INPUT | §3.1 |
-| E5 | 거리 `310708.03` / 시간 `17265.5` | INVALID_INPUT (소수 거부) | §3.1·§4 |
-| E6 | `multiRotation` = `0`·`1` (fixture 실값 `"1"` 포함) | **통과** — 둘 다 1바퀴 (D1 확정) | §2.5 MUST |
+| E5 | 거리 `310708.03` / 시간 `17265.5` / 정수값 소수 표기 `15.0` | INVALID_INPUT (소수 거부 — 표기 기준) | §3.1·§4 |
+| E6 | `multiRotation` = `0`·`1` (fixture 실값 `1` 포함) | **통과** — 둘 다 1바퀴 (D1 확정) | §2.5 MUST |
 | E6b | `multiRotation` = `2` 이상, 또는 `-1`(무제한 복귀) | UNSUPPORTED_INPUT — 차고 재방문은 범위 밖 | §2.5 MUST·§12 |
 | E6c | `multiRotation` = `-2` 이하 | INVALID_INPUT — 규약이 "greater than -1"로 금지한 값 | §2.5·§12 |
 | E7 | qty 0·음수 | INVALID_INPUT. null → 1 | §3.1 |
@@ -492,13 +534,13 @@ Domain의 optional 규칙·경계값·오류 분류(§2·§3·§12)에서 뽑았
 | E17 | reqDate < planStart | 수용 (음수 초로 정규화) — 실행 불가능성은 탐색·미배정의 일 | §2.3·§3.4 유추 |
 | E18 | planStart ≥ planEnd | INVALID_INPUT | §2.2 |
 | E19 | roundtrip + endDepot 부재 | endDepot := startDepot. oneway + endDepot 명시 → 그 값 유지 | §2.5 |
-| E20 | 차량 startDepot 부재 (fixture 전 차량) + 차고 1개 | 그 차고로 확정. 차고 여러 개면 INVALID_INPUT | §2.5·§2.1 |
+| E20 | 차량 startDepot 부재 (fixture 전 차량) + 차고 1개 | 그 차고로 확정. 차고 여러 개면 INVALID_INPUT | §2.4 부재 규칙 (2026-08-12 확정 — §2.1 '몰래 채우는 기본값'에 안 걸리는 명시 규칙) |
 | E21 | 같은 LocationId에 다른 좌표 | INVALID_INPUT | §2.1 추측 금지 |
 | E22 | locId 부재 | `LocationId.generated(좌표 원문)` — 같은 좌표 원문 = 같은 장소 | §2.3 |
 | E23 | capability 미요구 (빈 집합) | 모든 차량과 capability 축 통과 | §3.4 |
 | E24 | 호환 차량 0대인 Request | 오류 아님 — 정규화 통과, 풀이 진행 | §3.4 |
 | E25 | 중복 orderId / vehicleId | INVALID_INPUT | §5의 ID 참조 무결성 전제 |
-| E26 | 차량 vehicleFeature가 `"ALL"` | 문자 그대로 비교 (목록에 `"ALL"`이 있어야 매칭) — §3.4 식을 벗어난 해석 금지 | §3.4 |
+| E26 | 차량 vehicleFeature가 `"ALL"` 또는 부재 | **전 차급 와일드카드** — `Optional.empty`로 접는다 (2026-08-12 확정, 종전 "문자 그대로 비교" 규칙 폐기 — 규약 Default `"ALL"` 차량이 유령이 되던 결함 수선) | §3.4 |
 | E27 | 시간창 close < open (예: 야간조 `22:00~06:00`) | **수용 — 자정을 넘는 창이다** (2026-08-10 D4 확정, 종전 INVALID_INPUT을 뒤집음). close를 다음 날짜의 그 시각으로 보고 전개한다. 계획 시작 '전날'에 시작한 창이 첫날 아침까지 이어지는 부분도 잘려 들어온다 | Domain §3.2 규칙 1·2 |
 | E27b | 시간창 close == open (예: `09:00~09:00`) | **INVALID_INPUT (신규)** — 1초짜리 창인지 24시간인지 애매하다 (추측 금지). E27을 수용하면서 생긴 구멍을 닫는다 | Domain §3.2 규칙 3·§2.1 |
 | E28 | 기본창 `00:00:00~23:59:59`, 3일 계획 | `[0,86399]`·`[86400,172799]`·`[172800,259199]`가 **병합돼 `[0,259199]` 하나**. 자정마다 1초 틈이 남으면 자정을 넘는 이동이 전부 막힌다 | Domain §3.2 규칙 5 |
@@ -512,23 +554,23 @@ Domain의 optional 규칙·경계값·오류 분류(§2·§3·§12)에서 뽑았
 
 위치: `solver-core/src/test/java/com/ronext/rpdptw/domain/` (+ `domain/input/`).
 의존은 JUnit만 — fixture JSON 파싱은 Jackson **3**(app, Stage 0 §4.4)이 필요하므로 Stage 6 통합 테스트의 일이고,
-여기서는 fixture의 실값(26.2 kg, 310708.03 m, multiRotation "1", 전역 28)을 손으로 옮겨 쓴다.
+여기서는 fixture의 실값(26.2 kg, 310708.03 m, multiRotation 1, 전역 28)을 손으로 옮겨 쓴다.
 
 | # | 테스트 | 내용 | 대응 DoD 문장 |
 |---|---|---|---|
 | T1 | `UnitsTest.floorsAtThirdDecimal` | E1·E2·E3 값 확인. `BigDecimal` 문자열 경로로 double 오차 없음 확인 | "FLOOR 단위 테스트" |
 | T2 | `UnitsTest.rejectsNegative` | E4 → INVALID_INPUT | 단위·경계값 |
-| T3 | `UnitsTest.rejectsFractionalDistanceAndTime` | E5 (fixture 실값) → INVALID_INPUT | "소수 거부" |
+| T3 | `UnitsTest.rejectsFractionalDistanceAndTime` | E5 (fixture 실값 + 정수값 소수 표기 `15.0`) → INVALID_INPUT — 표기 기준의 직접 검증 | "소수 거부" |
 | T4 | `PlanNormalizerTest.absentOptionalMeansNoConstraint` | E10·E15: 부재 축 전부 `Optional.empty`, sentinel 부재 확인 | "optional 부재 = 제약 없음" |
-| T5 | `PlanNormalizerTest.acceptsOneRotationRejectsMultiTrip` | **통과 집합 고정.** E6: `0`·`1` 통과(fixture 실값 `"1"` 포함) · E6b: `2`·`5`·`-1` → UNSUPPORTED_INPUT · E6c: `-2` → INVALID_INPUT. **`-1` 케이스가 이 테스트의 핵심**이다 — 판정을 `> 1` 비교식으로 쓰면 여기서만 깨진다 | "`multiRotation` 지원 범위 `{0,1}` 밖 거부 테스트" |
+| T5 | `PlanNormalizerTest.acceptsOneRotationRejectsMultiTrip` | **통과 집합 고정.** E6: `0`·`1` 통과(fixture 실값 `1` 포함) · E6b: `2`·`5`·`-1` → UNSUPPORTED_INPUT · E6c: `-2` → INVALID_INPUT. **`-1` 케이스가 이 테스트의 핵심**이다 — 판정을 `> 1` 비교식으로 쓰면 여기서만 깨진다 | "`multiRotation` 지원 범위 `{0,1}` 밖 거부 테스트" |
 | T6 | `TimeBaseTest.secondsFromPlanStart` | 원점 변환·`toWallClock` 왕복·E17 음수 | 경계값 (Domain §3.2) |
 | T7 | `PlanNormalizerTest.serviceTimeFormula` | duration + Σ(taskTime×qty) — qty 곱 포함 (Domain §3.3) | Stage 범위 문장 "serviceTime 공식" |
 | T8 | `PlanNormalizerTest.reqDateDefaultsToPlanEnd` | E16, side별 독립 reqDate (Domain §2.3 MUST) | Stage 범위 문장 |
 | T9 | `PlanNormalizerTest.foldsGlobalStopCount` | E11·E12 (min 접기) | 경계값 (Domain §2.6) |
 | T10 | `PlanNormalizerTest.rejectsAmbiguousInput` | E8·E14·E18·E21·E25 → INVALID_INPUT | 경계값·오류 분류 |
 | T11 | `PlanNormalizerTest.deliveryOnlyHasNoPickupSide` | pattern 확정 + pickup `Optional.empty` (Domain §1.3 MUST NOT) | Stage 범위 문장 "canonical 모델" |
-| T12 | `CompatibilityTest.axisTruthTable` | **size 축의 참/거짓 조합**(E26·E14의 `["ALL"]` 포함)과 `compatible`의 AND 결합 + E23·E24. `capability`·`zone`은 **현행 wire에서 항상 참**이라(차량에 해당 필드 없음) 미요구/부재 시 통과만 확인한다 — 도달 불가능한 조합의 진리표를 만들지 않는다 | Stage 범위 문장 "호환성 판정" |
-| T13 | `PlanNormalizerTest.depotResolution` | E19·E20: `options.trips = roundtrip` + endDepot 부재 → `startDepot` · `oneway` + endDepot 명시 → 그 값 유지 · startDepot 부재 + 차고 1개 → 그 차고, 여러 개 → INVALID_INPUT | 경계값 (Domain §2.5) |
+| T12 | `CompatibilityTest.axisTruthTable` | **size 축의 참/거짓 조합**(E26·E14의 `["ALL"]` 포함)과 `compatible`의 AND 결합 + E23·E24. `capability`·`zone`은 **현행 wire에서 항상 참**이라(zone은 차량 `zoneIds` 부재, capability는 주문 요구 부재 — §5) 미요구/부재 시 통과만 확인한다 — 도달 불가능한 조합의 진리표를 만들지 않는다 | Stage 범위 문장 "호환성 판정" |
+| T13 | `PlanNormalizerTest.depotResolution` | E19·E20: `options.trips = roundtrip` + endDepot 부재 → `startDepot` · `oneway` + endDepot 명시 → 그 값 유지 · startDepot 부재 + 차고 1개 → 그 차고, 여러 개 → INVALID_INPUT | 경계값 (Domain §2.5·§2.4) |
 | T14 | `TimeBaseTest.expandsDailyWindows` | **창 전개 전수.** E28(기본창 3일 → 병합돼 1개) · E29(planStart 비자정 클리핑) · E31(planEnd 클리핑) · E30(빈 목록, 예외 없음) · Domain §3.2 예2(근무 08:00\~17:00 3일 → `[28800,61200]`·`[115200,147600]`·`[201600,234000]`) · 결과의 불변식(정렬·비겹침·병합 완료) | 경계값 (Domain §3.2) |
 | T15 | `TimeBaseTest.acceptsOvernightWindowAndRejectsZeroLength` | **야간조 케이스.** E27: `22:00~06:00` 3일 계획 → 전날에서 넘어온 `[0, 첫날 06:00]` + 날마다 `[22:00, 다음날 06:00]` · E27b: `09:00~09:00` → INVALID_INPUT | 경계값 (Domain §3.2 규칙 2·3) |
 | T16 | `PlanNormalizerTest.floorFixtureWindowsStayOneEach` | **1일 fixture 무영향 증명.** §4 말미 실측 표의 세 값(차량 `00:00:00~23:30:00` → `[[0,84600]]`, 차고 `00:00:00~23:59:59` → `[[0,86399]]`, 주문 `05:45~10:30` → 창 1개)을 `planEnd=86400`으로 손 조립해 **목록 길이가 전부 1**임을 단언 | 경계값 (Domain §3.2 — 회귀 방지) |
@@ -543,7 +585,7 @@ T7·T8·T11\~T16은 DoD 두 문장 밖이지만 Plan Stage 1 범위 문장("cano
 
 | 안 하는 것 | 담당 | 근거 |
 |---|---|---|
-| 이동표 키 구성·완전성 검사·self arc = 0 강제·누락 보정(Great Circle, `ceil(D×3.6/speed)`) | Stage 2 | Domain §4 |
+| 이동표 키 구성·완전성 검사·self arc sentinel(D=999,000·U=86,400) 강제·누락 보정(Great Circle, `ceil(D×3.6/speed)`) | Stage 2 | Domain §4 |
 | `Problem` 동결·ID 참조 그래프 검증·호환성 사실 사전 계산 | Stage 2 | Domain §5 |
 | `Solution`·전파·평가·`Profile`(core `eval`)·`ProfileRegistry`(solver-profile 모듈) | Stage 3 | Domain §6–§8 |
 | 미배정 사유 산출 (`NO_COMPATIBLE_VEHICLE` 등) | Stage 5 | Domain §11 |
@@ -552,7 +594,7 @@ T7·T8·T11\~T16은 DoD 두 문장 밖이지만 Plan Stage 1 범위 문장("cano
 | fixture JSON을 직접 읽는 테스트 (Jackson 3 / app) | Stage 6 | Architecture §2.1 (core 의존 0), Stage 0 §4.4 |
 | `depot.taskTime` — **읽지도 담지도 않는다** | [Stage Extra E1](stage-extra-deferred-features.md) (multi-trip) | 복귀 선적 시간이라 1바퀴엔 미발생 (Domain §2.5) |
 | 비용(cost) 축 처리 | Stage 3 평가에서 필요 시 | Domain §3.1·§8 |
-| 탐색 예산(`Termination.secondsSpentLimit`) 파싱·전달 | Stage 6 adapter → Stage 4 `AlnsConfig` | Domain §2.5.1, §2.2 |
+| 탐색 예산(`Termination.secondsSpentLimit`) 파싱·전달 | Stage 6 adapter parse 반환 봉투(`ParseResult`, 2026-08-12 확정) → Stage 4 `AlnsConfig` | Domain §2.5.1, §2.2 |
 | 치수 축 전부 (item 3필드 + 차량 한도 3필드) | [Stage Extra E2](stage-extra-deferred-features.md) (3D 적재 고객 확정 시) | Domain §2.1.1 |
 | 차량별 `trips` | [Stage Extra E1](stage-extra-deferred-features.md) | wire에 필드 없음 (Domain §2.4 유예 표) |
 | 차량 소유 구분(`VehicleOwnership`) | [Stage Extra E3](stage-extra-deferred-features.md) | 소비처 0 (Domain §2.4 유예 표) |
@@ -563,11 +605,13 @@ T7·T8·T11\~T16은 DoD 두 문장 밖이지만 Plan Stage 1 범위 문장("cano
 
 확정 문서로 답이 안 나오는 것만 남긴다. Stage 1 구현은 각 항목의 "잠정 처리"로 진행한다.
 
-닫힌 질문은 여기 남기지 않는다 (2026-08-11 정리) — `multiRotation` 의미는 [Plan D1](../implementation-plan.md),
-다일 시간창은 [Plan D4](../implementation-plan.md), 치수 축은 [Stage Extra E2](stage-extra-deferred-features.md),
-`taskTime × qty`는 [Domain §3.1·§3.3](../domain-design.md)(2026-08-11 소유자 확정)이 정본이다.
+닫힌 질문의 처리 규칙은 [README](README.md)의 공통 규칙(2026-08-13)을 따른다 — 해소 표시를
+달아 남긴다. (이 문서는 2026-08-11 정리 때 닫힌 질문을 이미 지웠으므로 그 포인터만 남긴다:
+`multiRotation` 의미는 [Plan D1](../implementation-plan.md), 다일 시간창은
+[Plan D4](../implementation-plan.md), 치수 축은 [Stage Extra E2](stage-extra-deferred-features.md),
+`taskTime × qty`는 [Domain §3.1·§3.3](../domain-design.md)(2026-08-11 소유자 확정)이 정본이다.)
 
 | # | 질문 | 잠정 처리 |
 |---|---|---|
-| Q4 | speed의 소수 입력 — 규약 PDF는 double, Domain §3.1 소수 거부 목록엔 거리·시간만 있다 | 정수만 수용(`Integer`), 소수 speed는 INVALID_INPUT (fixture는 정수 `"45"`). Domain 확인 후 완화 가능 |
+| Q4 | speed의 소수 입력 — 규약 PDF는 double, Domain §3.1 소수 거부 목록엔 거리·시간만 있다 | 정수만 수용(`Integer`), 소수 speed는 INVALID_INPUT (fixture는 정수 `45`). Domain 확인 후 완화 가능 |
 | Q6 | plan `customerId`의 wire 원천 — Domain §2.2가 "`shprId`(또는 협의 필드)"로 열어 둠. fixture는 plan `shprId="S3853"`와 order별 `customerId="WINCOMMERCE"`가 공존 | canonical은 `Optional<String>` 하나만 보유. 어느 wire 필드를 쓸지는 Stage 6 adapter에서 협의 확정. 부재 시 default profile (Domain §8.4) |

@@ -38,6 +38,40 @@ revisions:
     ③ §3.1에 `weight`·`volume`·`taskTime` **전부 ×qty** 명시(규약 PDF 문면이 부정확) ·
     소수 거리·시간 거부를 재확인(FLOOR 완화 안 함)하고 원본 fixture 미접수 사실 기록.
     **설계 규칙 변경은 없다** — ②③은 기존 규칙의 근거·문구 확정이고, ①은 선제 구현 되돌리기다
+  - 2026-08-12 **전수 감사 치명 결함 3건 수선 (시스템 소유자 확정)** — ① §4 self arc:
+    "= 0" 규정 폐기, 정규화가 sentinel **D = 999,000 m · U = 86,400초**로 강제(입력 self arc
+    값은 읽지 않고 버린다 — 실물 wire는 D=9999를 보낸다) · ② §2.4 `startDepot` 부재 규칙 신설
+    (이 도메인은 CVRPTW도 덮는다 — depot이 하나면 그 차고, 여러 개면 `INVALID_INPUT`) ·
+    ③ §3.1 수치 필드의 JSON 인코딩 = **number** 확정(문자열 수치는 `INVALID_INPUT`,
+    실행 fixture를 number로 정정). §12 오류 예시 2건 추가
+  - 2026-08-12 감사 후속 인터뷰 — ① §3.1 소수 거부 판정 = **표기 기준**(number 토큰에
+    소수점이 있으면 값과 무관하게 거부, `15.0`도 거부) 확정. 인용 수치 204,756이 이 기준임을
+    명기(그중 3,558건은 정수값 소수 표기) · ② §2.4 `maxDriveDist`의 PDF 철자 `maxDriveDistc`
+    별칭 수용(두 철자 다 읽고, 둘 다 오면 `INVALID_INPUT`) · ③ §2.3 `itemId` 필수 —
+    **비어 있으면 orderId 사용** (stage-06의 `prodId` 폴백은 소유자 확정이 아닌
+    작성 시 발명(commit edb2aae)이라 폐기) · ④ §2.5 실물 options 3키
+    (`driverRestTimeRatio`·`difficultySortType`·`customerAbbr`) **무시 확정** —
+    0이 아닌 비율도 거부하지 않음(수용된 위험) · ⑤ §2.1 미지 wire 필드 일반 정책 = **무시**
+    확정 + 실물 무시 대상 목록 등재(`DEPOT`·`district`·주문 `customerId`·`continent`·
+    `lssId`·`routes`·`prodId`) · ⑥ §3.4 차량 쪽 `vehicleFeature` 부재·`"ALL"` =
+    **전 차급 와일드카드** 확정(규약 Default "ALL" 차량이 유령이 되던 결함 수선) ·
+    ⑦ §3.1 단위 코드 검증 확정(`KG`/`CBM` 외 `INVALID_INPUT`, 부재 = KG·CBM) ·
+    ⑧ §7.4 stopCount **첫 고객 방문도 +1** 확정(Win 실측 28방문=28정차=한도 경계로 검산) ·
+    ⑨ §11.1 미배정 reason 판정 규칙 정본화(4종 고정 + 검사 순서: 호환 0대 → 정적 용량 →
+    단독 전파 불가 → NOT_PLACED — Stage 5 §4.3 절차를 정본으로 승격) · ⑩ §10.2 검사 목록을
+    **참조형으로 전환**(§6.2 전 항목 + §6.3 XOR + §3.4 호환성 + §2.6 경계 + profile hard —
+    한도 축 누락이 낳은 상하위 역전을 구조적으로 봉합)
+  - 2026-08-13 전수 감사 기계적 정정 — §2.2 depots 행에 규약 단일 depot 정책 주석 ·
+    §2.4 공통 목록을 "실물 wire 실존 7필드 / 규약 정의 optional(실물 미출현)"로 분리하고
+    규약(PDF 표 정의)·실물 wire(fixture 실측) 용어 구분 명시 · §2.5 depot.taskTime
+    "복귀 자체가 없으므로" → "복귀 후 재선적이 없으므로"(roundtrip의 복귀는 있다) ·
+    §2.5 defaultSpeed의 실물 wire 표기(`Optimizer.DefaultSpeed`) 병기 · §3.3 openTime이
+    §7.1 적용 창의 open임을 명시 · §6.2 hard 행의 "등" 제거·한도 축 전수 나열 · §7.1 절차 6이
+    새로 판정하는 것(용량·한도) 명시 · §7.2 숫자 예에 R2배 방문 보충(pair 완결·종료 load 0 —
+    자체 MUST 위반이던 예 정정) · §7.3 마지막 방문 departure = serviceEnd 명시 · §8.3
+    "가중합 비교기를 만들 수 없다" 단언 완화(축 구성은 구조가 못 막는다 — 리뷰 대상) ·
+    §11.1을 의미 정본으로 한정(필드명·형태는 §11.2 소유)·visits 적재 2축(loadWeight·
+    loadVolume) 표기·run "재검증 통과 여부"에 항상 PASS 주석. 규칙 변경 없음
 ---
 
 # RO-Next Domain Design
@@ -141,6 +175,12 @@ revisions:
 - 변환 경로는 **adapter 하나** (MUST). 스키마 버전을 여러 개 병행 운영하지 않는다 (MUST NOT).
 - 규약에 없는 canonical 필드(예: pickup 쪽 시간창)는 optional이며, 없으면 그 축을 쓰지 않는다.
 - adapter는 애매한 값을 **추측하지 않는다** — 규칙으로 정해진 기본값만 채우고, 그 외는 입력 오류.
+- **미지 wire 필드는 무시한다 (2026-08-12 확정).** 이 문서가 처분을 정하지 않은 키는 검증도
+  보관도 하지 않고 조용히 버린다 — wire는 호출 시스템이 관리하므로 저쪽의 필드 추가가 접수를
+  깨면 안 된다. 실물에서 확인된 무시 대상: 주문 `DEPOT`·`district`·주문 수준 `customerId`
+  (profile 키는 `shprId` — §2.2), top-level `continent`·`lssId`·`routes`, item `prodId`(§2.3),
+  options 3키(§2.5). PDF가 Mandatory로 표기한 `continent`도 소비처가 없어 존재 검증조차
+  하지 않는다.
 
 ### 2.1.1 canonical 확장 기준 (MUST, 2026-08-10 확정)
 
@@ -182,7 +222,7 @@ revisions:
 | `planId` | 풀이 식별자 | `planId` |
 | `planStart` / `planEnd` | 계획 기간 `[planStart, planEnd)` — 끝 미포함. **여러 날 가능** (시간창 전개는 §3.2) | `dateRange.from/to` |
 | `customerId` | 어느 고객 요청인지 (profile 선택에 사용, §8.4) | `shprId`(또는 협의 필드) |
-| depots | 차고 목록 (여러 개 가능) | `depot[]` |
+| depots | 차고 목록 (canonical은 여러 개 가능) | `depot[]` — 규약은 단일 depot 정책이다 (다중은 협의 사항, PDF 3쪽). 다중 depot 시의 `startDepot` 부재 규칙은 §2.4 |
 | requests | 일감 목록 | `orders[]` |
 | vehicles | 차량 목록 | `vehicles[]` |
 | travel input | 이동 거리·시간 입력 (§4) | `distanceMatrix[]` 또는 좌표 |
@@ -216,15 +256,38 @@ revisions:
 | 금지 | "reqDate 이후 배송" 해석 금지. 한쪽 `reqDate`로 다른 쪽을 대체 금지 |
 
 - `duration`과 `item.taskTime`은 다른 값이다. 방문 서비스 시간 계산은 §3.3.
+- **`itemId`는 필수다** (규약 Mandatory와 일치). **비어 있으면 그 주문의 `orderId`를
+  itemId로 쓴다** (2026-08-12 시스템 소유자 확정 — §2.1이 허용하는 '규칙으로 정해진 기본값'.
+  실물 fixture는 452건 전부 빈 문자열이라 전건 orderId를 쓴다). `prodId`는 canonical이 읽지
+  않는다 — 종전 stage 문서의 `prodId` 폴백은 시스템 소유자 확정이 아닌 작성 시 발명이라 폐기했다.
 
 ### 2.4 Vehicle 필드
 
-**공통(대부분 존재)**: `vehicleId`, `maxWeight`, `maxVolume`, `vehicleFeature`(차급 코드 하나),
-`workStart`/`workEnd`, `speed`(km/h), `maxStopCnt`, `maxDriveTime`(초), `maxDriveDist`(m), `startDepot`.
+용어 구분 — 이 절에서 **규약**은 PDF 표의 정의를, **실물 wire**는 fixture 실측
+([win_poc_case_floor.json](../data/win_poc_case_floor.json))을 가리킨다. 둘은 다르다 —
+규약이 정의해도 실물 wire에 안 오는 필드가 있다.
+
+**공통 — 실물 wire 실존 7필드** (fixture 차량 31/31): `vehicleId`, `maxWeight`, `maxVolume`,
+`vehicleFeature`(차급 코드 하나 — 부재·`"ALL"` = 전 차급 와일드카드, §3.4),
+`workStart`/`workEnd`, `speed`(km/h).
+
+**규약 정의 optional — 실물 wire 미출현 (0/31)**: `maxStopCnt`, `maxDriveTime`(초),
+`maxDriveDist`(m). `startDepot`도 실물 미출현이다 (규약 표에는 정의가 없는 canonical 필드 —
+부재 규칙은 아래).
 
 - `workStart`/`workEnd`는 **날마다 반복되는 근무창**이다 (§3.2). 계획 기간이 여러 날이면 날짜마다
   같은 시간대의 창이 하나씩 생긴다. `maxDriveTime`·`maxDriveDist`·`maxStopCnt`는 **경로 전체 합계**의
   한도이며 하루치 한도가 아니다 (규약이 기간을 말하지 않는다 — 하루 한도가 필요해지면 그때 축을 더한다).
+- `maxDriveDist`의 규약 PDF 표기는 `maxDriveDistc`다 (8쪽 — 끝의 c. 오타로 추정되나 실물
+  wire 출현이 0건이라 미확인). adapter는 **두 철자를 모두 읽고**, 두 키가 같이 오면
+  `INVALID_INPUT`이다 (2026-08-12 확정).
+
+**`startDepot` 부재 규칙 (MUST, 2026-08-12 확정)** — 이 도메인은 CVRPTW도 덮으며, CVRPTW에는
+depot이 반드시 있다. 실물 wire도 top-level `depot` 배열로 차고를 준다 (규약은 단일 depot 정책 —
+fixture는 depot 1개에 차량 31/31이 `startDepot` 없이 온다). 규칙: 차량에 `startDepot`이 없으면
+**계획의 depot이 정확히 하나일 때 그 차고가 출발 차고다.** 이것은 §2.1이 금지한 '몰래 채우는
+기본값'이 아니라 여기 명시된 규칙이다. depot이 여러 개인데 `startDepot`이 없으면 어느 차고인지
+추측할 수 없으므로 `INVALID_INPUT`이다 (§12).
 
 **Optional — 없으면 그 축의 제약을 아예 적용하지 않는다 (MUST: 몰래 기본값을 채우지 않는다)**
 
@@ -253,13 +316,22 @@ revisions:
 
 | 규칙 | 내용 |
 |---|---|
-| 차고 여러 개 | 가능. 차량마다 `startDepot` 지정, `endDepot`은 optional |
+| 차고 여러 개 | 가능. 차량마다 `startDepot` 지정, `endDepot`은 optional. `startDepot` 부재 규칙은 §2.4 |
 | `trips` | `oneway` = 도착 차고 없음(차량에 `endDepot` 있으면 그것 우선). `roundtrip` = `endDepot` 미지정 차량은 `startDepot`으로 복귀. **전체 설정 하나다** — 차량별 지정은 wire에 없어 유예했다 (§2.4 유예 표). 아래 주석 |
 | `multiRotation` | **차량이 도는 바퀴 수**를 센다. **core 지원 범위 = 경로당 trip 1개**(= 1바퀴, 차고 재방문 없음)이므로 **통과하는 값은 `{0, 1}` 둘뿐**이다 — `0`은 미설정(규약 기본값)이고 `1`과 같게 취급한다. `-1`(무제한 복귀)·`2` 이상은 범위를 넘으므로 `UNSUPPORTED_INPUT`으로 거부 (MUST). `-2` 이하는 규약 자체가 금지한 값이라 `INVALID_INPUT`. 아래 주석 |
 | `waitInDepot` | `Y` = 첫 방문 시간창에 맞춰 차고에서 늦게 출발 가능. `N` = **근무 시작과 차고 개장 중 늦은 쪽에 즉시 출발** |
 | `depot.openTime`/`closeTime` | 차고 시간창. **출발·복귀 두 순간에 적용**한다 (§7.1). 날마다 반복 (§3.2). 위반은 `DEPOT_WINDOW` |
-| `depot.taskTime` | **차고로 복귀해 다시 선적하는 데 걸리는 시간이다** (2026-08-11 시스템 소유자 확정). `multiRotation`이 `{0, 1}` = 1바퀴뿐인 현재 범위에서는 **복귀 자체가 없으므로 이 시간도 발생하지 않는다** — canonical에 담지 않고 시간 계산에도 쓰지 않는다. multi-trip을 여는 시점에 함께 되살린다 ([Stage Extra E1](implementation/stage-extra-deferred-features.md)) |
-| `defaultSpeed` | 이동표 준비 규칙에 사용 (§4) |
+| `depot.taskTime` | **차고로 복귀해 다시 선적하는 데 걸리는 시간이다** (2026-08-11 시스템 소유자 확정). `multiRotation`이 `{0, 1}` = 1바퀴뿐인 현재 범위에서는 **복귀 후 재선적이 없으므로 이 시간도 발생하지 않는다** (roundtrip의 복귀 자체는 있다 — §7.1 `DEPOT_WINDOW` 검사 대상) — canonical에 담지 않고 시간 계산에도 쓰지 않는다. multi-trip을 여는 시점에 함께 되살린다 ([Stage Extra E1](implementation/stage-extra-deferred-features.md)) |
+| `defaultSpeed` | 이동표 준비 규칙에 사용 (§4). 실물 wire 표기는 `Optimizer.DefaultSpeed`다 (fixture 실측 — PDF 정의는 `defaultSpeed`) |
+
+**실물 options 중 읽지 않는 3키 (2026-08-12 확정)** — `driverRestTimeRatio`·`difficultySortType`·
+`customerAbbr`는 **무시한다** (canonical에 담지 않고 검증도 하지 않는다 — 무슨 값이 와도 접수는
+통과). `customerAbbr`(고객 축약명)·`difficultySortType`(Win 내부 정렬 힌트로 추정)은 답의 의미와
+무관하다. `driverRestTimeRatio`는 이름상 운전 시간에 비례한 휴식 비율로 보이나 Win 쪽 의미가
+미확인이라 소비하지 않는다 — **0이 아닌 값도 거부하지 않으므로, 그런 입력에서는 Win 엔진과
+결과가 다를 수 있다 (수용된 위험, 시스템 소유자 확정).** §7.3의 `interWorkWindowRestTime`
+(근무창 사이 휴식)과는 다른 개념이니 혼동하지 말 것. 의미가 확인되고 필요해지면 배송정책으로
+편입한다.
 
 **`multiRotation`은 금지가 아니라 지원 범위 선언이다** (2026-08-10 변경). 엔진이 나중에 trip
 분할을 지원하면 이 문서의 MUST를 뒤집는 대신 지원 범위 숫자를 올린다. 다만 회전 분할은
@@ -366,13 +438,29 @@ revisions:
 | 비용 | integer | overflow 검사하는 integer |
 | 수량 | 양의 정수 | integer |
 
+- **수치 필드의 JSON 인코딩은 number다 (MUST, 2026-08-12 확정).** `weight`·`volume`·`qty`·
+  `taskTime`·`duration`·`speed`·`maxWeight`·`maxVolume`·좌표·이동표 `D`/`U`, 그리고 `options`의
+  수치 값(`multiRotation`·`Optimizer.VehicleMaxStopCount`·`Termination.secondsSpentLimit` 등)을
+  JSON 문자열로 보내면 `INVALID_INPUT`이다 (§12) — 문자열 표기를 병행 수용하면 소수 판정(아래)이
+  '문자열의 점'과 '값' 두 기준으로 갈린다. 시각(`HH:mm:ss`)·날짜 문자열(§3.2)은 수치가 아니다.
+  실물 fixture는 수치 대부분이 문자열이어서 2026-08-12에 number로 정정했다
+  (`win_poc_case_floor.json`. 원본 `win_poc_case.json`은 수신 원형 그대로 보존 — 어차피 아래
+  소수 거리 규칙으로 미접수다).
 - `double`로 먼저 근사한 뒤 변환하지 않는다 (MUST NOT). item 단위로 먼저 환산 후 합산한다.
 - **`weight`·`volume`·`taskTime`은 전부 '개당' 값이고 `× qty`로 합산한다** (MUST, 2026-08-11
   시스템 소유자 확정). 규약 PDF가 `taskTime`을 "calculated by item type not quantity"로 적어
   두었으나 **문면이 부정확한 것으로 본다** — 이 문서가 정본이다 (§3.3도 같은 규칙).
   합산은 `multiplyExact`/`addExact`로 하고 overflow는 입력 오류다.
+- **단위 코드는 검증한다 (MUST, 2026-08-12 확정).** item의 `weightUnitCd`·`volumeUnitCd`가
+  있으면 각각 `KG`·`CBM`이어야 하고, 다른 값은 `INVALID_INPUT`이다 — 코드를 무시하면 다른
+  단위로 보낸 값이 무증상으로 kg/CBM 취급된다. 부재면 KG·CBM으로 본다 (규칙으로 정해진
+  기본값, §2.1). 실물 fixture는 452건 전부 `KG`/`CBM` (PDF: "must be KG"·"must be CBM").
 - 소수 거리·시간 입력은 거부한다 (2026-08-11 재확인 — FLOOR 수용으로 완화하지 않는다).
-  실물 원본 `win_poc_case.json`은 이동표 205,209건 중 204,756건이 소수라 **접수되지 않는다**;
+  **판정은 표기 기준이다 (MUST, 2026-08-12 확정): number 토큰에 소수점이 있으면 값과 무관하게
+  거부한다** — `15.0`도 거부, `15`만 통과. 값 기준(비정수만 거부)이 아니므로 구현은 raw 토큰
+  (또는 `BigDecimal` scale > 0)을 본다 — double로 파싱하면 `15.0`과 `15`를 구분할 수 없다.
+  실물 원본 `win_poc_case.json`은 이동표 205,209건 중 204,756건이 이 기준의 소수(D 토큰에
+  소수점 — 그중 3,558건은 `15.0`꼴 정수값)라 **접수되지 않는다**;
   정수화 전처리를 거친 `win_poc_case_floor.json`이 실행 fixture다.
 
 ### 3.2 시간 원점과 시간창 전개
@@ -459,15 +547,24 @@ serviceStartTime  = max(arrival, openTime)
 serviceEndTime    = serviceStartTime + serviceTime
 ```
 
+- 여기의 `openTime`은 **§7.1(절차 2)이 고른 적용 창의 open**이다 — 창은 목록이므로(§3.2)
+  스칼라 하나가 아니고, 어느 창을 쓰는지는 §7.1이 정한다.
 - order 수준 `taskTime`만 있고 item이 없는 형태는 입력 오류 (기존 유지).
 
 ### 3.4 호환성 판정 (독립 hard, 전부 AND)
 
 ```text
-sizeCompatible       = vehicle.vehicleFeature ∈ request.vehicleFeatureList  OR  list == ["ALL"]
+sizeCompatible       = vehicle이 전 차급(vehicleFeature 부재·"ALL")  OR  list == ["ALL"]
+                       OR  vehicle.vehicleFeature ∈ request.vehicleFeatureList
 capabilityCompatible = request가 capability 미요구  OR  요구 ⊆ vehicle.capabilities
 zoneCompatible       = vehicle.zoneIds 미입력(전 구역)  OR  방문 zoneId ∈ vehicle.zoneIds
 ```
+
+**차량 쪽 `"ALL"`·부재는 와일드카드다 (2026-08-12 확정).** 규약 PDF가 차량 `vehicleFeature`의
+Default를 `"ALL"`로 정의하므로, 생략됐거나 `"ALL"`인 차량은 **전 주문과 차급 호환**이다 —
+주문 쪽 `["ALL"]`(전 차급 허용)과 대칭이고, "optional 부재 = 그 축 제약 없음"(§2.4)과 같은
+철학이다. 정규화는 부재와 `"ALL"`을 같은 상태(전 차급)로 접는다. 문자 비교만 하면 이런 차량이
+어느 주문도 싣지 못하는 유령 차량이 된다 — 종전 문면의 결함이었다.
 
 **치수 축은 없다 (2026-08-11 유예).** `Item`에 치수가 없어 검사 대상 자체가 없었다.
 3D 적재 고객이 확정되면 §2.1.1 경로로 되살리고, **판정은 core `Compatibility`가 아니라
@@ -484,9 +581,18 @@ zoneCompatible       = vehicle.zoneIds 미입력(전 구역)  OR  방문 zoneId 
 
 | 값 | 뜻 | 규칙 |
 |---|---|---|
-| `D` | 거리 (integer meter) | 소수 거부. self arc = 0 |
-| `U` | 시간 (integer second) | 소수 거부. self arc = 0 |
+| `D` | 거리 (integer meter) | 소수 거부. self arc는 입력과 무관하게 999,000 — 아래 주석 |
+| `U` | 시간 (integer second) | 소수 거부. self arc는 입력과 무관하게 86,400 — 아래 주석 |
 | `C` 등 기타 | 참고 값 | **feasibility·점수에 사용 금지** (MUST NOT) |
+
+**self arc는 정규화가 만드는 sentinel이다 (MUST, 2026-08-12 확정).** 자기 자신으로 가는
+arc(출발지 == 도착지)는 유효한 경로에 나타나면 안 되므로 **굉장히 큰 값**으로 둔다 — `0`이면
+자기 순환이 공짜가 되고, `Long.MAX_VALUE`류 극단값은 전파 합산(`addExact`)에서 overflow가 난다.
+그래서 **D = 999,000 m(= 999 km) · U = 86,400초(= 1,440분 = 24시간)**로 고정한다 — 어떤 실제
+arc보다 크면서 long 합산 overflow와는 거리가 먼 크기다. 입력 이동표의 self arc 행은 **값을 읽지
+않고 버린다** — 있어도 없어도 되고, 소수 거부의 검사 대상도 아니다 (실물 wire는 self arc 453건
+전부 D=9999·U=0 sentinel을 보낸다 — fixture 실측). §5 규칙 4의 이동표 완전성 검사에서 self arc는
+누락으로 세지 않는다.
 
 누락 보정 (기존 유지):
 
@@ -551,7 +657,7 @@ Problem (고정)                          Solution (탐색이 바꿈)
 | `servicePattern` | `DELIVERY_ONLY`는 delivery 방문만 (가짜 픽업 방문 금지) |
 | 적재 | 모든 구간에서 `0 ≤ load ≤ capacity`. 아래 부호 규칙 |
 | 이동 | 준비된 이동표만 사용 |
-| hard | 시간창·근무창·**차고 창**·`reqDate`·maxStop·maxDrive 등 전부 충족 |
+| hard | 시간창·근무창·**차고 창**·`reqDate`·한도 축(`maxStopCnt`·`maxDriveTime`·`maxDriveDist` — §2.6 경계 포함) 전부 충족 |
 | 차고 재방문 | 경로 중간의 depot 재방문 금지 (multi-trip 비범위) |
 
 **적재 부호 규칙 (MUST)**
@@ -637,8 +743,8 @@ bank는 **`RequestId`만** 담는다. 실패 사유·에러 메시지·비용을
 3. serviceEnd     = serviceStart + serviceTime      // §3.3
 4. reqDate 검사    : serviceStart ≤ reqDate          // §2.3. serviceEnd는 조건 아님
 5. load 갱신       : 픽업 +, 배송 −                   // §6.2 부호 규칙
-6. hard 검사       : 용량·시간창(serviceStart ≤ closeTime)·근무창·차고 창·한도
-                    (시간창·근무창은 절차 2·7이, 차고 창은 절차 0·8이 판정한다)
+6. hard 검사       : 이 절차가 새로 판정하는 것은 **용량과 한도(경로 누적, §2.6)**뿐이다
+                    (시간창(serviceStart ≤ closeTime)·근무창은 절차 2·7이, 차고 창은 절차 0·8이 판정한다)
 7. departure      = serviceEnd 이상이면서 다음 이동을 통째로 담는 가장 이른 시각
                     창 끝을 넘으면 다음 창으로 미룬다. 남은 창이 없으면 WORK_WINDOW
                     (근무창이 하나뿐이면 항상 departure = serviceEnd다 — 종전과 같다)
@@ -681,7 +787,8 @@ bank는 **`RequestId`만** 담는다. 실패 사유·에러 메시지·비용을
 ```text
 경로: 차고A(08:00 출발) → R2픽(창 09:00–12:00, 서비스 5분, reqDate 10:00)
                        → R1배(창 13:00–18:00, 서비스 14분, reqDate 15:00)
-이동: 차고→픽 40분, 픽→R1배 50분
+                       → R2배(창 13:00–18:00, 서비스 5분, reqDate 15:00)
+이동: 차고→픽 40분, 픽→R1배 50분, R1배→R2배 10분
 ```
 
 | 단계 | 시각 | load |
@@ -691,6 +798,8 @@ bank는 **`RequestId`만** 담는다. 실패 사유·에러 메시지·비용을
 | R2픽 서비스 | 09:00–09:05, reqDate 검사 09:00≤10:00 통과 | 픽업 후 **20** |
 | R1배 도착 | 09:55 → 13:00까지 대기 | 20 |
 | R1배 서비스 | 13:00–13:14, reqDate 검사 13:00≤15:00 통과 | 배송 후 **10** |
+| R2배 도착 | 13:24 (departure 13:14 + 10분) | 10 |
+| R2배 서비스 | 13:24–13:29, reqDate 검사 13:24≤15:00 통과 | 배송 후 **0** — 종료 load 0 (§6.2), pair 완결 (§6.3) |
 
 만약 serviceStart가 16:00이고 reqDate가 15:00이면 `16:00 ≤ 15:00` 거짓 → 그 경로는 **불가**.
 전파는 가능/불가 **사실**만 알려주고, 점수로 덮지 않는다.
@@ -728,6 +837,8 @@ routeOperationalTime = driveTime + customerWaitingTime + depotWaitingTime
 
 방문의 `departure`는 지금까지 `serviceEnd`와 항상 같아 따로 기록하지 않았다. 근무창이 여럿이면
 둘이 달라지므로(다음 창까지 쉬고 출발 — §7.1 절차 7) **별도로 기록한다.**
+후속 이동이 없는 **마지막 방문**의 `departure`는 `serviceEnd`다 (절차 7의 "다음 이동"이 없다 —
+대기 합산의 마지막 항이 0이 되어 아래 항등식이 유지된다).
 
 **대기 3종의 정의 (MUST)** — 경로 시간 중 **근무창 사이의 틈에 있는 시간은 전부**
 `interWorkWindowRestTime`이고, 근무 시간 중 기다린 것만 고객·차고 대기다:
@@ -754,8 +865,10 @@ routeOperationalTime = routeEnd − spanStart          // routeEnd = §7.1 절�
 ### 7.4 stopCount와 주행 (기존 유지)
 
 ```text
-stopCount: 직전 고객 서비스 장소와 이번 장소가 다르면 +1
-           (depot는 세지 않음. 같은 장소 연속 방문은 첫 진입만 +1)
+stopCount: 서로 다른 연속 고객 장소 그룹마다 +1 — 첫 고객 방문도 +1이다 (2026-08-12 확정:
+           직전 고객 장소가 없어도 센다). depot는 세지 않음. 같은 장소 연속 방문은 첫 진입만 +1.
+           검산: Win 참조 해 V027·V030 = 방문 28곳 = 정차 28 = 한도 28 경계 (§2.6과 정합 —
+           첫 방문을 안 세면 27이 되어 경계 실측이 성립하지 않는다)
 driveDist = Σ 실제 지난 D (meter)      // depot→첫고객, 고객→고객, (있으면) 마지막→endDepot
 driveTime = Σ 실제 지난 U (second)     // 대기·서비스·휴식은 불포함
 ```
@@ -815,7 +928,9 @@ profile의 `score`는 **"작을수록 좋다"인 축의 순서 있는 목록**�
 ```
 
 - 고정 가중치(1:100)나 Big-M으로 여러 축을 한 숫자로 뭉개지 않는다 (MUST NOT).
-  **비교기 자체가 사전식 하나뿐이므로 가중합 비교기를 만들 수 없다** — 관례가 아니라 구조다.
+  비교기 자체는 사전식 하나뿐이지만, profile이 축 하나에 가중합(`w1·a + w2·b`)을 담으면 그대로
+  가중합 비교가 된다 — **구조가 막아 주지 않으므로** 이 MUST NOT은 리뷰로 지킨다
+  (§13 체크리스트 15).
 - 크게 만들고 싶은 축은 부호를 뒤집어 넣는다 (전 축이 최소화 대상이라는 규칙을 깨지 않는다).
 - 같은 profile이 만드는 축 목록의 **길이는 항상 같다.** 다르면 버그다.
 - 소유 구분(LEASE/DIRECT) 비용 축은 **지금 없다** — canonical에 소유 필드를 담지 않기
@@ -899,7 +1014,7 @@ profile (고객별)                     ✅ 추가 hard 제약, score 축 구성
 |---|---|
 | 시점 | 결과 저장 직전 1회 (매 trial마다 돌리지 않는다) |
 | 입력 | 최종 `Solution` 전체 + 같은 `Problem` + **같은 profile 인스턴스** (§8.4) |
-| 검사 | 모든 경로에 대해: pair·XOR(§6.3), 선행, 적재 곡선, 시간창·`reqDate`·**근무창(다일)·차고 창**, 이동표 사용, profile hard. 근무창·차고 창은 재계산한 시각이 실제로 창 안에 있는지 훑어 확인한다 (모든 이동·서비스가 한 근무창 안, 차고 출발·복귀 순간이 차고 창 안 — §7.1). 그리고 metric(③)과 score 축(④)을 각각 재계산해 탐색이 보고한 값과 대조 |
+| 검사 | **유효 조건의 정본을 참조한다 (2026-08-12 참조형 전환)**: §6.2 표 전 항목(pair·servicePattern·적재 곡선·종료 load=0·이동표 사용·시간창·`reqDate`·근무창·차고 창·maxStop·maxDrive 한도) + §6.3 배정 XOR + §3.4 호환성 + §2.6 경계 포함(≤) + profile hard(§8.4) — 전부 캐시 없이 재계산한다. 근무창·차고 창은 재계산한 시각이 실제로 창 안에 있는지 훑어 확인한다 (모든 이동·서비스가 한 근무창 안, 차고 출발·복귀 순간이 차고 창 안 — §7.1). 그리고 metric(③)과 score 축(④)을 각각 재계산해 탐색이 보고한 값과 대조. **여기서 목록을 따로 유지하지 않는다** — hard 축이 늘면 §6.2가 늘고 재검증은 자동으로 따라간다 |
 | 범위 | 바뀐 경로만이 아니라 **해 전체** (bank 포함) |
 | 독립성 | 탐색의 증분 캐시·내부 상태를 믿지 않는다. 코드도 `verify` 패키지로 분리, 탐색 내부 참조 금지 (Architecture §2) |
 | 예산 무관 | 탐색 예산(§2.5.1)을 읽지 않는다 (MUST NOT). 시간·step 한도와 무관하게 해 전체를 검사한다 |
@@ -918,26 +1033,42 @@ profile (고객별)                     ✅ 추가 hard 제약, score 축 구성
 
 ### 11.1 내용 (의미 목록)
 
+이 절은 결과에 담기는 **의미의 목록**이다 — wire 필드명·형태는 §11.2(Plan D2 협의)가
+소유하며, 아래 이름은 의미를 가리키는 표기이지 wire 표기의 확정이 아니다.
+
 ```text
 planId, status (DONE | FAILED)
-run   : inputKey(접수 시 S3 key), 접수·시작·종료 시각, 사용한 profileId, 재검증 통과 여부
+run   : inputKey(접수 시 S3 key), 접수·시작·종료 시각, 사용한 profileId,
+        재검증 통과 여부(항상 PASS다 — FAILED 결과는 생산 경로가 없다(아래). 재검증이
+        실행됐다는 증빙으로만 남는다)
         적용된 배송정책(§2.5)과 탐색 예산(§2.5.1) — 둘을 **따로** 기록한다.
         같은 문제를 다른 예산으로 돌린 결과를 구별할 수 있어야 한다 (벤치마크 비교의 전제)
 routes: 차량별로 —
   vehicleId
-  visits[]: orderId(RequestId), locationId, arrival, serviceStart, serviceEnd, load
+  visits[]: orderId(RequestId), locationId, arrival, serviceStart, serviceEnd,
+            loadWeight·loadVolume (적재 2축 — §7.3)
             (방문의 `departure`(§7.3)는 계산·기록되지만 결과 노출 여부는 wire 협의 항목이다 —
              다일 계획에서는 `serviceEnd`와 달라진다)
   경로 시각: depotDeparture(차고 출발 — §7.1 절차 0), depotReturn(도착 차고 도착 — §7.1 절차 8,
             endDepot 있을 때만). 2026-08-11 추가 — 이 값이 없으면 호출 측이 이동표 없이는
             "차가 몇 시에 차고를 나서는가"를 알 수 없다. wire 필드명·형식은 협의(§11.2, Plan D2)
   경로 지표: driveDist, driveTime, stopCount, routeOperationalTime
-unassigned[]: orderId + reason (예: NO_COMPATIBLE_VEHICLE, TIME_WINDOW_INFEASIBLE, CAPACITY, NOT_PLACED)
+unassigned[]: orderId + reason — 4종 고정(NO_COMPATIBLE_VEHICLE, CAPACITY,
+              TIME_WINDOW_INFEASIBLE, NOT_PLACED), 판정 규칙은 아래 (2026-08-12 확정)
 metrics: unassignedCount, usedVehicleCount, totalDistance, totalRouteOperationalTime
 ```
 
 - 미배정 사유는 결과 생성 시 계산해 붙인다 (bank는 ID만 갖고 있으므로, §6.3).
   탐색이 남긴 bank가 그대로 결과가 되는 게 아니라 **재검증을 통과한 해의 미배정 집합**이 결과다.
+- **reason 판정 규칙 (MUST, 2026-08-12 확정)** — 요청마다 아래를 순서대로 검사해 **첫 번째로
+  해당하는 값**을 붙인다 (순서 고정 = 결정적. 전파가 필요 없는 정적 검사를 앞에 둔다):
+  1. `NO_COMPATIBLE_VEHICLE` — 호환 차량이 0대 (§3.4 동결 사실).
+  2. `CAPACITY` — 호환 차량 전부가 이 요청 하나도 싣지 못한다 (총수요 > 차량 최대 용량,
+     정적 비교).
+  3. `TIME_WINDOW_INFEASIBLE` — 남은 호환 차량 전부에서 **빈 경로에 이 요청만** 넣은 단독
+     경로가 전파(§7)로 불가 — 시간창·`reqDate`·근무창·차고 창·주행 한도 계열 전부 이 bucket이다.
+  4. `NOT_PLACED` — 단독으로는 가능한데 이번 해에서 자리 경합으로 밀렸다.
+  비용은 |미배정| × |호환 차량| 회의 단독 전파뿐이다. 절차 상세는 Stage 5 §4.3이 구현 계약으로 갖는다.
 - 식별자는 규약과 같은 이름(`orderId`, `vehicleId` 등)을 쓴다.
 - `status`의 `FAILED`는 열거 호환용이다 — **FAILED 결과 JSON은 생산 경로가 없다** (2026-08-11 명시).
   재검증에 실패한 배차안은 결과를 저장하지 않으므로(§10.2) result.json은 언제나 `DONE`이고,
@@ -956,7 +1087,7 @@ metrics: unassignedCount, usedVehicleCount, totalDistance, totalRouteOperational
 
 | 분류 | 예 | 처리 |
 |---|---|---|
-| 입력 오류 | 스키마 위반, 소수 거리, `close == open`인 시간창(§3.2), `multiRotation ≤ -2`(규약이 금지한 값, §2.5) | 접수 시 4xx (S3 저장 없음) |
+| 입력 오류 | 스키마 위반, 소수 거리, 수치를 문자열로 인코딩(§3.1), `close == open`인 시간창(§3.2), depot 여러 개인데 `startDepot` 없음(§2.4), `multiRotation ≤ -2`(규약이 금지한 값, §2.5) | 접수 시 4xx (S3 저장 없음) |
 | 미지원 입력 | `multiRotation`이 `{0, 1}` 밖 — 즉 `-1` 또는 `2` 이상 (§2.5) | `UNSUPPORTED_INPUT` — 접수 거부 |
 | Problem 생성 실패 | ID 참조 깨짐, 이동표 불완전 | FAILED 상태 + 원인 |
 | 탐색 중단 | 시간 한도 도달 | 그 시점 best로 재검증 진행 (정상) |

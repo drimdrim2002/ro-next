@@ -34,6 +34,31 @@ revisions:
   - 2026-08-11 Stage 1 유예 반영 — §4.4 adapter 매핑에서 차량 `trips`·`vhclOwnTyp`·치수 3필드,
     §4.3 `depot.taskTime`을 "무시"로 · §4.6 `trips`를 전체 설정 하나로 · 접수 4xx 예시에서
     `vhclOwnTyp` 제거(읽지 않는 필드라 예시가 될 수 없다) · `taskTime ×qty` 포인터를 Domain으로
+  - 2026-08-12 Domain 2026-08-12 개정(self arc sentinel·startDepot 부재 규칙·수치 number
+    인코딩) 정합 — §4 공통 규칙 1을 "문자열·숫자 둘 다 수용"에서 **number만 수용(문자열 수치 =
+    INVALID_INPUT)**으로 반전 · §4.5에 self arc 행 배제 주석 · E1\~E1c·E3·T1·T2·T4·T13의
+    fixture 값 표기를 number로(원본 win_poc_case.json은 문자열 보존 = 미접수) · N2에 인코딩
+    검증 사유
+  - 2026-08-12 감사 후속 인터뷰 ①·② 정합 — ① 소수 거부 = **표기 기준**(Domain §3.1 확정):
+    §4 공통 규칙 1의 정수 필드 소수 거부에 "값이 정수라도 소수점 표기면 거부" 명시,
+    §4.5 D/U 행의 검사 명칭을 소수 표기 검사로 · ② §4.4 `maxDriveDist`/`maxDriveDistc`
+    별칭의 정본을 Domain §2.4로 명시, 둘 다 오면 `INVALID_INPUT` 추가 · ③ itemId 폴백을
+    `prodId`에서 **`orderId`로 교체** (§4.4·E4·T2 — prodId 폴백은 소유자 확정이 아닌
+    작성 시 발명이라 폐기, Domain §2.3 정본) · ④ options 3키 무시 확정 반영
+    (§4.6·E19·Q5 — `driverRestTimeRatio`는 0 아닌 값도 거부 안 함, Domain §2.5) ·
+    ⑤ 탐색 예산 운반 경로 확정 — `parse`가 **`ParseResult(PlanInput, OptionalLong
+    secondsSpentLimit)` 봉투**를 반환 (무상태·파싱 1회 — §2.2·§3.1·§3.2·§4.6)
+  - 2026-08-13 감사 결함 정정 (분할 8 #1·#6·#7·#8·#9·#10, 분할 7 F5 연쇄) — §4.6
+    `multiRotation` 행의 생략된 주어 명시(`OptionsInput`에는 담는다, 미보관 주어는 canonical
+    `Plan` — 정본 Stage 1 §2.3) · §4.5 `C` 행의 주어 명시(wire에는 전 행 존재, 운반체에
+    필드를 안 만든다) · §3.1-2b의 빈 `zoneIds` 근거를 Domain §12에서 Stage 1 §4 절차 5로 ·
+    §3.1-3에 `Optional.ofNullable` 명시 · Stage 5 `SearchBudget.termination` 삭제 연쇄 반영
+    (`budgetOf` 시그니처·§3.2-i·§5 예시 — 종료 사유는 stats라 run 메타에 안 실린다,
+    Domain §11.1) · §10 Q3 셀의 Domain §12 인용에 "당시 문면" 표시 · §10 서두를 README
+    공통 규칙(표시하고 남김)으로. 매핑·절차 자체는 무변경
+  - 2026-08-13 감사 결함 정정 (분할 8 §1-3) — §5 서두 "필드명은 §11.1의 이름 그대로" 거짓
+    교정: §11.1은 의미 정본, 필드명·형태는 §11.2(Plan D2) 소유 — wire 표기는 이 절 잠정안
+    (Domain §11.1 2026-08-13 의미 정본 좁히기의 후속)
 ---
 
 # Stage 6 — 앱 조립
@@ -48,8 +73,8 @@ solver-core는 이 Stage에서 수정하지 않는다.
 **DoD** ([Plan Stage 6](../implementation-plan.md)): fake 저장소로 e2e 통합 테스트 —
 POST 접수 → DONE까지 → GET 결과 · win_poc_case_floor.json 접수·완주 (성공 기준 §0 달성 시점).
 **두 문장 모두 선행 조건 없이 달성 가능하다** — 종전 두 번째 문장을 막던 multiRotation 충돌은
-[Plan §2.1 D1](../implementation-plan.md)이 닫았다 (2026-08-10: 값은 바퀴 수, fixture의 `"1"`은
-1바퀴라 원본 그대로 접수된다. §10 Q1).
+[Plan §2.1 D1](../implementation-plan.md)이 닫았다 (2026-08-10: 값은 바퀴 수, fixture의 `1`은
+1바퀴라 그대로 접수된다. §10 Q1).
 
 핵심 구도 — Architecture §1의 한 장 그림을 클래스로 결선한다:
 
@@ -132,7 +157,7 @@ ro-next:
 - `AlnsConfig` 조립 (run마다, §3.2 절차 3-d′):
 
   ```text
-  timeLimitSec = wire Termination.secondsSpentLimit  ▷  fallback-time-limit-sec
+  timeLimitSec = wire Termination.secondsSpentLimit (운반: ParseResult — §2.2)  ▷  fallback-time-limit-sec
   maxSteps·idleSteps·idleSec = 설정값 (비어 있으면 OptionalLong.empty)
   seed = 설정값
   나머지 튜닝 파라미터 = AlnsConfig.defaults(...)의 값 그대로
@@ -193,9 +218,14 @@ import tools.jackson.databind.JsonNode;
 public final class PlanJsonAdapter {
     /** @param mapper floats를 BigDecimal로 읽도록 구성한 JsonMapper (§6 N2) */
     public PlanJsonAdapter(JsonMapper mapper);
-    /** 규약 JSON → PlanInput. wire 형식 변환만 — 의미 변환·기본값은 PlanNormalizer (Stage 1 서두).
+    /** 규약 JSON → ParseResult. wire 형식 변환만 — 의미 변환·기본값은 PlanNormalizer (Stage 1 서두).
         실패 시 InputException(INVALID_INPUT, field=JSON 경로). §4 매핑표가 계약. */
-    public PlanInput parse(byte[] wireJson);
+    public ParseResult parse(byte[] wireJson);
+
+    /** parse의 반환 봉투 (2026-08-12 확정). 탐색 예산은 canonical(PlanInput)에 담기지 않으므로
+        (Domain §2.5.1) 같은 파싱 1회의 별도 산출물로 함께 반환한다 — adapter는 무상태라
+        동시 요청(§3.2 concurrency 2)에서 값이 섞일 자리가 없다. */
+    public record ParseResult(PlanInput plan, OptionalLong secondsSpentLimit) {}
 }
 
 public final class ResultJsonWriter {
@@ -235,9 +265,11 @@ public final class SolveRunner {
         AlnsConfig create(OptionalLong wireTimeLimitSec);
     }
 
-    /** AlnsConfig의 예산 필드 + 실제 종료 사유를 결과용 SearchBudget으로 옮긴다 (Stage 5 §4.1).
-        알고리즘 튜닝 파라미터는 담지 않는다 — 그건 결과에 남지 않고 Stage 8 §4 표가 소유한다. */
-    static SolveResult.SearchBudget budgetOf(AlnsConfig config, Termination termination);
+    /** AlnsConfig의 예산 필드를 결과용 SearchBudget으로 옮긴다 (Stage 5 §4.1).
+        알고리즘 튜닝 파라미터는 담지 않는다 — 그건 결과에 남지 않고 Stage 8 §4 표가 소유한다.
+        종료 사유·반복 카운터 등 `AlnsRunStats`도 담지 않는다 — stats는 로그·실험용으로만
+        (Domain §11.1, Stage 5 §9. 종전의 termination 인자는 2026-08-13 삭제). */
+    static SolveResult.SearchBudget budgetOf(AlnsConfig config);
 }
 
 public final class SolveExecutor implements AutoCloseable {
@@ -287,7 +319,7 @@ solve 미존재 → 404, DONE 전 result → 409, 그 외 예외 → 500. 404·4
 
 ```text
 POST /solves (body = 규약 JSON 바이트)
-1. planInput = PlanJsonAdapter.parse(body)
+1. parsed = PlanJsonAdapter.parse(body), planInput = parsed.plan()
    실패 → 400 (S3에 아무것도 남기지 않음 — Domain §12).
    JSON 문법 오류·필수 필드 부재·타입 파싱 불가·단위 코드 위반(§4 공통 규칙)이 여기서 걸린다
    — "규약에 맞는 JSON인가" 수준 (Architecture §3.1 주석).
@@ -301,10 +333,12 @@ POST /solves (body = 규약 JSON 바이트)
 2b. 정규화 검증 (2026-08-11 — Architecture §3.1 개정·Domain §12 이행, §10 Q3 해소):
    PlanNormalizer.normalize(planInput)을 실행하고 결과 Plan은 버린다.
    InputException(INVALID_INPUT) → 400, (UNSUPPORTED_INPUT) → 422 — 저장 없음.
-   소수 거리·`close == open` 시간창·빈 `zoneIds`가 여기서 걸린다 (Domain §12의 접수 4xx 분류).
+   소수 거리·`close == open` 시간창(Domain §12의 접수 4xx 분류)과 빈 `zoneIds`
+   (Stage 1 §4 절차 5의 정규화 규칙 — Domain §12 예시에는 없다)가 여기서 걸린다.
    Problem.freeze는 하지 않는다 — 무거운 작업(이동표·동결)은 여전히 executor에서.
    parse·normalize 결과는 검증에만 쓰고 버린다 (executor가 저장본에서 다시 파싱·정규화).
-3. key = SolveKey.issue(planInput.customerId(), planInput.planId(), clock, rng)   // §3.3
+3. key = SolveKey.issue(Optional.ofNullable(planInput.customerId()), planInput.planId(),
+                        clock, rng)   // §3.3 — PlanInput.customerId는 nullable String (§4 공통 규칙 5)
    planId·customerId가 key 안전 문자 집합 밖이면 400 (§7 E5 — 잠정 규칙).
 4. store.putInput(key, body)     — 받은 바이트 원문 그대로 (재직렬화 금지. "검증 통과본" = 원문)
 5. store.putStatus(key, RECEIVED, heartbeatAt = now)
@@ -321,7 +355,7 @@ SolveExecutor.submit → 고정 크기 풀(concurrency)의 큐에 등록. 워커
    (ScheduledExecutorService 1개 공용. run별 락으로 3과 직렬화 — §7 E10).
 3. outcome = SolveRunner.run(key, receivedAt):
    a. bytes = store.getInput(key)              부재 → FAILED("INPUT_MISSING") (저장 불변식 위반)
-   b. planInput = adapter.parse(bytes)         InputException → FAILED("INPUT: {field} {message}")
+   b. parsed = adapter.parse(bytes), planInput = parsed.plan()   InputException → FAILED("INPUT: {field} {message}")
    c. plan = PlanNormalizer.normalize(planInput)   InputException → FAILED(〃) — 의미 오류는
       여기서 걸린다 (소수 거리, `close == open` 시간창 등 — Architecture §3.1 주석, §10 Q3)
    d. problem = Problem.freeze(plan)               ProblemCreationException → FAILED("PROBLEM: …")
@@ -340,7 +374,7 @@ SolveExecutor.submit → 고정 크기 풀(concurrency)의 큐에 등록. 워커
       (재검증 FAIL 시 결과 미저장 — Domain §10.2 MUST, Master §3-⑥)
    i. pass(= VerificationResult.Pass) → finishedAt = now.
       stamp = RunStamp(key.inputObjectKey(), utc(receivedAt), utc(startedAt), utc(finishedAt),
-                       budgetOf(alnsConfig, result.stats().termination()))   // Stage 5 §4.1
+                       budgetOf(alnsConfig))   // Stage 5 §4.1 — stats(종료 사유 포함)는 안 싣는다
       solveResult = ResultAssembler.assemble(problem, profile, pass, stamp)
       store.putResult(key, resultWriter.write(solveResult)) → DONE
 4. heartbeat 취소 + 진행 중인 heartbeat put 완료 대기 (run별 락).
@@ -405,10 +439,16 @@ solveKey를 그대로 URL에 붙이면 된다. 최종 경로·필드명은 호�
 
 **공통 규칙**
 
-1. 숫자 값은 JSON 문자열·숫자 둘 다 수용한다 (fixture 혼재: `qty:"1"`, `taskTime:0`,
-   원본 D `"310708.03"` vs floor D `310708`). 정수 필드(`qty`·`duration`·`taskTime`·
-   `speed`·`multiRotation` 등)에 소수 → `INVALID_INPUT`. `BigDecimal` 필드는 원문 자릿수
-   보존 (§6 N2 — double 경유 금지, Domain §3.1 MUST NOT).
+1. 수치 값은 **JSON number만** 수용한다 — 문자열로 인코딩된 수치는 `INVALID_INPUT`이다
+   (Domain §3.1, 2026-08-12 확정). 대상은 `weight`·`volume`·`qty`·`taskTime`·`duration`·
+   `speed`·`maxWeight`·`maxVolume`·좌표·이동표 `D`/`U`·options의 수치 값(`multiRotation` 등)
+   전부이고, 시각(`HH:mm:ss`)·날짜·ID·코드(`weightUnitCd`·이동표 `C` 등)는 수치가 아니라
+   문자열 그대로다. floor fixture는 2026-08-12 number로 정정 완료(`qty: 1`·`duration: 300`·
+   `speed: 45` 등), 원본 win_poc_case.json은 수신 원형으로 문자열 그대로 보존 — 이 규칙만으로도
+   미접수다. 정수 필드(`qty`·`duration`·`taskTime`·`speed`·`multiRotation` 등)에 소수 →
+   `INVALID_INPUT` — 판정은 **표기 기준**이라 `300.0`처럼 값이 정수라도 소수점 표기면
+   거부한다 (Domain §3.1, 2026-08-12 확정). `BigDecimal` 필드는 원문 자릿수 보존
+   (§6 N2 — double 경유 금지, Domain §3.1 MUST NOT).
 2. DateTime은 `yyyy-MM-dd HH:mm:ss`와 RFC3339(`...T...Z`) 둘 다 수용해 `LocalDateTime`으로
    통일한다 (Domain §2.2). RFC3339의 offset은 버리고 표기된 벽시계를 쓴다 (timezone 해석은
    솔버 밖 책임 — Domain §2.2. §7 E21).
@@ -418,7 +458,8 @@ solveKey를 그대로 URL에 붙이면 된다. 최종 경로·필드명은 호�
 5. 부재(optional)는 전부 null로 넘긴다 — 기본값 채움·min 접기는 `PlanNormalizer`의 일이다
    (Stage 1 서두: adapter는 wire 형식 변환만).
 6. 아래 "무시" 필드와 미지(unknown) 필드는 조용히 버린다 (관용 수신 — wire 확장에 견딤).
-   매핑된 필드의 값 오류만 거부한다.
+   매핑된 필드의 값 오류만 거부한다. (정본 Domain §2.1 — 2026-08-12 시스템 소유자 확정.
+   실물 무시 대상 목록도 그곳에 등재.)
 
 ### 4.1 Plan 봉투 → `PlanInput`
 
@@ -459,11 +500,11 @@ solveKey를 그대로 URL에 붙이면 된다. 최종 경로·필드명은 호�
 
 | wire | ItemInput | 규칙 |
 |---|---|---|
-| `itemId` ▷ `prodId` | `itemId` | itemId blank이면 prodId로 폴백 — floor fixture는 452건 전부 itemId `""` (실측). 둘 다 blank → `INVALID_INPUT` (§7 E4) |
-| `weight` / `volume` | `weightKg` / `volumeCbm` | 필수, BigDecimal 원문. `weightUnitCd` 존재 시 `"KG"`, `volumeUnitCd` 존재 시 `"CBM"`만 허용 — 그 외 `INVALID_INPUT` (Stage 1 §8 인계) |
+| `itemId` ▷ `orderId` | `itemId` | itemId는 필수 — blank이면 **그 주문의 orderId를 쓴다** (정본 Domain §2.3, 2026-08-12 시스템 소유자 확정). floor fixture는 452건 전부 itemId `""` (실측) → 전건 orderId 사용 (§7 E4) |
+| `weight` / `volume` | `weightKg` / `volumeCbm` | 필수, BigDecimal 원문. `weightUnitCd` 존재 시 `"KG"`, `volumeUnitCd` 존재 시 `"CBM"`만 허용 — 그 외 `INVALID_INPUT` (정본 Domain §3.1, 2026-08-12 확정) |
 | `qty` | `qty` | 부재 → null (→ 1) |
 | `taskTime` | `taskTimeSec` | 부재 → null (→ 0). **×qty 확정** (2026-08-11 소유자 — Domain §3.1·§3.3) |
-| `orderId`(중복), `prodId`(폴백에 안 쓰인 경우) | 무시 | |
+| `orderId`(중복), `prodId` | 무시 | 종전 `prodId` 폴백은 폐기 — 시스템 소유자 확정이 아닌 작성 시 발명이었다 (Domain §2.3, 2026-08-12) |
 
 ### 4.4 `vehicles[]` → `VehicleInput`
 
@@ -476,7 +517,7 @@ solveKey를 그대로 URL에 붙이면 된다. 최종 경로·필드명은 호�
 | `speed` | `speedKmH` | 정수만 — 소수 → `INVALID_INPUT` (Stage 1 §9 Q4 잠정 유지) |
 | `maxStopCnt` | `maxStopCnt` | 부재 → null |
 | `maxDriveTime` | `maxDriveTimeSec` | 부재 → null |
-| `maxDriveDistc` ▷ `maxDriveDist` | `maxDriveDistMeter` | 규약 PDF 표기가 `maxDriveDistc`(오타 추정) — 두 이름 다 수용 |
+| `maxDriveDist` / `maxDriveDistc` | `maxDriveDistMeter` | 규약 PDF 표기는 `maxDriveDistc`(오타 추정, 실물 wire 출현 0건) — 두 철자 다 수용, **둘 다 오면 `INVALID_INPUT`** (정본 Domain §2.4, 2026-08-12 확정) |
 | `maxWidth` / `maxHeight` / `maxLength` | — | **무시한다** — canonical에 치수 축이 없다 (2026-08-11 유예, Domain §2.4 유예 표 · Stage Extra E2) |
 | `driverSkill` | `capabilities` (싱글턴 집합) | 부재 → null (→ 빈 집합). `"ALL"`도 문자 그대로 — 축 휴면이라 무영향 (§7 E20) |
 | `zoneIds` | `zoneIds` | 확장 (Domain §2.4) — 그대로 전달 (빈 집합 거부는 정규화) |
@@ -489,28 +530,31 @@ solveKey를 그대로 URL에 붙이면 된다. 최종 경로·필드명은 호�
 | wire | TravelEntryInput | 규칙 |
 |---|---|---|
 | `F` / `T` | `fromLocId` / `toLocId` | 필수 |
-| `D` / `U` | `distance` / `time` | BigDecimal 원문 — 정수성 검사는 정규화 (Stage 1 절차 7) |
-| `C` | — | 구조적 배제: 필드 자체가 없다 (Domain §4 MUST NOT — fixture 실값 O·G) |
+| `D` / `U` | `distance` / `time` | BigDecimal 원문 — 소수 표기 검사(scale > 0 거부, 표기 기준)는 정규화 (Stage 1 절차 7). self arc(`F` == `T`) 행은 정규화가 값을 읽지 않고 버린다 — 소수 검사 대상도 아니다 (Domain §4, 2026-08-12) |
+| `C` | — | 구조적 배제: **`TravelEntryInput`에 `C` 필드를 만들지 않는다** — wire에는 전 행에 존재하지만(fixture 실값 O·G) 읽지 않는다 (Domain §4 MUST NOT) |
 
 ### 4.6 `options` → `OptionsInput` (전부 optional — 부재 → null, 기본값은 정규화가)
 
 | wire | OptionsInput | 규칙 |
 |---|---|---|
 | `trips` | `trips` | **전체 설정 하나다** — 차량별 지정은 유예 (§4.4, Domain §2.5) |
-| `multiRotation` | (검증만, 미보관) | 접수 게이트 §3.1-2의 대상. 통과는 `{0, 1}`(= 1바퀴)뿐 — `-1`·`2 이상`은 거부 (Domain §2.5) |
+| `multiRotation` | `multiRotation` | **`OptionsInput`에는 담는다** (정본 Stage 1 §2.3) — "검증만, 미보관"의 주어는 canonical `Plan`이다 (정규화가 검증 후 보관하지 않는다, Stage 1 §4 절차 2). 접수 게이트 §3.1-2의 대상. 통과는 `{0, 1}`(= 1바퀴)뿐 — `-1`·`2 이상`은 거부 (Domain §2.5) |
 | `waitInDepot` | `waitInDepot` | |
 | `distanceTimeCalculate` ▷ `distanceCalculate` | `distanceTimeCalculate` | fixture·Domain 표기 우선, 규약 PDF 표기(`distanceCalculate`)도 수용 |
 | `Optimizer.DefaultSpeed` ▷ `defaultSpeed` | `defaultSpeedKmH` | 정수만 |
-| `Termination.secondsSpentLimit` | (canonical 아님) `AlnsConfig.timeLimitSec` | floor fixture 값 600. **`Plan`에 담기지 않는다** — adapter가 별도로 꺼내 `AlnsConfigFactory`에 넘긴다 (Domain §2.5.1, §1.1) |
+| `Termination.secondsSpentLimit` | (canonical 아님) `AlnsConfig.timeLimitSec` | floor fixture 값 600. **`Plan`에 담기지 않는다** — parse 반환 봉투 `ParseResult.secondsSpentLimit`(§2.2, 2026-08-12 확정)로 함께 나와 `AlnsConfigFactory`로 간다 (Domain §2.5.1) |
 | `Optimizer.VehicleMaxStopCount` | `globalVehicleMaxStopCount` | fixture 값 28 (min 접기는 정규화 — Domain §2.6) |
-| `driverRestTimeRatio`, `difficultySortType`, `customerAbbr` | 무시 | §10 Q5 / §7 E19 |
+| `driverRestTimeRatio`, `difficultySortType`, `customerAbbr` | 무시 | **무시 확정** — Domain §2.5 (2026-08-12 시스템 소유자). 0이 아닌 비율도 거부하지 않는다 (§7 E19) |
 
 ---
 
 ## 5. result.json wire 잠정안 (Stage 5 §9 인계 — 협의 전 잠정, 의미는 Domain §11.1)
 
-필드명은 §11.1의 이름 그대로, 시각은 `yyyy-MM-dd HH:mm:ss`(UTC 벽시계 — Domain §2.2 표기 관례),
-무게·부피는 입력과 대칭인 decimal kg/cbm 문자열(milli ÷ 1000, 소수 3자리), 거리 m·시간 초는 정수다.
+필드명은 §11.1의 **의미 항목에 1:1 대응**하되 wire 표기는 이 절의 잠정안이다 — §11.1은 의미
+정본일 뿐 필드명·형태는 §11.2(Plan D2 협의) 소유라 "이름 그대로"가 아니다 (2026-08-13 교정.
+예: 의미 `totalDistance` → wire `totalDistanceMeter`, 적재 2축 → `loadWeightKg`·`loadVolumeCbm`).
+시각은 `yyyy-MM-dd HH:mm:ss`(UTC 벽시계 — Domain §2.2 표기 관례), 무게·부피는 입력과 대칭인
+decimal kg/cbm 문자열(milli ÷ 1000, 소수 3자리), 거리 m·시간 초는 정수다.
 
 ```json
 {
@@ -521,7 +565,7 @@ solveKey를 그대로 URL에 붙이면 된다. 최종 경로·필드명은 호�
     "receivedAt": "2023-09-13 00:15:00", "startedAt": "2023-09-13 00:15:01",
     "finishedAt": "2023-09-13 00:25:01", "profileId": "default", "verified": true,
     "deliveryPolicy": { "trips": "oneway", "waitInDepot": false },
-    "searchBudget": { "timeLimitSec": 600, "seed": 0, "termination": "TIME_LIMIT" }
+    "searchBudget": { "timeLimitSec": 600, "seed": 0 }
   },
   "routes": [{
     "vehicleId": "V009",
@@ -553,7 +597,7 @@ solveKey를 그대로 URL에 붙이면 된다. 최종 경로·필드명은 호�
 | # | 내용 |
 |---|---|
 | N1 | **접수는 파싱 + 정규화 검증까지** (2026-08-11 개정 — §10 Q3 해소): 접수가 `parse` + multiRotation 게이트 + `PlanNormalizer.normalize`를 실행해 의미 오류까지 4xx로 돌려주고 결과는 버린다 (Domain §12 이행, Architecture §3.1 같은 날 개정). Problem 동결은 여전히 executor에서. executor가 저장된 input.json을 **같은 adapter·같은 normalizer로 다시** 처리한다 — 접수 검증과 실행 입력이 한 코드 경로이고, executor 쪽 정규화(§3.2-c)는 접수를 우회해 store에 직접 놓인 입력에 대한 최종 방어로 남는다 |
-| N2 | **BigDecimal 파싱 경로 (Jackson 3)**: adapter 전용 `JsonMapper`(`tools.jackson.databind.json.JsonMapper`)를 구성해 JSON 숫자(float/double)를 `BigDecimal`로 읽고, tree(`JsonNode`) 기반 수동 매핑을 쓴다. Feature 이름은 구현 시 Jackson 3 API로 확인 — 의도는 Jackson 2의 `USE_BIG_DECIMAL_FOR_FLOATS`와 동등. `double` 경유 금지(Domain §3.1 MUST NOT)를 wire 파싱까지 관철한다 (databind POJO 자동 매핑은 숫자/문자 혼재·원문 보존에 부적합). **Jackson 2 `ObjectMapper`·`com.fasterxml.jackson`·`spring-boot-jackson2`는 쓰지 않는다** (Stage 0 §4.4) |
+| N2 | **BigDecimal 파싱 경로 (Jackson 3)**: adapter 전용 `JsonMapper`(`tools.jackson.databind.json.JsonMapper`)를 구성해 JSON 숫자(float/double)를 `BigDecimal`로 읽고, tree(`JsonNode`) 기반 수동 매핑을 쓴다. Feature 이름은 구현 시 Jackson 3 API로 확인 — 의도는 Jackson 2의 `USE_BIG_DECIMAL_FOR_FLOATS`와 동등. `double` 경유 금지(Domain §3.1 MUST NOT)를 wire 파싱까지 관철한다 (databind POJO 자동 매핑은 원문 보존과 인코딩 검증 — 수치 필드의 token이 number인지 확인해 문자열 수치를 `INVALID_INPUT`으로 거부(공통 규칙 1, Domain §3.1) — 에 부적합). **Jackson 2 `ObjectMapper`·`com.fasterxml.jackson`·`spring-boot-jackson2`는 쓰지 않는다** (Stage 0 §4.4) |
 | N3 | **heartbeat와 최종 기록의 직렬화**: heartbeat put과 종료 put이 겹치면 DONE 뒤에 RUNNING이 덮일 수 있다. run별 락 + "취소 후 진행 중 put 완료 대기"(§3.2 절차 4)로 마지막 쓰기가 항상 최종 상태이게 한다 |
 | N4 | **runner/executor 분리**: `SolveRunner`는 스레드·heartbeat를 모르는 동기 파이프라인이라 fake store만으로 단위 테스트가 된다 (T7·T8). `SolveExecutor`는 비동기 감싸개(풀·큐·heartbeat·최종 기록)만 갖는다 |
 | N5 | **`Verifier` seam 하나만**: DoD급 임무인 "Fail → status FAILED 기록"을 테스트하려면 Fail을 만들어야 하는데, 정상 ALNS는 verify를 통과하는 해만 낸다 (Stage 5 T8). 함수형 인터페이스 주입(기본 `SolutionVerifier::verify`)이 최소 seam이다. 다른 core 호출(normalize·freeze·solve)은 입력으로 실패를 만들 수 있어 seam을 두지 않는다 |
@@ -566,12 +610,12 @@ solveKey를 그대로 URL에 붙이면 된다. 최종 경로·필드명은 호�
 
 | # | 상황 | 처리 | 근거 |
 |---|---|---|---|
-| E1 | `multiRotation: "1"` POST (두 fixture 원본 그대로) | **200 — 접수된다** (1바퀴, D1 확정). 저장·실행이 정상 진행 | Domain §2.5 MUST |
-| E1b | `multiRotation: "2"`·`"-1"` POST | 422 UNSUPPORTED_INPUT, 저장 없음 (차고 재방문 = 범위 밖) | Domain §2.5 MUST·§12 |
-| E1c | `multiRotation: "-2"` POST | 400 INVALID_INPUT, 저장 없음 (규약이 금지한 값) | Domain §2.5·§12 |
+| E1 | `multiRotation: 1` POST (floor fixture 원본 그대로) | **200 — 접수된다** (1바퀴, D1 확정). 저장·실행이 정상 진행. 문자열 `"1"`은 200이 아니라 400이다 — 공통 규칙 1 (Domain §3.1, 2026-08-12) | Domain §2.5 MUST |
+| E1b | `multiRotation: 2`·`-1` POST | 422 UNSUPPORTED_INPUT, 저장 없음 (차고 재방문 = 범위 밖) | Domain §2.5 MUST·§12 |
+| E1c | `multiRotation: -2` POST | 400 INVALID_INPUT, 저장 없음 (규약이 금지한 값) | Domain §2.5·§12 |
 | E2 | JSON 문법 오류·필수 필드 부재·단위 코드 위반 | 400, S3 저장 없음 | Domain §12, Architecture §3.1-1 |
-| E3 | 소수 D/U(원본 win_poc_case.json)·`close == open` 시간창 | **접수 절차 2b의 정규화 검증에서 400 — 저장 없음** (2026-08-11, Domain §12). 접수를 우회해 store에 직접 놓인 입력은 executor 정규화가 FAILED로 잡는다 (T8a — 최종 방어) | Domain §12, §3.1-2b |
-| E4 | itemId 전건 blank (floor fixture 실측 452/452) | `prodId` 폴백. 둘 다 blank → 400 | §4.3 (규약 Mandatory와 fixture 실물의 충돌 해소) |
+| E3 | 문자열 수치 인코딩(원본 win_poc_case.json)·소수 D/U(number)·`close == open` 시간창 | **400 — 저장 없음.** 문자열 수치는 파싱·매핑(공통 규칙 1, Domain §3.1 — 2026-08-12)에서, 소수 D/U·시간창은 접수 절차 2b의 정규화 검증(2026-08-11, Domain §12)에서 걸린다 — 원본 fixture는 인코딩 규칙만으로도 미접수다. 접수를 우회해 store에 직접 놓인 입력은 executor 정규화가 FAILED로 잡는다 (T8a — 최종 방어) | Domain §3.1·§12, §3.1-2b |
+| E4 | itemId 전건 blank (floor fixture 실측 452/452) | **orderId 폴백** (종전 prodId 폴백 폐기 — 2026-08-12 확정) | Domain §2.3 (규약 Mandatory와 fixture 실물의 충돌 해소) |
 | E5 | planId·shprId에 `/`·공백 등 key 안전 문자 밖 | 400 INVALID_INPUT — **잠정 규칙** (Domain 미규정, key·URL 안전) | Architecture §3.3 (key 조립 소유) |
 | E6 | customerId(shprId) 부재 | key 세그먼트 `unknown`, profile은 default | §3.3, Domain §8.4 |
 | E6b | wire에 `Termination` 부재 | `fallback-time-limit-sec` 적용. 접수는 거부하지 않는다 (예산은 유효성 문제가 아님) | §1.1, Domain §2.5.1 |
@@ -588,7 +632,7 @@ solveKey를 그대로 URL에 붙이면 된다. 최종 경로·필드명은 호�
 | E16 | ALNS `IllegalStateException` (구조 결함) | FAILED + 원인 — 조용히 삼키지 않음 | Stage 4 N2, Domain §12 |
 | E17 | body ≈ 12.4 MB (floor fixture 실측) | 수용 — 서블릿 raw body에 기본 크기 제한 없음. 상한 설정을 추가하지 않는다 (내부 서비스) | Plan §0 |
 | E18 | orders 빈 배열 | 접수 수용 → 빈 해로 완주 (DONE, 전부 지표 0) | Stage 2 E19·Stage 4 E1 |
-| E19 | 주문 수준 `taskTime`(규약 샘플에 존재)·`driverRestTimeRatio` ≠ 0 | 무시 — serviceTime 공식(Domain §3.3)과 canonical에 자리가 없음. 거부 여부는 §10 Q5 | Domain §3.3 |
+| E19 | 주문 수준 `taskTime`(규약 샘플에 존재)·`driverRestTimeRatio` ≠ 0 | 무시 — serviceTime 공식(Domain §3.3)과 canonical에 자리가 없음. `driverRestTimeRatio`는 **무시 확정, 거부 안 함** (Domain §2.5, 2026-08-12). 주문 `taskTime`의 거부 여부만 §10 Q5(D2 협의)에 남는다 | Domain §3.3·§2.5 |
 | E20 | 차량 `driverSkill: "ALL"` | 문자 그대로 집합 {"ALL"} — 주문 요구 능력의 wire 원천이 없어 capability 축 전체가 휴면 (항상 통과) | Domain §3.4, §4.4 |
 | E21 | reqDate가 RFC3339 (`2017-07-21T17:32:28Z`) | offset 버리고 벽시계로 통일 (잠정) | Domain §2.2 |
 | E22 | 탐색이 시간 한도로 중단된 best | 정상 DONE (재검증 통과 시) | Domain §12 |
@@ -602,10 +646,10 @@ solveKey를 그대로 URL에 붙이면 된다. 최종 경로·필드명은 호�
 
 | # | 테스트 | 내용 | 대응 DoD 문장 |
 |---|---|---|---|
-| T1 | `PlanJsonAdapterTest.parsesFloorFixture` | win_poc_case_floor.json 전체 파싱 → 건수(452·31·205,209)·실값 spot check (weight `26.2`→BigDecimal 원문, duration 300, qty "1"→1, D 310708 int, options **매핑 7키**(wire 원문은 10키 — `driverRestTimeRatio`·`difficultySortType`·`customerAbbr` 3키는 무시, §4.6), dateRange) | (Plan 범위 문장 "규약 JSON adapter — win_poc fixture로 검증") |
-| T2 | `PlanJsonAdapterTest.toleratesWireVariants` | 원본 win_poc_case.json도 파싱 성공(소수는 BigDecimal 보존 — 거부는 정규화 몫) · itemId→prodId 폴백(E4) · `dueDate`·RFC3339(E21)·문자/숫자 혼재(공통 규칙 1) 소형 케이스 | 〃 |
+| T1 | `PlanJsonAdapterTest.parsesFloorFixture` | win_poc_case_floor.json 전체 파싱 → 건수(452·31·205,209)·실값 spot check (weight `26.2`→BigDecimal 원문, duration 300, qty 1, D 310708 int, options **매핑 7키**(wire 원문은 10키 — `driverRestTimeRatio`·`difficultySortType`·`customerAbbr` 3키는 무시, §4.6), dateRange) | (Plan 범위 문장 "규약 JSON adapter — win_poc fixture로 검증") |
+| T2 | `PlanJsonAdapterTest.toleratesWireVariants` | 원본 win_poc_case.json → 문자열 수치 인코딩으로 INVALID_INPUT (공통 규칙 1·E3, Domain §3.1 — 수신 원형 보존 fixture) · itemId→orderId 폴백(E4) · `dueDate`·RFC3339(E21) 소형 케이스 · 소수 D/U(number)는 파싱 통과, BigDecimal 보존 — 거부는 정규화 몫 | 〃 |
 | T3 | `SolveApiTest.acceptStoresInputAndStatus` | 유효 소형 JSON POST → 200 + solveKey 형식 · store에 input.json(원문 바이트 동일)+RECEIVED | (Plan 범위 문장 "접수 API — 검증→저장→200+solveKey") |
-| T4 | `SolveApiTest.rejectsWithoutStoring` | 문법 오류·필수 누락 → 400 · **소수 거리 등 정규화 오류 → 400 (E3, 2026-08-11 절차 2b)** · multiRotation `"2"`·`"-1"` → 422 UNSUPPORTED_INPUT · `"-2"` → 400 · 이 경우 전부 store 빈 상태 (E1b·E1c·E2). **대조군으로 `"1"`은 200 + 저장됨**을 같이 단언한다 (E1) — 게이트가 반대로 구현되는 것을 막는 지점이다 | 〃 (Domain §12 "S3 저장 없음") |
+| T4 | `SolveApiTest.rejectsWithoutStoring` | 문법 오류·필수 누락 → 400 · **소수 거리·문자열 수치 등 → 400 (E3 — 2026-08-11 절차 2b·2026-08-12 공통 규칙 1)** · multiRotation `2`·`-1` → 422 UNSUPPORTED_INPUT · `-2` → 400 · 이 경우 전부 store 빈 상태 (E1b·E1c·E2). **대조군으로 `1`은 200 + 저장됨**을 같이 단언한다 (E1) — 게이트가 반대로 구현되는 것을 막는 지점이다 | 〃 (Domain §12 "S3 저장 없음") |
 | T5 | `SolveKeyTest.issueAndObjectKeys` | 조립 형식·문자 집합 검증(E5)·runId 유일성·객체 key 3종·`of` 왕복 | (Plan 범위 문장 — Architecture §3.3 key 규칙) |
 | T6 | `LocalSolveStoreTest.roundTrip` | put/get 왕복 3종 · 부재 시 `Optional.empty` | (Plan 범위 문장 "`SolveStore`(fake …)") |
 | T7 | `SolveRunnerTest.happyPathToDone` | 소형 입력(짧은 한도) → Outcome DONE · result.json 존재·파싱 가능 · putResult가 최종 상태 기록보다 선행(§3.2 불변식) | (Plan 범위 문장 "SolveExecutor — 상태 전이") |
@@ -614,7 +658,7 @@ solveKey를 그대로 URL에 붙이면 된다. 최종 경로·필드명은 호�
 | T10 | `SolveApiTest.statusAndResultQueries` | 미존재 404 · RUNNING+오래된 heartbeatAt를 store에 심고 GET → "STALE" · DONE 전 result 409 · DONE 후 200 바이트 동일 (E14 포함) | (Plan 범위 문장 "조회 API"·"STALE") |
 | T11 | `ResultJsonWriterTest.wireFormatGolden` | 손조립 `SolveResult` → §5 잠정안 필드·시각 포맷·decimal 변환(milli→"812.400") 정확 일치 | (Stage 5 인계 "result.json 직렬화") |
 | T12 | `SolveE2eTest.postToDoneToResult` | @SpringBootTest(RANDOM_PORT)+local profile(@TempDir): 소형 규약 JSON POST → GET 폴링으로 DONE 대기(짧은 시간 한도) → GET result → metrics·routes 검증 | **"fake 저장소로 e2e 통합 테스트 — POST 접수 → DONE까지 → GET 결과"** |
-| T13 | `FloorFixtureE2eTest` (조건부 — `-De2e.floor=true`류 태그, CI 기본 제외) | win_poc_case_floor.json POST → DONE(한도 600초, 최대 ~11분 폴링) → result 검증 + 재검증 통과(verified=true). **실행 가능하다** — Q1(D1) 해소로 `multiRotation: "1"` 원본이 그대로 접수된다 (2026-08-10) | **"win_poc_case_floor.json 접수·완주 (성공 기준 §0 달성 시점)"** |
+| T13 | `FloorFixtureE2eTest` (조건부 — `-De2e.floor=true`류 태그, CI 기본 제외) | win_poc_case_floor.json POST → DONE(한도 600초, 최대 ~11분 폴링) → result 검증 + 재검증 통과(verified=true). **실행 가능하다** — Q1(D1) 해소로 `multiRotation: 1`이 그대로 접수된다 (2026-08-10) | **"win_poc_case_floor.json 접수·완주 (성공 기준 §0 달성 시점)"** |
 | T14 | `SolveRunnerTest.resolvesProfileOnceAndSharesIt` | 스파이 `ProfileRegistry`로 `resolve` 호출이 정확히 1회임을 단언 + solver와 verifier에 전달된 `Profile`이 **동일 인스턴스**(`assertSame`)임을 단언 | (Domain §8.4 MUST — `Problem`이 profile을 담지 않게 된 이후 이것이 유일한 보장 지점) |
 | T15 | `SolveRunnerTest.buildsBudgetFromWireThenConfig` | wire `Termination` 있음 → 그 값이 `AlnsConfig.timeLimitSec`, 없음 → `fallback-time-limit-sec` (E6b). idle 키 미설정 시 `empty` (E6c). 결과 run 메타에 `deliveryPolicy`와 `searchBudget`이 **각각** 실림 | (Domain §2.5.1·§11.1) |
 | T16 | `AppArchitectureRulesTest.awsSdkOnlyInStorage` | `..app.storage..` 밖 → `software.amazon.awssdk..` 참조 금지 (N6) — 2026-08-11 개번, 종전 번호 T14가 중복이었다 | (Architecture §8 강제) |
@@ -644,12 +688,14 @@ Plan §1의 편입(2026-08-11)에 따라 이 표 전부가 완료 기준이다.
 
 ## 10. 미해결 질문
 
-확정 문서로 답이 안 나오는 것만 남긴다. Stage 6 구현은 각 항목의 "잠정 처리"로 진행한다.
+닫힌 질문은 해소 표시를 달아 남긴다 ([README](README.md) 공통 규칙, 2026-08-13) —
+Q1·Q3은 해소됐고, Q2·Q4·Q5는 [Plan §2.1 D2](../implementation-plan.md) 협의로 이관 상태다.
+Stage 6 구현은 각 항목의 "잠정 처리"로 진행한다.
 
 | # | 질문 | 잠정 처리 |
 |---|---|---|
-| Q1 | **multiRotation** (Stage 0 §11 Q2 → Stage 1 §9 Q1 인계): 두 fixture 모두 `multiRotation: "1"`이라 최종 성공 기준 fixture(Plan §0)가 접수(§3.1-2)에서 422로 거부된다 | **해소 (2026-08-10, [Plan §2.1 D1](../implementation-plan.md) 확정).** 숫자는 **차량이 도는 바퀴 수**이고 `"1"` = 1바퀴 = **지원 범위 안**이다 — fixture는 원본 그대로 접수되며 **Stage 6에 남은 선행 조건은 없다**(T13 실행 가능). 판정은 `!= 0` 거부에서 **통과 = `{0, 1}`**로 반전됐다 (§3.1-2·E1\~E1c·T4). 판정 규칙은 `PlanNormalizer`(Stage 1 절차 2)와 접수 게이트(§3.1-2)가 **같은 조건**을 갖는다 — adapter 단독 우회 금지(의미 규칙은 solver-core 소유)는 그대로다. **주의: 규약 PDF 문면은 이 숫자를 복귀 횟수로 읽게 적혀 있어 PDF만 보고 게이트를 짜면 정확히 반대가 된다** (Domain §2.5 주석) |
+| Q1 | **multiRotation** (Stage 0 §11 Q2 → Stage 1 §9 Q1 인계): 두 fixture 모두 `multiRotation: "1"`이라 최종 성공 기준 fixture(Plan §0)가 접수(§3.1-2)에서 422로 거부된다 | **해소 (2026-08-10, [Plan §2.1 D1](../implementation-plan.md) 확정).** 숫자는 **차량이 도는 바퀴 수**이고 값 `1` = 1바퀴 = **지원 범위 안**이다 — fixture는 그대로 접수되며 **Stage 6에 남은 선행 조건은 없다**(T13 실행 가능). 판정은 `!= 0` 거부에서 **통과 = `{0, 1}`**로 반전됐다 (§3.1-2·E1\~E1c·T4). 판정 규칙은 `PlanNormalizer`(Stage 1 절차 2)와 접수 게이트(§3.1-2)가 **같은 조건**을 갖는다 — adapter 단독 우회 금지(의미 규칙은 solver-core 소유)는 그대로다. **주의: 규약 PDF 문면은 이 숫자를 복귀 횟수로 읽게 적혀 있어 PDF만 보고 게이트를 짜면 정확히 반대가 된다** (Domain §2.5 주석) |
 | Q2 | **customerId의 wire 원천** (Stage 1 §9 Q6 인계): fixture에 plan `shprId="S3853"`와 주문 수준 `customerId="WINCOMMERCE"`가 공존한다. profile 선택 키·S3 key 세그먼트가 어느 쪽인지 협의 필요 (profile 레지스트리 키 명명에 직결) | **[Plan §2.1 D2](../implementation-plan.md)(wire 협의)로 이관 (2026-08-10).** 그때까지 Domain §2.2의 명시 대응(`shprId`)을 매핑 (§4.1). 주문 수준 customerId는 무시. 현재는 어느 쪽이든 default profile이라 동작 차이 없음 |
-| Q3 | **접수 4xx의 깊이**: Domain §12는 "소수 거리·알 수 없는 vhclOwnTyp"을 접수 4xx(S3 저장 없음)로 분류하는데, Architecture §3.1은 "canonical 변환은 접수에서 하지 않고 의미 오류는 풀이 단계 FAILED"라 한다 — 두 정본이 충돌 | **해소 (2026-08-11 결정).** Domain §12를 따른다 — 접수가 `PlanNormalizer.normalize`까지 실행해 의미 오류도 4xx·저장 없음 (§3.1 절차 2b·N1·E3·T4). Architecture §3.1이 같은 날 개정됐다. executor 쪽 정규화는 최종 방어로 유지 (T8a) |
+| Q3 | **접수 4xx의 깊이**: Domain §12는 "소수 거리·알 수 없는 vhclOwnTyp"(당시 문면 — `vhclOwnTyp`은 2026-08-11 유예로 현행 §12에서 빠졌다)을 접수 4xx(S3 저장 없음)로 분류하는데, Architecture §3.1은 "canonical 변환은 접수에서 하지 않고 의미 오류는 풀이 단계 FAILED"라 한다 — 두 정본이 충돌 | **해소 (2026-08-11 결정).** Domain §12를 따른다 — 접수가 `PlanNormalizer.normalize`까지 실행해 의미 오류도 4xx·저장 없음 (§3.1 절차 2b·N1·E3·T4). Architecture §3.1이 같은 날 개정됐다. executor 쪽 정규화는 최종 방어로 유지 (T8a) |
 | Q4 | **wire 최종 협의 부재**: 결과 JSON 필드명·시각 timezone 표기·단위 표현(§5), 조회 경로(§3.4), HTTP 상태 배정(§2.4) — Domain §11.2·Architecture §3.4가 "협의 확정"으로 열어 둠. 협의 상대가 현재 없음 | **[Plan §2.1 D2](../implementation-plan.md)로 이관 (2026-08-10).** "협의 상대를 찾는 것"이 D2의 첫 작업으로 올라갔다. 그때까지 §5·§3.4의 잠정안으로 구현·테스트(T11 golden). 협의 후 변경은 wire 표기만 — 의미(Domain §11.1)는 불변 |
-| Q5 | **legacy 시간 필드의 처리**: 규약 샘플의 주문 수준 `taskTime`, `driverRestTimeRatio`(스펙 샘플 값 0.15) — canonical·serviceTime 공식에 자리가 없어 무시하면 호출 측 기대와 조용히 어긋날 수 있다 | **[Plan §2.1 D2](../implementation-plan.md)로 이관 (2026-08-10)** — 호출 측이 이 값을 무엇으로 기대하는지가 답이라 협의 항목이다. 그때까지 무시 (E19 — 공식 밖 입력 미사용). 0이 아닌 값을 거부(UNSUPPORTED_INPUT)로 바꿀지는 협의 결과와 함께 결정. **주의: `driverRestTimeRatio`(운전 시간에 비례한 휴식)는 Domain §7.3의 `interWorkWindowRestTime`(근무창 사이의 야간 휴식)과 다른 개념이다** — D4가 후자를 실계산하게 됐다고 이 필드가 해소되는 것이 아니다 |
+| Q5 | **legacy 시간 필드의 처리**: 규약 샘플의 주문 수준 `taskTime`, `driverRestTimeRatio`(스펙 샘플 값 0.15) — canonical·serviceTime 공식에 자리가 없어 무시하면 호출 측 기대와 조용히 어긋날 수 있다 | **[Plan §2.1 D2](../implementation-plan.md)로 이관 (2026-08-10)** — 호출 측이 이 값을 무엇으로 기대하는지가 답이라 협의 항목이다. 그때까지 무시 (E19 — 공식 밖 입력 미사용). **`driverRestTimeRatio`는 부분 종결 (2026-08-12, 시스템 소유자)** — 무시 확정, 0이 아닌 값도 거부하지 않는다 (Domain §2.5, 수용된 위험). 주문 수준 `taskTime`의 처리만 D2에 남는다. **주의: `driverRestTimeRatio`(운전 시간에 비례한 휴식)는 Domain §7.3의 `interWorkWindowRestTime`(근무창 사이의 야간 휴식)과 다른 개념이다** — D4가 후자를 실계산하게 됐다고 이 필드가 해소되는 것이 아니다 |

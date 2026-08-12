@@ -26,6 +26,15 @@ revisions:
     DoD 편입으로 갱신
   - 2026-08-11 Stage 1 유예 반영 — §8 `depot.taskTime`(복귀 선적 시간이라 1바퀴엔 미발생) ·
     §4.3 소유 비용축 · §4.4 3D profile 예시 주석. 전파 절차·차고 창 적용은 무변경
+  - 2026-08-12 Domain 2026-08-12 개정(self arc sentinel·startDepot 부재 규칙·수치 number
+    인코딩) 정합 — §3.3 주석·E18·E19의 "self arc = 0"을 sentinel U=86,400으로 (Domain §4)
+  - 2026-08-13 감사 후속 인터뷰 정합 — §4.4의 차고 NodeId 문구를 "NodeId 자체가 없다
+    (설계 확정 삭제)"로 명확화
+  - 2026-08-13 감사 결함 정정 (분할 6 #1·#2·#6·#7·#9, 통합 §2) — §3.3 절차 1·2에
+    Domain §7.1 **위반 귀속** 규약(두 창 축 동시 소진 시 절차 문장에 먼저 적힌 쪽) 전파 ·
+    E35에 "Ds 목록이 먼저 소진" 데이터 조건 명시(과일반화 교정, T14 문구 동기) ·
+    §2.1 "방어 복사만"에 `Route` 빈 visits 거부 병기 · §7 말미 Plan 인용을 의역 표기로 ·
+    §9 서두를 README 공통 규칙(표시하고 남김)으로. 전파 절차·판정 자체는 무변경
 ---
 
 # Stage 3 — Solution·전파·평가
@@ -124,7 +133,8 @@ Domain §8.1의 층 ③④⑤가 각각 `Evaluation` · `Profile.score` · `Scor
 
 ### 2.1 SoT 시그니처
 
-record는 불변이고 compact constructor에서 방어 복사(`List.copyOf`/`Set.copyOf`)만 한다.
+record는 불변이고 compact constructor에서는 방어 복사(`List.copyOf`/`Set.copyOf`)와
+`Route`의 빈 visits 거부(E30)만 한다.
 pair·XOR 규칙 검사는 생성자가 아니라 `StructureCheck` 한 곳이 소유한다 (위반을 던지지 않고
 **목록으로 보고** — DoD의 "검출"이 테스트 가능해야 하고, Stage 4 trial 루프가 결함을 버그
 신호로 다뤄야 하기 때문).
@@ -305,6 +315,9 @@ fitService(창목록, from, S)  = [t, t+S]가 한 창 안에 통째로 들어가
             · 어느 근무창 안 · 어느 Ds 창 안 · 첫 이동이 그 근무창 안에 통째로
             = fitArc(W, t, U[startDepot→loc₁])와 Ds를 함께 앞으로 밀며 찾는다.
             근무창이 먼저 소진되면 WORK_WINDOW, Ds가 먼저 소진되면 DEPOT_WINDOW (at 부재).
+            두 창 축이 **같은 시각에 함께 소진**되면 절차 문장에 먼저 적힌 쪽 = WORK_WINDOW를
+            기록한다 (Domain §7.1 위반 귀속, 2026-08-11 — 가능/불가 판정은 안 바뀌지만
+            탐색과 재검증이 FAILED 원인 종류까지 같게 내기 위한 규약).
             → **"근무 시작 즉시 출발"은 "근무 시작과 차고 개장 중 늦은 쪽에 즉시"다** (Domain §2.5).
           waitInDepot=Y: 위 조건을 지키면서 첫 방문 serviceStart에 맞춰 늦춘다 —
             departure = 위 조건을 만족하면서 arrival ≤ firstServiceStart인 **가장 늦은** 시각
@@ -314,11 +327,12 @@ fitService(창목록, from, S)  = [t, t+S]가 한 창 안에 통째로 들어가
           depotWaitingTime = [spanStart, departure] 중 **근무창에 걸친 부분** (Domain §7.3).
             차고가 근무 시작보다 늦게 열면 **N에서도 0이 아니다**.
 2. 방문 루프  각 방문 i에 대해 Domain §7.1의 1–7 순서 그대로:
-          arrival    = 직전 departure + U[직전 장소 → locᵢ]        // §7.1-1 (self arc = 0)
+          arrival    = 직전 departure + U[직전 장소 → locᵢ]        // §7.1-1 (self arc는 sentinel U=86,400 — §4)
                        (직전 출발이 이동을 담는 창을 골랐으므로 arrival은 근무창 안이다)
           serviceStart = arrival 이상이면서 side.windows 중 하나 안이고
                        fitService(W, ·, serviceTime)도 만족하는 가장 이른 시각   // §7.1-2
             side.windows가 먼저 소진 → TIME_WINDOW / W가 먼저 소진 → WORK_WINDOW
+            (두 축이 같은 시각에 함께 소진되면 먼저 적힌 쪽 = TIME_WINDOW — Domain §7.1 위반 귀속)
             (창이 하나면 max(arrival, open) — 종전 식과 같다. serviceStart > close 판정도
              그대로 살아 있다: 창을 넘어선 순간 그 창은 후보에서 빠진다. Domain §7.1 MUST)
           serviceEnd  = serviceStart + side.serviceTimeSec         // §7.1-3
@@ -566,8 +580,8 @@ public record NodeRef(RequestId requestId, boolean pickup, RequestSide side) {}
   인자로 전달되며, "탐색과 재검증이 같은 인스턴스"(§8.4 MUST)는 **호출자가 한 번 resolve해
   양쪽에 같은 값을 넘기는 것**으로 지킨다 (Stage 6 §조립). `Problem` 자체도 같은 방식으로
   공유되므로 보장 수준이 동일하다.
-- `nodeRef` 색인은 freeze가 만든다 (차고 NodeId는 색인에 넣지 않는다 — 경로 visits에 올 수
-  없는 값이므로 조회 실패가 곧 구조 신호다).
+- `nodeRef` 색인은 freeze가 만든다. 차고는 **NodeId 자체가 없다** (유예가 아니라 설계 확정
+  삭제 — 2026-08-13 분류 확정) — 경로 visits에 올 수 없는 값이므로 조회 실패가 곧 구조 신호다.
 - 의존 최종 그림 (전부 한 방향, 순환 없음 — Architecture §2와 정합):
 
 ```text
@@ -624,14 +638,14 @@ Domain §6–§8의 optional 규칙·경계값·오류 분류에서 뽑았다.
 | E15 | 비호환 차량 경로에 배정 | Evaluator INCOMPATIBLE_VEHICLE (hard — 감점 아님) | §3.4·§8.1 |
 | E16 | maxStop·maxDrive·치수 축 부재 | 검사 자체 없음 (sentinel 비교 금지) | §2.4·§2.6 |
 | E17 | stopCount == effectiveMaxStopCount | 통과 (`≤`). +1이면 MAX_STOP_COUNT | §2.6 |
-| E18 | 같은 장소 연속 방문 | 첫 진입만 stopCount +1, 사이 U=0 (self arc) | §7.4 |
-| E19 | 첫 방문이 startDepot과 같은 장소 | stopCount +1 (depot는 비교 대상 아님), U=0 | §7.4 |
+| E18 | 같은 장소 연속 방문 | 첫 진입만 stopCount +1, 사이 U = 86,400 (self arc sentinel — Domain §4, 2026-08-12 확정: 유효한 경로에 self arc가 나타나지 않게 하는 값. 종전 "U=0"은 폐기) | §7.4·§4 |
+| E19 | 첫 방문이 startDepot과 같은 장소 | stopCount +1 (depot는 비교 대상 아님), U = 86,400 (self arc sentinel — §4) | §7.4·§4 |
 | E20 | waitInDepot=Y | 첫 방문 대기가 depotWaiting으로 이동, serviceStart·routeOperationalTime은 N과 동일. **다일이면 그 대기 중 창 사이의 틈은 rest로 간다** (근무 시간 부분만 depotWaiting) | §2.5·§7.3 |
 | E21 | waitInDepot=Y인데 최속 출발도 창에 늦음 | TIME_WINDOW (Y는 늦추기만 — 이르게 못 함) | §2.5 |
 | E22 | endDepot 존재 | 마지막→endDepot 이동을 driveDist·Time·근무창에 포함 | §7.4·§6.2 |
 | E23 | 마지막 이동이 남은 근무창 어디에도 안 들어감 | WORK_WINDOW (종전의 "routeEnd > close" 검사를 대체 — 배치 실패가 곧 위반, N5) | Domain §3.2·§7.1 |
 | E34 | 차고가 근무 시작보다 늦게 엶 (근무 06:00\~, 차고 08:00\~) | waitInDepot=**N**이어도 출발 = 08:00, `depotWaitingTimeSec = 7200` (종전 "N이면 0"은 거짓이 된다) | Domain §2.5·§7.1 절차 0 |
-| E35 | 차고 창 밖에만 출발 가능한 상황 (근무창 ∩ 차고 창 = ∅) | DEPOT_WINDOW (at 부재 — 출발 전 위반) | Domain §7.1 절차 0 |
+| E35 | 차고 창 밖에만 출발 가능한 상황 (근무창 ∩ 차고 창 = ∅) 중 **Ds(차고 창) 목록이 먼저 소진되는 구성** — 예: 차고 창이 근무창보다 먼저 끝남 | DEPOT_WINDOW (at 부재 — 출발 전 위반). 결과는 데이터에 따라 갈린다: 근무창 목록이 먼저 소진되는 구성이면 WORK_WINDOW, 동시 소진이면 WORK_WINDOW (§3.3 절차 1 — Domain §7.1 위반 귀속) | Domain §7.1 절차 0 |
 | E36 | endDepot 도착이 차고 창 사이의 틈 | DEPOT_WINDOW — 문 열 때까지 기다렸다 들어가는 것으로 **미루지 않는다** | Domain §7.1 절차 8 |
 | E37 | 이동이 현재 창 끝을 넘음, 다음 창 있음 | 위반 아님 — 다음 창으로 미룬다. 미룬 시간 중 창 사이 틈은 `interWorkWindowRestTimeSec`, 근무창에 걸친 부분은 `customerWaitingTimeSec` (§3.5, Domain §7.3) | Domain §3.2·§7.1-7 |
 | E38 | 서비스가 창 끝을 넘음 (`serviceStart + serviceTime > close`) | serviceStart를 다음 창으로 미룬다. 그 때문에 방문 시간창을 넘기면 TIME_WINDOW, 근무창이 소진되면 WORK_WINDOW | Domain §7.1-2 |
@@ -672,13 +686,13 @@ Stage 6 — Stage 1 §7과 동일 원칙).
 | T11 | `RoutePropagatorTest.stopCountAndDriveAggregation` | E18·E19·E22: 같은 장소 연속·depot 미산입·endDepot 포함 driveDist/Time | (Plan 범위 문장 "기록 값 §7.3") |
 | T12 | `EvaluatorTest.hardConstraintReadsProblemFacts` | 차급(`vehicleFeature`)을 보고 판정하는 테스트 `HardConstraint` → `problem` 인자로 그 값에 도달함을 확인 (§4.3 고객 구현 예의 전제) | (노트 N2 — 이번 변경의 목적 자체) |
 | T13 | `RoutePropagatorTest.deferSToNextWorkWindow` | **다일 전파.** §3.5 대응표의 전 셀 — 2일차 16:30 90분 이동이 3일차 08:00으로 미뤄지고 `customerWaitingTimeSec += 1800`·`interWorkWindowRestTimeSec += 54000`(2026-08-11 정정 — 종전 목표값 "rest 55800"은 §7.3 공식과 모순), 도착 207000 (E37) · 서비스가 창을 넘는 변형 (E38) · 대기가 근무 시간/틈으로 갈리는 변형 (customerWaiting 3600 + rest 54000) | (Domain §7.2.1 재현 — D4 확정분) |
-| T14 | `RoutePropagatorTest.depotWindowAppliesToDepartureAndReturn` | **차고 창.** E35(출발 불가 → DEPOT_WINDOW, at 부재) · E36(복귀가 창 틈 → DEPOT_WINDOW, 미루지 않음) · 차고 창이 전일이면 종전과 동일 | (Domain §7.1 — D4 확정분) |
+| T14 | `RoutePropagatorTest.depotWindowAppliesToDepartureAndReturn` | **차고 창.** E35(출발 불가, **Ds 목록이 먼저 소진되는 구성** → DEPOT_WINDOW, at 부재 — 창 구성은 E35의 데이터 조건 그대로) · E36(복귀가 창 틈 → DEPOT_WINDOW, 미루지 않음) · 차고 창이 전일이면 종전과 동일 | (Domain §7.1 — D4 확정분) |
 | T15 | `RoutePropagatorTest.routeOperationalTimeIdentityHolds` | **항등식.** 단일 창·다일·waitInDepot Y/N·endDepot 유무 네 조합에서 `routeOperationalTimeSec() == routeEndSec() − spanStartSec()` (Domain §7.3). 성분 정의가 어긋나면 여기서 먼저 깨진다 | (Domain §7.3 — 두 구현 대조의 전제) |
 | T16 | `RoutePropagatorTest.singleWindowMatchesPreD4Values` | **회귀 방지.** 현행 fixture 모양(창 1개·차고 전일창·endDepot 없음)에서 `departureSec == serviceEndSec`(전 방문)·`interWorkWindowRestTimeSec == 0`·`depotWaitingTimeSec == 0` (E40) — D4가 1일 입력의 값을 바꾸지 않았다는 증명 | (Domain §3.2 — D4 무영향 근거) |
 
-T9–T16은 DoD 세 문장 밖이지만 Plan Stage 3 범위 문장("적재 부호 규칙, 전파 루프, 기록 값(§7.3),
-metric, 사전식 비교")과 Domain §3.2·§7.1(D4 확정분)의 직접 검증이다 — Plan §1의 편입(2026-08-11)에
-따라 이 표 전부가 완료 기준이다.
+T9–T16은 DoD 세 문장 밖이지만 Plan Stage 3 범위 문장(취지 — 적재 부호 규칙, 전파 절차·기록
+값(§7.3), metric, 사전식 비교)과 Domain §3.2·§7.1(D4 확정분)의 직접 검증이다 — Plan §1의
+편입(2026-08-11)에 따라 이 표 전부가 완료 기준이다.
 
 ---
 
@@ -701,8 +715,8 @@ metric, 사전식 비교")과 Domain §3.2·§7.1(D4 확정분)의 직접 검증
 
 ## 9. 미해결 질문
 
-확정 문서로 답이 안 나오는 것만 남긴다. **Q1·Q2·Q3는 전부 해소됐다** (Q2·Q3는 2026-08-10
-D4 확정) — 이 절에 남은 미결은 Q4 하나다.
+닫힌 질문은 해소 표시를 달아 남긴다 ([README](README.md) 공통 규칙, 2026-08-13).
+**Q1·Q2·Q3는 전부 해소됐다** (Q2·Q3는 2026-08-10 D4 확정) — 이 절에 남은 미결은 Q4 하나다.
 
 | # | 질문 | 잠정 처리 |
 |---|---|---|
