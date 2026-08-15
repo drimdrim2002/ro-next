@@ -17,6 +17,9 @@ revisions:
     (2026-08-11 접수 깊이 확정 정합 — 정본은 Architecture §3.1) · §3 결정 #10 "의존성 0"에
     compile scope 명시 · §6 차량별 multiRotation 문단의 덮어쓰기 규칙 참조에 유예 상태 명시 ·
     §7 "과거 문서는 전부 deprecated/에" 문구를 아카이브 표 참조로 교정
+  - 2026-08-14 Domain `startDepot` optional + `PICKUP_ONLY` — §3 결정 3에 pickup-only
+    같은 core · §5 1차 성공 기준에 Stage 6 현 규약 wire start 채움 · §8 Request에 한쪽
+    side 부재 허용. 가짜 depot 방문 금지
 ---
 
 # RO-Next Master Design
@@ -66,7 +69,7 @@ revisions:
 |---|---|---|
 | 1 | **입력 계약 하나** | 솔버가 이해하는 canonical(정본) 입력 의미는 하나. 버전별 스키마 병행 운영 없음. 외부 규약([RO Input Json Spec](../data/ro_input_json_spec.pdf))과의 차이는 **adapter 하나**가 변환 |
 | 2 | **pair가 원자 단위** | 배정·이동의 단위는 개별 지점이 아니라 `Request`(pickup+delivery 짝). 짝이 갈라지면 품질 문제가 아니라 **구조 결함** |
-| 3 | **delivery-only도 같은 core** | 배송만 있는 주문(현 규약 전부)도 같은 RPDPTW core가 처리. 가짜 픽업 방문을 만들지 않음 |
+| 3 | **delivery-only·pickup-only도 같은 core** | 배송만 있는 주문(현 규약 전부)과 집하만 있는 주문도 같은 RPDPTW core가 처리. 가짜 픽업·하차 방문, 가상 depot을 만들지 않음 |
 | 4 | **Problem 동결 후 탐색** | 풀이 시작 시 문제(주문·차량·이동표·규칙 설정)를 `Problem`으로 동결. 탐색은 `Solution`(경로·미배정)만 변경 |
 | 5 | **ALNS이 기본 탐색** | 초기해 생성 → ALNS(destroy/repair) 개선. MIP 재조합은 §6 향후 옵션 |
 | 6 | **재검증 1회** | 결과 저장 직전, 탐색 코드와 분리된 검증 코드가 최종 배차안 전체를 재계산. **재검증을 통과하지 못한 배차안은 결과로 저장하지 않는다** — 이것이 유일한 발행 규칙 |
@@ -101,6 +104,8 @@ revisions:
 - **구현 완료 기준**: 각 구현 단계의 DoD([Implementation Plan](implementation-plan.md))를 따른다 — 테스트 통과, 실제 fixture 실행 결과 같은 보통의 기준이다.
 - **1차 성공 기준**: [win_poc_case_floor.json](../data/win_poc_case_floor.json)을 실제 솔버로 풀어
   재검증 통과 + 결과 JSON 생성. 이후 기존 엔진(Win) 결과와 지표 비교.
+  앱 접수(Stage 6)가 현 규약 wire의 빈 `startDepot`을 단일 차고로 채우므로, 이 기준의 출발은
+  `WIN_0`이다 (Domain §2.4).
 
 이전 문서의 "gate + evidence" 완료 판정 체계는 폐기했다.
 
@@ -126,7 +131,7 @@ Stage Extra E1이 복원 지점이다). 그 전에 미리 필드를 만들어 �
 [Stage Extra](implementation/stage-extra-deferred-features.md) 등재부에 있고,
 작업 목록 등재는 [Plan §1 말미](implementation-plan.md)다.
 
-그 외: 규약의 PICKUP_DELIVERY 확장(canonical은 이미 지원, wire 규약 협의 필요), multi-depot 확대,
+그 외: 규약의 PICKUP_DELIVERY·PICKUP_ONLY 확장(canonical은 이미 지원, wire 규약 협의 필요), multi-depot 확대,
 분산 병렬 탐색(여러 워커 경쟁)은 필요해질 때 각각 별도 결정으로 연다.
 
 ## 7. 문서 지도
@@ -148,7 +153,7 @@ Stage Extra E1이 복원 지점이다). 그 전에 미리 필드를 만들어 �
 |---|---|
 | **규약 (spec)** | 호출 시스템과 이미 공유된 입력 JSON 형식. [data/ro_input_json_spec.pdf](../data/ro_input_json_spec.pdf) |
 | **canonical (정본)** | 솔버 내부가 이해하는 유일한 입력 의미. adapter가 규약 → canonical로 변환 |
-| **`Request`** | 운송 의무 한 건. pickup+delivery 짝(pair). 현 규약의 주문(order)은 delivery만 있는 Request |
+| **`Request`** | 운송 의무 한 건. pickup+delivery 짝(pair). 한쪽 side가 없을 수 있다(차고 적재/하차). 현 규약의 주문(order)은 delivery만 있는 Request |
 | **`Problem`** | 풀이 시작 시 동결된 문제 묶음(주문·차량·이동표·규칙 설정). 이후 절대 변경되지 않음 |
 | **`Solution`** | 배차안: 차량별 방문 순서 + 미배정 목록. 탐색이 바꾸는 유일한 대상 |
 | **ALNS** | 해를 조금 부수고(destroy) 다시 넣으며(repair) 반복 개선하는 탐색 방법 |

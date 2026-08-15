@@ -38,6 +38,10 @@ revisions:
     교정(구현 반영 → 2026-08-11 유예, Stage Extra E1) · §2.1 "어느 Stage도 막고 있지 않다"
     전칭 완화 · Stage Extra 절 "§5 승격 절차"의 소속 문서 명시 · Stage 1 DoD 소수 규칙
     문구 분리(무게·부피 FLOOR / 거리·시간 거부, optional 부재 = 제약 없음·기본값 구분)
+  - 2026-08-14 Domain `startDepot` optional + `PICKUP_ONLY` 정합 — Stage 1 DoD에서
+    `startDepot`을 "규칙으로 정해진 기본값"에서 제외(부재 = 첫 고객 시작). trips 접기에
+    start도 없으면 INVALID 추가. §0 fixture: 직접 정규화 시 start empty, 앱 접수(Stage 6)는
+    단일 차고를 채움. 2026-08-12 채움 규칙과 구분
 ---
 
 # RO-Next Implementation Plan
@@ -72,6 +76,9 @@ revisions:
 > [data/win_poc_case_floor.json](../data/win_poc_case_floor.json) (주문 452건·차량 31대)을
 > 앱에 접수 → 실제 ALNS로 풀이 → **재검증 통과** → 결과 JSON 생성.
 > 이후 같은 입력의 기존 엔진(Win) 결과와 지표(미배정 수·차량 수·총거리) 비교.
+> 차량 31대는 wire에 `startDepot`이 없다. **앱 접수(Stage 6 adapter)** 가 단일 차고 `WIN_0`을
+> 채우므로 이 기준의 출발은 `WIN_0`이다. `PlanInput`으로 직접 정규화하면 start는 비어 있다
+> (Domain §2.4, 2026-08-14 — 정규화는 채우지 않는다).
 
 ## 0.1 VRPTW로 보면 — Stage 한 장
 
@@ -164,13 +171,15 @@ VRPTW instance의 개념(요청, 차량, TW, capacity)은 그대로다. 달라�
 
 - 무게·부피는 소수를 받아 **×1000 FLOOR**하고, **거리·시간 소수는 거부**한다 (표기 기준 —
   Domain §3.1). 소수를 조용히 반올림하지 않는다. optional 부재는 한도·용량 축이면
-  “그 축 제약 없음”, `speed`·`trips`·`multiRotation`·`startDepot`이면 규칙으로 정해진
-  기본값이다 (Domain §2.4·§2.6·§3.1).
+  “그 축 제약 없음”, `speed`·`trips`·`multiRotation`이면 규칙으로 정해진 기본값이다.
+  `startDepot` 부재는 기본값이 아니라 **첫 고객에서 시작**이다 (Domain §2.4, 2026-08-14 —
+  2026-08-12 단일 차고 채움 규칙은 폐기. 현 규약 wire 채움은 Stage 6).
 - `multiRotation`이 core 지원 범위를 넘으면 거부한다 (통과 = `{0, 1}`,
   `-1`·`2 이상` → `UNSUPPORTED_INPUT`, `≤ -2` → `INVALID_INPUT` — Domain §2.5, §2.1 D1 확정).
   즉 multi-trip 요청은 여기서 걸린다.
 - `trips` 접기 테스트 — `options.trips`가 `roundtrip`이면 `endDepot` 부재 차량이
-  `startDepot`으로 복귀한다. **차량별** `trips`는 wire에 없어 유예했다
+  `startDepot`으로 복귀한다. start도 없으면 `INVALID_INPUT`이다. **차량별** `trips`는
+  wire에 없어 유예했다
   ([Stage Extra E1](implementation/stage-extra-deferred-features.md), 2026-08-11).
 
 **용어 메모**

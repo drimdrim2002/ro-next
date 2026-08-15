@@ -26,6 +26,8 @@ revisions:
     추가 · E8 "(fixture 상황)" 오기 교정(fixture는 전 차량 speed 45 — 부재는 합성 케이스) ·
     E19 "(또는 빈 경로)"를 "(또는 경로 0개)"로(빈 visits Route는 Stage 3이 금지) ·
     §7 말미 Plan 인용을 의역 표기로 · §9 서두를 README 공통 규칙(표시하고 남김)으로. 설계 무변경
+  - 2026-08-14 Domain `startDepot` optional + `PICKUP_ONLY` — freeze 절차 3을 3패턴 ↔ side로.
+    start/end는 **있으면** 차고 집합. E16 확장. start 부재는 실패가 아님
 ---
 
 # Stage 2 — 이동표와 Problem 동결
@@ -222,9 +224,13 @@ Stage 1 §2.2). 결과 run 메타에 남길지는 Stage 6 재량이며, 그 경�
          (차고는 NodeId를 갖지 않는다 — Stage 1 §2.2, Stage 3 §4.4)
          위반 → 실패 (Domain §5 "ID 참조").
 3. 참조   pair 참조 (Domain §5·§1.3):
-         - pattern == PICKUP_DELIVERY ⇔ pickup side 존재. 불일치 → 실패.
+         - DELIVERY_ONLY   ⇔ pickup 부재 ∧ delivery 존재
+         - PICKUP_ONLY     ⇔ pickup 존재 ∧ delivery 부재
+         - PICKUP_DELIVERY ⇔ pickup 존재 ∧ delivery 존재
+         불일치 → 실패.
          모든 side·depot의 locationId ∈ locations 맵. 아니면 → 실패.
-         vehicle.startDepot·endDepot(있으면) ∈ 차고 LocationId 집합. 아니면 → 실패.
+         vehicle.startDepot·endDepot(**있으면**) ∈ 차고 LocationId 집합. 아니면 → 실패.
+         부재는 실패가 아니다 (첫 고객 시작 / 마지막 고객 종료 — Domain §2.4).
 4. speed  차량별 resolvedSpeedKmH 확정 (§3 절차 5 체인). ≤ 0 → 실패.
          distinct 집합을 만들어 5로 넘긴다. VehicleId→speed 맵은 Problem이 보관.
 5. 이동표 TravelMatrix.prepare(locations, plan.travelEntries, speeds).
@@ -275,8 +281,8 @@ Domain §4·§5의 규칙·경계값·오류 분류에서 뽑았다. "실패" = 
 | E13 | 보정 U가 int 범위 초과 | 실패 (overflow 검사) | §3.1 |
 | E14 | 서로 다른 두 장소인데 입력 D=0 | 허용 (금지 규칙 없음 — 동일 건물 별개 locId 등) | §4 |
 | E15 | 같은 좌표의 두 장소를 GC 보정 | D=0 → U=0 | §4 |
-| E16 | DELIVERY_ONLY인데 pickup side 존재 (Plan 직접 조립) | 실패 (pair 참조) | §1.3·§5 |
-| E17 | startDepot/endDepot이 차고 목록 밖 | 실패 (ID 참조) — 정상 경로에선 Stage 1이 선차단, freeze는 방어 재검증 | §5 |
+| E16 | 패턴 ↔ side 불일치 (Plan 직접 조립): DELIVERY_ONLY인데 pickup 있음, PICKUP_ONLY인데 delivery 있음, PICKUP_DELIVERY인데 한쪽 없음, 둘 다 없음 | 실패 (pair 참조) | §1.3·§5 |
+| E17 | startDepot/endDepot이 **있는데** 차고 목록 밖 | 실패 (ID 참조) — 정상 경로에선 Stage 1이 선차단, freeze는 방어 재검증. 부재는 통과 | §5 |
 | E18 | 호환 차량 0대인 Request | 통과 — `compatibleVehicles` = ∅로 동결. 미배정+사유는 Stage 5 | §3.4 |
 | E19 | vehicles 또는 requests가 빈 목록 | 통과 — 전부 bank(또는 **경로 0개**)인 해로 풀이 진행. 빈 visits의 `Route`가 아니다 — 그건 Stage 3이 금지한다 (미사용 차량 = Route 부재, Stage 3 E30) | §3.4 유추 (금지 규칙 없음) |
 | E20 | RequestId 중복 등으로 NodeId 충돌 | 실패 | §5 |

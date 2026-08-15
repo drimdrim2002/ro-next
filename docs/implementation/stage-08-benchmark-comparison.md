@@ -44,6 +44,8 @@ revisions:
     "우리 솔버의 실측 지표"로 좁힘 · §7 말미 옛 전제(선행 조건 미해소)를 과거형으로 ·
     §9 Q1을 "해소된 질문(기록용)" 표로 이동 · W7의 "복귀 자체가 없으므로"를
     "복귀 후 다음 바퀴 선적이 없으므로"로 (C-4 정합). 비교 절차·지표 정의 무변경
+  - 2026-08-14 Domain `startDepot` optional — 비교·Win 재생은 **앱 접수와 같은 채움**
+    (Stage 6 adapter: start 키 없음 + depot 1개 → WIN_0). 정규화 단독으로는 start empty
 ---
 
 # Stage 8 — 벤치마크 비교
@@ -73,8 +75,10 @@ win_poc 입력에 대한 우리 솔버의 지표를 기존 엔진(Win)의 결과
 
 **미해소 조건은 하나도 남지 않았다** (2026-08-10). 마지막까지 남아 있던 P1이 D1 확정으로
 닫히면서, 이 Stage는 Stage 7 완료(P3) 뒤 곧바로 시작할 수 있다. §3.1의 재생도 마찬가지다 —
-fixture를 Stage 1 정규화에 통과시켜 Problem을 만드는 경로가 `multiRotation: 1`을
-그대로 받아들이므로(통과 = `{0, 1}`, Stage 1 절차 2) Win 기준값 산출에 걸림돌이 없다.
+fixture를 Stage 6 adapter(현 규약 CVRPTW 채움: startDepot=`WIN_0`) 뒤 Stage 1 정규화에
+통과시켜 Problem을 만드는 경로가 `multiRotation: 1`을 그대로 받아들이므로(통과 = `{0, 1}`,
+Stage 1 절차 2) Win 기준값 산출에 걸림돌이 없다. 정규화만 하면 start가 비어 Win 경로
+(차고 출발)와 출발이 달라진다 (Domain §2.4, 2026-08-14).
 
 ---
 
@@ -163,9 +167,11 @@ DoD(V6)와 같은 경로라 별도 준비가 없다. 로컬(local profile) 실�
 내역뿐이다. 절차:
 
 ```text
-준비   win_poc_case_floor.json → Stage 1 정규화 → Stage 2 freeze → problem.
-      우리 실행과 완전히 같은 경로다. fixture를 고치지 않는다 — multiRotation 1은
-      1바퀴라 정규화를 그대로 통과한다 (§1 P1 해소).
+준비   win_poc_case_floor.json → Stage 6 adapter 채움(startDepot=WIN_0) →
+      Stage 1 정규화 → Stage 2 freeze → problem.
+      우리 실행(앱 접수)과 같은 출발이다. fixture 파일은 고치지 않는다 — multiRotation 1은
+      1바퀴라 정규화를 그대로 통과하고, start 키 없음은 adapter가 채운다 (§1 P1 해소,
+      Domain §2.4 2026-08-14).
 
 1. 복원 (CSV → 차량별 방문 목록)
    rows = alns_result.csv 파싱

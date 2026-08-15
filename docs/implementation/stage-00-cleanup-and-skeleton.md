@@ -24,6 +24,8 @@ revisions:
     인코딩) 정합 — §11 Q2 해소 문면의 fixture 값 인용을 number 표기(`1`)로. 파일 목록·DoD 무변경
   - 2026-08-13 감사 결함 정정 (분할 5 #6) — §11 세 질문이 전부 종결됐음을 절 서두에 명시하고
     Q1·Q3에 해소 날짜 표기 (README 공통 규칙 "표시하고 남김" 이행). 설계 무변경
+  - 2026-08-14 Domain `startDepot` optional + `PICKUP_ONLY` — 2026-08-12 채움 규칙이
+    Domain §2.4에서 뒤집힘. 이 Stage 설계 무변경
 ---
 
 # Stage 0 — 정리와 뼈대

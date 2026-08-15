@@ -35,6 +35,12 @@ revisions:
     E35에 "Ds 목록이 먼저 소진" 데이터 조건 명시(과일반화 교정, T14 문구 동기) ·
     §2.1 "방어 복사만"에 `Route` 빈 visits 거부 병기 · §7 말미 Plan 인용을 의역 표기로 ·
     §9 서두를 README 공통 규칙(표시하고 남김)으로. 전파 절차·판정 자체는 무변경
+  - 2026-08-14 Domain `startDepot` optional + `PICKUP_ONLY` — `RouteFacts.departureSec`를
+    Optional로. 절차 0/1을 start 유무로 분기(없으면 앞 arc 없음, 첫 방문 arrival = spanStart).
+    절차 3: end 도착 시 PICKUP_ONLY만 −수요. 구조 검사에 PICKUP_ONLY. E41~E43·T15 조합 확장
+  - 2026-08-15 Evaluator 절차 2 `at` — PICKUP_ONLY는 delivery side가 없으므로 있는 방문 NodeId
+    (DELIVERY_ONLY → delivery, PICKUP_ONLY → pickup, PICKUP_DELIVERY → delivery).
+    §3.1 `DEPOT_WINDOW` 설명을 Domain §7.1에 맞춤 (있는 출·도착만)
 ---
 
 # Stage 3 — Solution·전파·평가
@@ -151,8 +157,9 @@ public record Solution(List<Route> routes, Set<RequestId> bank) {
 ```
 
 - **depot는 `visits`에 없다.** 출발/도착 차고는 `Problem.vehicle(id)`의
-  `startDepot`/`endDepot`에서 전파가 읽는다 (Stage 1이 trips 접기를 끝냈으므로 — Stage 1 §4
-  절차 5). 경로 중간 depot 재방문(Domain §6.2 금지)은 **표현 자체가 불가능**하다 (노트 N4).
+  `startDepot`/`endDepot`(**있으면**)에서 전파가 읽는다 (Stage 1이 trips 접기를 끝냈으므로 —
+  Stage 1 §4 절차 5). 없으면 첫 고객에서 시작 / 마지막 고객에서 종료. 경로 중간 depot
+  재방문(Domain §6.2 금지)은 **표현 자체가 불가능**하다 (노트 N4).
 - `Solution`은 SoT만 담는다 (Domain §6.4). 도착 시각·load·점수 등 파생은 전파·평가의 출력이고
   `Solution`에 저장하지 않는다.
 - record 불변성이 Domain §6.5의 의도(확정 해 제자리 수정 금지)를 타입으로 보장한다.
@@ -172,7 +179,7 @@ public record StructureViolation(Kind kind,
     public enum Kind {
         UNKNOWN_VEHICLE,          // 경로의 VehicleId가 Problem에 없음
         DUPLICATE_VEHICLE_ROUTE,  // 한 차량이 두 경로 소유 (§6.2 "차량 하나")
-        UNKNOWN_NODE,             // 경로의 NodeId가 Problem에 없음 (DELIVERY_ONLY 가짜 픽업 포함)
+        UNKNOWN_NODE,             // 경로의 NodeId가 Problem에 없음 (DELIVERY_ONLY 가짜 픽업·PICKUP_ONLY 가짜 하차 포함)
         DUPLICATE_NODE,           // 같은 NodeId가 해 전체에 두 번
         PAIR_SPLIT,               // pickup·delivery가 서로 다른 경로 (§1.4)
         PAIR_INCOMPLETE,          // PICKUP_DELIVERY의 한쪽 방문만 존재 (§1.4)
@@ -189,11 +196,13 @@ public record StructureViolation(Kind kind,
 ```text
 1. 경로   각 Route의 vehicleId가 Problem에 존재. 두 Route가 같은 차량이면 위반.
 2. 방문   각 NodeId를 Problem.nodeRef로 역참조 — 실패 시 UNKNOWN_NODE.
-         DELIVERY_ONLY의 pickup NodeId는 Problem에 등록돼 있지 않으므로 (Stage 1 §2.2 —
-         pickup side 부재) 여기서 자동으로 걸린다 (§1.3 MUST NOT의 구조적 강제).
+         DELIVERY_ONLY의 pickup NodeId·PICKUP_ONLY의 delivery NodeId는 Problem에 등록돼
+         있지 않으므로 (Stage 1 §2.2 — 없는 side) 여기서 자동으로 걸린다 (§1.3 MUST NOT의
+         구조적 강제).
          해 전체에서 같은 NodeId 중복 → DUPLICATE_NODE.
 3. pair   RequestId별로 등장 방문을 모은다:
          DELIVERY_ONLY: delivery 방문 1개 = 그 경로가 소유.
+         PICKUP_ONLY: pickup 방문 1개 = 그 경로가 소유.
          PICKUP_DELIVERY: 두 방문이 다른 경로 → PAIR_SPLIT. 한쪽만 → PAIR_INCOMPLETE.
            같은 경로에서 pickup index > delivery index → PICKUP_AFTER_DELIVERY.
 4. XOR   소유된 RequestId가 bank에도 있으면 ASSIGNED_AND_BANKED.
@@ -230,7 +239,7 @@ public sealed interface PropagationResult {
 
 public enum Violation {
     TIME_WINDOW, REQ_DATE, WORK_WINDOW,
-    DEPOT_WINDOW,           // 차고 창 밖 출발·복귀 (Domain §7.1, 2026-08-10 D4 신설)
+    DEPOT_WINDOW,           // 차고 창 밖 있는 출·도착 (Domain §7.1, 2026-08-10 D4 신설)
     CAPACITY_WEIGHT, CAPACITY_VOLUME,
     MAX_STOP_COUNT, MAX_DRIVE_TIME, MAX_DRIVE_DIST,
     INCOMPATIBLE_VEHICLE,   // Evaluator가 사용 (§4.2)
@@ -239,8 +248,9 @@ public enum Violation {
 ```
 
 - `WORK_WINDOW`는 "**남은 근무창이 없다**"는 뜻이다 (창 끝을 넘는 이동·서비스는 위반이 아니라
-  다음 창으로 미루는 대상이다 — Domain §3.2·§7.1). `DEPOT_WINDOW`는 차고 출발·복귀 **순간**이
-  차고 창 밖일 때다. 둘은 `verify` 쪽 `VerifyViolation.Kind`에 같은 이름으로 하나씩 대응한다
+  다음 창으로 미루는 대상이다 — Domain §3.2·§7.1). `DEPOT_WINDOW`는 **있는** 차고 출·도착
+  **순간**이 차고 창 밖일 때다 (없는 쪽은 검사하지 않는다). 둘은 `verify` 쪽
+  `VerifyViolation.Kind`에 같은 이름으로 하나씩 대응한다
   (의미를 맞추되 별도 정의 — Stage 5 노트 N2).
 
 ### 3.2 사실 값 (Domain §7.3과 1:1)
@@ -259,7 +269,7 @@ public record VisitFacts(
 public record RouteFacts(
     VehicleId vehicleId,
     long spanStartSec,                  // 첫 근무창의 open — 경로 시간의 기준점 (§7.3)
-    long departureSec,                  // 차고 출발 시각
+    Optional<Long> departureSec,        // 차고 출발 시각. startDepot 있을 때만 (Domain §7.1 절차 0)
     long initialLoadWeightMilliKg, long initialLoadVolumeMilliCbm,   // §6.2 출발 적재
     List<VisitFacts> visits,
     Optional<Long> endDepotArrivalSec,  // endDepot 있을 때만
@@ -310,7 +320,12 @@ fitService(창목록, from, S)  = [t, t+S]가 한 창 안에 통째로 들어가
           initialLoad > v.capacity → CAPACITY_* (at 부재 — 출발 전 위반).
           W = v.workWindows. 비어 있으면 WORK_WINDOW (계획 기간에 못 쓰는 차량 — Stage 1 E30).
           spanStart = W[0].open.
-1. 출발    Ds = problem.depotAt(v.startDepot).windows(). 비어 있으면 DEPOT_WINDOW.
+1. 출발    v.startDepot 없음 (Domain §7.1 절차 0'):
+            앞 arc 없음. 차고 창 검사 없음. waitInDepot 미적용.
+            첫 방문 arrival = spanStart. departureSec = empty. depotWaitingTime = 0.
+            이어서 절차 2 (첫 방문은 직전 departure가 없으므로 arrival을 spanStart로 둔다).
+          v.startDepot 있음:
+          Ds = problem.depotAt(v.startDepot).windows(). 비어 있으면 DEPOT_WINDOW.
           waitInDepot=N (options): departure = 아래를 모두 만족하는 가장 이른 시각 (Domain §7.1 절차 0)
             · 어느 근무창 안 · 어느 Ds 창 안 · 첫 이동이 그 근무창 안에 통째로
             = fitArc(W, t, U[startDepot→loc₁])와 Ds를 함께 앞으로 밀며 찾는다.
@@ -327,7 +342,8 @@ fitService(창목록, from, S)  = [t, t+S]가 한 창 안에 통째로 들어가
           depotWaitingTime = [spanStart, departure] 중 **근무창에 걸친 부분** (Domain §7.3).
             차고가 근무 시작보다 늦게 열면 **N에서도 0이 아니다**.
 2. 방문 루프  각 방문 i에 대해 Domain §7.1의 1–7 순서 그대로:
-          arrival    = 직전 departure + U[직전 장소 → locᵢ]        // §7.1-1 (self arc는 sentinel U=86,400 — §4)
+          arrival    = 첫 방문 ∧ startDepot 없음: spanStart (절차 1).
+                       그 외: 직전 departure + U[직전 장소 → locᵢ]  // §7.1-1 (self arc는 sentinel U=86,400 — §4)
                        (직전 출발이 이동을 담는 창을 골랐으므로 arrival은 근무창 안이다)
           serviceStart = arrival 이상이면서 side.windows 중 하나 안이고
                        fitService(W, ·, serviceTime)도 만족하는 가장 이른 시각   // §7.1-2
@@ -337,7 +353,7 @@ fitService(창목록, from, S)  = [t, t+S]가 한 창 안에 통째로 들어가
              그대로 살아 있다: 창을 넘어선 순간 그 창은 후보에서 빠진다. Domain §7.1 MUST)
           serviceEnd  = serviceStart + side.serviceTimeSec         // §7.1-3
           serviceStart > side.reqDateSec → REQ_DATE                // §7.1-4. serviceEnd는 조건 아님 (MUST NOT)
-          load 갱신   : pickup 방문 +수요, delivery 방문 −수요       // §7.1-5·§6.2 부호 규칙
+          load 갱신   : pickup 방문 +수요, delivery 방문 −수요       // §7.1-5·§6.2 (PICKUP_ONLY는 pickup만)
           0 ≤ load ≤ capacity 위반 → CAPACITY_*                    // §7.1-6
           departure   = fitArc(W, serviceEnd, U[locᵢ → 다음 장소])  // §7.1-7 — 창 끝을 넘으면
                         부재이면 WORK_WINDOW                        //          다음 창으로 미룬다
@@ -352,7 +368,10 @@ fitService(창목록, from, S)  = [t, t+S]가 한 창 안에 통째로 들어가
           driveDist·driveTime 가산 (§7.4 "(있으면) 마지막→endDepot").
           endArrival이 problem.depotAt(v.endDepot).windows() **어느 것에도** 들어가지 않으면 DEPOT_WINDOW —
             기다렸다 들어가는 것으로 미루지 않는다 (Domain §7.1 절차 8 확정).
-          부재: 마지막 고객에서 종료 (§6.2).
+          도착 사건에서 그 경로에 배정된 PICKUP_ONLY 수요만 뺀다 (Domain §6.2).
+            잔량을 0으로 대입하지 않는다 (MUST NOT). 그 다음 0 ≤ load ≤ capacity.
+          부재: 마지막 고객에서 종료 (§6.2). PICKUP_ONLY가 이 경로에 있으면 하차 싱크가
+            없어 종료 load ≠ 0 — 호환이 막았어야 하는 2차 방어.
 4. 휴식    routeEnd = endArrival (endDepot 있으면) 또는 마지막 serviceEnd.
           interWorkWindowRestTime = (routeEnd − spanStart) − ([spanStart, routeEnd] 중 근무창에
             걸친 시간)  — 근무창 사이의 틈에서 보낸 시간 전부 (Domain §7.3).
@@ -460,7 +479,9 @@ public sealed interface EvaluationResult {
    통과 금지, §8.1 MUST NOT).
 2. 경로마다 호환성: 소유한 각 RequestId에 대해
    vehicleId ∈ problem.compatibleVehicles(requestId) (§3.4 동결 사실, Stage 2).
-   위반 → Infeasible(INCOMPATIBLE_VEHICLE, at = 그 request의 delivery NodeId).
+   위반 → Infeasible(INCOMPATIBLE_VEHICLE, at = 그 request의 있는 방문 NodeId).
+           DELIVERY_ONLY → delivery, PICKUP_ONLY → pickup,
+           PICKUP_DELIVERY → delivery (기존과 같음).
 3. 경로마다 profile hard: profile.hardConstraints()의 각 h에 대해
    h.satisfied(problem, routeFacts) — 위반 → Infeasible(PROFILE_HARD, hardConstraintId = h.id()).
 4. evaluation = Evaluation.aggregate(전 경로 facts, bank.size())     // 층 ③
@@ -627,7 +648,7 @@ Domain §6–§8의 optional 규칙·경계값·오류 분류에서 뽑았다.
 | E4 | arrival < 다음 창의 open | 대기 후 open에 서비스 시작, `waitingSec` 기록 (`side.windows`에서 arrival 이후 첫 창) | §7.1-2 |
 | E5 | 출발 전 initialLoad > capacity | CAPACITY_* (at 부재) — 방문 전 위반 | §6.2 |
 | E6 | load == capacity | 통과 (`≤`) | §6.2 |
-| E7 | DELIVERY_ONLY의 pickup NodeId가 경로에 등장 | UNKNOWN_NODE (Problem에 미등록 — 구조적 강제) | §1.3 MUST NOT |
+| E7 | DELIVERY_ONLY의 pickup NodeId·PICKUP_ONLY의 delivery NodeId가 경로에 등장 | UNKNOWN_NODE (Problem에 미등록 — 구조적 강제) | §1.3 MUST NOT |
 | E8 | 같은 Request가 두 경로에 (PD 양쪽이 갈라짐) | PAIR_SPLIT | §1.4 |
 | E9 | PD의 delivery만 경로에 | PAIR_INCOMPLETE | §1.4 |
 | E10 | pickup이 delivery보다 뒤 | PICKUP_AFTER_DELIVERY | §1.4 |
@@ -661,6 +682,9 @@ Domain §6–§8의 optional 규칙·경계값·오류 분류에서 뽑았다.
 | E31 | `Scores.compare`에 길이 다른 배열 | IllegalArgumentException — 같은 profile이면 길이가 같아야 한다 (버그 신호) | §8.3 |
 | E32 | profile이 빈 `long[]`을 반환 | 모든 해가 동점이 된다. 금지하지 않되 E31과 같은 방식으로 길이 일관성만 검사 | §8.3 |
 | E33 | `HardConstraint`가 `problem`에서 optional 필드(치수 등)를 읽었는데 부재 | 그 제약의 판단이다 — core는 관여하지 않는다 (부재 = 그 축 미사용은 Domain §2.4의 core 규칙) | §8.4 |
+| E41 | startDepot 부재 | 앞 arc 없음. 첫 방문 arrival = spanStart. departureSec empty. depotWaitingTime = 0. waitInDepot 미적용 | Domain §7.1 절차 0' |
+| E42 | PICKUP_ONLY pickup 방문 | load +수요. endDepot 도착에서 같은 수요만 −. 잔량 일괄 0 대입 금지 | Domain §6.2 |
+| E43 | startDepot 부재 + waitInDepot=Y | Y는 무시. 오류 아님. 시각은 N과 동일 | Domain §2.5·§7.1 |
 
 ---
 
@@ -687,7 +711,7 @@ Stage 6 — Stage 1 §7과 동일 원칙).
 | T12 | `EvaluatorTest.hardConstraintReadsProblemFacts` | 차급(`vehicleFeature`)을 보고 판정하는 테스트 `HardConstraint` → `problem` 인자로 그 값에 도달함을 확인 (§4.3 고객 구현 예의 전제) | (노트 N2 — 이번 변경의 목적 자체) |
 | T13 | `RoutePropagatorTest.deferSToNextWorkWindow` | **다일 전파.** §3.5 대응표의 전 셀 — 2일차 16:30 90분 이동이 3일차 08:00으로 미뤄지고 `customerWaitingTimeSec += 1800`·`interWorkWindowRestTimeSec += 54000`(2026-08-11 정정 — 종전 목표값 "rest 55800"은 §7.3 공식과 모순), 도착 207000 (E37) · 서비스가 창을 넘는 변형 (E38) · 대기가 근무 시간/틈으로 갈리는 변형 (customerWaiting 3600 + rest 54000) | (Domain §7.2.1 재현 — D4 확정분) |
 | T14 | `RoutePropagatorTest.depotWindowAppliesToDepartureAndReturn` | **차고 창.** E35(출발 불가, **Ds 목록이 먼저 소진되는 구성** → DEPOT_WINDOW, at 부재 — 창 구성은 E35의 데이터 조건 그대로) · E36(복귀가 창 틈 → DEPOT_WINDOW, 미루지 않음) · 차고 창이 전일이면 종전과 동일 | (Domain §7.1 — D4 확정분) |
-| T15 | `RoutePropagatorTest.routeOperationalTimeIdentityHolds` | **항등식.** 단일 창·다일·waitInDepot Y/N·endDepot 유무 네 조합에서 `routeOperationalTimeSec() == routeEndSec() − spanStartSec()` (Domain §7.3). 성분 정의가 어긋나면 여기서 먼저 깨진다 | (Domain §7.3 — 두 구현 대조의 전제) |
+| T15 | `RoutePropagatorTest.routeOperationalTimeIdentityHolds` | **항등식.** 단일 창·다일·waitInDepot Y/N·endDepot 유무·**startDepot 유무** 조합에서 `routeOperationalTimeSec() == routeEndSec() − spanStartSec()` (Domain §7.3). E41·E42·E43 포함. 성분 정의가 어긋나면 여기서 먼저 깨진다 | (Domain §7.3 — 두 구현 대조의 전제) |
 | T16 | `RoutePropagatorTest.singleWindowMatchesPreD4Values` | **회귀 방지.** 현행 fixture 모양(창 1개·차고 전일창·endDepot 없음)에서 `departureSec == serviceEndSec`(전 방문)·`interWorkWindowRestTimeSec == 0`·`depotWaitingTimeSec == 0` (E40) — D4가 1일 입력의 값을 바꾸지 않았다는 증명 | (Domain §3.2 — D4 무영향 근거) |
 
 T9–T16은 DoD 세 문장 밖이지만 Plan Stage 3 범위 문장(취지 — 적재 부호 규칙, 전파 절차·기록

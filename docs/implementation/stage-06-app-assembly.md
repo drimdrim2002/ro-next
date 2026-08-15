@@ -59,6 +59,13 @@ revisions:
   - 2026-08-13 감사 결함 정정 (분할 8 §1-3) — §5 서두 "필드명은 §11.1의 이름 그대로" 거짓
     교정: §11.1은 의미 정본, 필드명·형태는 §11.2(Plan D2) 소유 — wire 표기는 이 절 잠정안
     (Domain §11.1 2026-08-13 의미 정본 좁히기의 후속)
+  - 2026-08-14 Domain `startDepot` optional + `PICKUP_ONLY` — §4.4 현 규약 CVRPTW 채움
+    (start 키 없음 + depot 1개 → 그 ID를 VehicleInput에). 정규화는 채우지 않는다.
+    §4.3 pickup만 있는 wire → PICKUP_ONLY (현 규약은 계속 delivery only)
+  - 2026-08-15 §4.2 차고 창 매핑 주석을 Domain §7.1에 맞춤 (있는 출·도착만)
+  - 2026-08-15 §4.4 차량 `vehicleFeature` 행의 "비교는 문자 그대로" 삭제 — 2026-08-12
+    E26(부재·`"ALL"` = 전 차급 접기)으로 폐기된 규칙의 잔재였다. adapter는 값을 그대로
+    넘기고 접기는 Stage 1이 한다 (구역 `"ALL"`도 같다 — Domain §3.4 2026-08-15). 매핑 무변경
 ---
 
 # Stage 6 — 앱 조립
@@ -476,12 +483,15 @@ solveKey를 그대로 URL에 붙이면 된다. 최종 경로·필드명은 호�
 |---|---|---|
 | `locId` | `locId` | 부재 → null (좌표 기반 생성 — Stage 1 E22) |
 | `latitude` / `longitude` | `latText` / `lonText` | 필수, 원문 보존 |
-| `openTime` / `closeTime` | `openTime` / `closeTime` | 부재 → null (**전개는 정규화** — Domain §3.2). 차고 창은 출발·복귀에 적용된다 (Domain §7.1) |
+| `openTime` / `closeTime` | `openTime` / `closeTime` | 부재 → null (**전개는 정규화** — Domain §3.2). 차고 창은 있는 출·도착 순간에만 적용된다 (Domain §7.1) |
 | `taskTime` | — | **무시한다** (2026-08-11). 복귀 선적 시간이라 1바퀴엔 발생하지 않아 canonical에 자리가 없다 (Domain §2.5 · Stage Extra E1) |
 | `zoneId` | `zoneId` | 보관만 |
 | `locTcd` | 무시 | canonical 밖 (Stage 1 §8 인계 목록) |
 
-### 4.3 `orders[]` → `RequestInput` (pickup = null 고정 — 현 규약 전부 DELIVERY_ONLY, Domain §1.3)
+### 4.3 `orders[]` → `RequestInput` (현 규약 전부 DELIVERY_ONLY — pickup = null 고정, Domain §1.3)
+
+현 규약 wire는 delivery 한 칸만 준다. pickup만 있는 wire가 협의되면 그 칸을 `pickup`에 넣고
+`delivery = null`로 두면 정규화가 `PICKUP_ONLY`로 확정한다. 지금은 그 경로를 열지 않는다.
 
 | wire | RequestInput | 규칙 |
 |---|---|---|
@@ -511,7 +521,7 @@ solveKey를 그대로 URL에 붙이면 된다. 최종 경로·필드명은 호�
 | wire | VehicleInput | 규칙 |
 |---|---|---|
 | `vehicleId` | `vehicleId` | 필수 |
-| `vehicleFeature` | `vehicleFeature` | 부재 → `"ALL"` (규약 default 열). 비교는 문자 그대로 (Stage 1 E26) |
+| `vehicleFeature` | `vehicleFeature` | 부재 → `"ALL"` (규약 default 열). **접기는 Stage 1이 한다** — adapter는 값을 그대로 넘기고, 정규화가 부재·blank·`"ALL"`을 전 차급(`Optional.empty`)으로 접는다 (Stage 1 E26. 종전 "비교는 문자 그대로"는 2026-08-12 폐기된 규칙의 잔재였다) |
 | `maxWeight` / `maxVolume` | `maxWeightKg` / `maxVolumeCbm` | 필수, BigDecimal |
 | `workStartTime` / `workEndTime` | `workStart` / `workEnd` | 부재 → null (**전개는 정규화** — 날마다 반복되는 근무창, Domain §3.2) |
 | `speed` | `speedKmH` | 정수만 — 소수 → `INVALID_INPUT` (Stage 1 §9 Q4 잠정 유지) |
@@ -522,7 +532,7 @@ solveKey를 그대로 URL에 붙이면 된다. 최종 경로·필드명은 호�
 | `driverSkill` | `capabilities` (싱글턴 집합) | 부재 → null (→ 빈 집합). `"ALL"`도 문자 그대로 — 축 휴면이라 무영향 (§7 E20) |
 | `zoneIds` | `zoneIds` | 확장 (Domain §2.4) — 그대로 전달 (빈 집합 거부는 정규화) |
 | `vhclOwnTyp` | — | **무시한다** — canonical에 소유 축이 없다 (2026-08-11 유예, Domain §2.4 유예 표 · Stage Extra E3) |
-| `startDepot` / `endDepot` | `startDepotLocId` / `endDepotLocId` | 확장 — 부재 → null (단일 차고 확정은 정규화, Stage 1 E20) |
+| `startDepot` / `endDepot` | `startDepotLocId` / `endDepotLocId` | 확장. **현 규약 CVRPTW 채움 (adapter 정책, Domain §2.4 2026-08-14)**: wire에 `startDepot` 키가 없고 계획 depot가 정확히 1개면 그 차고 ID를 `startDepotLocId`에 넣는다. depot가 0개·2개 이상이거나 start가 명시되면 채우지 않는다 (명시는 그대로, 부재는 null). 이 채움은 정규화가 하지 않는다 — Domain에 암묵 채움을 남기지 않기 위함. Win 1차 성공 기준은 이 앱 접수 경로다 |
 | `trips` | — | **무시한다** — 차량별 지정은 wire에 없어 유예했다. `options.trips` 하나만 쓴다 (2026-08-11, Domain §2.4 유예 표 · Stage Extra E1) |
 
 ### 4.5 `distanceMatrix[]` → `TravelEntryInput`
@@ -636,6 +646,7 @@ decimal kg/cbm 문자열(milli ÷ 1000, 소수 3자리), 거리 m·시간 초는
 | E20 | 차량 `driverSkill: "ALL"` | 문자 그대로 집합 {"ALL"} — 주문 요구 능력의 wire 원천이 없어 capability 축 전체가 휴면 (항상 통과) | Domain §3.4, §4.4 |
 | E21 | reqDate가 RFC3339 (`2017-07-21T17:32:28Z`) | offset 버리고 벽시계로 통일 (잠정) | Domain §2.2 |
 | E22 | 탐색이 시간 한도로 중단된 best | 정상 DONE (재검증 통과 시) | Domain §12 |
+| E23 | floor fixture 차량 31대 start 키 없음 + depot `WIN_0` 1개 | adapter가 `startDepotLocId = "WIN_0"`을 채움. depot 2개 합성·start 명시 합성은 채우지 않음 | Domain §2.4·§4.4 |
 
 ---
 
@@ -646,8 +657,8 @@ decimal kg/cbm 문자열(milli ÷ 1000, 소수 3자리), 거리 m·시간 초는
 
 | # | 테스트 | 내용 | 대응 DoD 문장 |
 |---|---|---|---|
-| T1 | `PlanJsonAdapterTest.parsesFloorFixture` | win_poc_case_floor.json 전체 파싱 → 건수(452·31·205,209)·실값 spot check (weight `26.2`→BigDecimal 원문, duration 300, qty 1, D 310708 int, options **매핑 7키**(wire 원문은 10키 — `driverRestTimeRatio`·`difficultySortType`·`customerAbbr` 3키는 무시, §4.6), dateRange) | (Plan 범위 문장 "규약 JSON adapter — win_poc fixture로 검증") |
-| T2 | `PlanJsonAdapterTest.toleratesWireVariants` | 원본 win_poc_case.json → 문자열 수치 인코딩으로 INVALID_INPUT (공통 규칙 1·E3, Domain §3.1 — 수신 원형 보존 fixture) · itemId→orderId 폴백(E4) · `dueDate`·RFC3339(E21) 소형 케이스 · 소수 D/U(number)는 파싱 통과, BigDecimal 보존 — 거부는 정규화 몫 | 〃 |
+| T1 | `PlanJsonAdapterTest.parsesFloorFixture` | win_poc_case_floor.json 전체 파싱 → 건수(452·31·205,209)·실값 spot check (weight `26.2`→BigDecimal 원문, duration 300, qty 1, D 310708 int, options **매핑 7키**(wire 원문은 10키 — `driverRestTimeRatio`·`difficultySortType`·`customerAbbr` 3키는 무시, §4.6), dateRange) · **E23: 차량 31대 `startDepotLocId == "WIN_0"`** (현 규약 CVRPTW 채움) | (Plan 범위 문장 "규약 JSON adapter — win_poc fixture로 검증") |
+| T2 | `PlanJsonAdapterTest.toleratesWireVariants` | 원본 win_poc_case.json → 문자열 수치 인코딩으로 INVALID_INPUT (공통 규칙 1·E3, Domain §3.1 — 수신 원형 보존 fixture) · itemId→orderId 폴백(E4) · `dueDate`·RFC3339(E21) 소형 케이스 · 소수 D/U(number)는 파싱 통과, BigDecimal 보존 — 거부는 정규화 몫 · E23 대조: depot 2개 또는 start 명시면 `startDepotLocId`를 채우지 않음 | 〃 |
 | T3 | `SolveApiTest.acceptStoresInputAndStatus` | 유효 소형 JSON POST → 200 + solveKey 형식 · store에 input.json(원문 바이트 동일)+RECEIVED | (Plan 범위 문장 "접수 API — 검증→저장→200+solveKey") |
 | T4 | `SolveApiTest.rejectsWithoutStoring` | 문법 오류·필수 누락 → 400 · **소수 거리·문자열 수치 등 → 400 (E3 — 2026-08-11 절차 2b·2026-08-12 공통 규칙 1)** · multiRotation `2`·`-1` → 422 UNSUPPORTED_INPUT · `-2` → 400 · 이 경우 전부 store 빈 상태 (E1b·E1c·E2). **대조군으로 `1`은 200 + 저장됨**을 같이 단언한다 (E1) — 게이트가 반대로 구현되는 것을 막는 지점이다 | 〃 (Domain §12 "S3 저장 없음") |
 | T5 | `SolveKeyTest.issueAndObjectKeys` | 조립 형식·문자 집합 검증(E5)·runId 유일성·객체 key 3종·`of` 왕복 | (Plan 범위 문장 — Architecture §3.3 key 규칙) |
@@ -677,7 +688,7 @@ Plan §1의 편입(2026-08-11)에 따라 이 표 전부가 완료 기준이다.
 | LocalStack e2e (실 S3 SDK 경로 확인) | Stage 7 (선택) | Architecture §6 |
 | Win 지표 비교·탐색 파라미터 튜닝·seed 정책 변경 | Stage 8 | Plan Stage 8 |
 | 결과·조회 wire의 **최종** 확정 (호출 시스템 협의) | 협의 후 (§5·§3.4는 잠정) | Domain §11.2, Architecture §3.4 |
-| PICKUP_DELIVERY의 wire 확장 (canonical은 이미 지원) | 협의 후 별도 | Master §6 |
+| PICKUP_DELIVERY·PICKUP_ONLY의 wire 확장 (canonical은 이미 지원) | 협의 후 별도 | Master §6 |
 | 고객 특화 Profile 구현·레지스트리 등록 (`builtIn()` = 전 고객 default) | 필요 시 별도 | Domain §8.4 |
 | 자동 재개·큐 이관(SQS)·다중 태스크 수평 확장 | 범위 밖 (필요 시 설계 변경) | Architecture §3.2·§8 |
 | 접수 인증·rate limit·요청 크기 상한 | 범위 밖 (내부 서비스 — 요구 없음) | Architecture §5 |

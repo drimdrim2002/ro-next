@@ -23,6 +23,8 @@ revisions:
     잔재와 절차 7 각주의 "fixture 충돌(Q1)" 옛 전제를 해소 후 문장으로 정리 (2026-08-10
     revision이 선언한 해제의 본문 이행) · §9 서두를 README 공통 규칙(표시하고 남김)으로.
     배포 절차 무변경
+  - 2026-08-14 Domain `startDepot` optional + `PICKUP_ONLY` — 2026-08-12 채움 규칙이
+    Domain §2.4에서 뒤집힘(채움은 Stage 6 adapter). 이 Stage 설계 무변경
 ---
 
 # Stage 7 — ECS 배포

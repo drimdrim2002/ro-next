@@ -72,6 +72,27 @@ revisions:
     "가중합 비교기를 만들 수 없다" 단언 완화(축 구성은 구조가 못 막는다 — 리뷰 대상) ·
     §11.1을 의미 정본으로 한정(필드명·형태는 §11.2 소유)·visits 적재 2축(loadWeight·
     loadVolume) 표기·run "재검증 통과 여부"에 항상 PASS 주석. 규칙 변경 없음
+  - 2026-08-14 **`startDepot` optional + `PICKUP_ONLY`** — 화물 축(`Request`)과 차의
+    출·종료 축(`Vehicle.startDepot`/`endDepot`)을 분리. ② 2026-08-12 §2.4 `startDepot`
+    부재 채움 규칙 **폐기**(차고 1개여도 비움 유지. 현 규약 wire의 `WIN_0` 채움은 Stage 6
+    adapter 정책 — Domain에 암묵 채움을 남기지 않는다. fixture 파일은 불변).
+    `Vehicle.startDepot`을 `endDepot`과 대칭 optional로. ③ `Request.delivery` optional +
+    `ServicePattern.PICKUP_ONLY` (§1.3 세 값). 적재 항등식 3줄(§6.2).
+    `DELIVERY_ONLY`×start 부재 / `PICKUP_ONLY`×end 부재는 정규화 오류가 아니라 호환성
+    (§3.4 depot 앵커 — 호환 0대 = `NO_COMPATIBLE_VEHICLE`). 둘 다 없는 Request는
+    `INVALID_INPUT`. `trips=roundtrip` + end 부재 + start 부재 = `INVALID_INPUT` (§2.5).
+    §7.1 출발을 start 유무로 분기(없으면 앞 arc 없음, 첫 방문 arrival = spanStart).
+    가상 depot·수량 부호 뒤집기·차고 NodeId 방문 금지
+  - 2026-08-15 §2.5 차고 창 행을 §7.1에 맞춤 — **있는** 출·도착 순간에만 적용 (없는 쪽은
+    검사하지 않는다). 종전 "출발·복귀 두 순간"은 양쪽 차고가 있을 때의 문면
+  - 2026-08-15 **구역 `"ALL"` 와일드카드 + 목록 원소 null 금지 (시스템 소유자 확정)** —
+    ① §3.4 `zoneCompatible` 식 개정: `"ALL"`은 구역 이름이 될 수 없는 예약어이고 목록에
+    **단독(`["ALL"]`)으로만** 올 수 있다 — `["ALL"]` = 전 구역, `["ALL","ZONE_1"]` =
+    `INVALID_INPUT`(차급 `["ALL","T1"]`과 같은 규칙), 방문 `zoneId`가 부재·blank·`"ALL"`이면
+    구역 제약 없음. 정규화가 양쪽을 접는다. §2.3·§2.4 표 칸 정합. 종전 문면은 구역 칸이 없는
+    방문을 구역 제한 차량과 불합격으로 읽히던 결함이 있었다 ·
+    ② §3 서두에 목록·집합 원소 null = `INVALID_INPUT` 신설 — 관문에서 막고 이후 코드는
+    null을 가정하지 않는다 (Stage 1 감사 발견: `Set.copyOf`의 NPE가 4xx여야 할 것을 5xx로 만든다)
 ---
 
 # RO-Next Domain Design
@@ -109,7 +130,7 @@ revisions:
 |---|---|---|
 | **order (주문)** | 규약 JSON에 들어오는 일감 한 건 | 변환 후에는 `Request`로 다룸 |
 | **`Request`** | 운송 의무 한 건 = pickup+delivery **짝(pair)**. 배정·변경의 원자 단위 | 지점 하나가 아님 |
-| **visit (방문)** | 경로에 실제로 찍히는 정차 한 번 | `DELIVERY_ONLY`의 pickup 쪽은 방문이 아님 |
+| **visit (방문)** | 경로에 실제로 찍히는 정차 한 번 | `DELIVERY_ONLY`의 pickup 쪽·`PICKUP_ONLY`의 delivery 쪽은 방문이 아님 |
 | **route (경로)** | 차량 한 대의 방문 순서 | 차종별 집계가 아님 |
 | **depot (차고)** | 차량의 출발/도착 거점 | 고객 방문 지점이 아님 |
 | **bank (미배정 목록)** | 탐색 중 아직 어느 경로에도 넣지 않은 `RequestId` 집합 | 최종 결과의 미배정이 아님 (§6.3) |
@@ -140,23 +161,36 @@ revisions:
   N1→N2 이동 시간 = 이동표[LOC-WH → LOC-CUST]
 ```
 
-### 1.3 `servicePattern` — Request의 두 형태
+### 1.3 `servicePattern` — Request의 세 형태
 
-| `servicePattern` | 경로 방문 | 시간 입력 |
-|---|---|---|
-| **`DELIVERY_ONLY`** | delivery **만** 방문 | delivery 쪽 시간창·서비스시간·`reqDate` |
-| **`PICKUP_DELIVERY`** | pickup·delivery **둘 다** 방문 | 양쪽 각각 시간창·서비스시간·`reqDate` |
+화물(`Request`)이 어디서 생기고 어디서 사라지는가와, 차(`Vehicle`)가 어디서 출발·종료하는가는
+다른 축이다. 패턴은 화물 쪽만 정한다.
+
+| `servicePattern` | pickup | delivery | 경로 방문 | 시간 입력 |
+|---|---|---|---|---|
+| **`DELIVERY_ONLY`** | ∅ | 고객 | delivery **만** | delivery 쪽 시간창·서비스시간·`reqDate` |
+| **`PICKUP_ONLY`** | 고객 | ∅ | pickup **만** | pickup 쪽 시간창·서비스시간·`reqDate` |
+| **`PICKUP_DELIVERY`** | 장소1 | 장소2 | pickup·delivery **둘 다** | 양쪽 각각 시간창·서비스시간·`reqDate` |
 
 - `DELIVERY_ONLY`의 pickup 쪽은 "짝 소유권"과 **출발 적재(initial load)에만** 참여한다.
+  화물은 그 차량의 `startDepot`에서 실린다 (차고는 방문이 아니다 — `NodeId` 없음).
   이동·정차·서비스 방문을 만들지 않는다 (MUST NOT). 가짜 depot 방문으로 흉내 내지 않는다 (MUST NOT).
-- 현 규약의 주문은 전부 `DELIVERY_ONLY`다. `PICKUP_DELIVERY`는 canonical이 이미 정의하며,
-  규약(wire) 확장은 호출 시스템과 협의 후 adapter만 추가한다.
+  이 패턴을 받는 차량은 `startDepot`이 있어야 한다 — 없으면 실을 곳이 없어 호환되지 않는다 (§3.4).
+- `PICKUP_ONLY`의 delivery 쪽은 "짝 소유권"과 **도착 하차에만** 참여한다.
+  화물은 그 차량의 `endDepot` **도착 사건**에서 내린다 (차고는 방문이 아니다).
+  이동·정차·서비스 방문을 만들지 않는다 (MUST NOT). 가짜 depot 방문으로 흉내 내지 않는다 (MUST NOT).
+  이 패턴을 받는 차량은 `endDepot`이 있어야 한다 — 없으면 내릴 곳이 없어 호환되지 않는다 (§3.4).
+- 양쪽 side가 모두 없으면 `INVALID_INPUT`이다 (§12).
+- 현 규약의 주문은 전부 `DELIVERY_ONLY`다. `PICKUP_DELIVERY`·`PICKUP_ONLY`는 canonical이
+  정의하며, 규약(wire) 확장은 호출 시스템과 협의 후 adapter만 추가한다.
 
 ### 1.4 pair 규칙 (MUST)
 
 1. 배정·변경(넣기/빼기)의 원자 단위는 **`Request` 전체**다. pickup만 빼거나 delivery만 넣는 연산은 없다.
-2. 같은 `Request`의 pickup·delivery는 **같은 차량 경로**에 있고, **pickup이 delivery보다 앞**이다.
-3. 짝이 갈라진 상태(한쪽만 배정, 서로 다른 차량)는 점수가 나쁜 게 아니라 **구조 결함(버그)**이다.
+2. 같은 `Request`의 **있는 방문**은 **같은 차량 경로**에 있다. pickup·delivery **둘 다** 있으면
+   pickup이 delivery보다 앞이다 (`PICKUP_DELIVERY`). 한쪽만 있으면 그 방문만 경로에 있다
+   (`DELIVERY_ONLY` = delivery, `PICKUP_ONLY` = pickup).
+3. 짝이 갈라진 상태(있어야 할 방문이 빠지거나 서로 다른 차량)는 점수가 나쁜 게 아니라 **구조 결함(버그)**이다.
 
 ---
 
@@ -222,7 +256,7 @@ revisions:
 | `planId` | 풀이 식별자 | `planId` |
 | `planStart` / `planEnd` | 계획 기간 `[planStart, planEnd)` — 끝 미포함. **여러 날 가능** (시간창 전개는 §3.2) | `dateRange.from/to` |
 | `customerId` | 어느 고객 요청인지 (profile 선택에 사용, §8.4) | `shprId`(또는 협의 필드) |
-| depots | 차고 목록 (canonical은 여러 개 가능) | `depot[]` — 규약은 단일 depot 정책이다 (다중은 협의 사항, PDF 3쪽). 다중 depot 시의 `startDepot` 부재 규칙은 §2.4 |
+| depots | 차고 목록 (canonical은 여러 개 가능) | `depot[]` — 규약은 단일 depot 정책이다 (다중은 협의 사항, PDF 3쪽). 차량 `startDepot`/`endDepot`은 각각 optional (§2.4). 현 규약 wire의 단일 차고 채움은 Stage 6 adapter |
 | requests | 일감 목록 | `orders[]` |
 | vehicles | 차량 목록 | `vehicles[]` |
 | travel input | 이동 거리·시간 입력 (§4) | `distanceMatrix[]` 또는 좌표 |
@@ -233,7 +267,8 @@ revisions:
 
 ### 2.3 Request 필드
 
-방문 쪽(side)별 필드 — `DELIVERY_ONLY`는 delivery 쪽만, `PICKUP_DELIVERY`는 양쪽 각각:
+방문 쪽(side)별 필드 — 있는 side만 채운다 (`DELIVERY_ONLY`는 delivery, `PICKUP_ONLY`는 pickup,
+`PICKUP_DELIVERY`는 양쪽). 둘 다 없으면 `INVALID_INPUT` (§1.3·§12).
 
 | 필드 | 뜻 | 비고 |
 |---|---|---|
@@ -241,7 +276,7 @@ revisions:
 | `openTime` / `closeTime` | 시간창 (양끝 포함). **계획 기간의 날마다 반복** (§3.2) | 기본 00:00:00 / 23:59:59 |
 | `duration` | 방문 자체에 드는 시간(주차 등, 초) | item 작업시간과 별개 |
 | `reqDate` | 고객 요청 시각 (아래 권위 정의) | 규약 `reqDate`/legacy `dueDate` |
-| `zoneId` | 방문 장소의 구역 | 차량 `zoneIds`와 대조 |
+| `zoneId` | 방문 장소의 구역. 부재·`"ALL"` = 구역 제약 없음 (§3.4) | 차량 `zoneIds`와 대조 |
 | `vehicleFeatureList` | 허용 차급 목록. `["ALL"]` = 전 차급 | 규약 `vehicleFeature` |
 | `items[]` | itemId, weight(kg), volume(cbm), qty, taskTime(초) | 규약 동일 |
 
@@ -251,7 +286,7 @@ revisions:
 |---|---|
 | 의미 | 고객이 원하는 요청 시각. 제약 대상은 **서비스 시작 시각** |
 | 제약 | 그 방문에서 **`serviceStartTime <= reqDate`** 하나뿐. `serviceEndTime`은 조건에 넣지 않는다 (MUST NOT) |
-| 적용 | `DELIVERY_ONLY`: delivery 쪽. `PICKUP_DELIVERY`: pickup·delivery **각각 자기** `reqDate` |
+| 적용 | `DELIVERY_ONLY`: delivery 쪽. `PICKUP_ONLY`: pickup 쪽. `PICKUP_DELIVERY`: pickup·delivery **각각 자기** `reqDate` |
 | 기본값 | 미입력이면 planEnd (사실상 제약 없음 — 규약 default와 동일) |
 | 금지 | "reqDate 이후 배송" 해석 금지. 한쪽 `reqDate`로 다른 쪽을 대체 금지 |
 
@@ -273,7 +308,7 @@ revisions:
 
 **규약 정의 optional — 실물 wire 미출현 (0/31)**: `maxStopCnt`, `maxDriveTime`(초),
 `maxDriveDist`(m). `startDepot`도 실물 미출현이다 (규약 표에는 정의가 없는 canonical 필드 —
-부재 규칙은 아래).
+부재는 비움으로 둔다. 현 규약 wire의 단일 차고 채움은 Stage 6 adapter — 아래).
 
 - `workStart`/`workEnd`는 **날마다 반복되는 근무창**이다 (§3.2). 계획 기간이 여러 날이면 날짜마다
   같은 시간대의 창이 하나씩 생긴다. `maxDriveTime`·`maxDriveDist`·`maxStopCnt`는 **경로 전체 합계**의
@@ -282,19 +317,35 @@ revisions:
   wire 출현이 0건이라 미확인). adapter는 **두 철자를 모두 읽고**, 두 키가 같이 오면
   `INVALID_INPUT`이다 (2026-08-12 확정).
 
-**`startDepot` 부재 규칙 (MUST, 2026-08-12 확정)** — 이 도메인은 CVRPTW도 덮으며, CVRPTW에는
-depot이 반드시 있다. 실물 wire도 top-level `depot` 배열로 차고를 준다 (규약은 단일 depot 정책 —
-fixture는 depot 1개에 차량 31/31이 `startDepot` 없이 온다). 규칙: 차량에 `startDepot`이 없으면
-**계획의 depot이 정확히 하나일 때 그 차고가 출발 차고다.** 이것은 §2.1이 금지한 '몰래 채우는
-기본값'이 아니라 여기 명시된 규칙이다. depot이 여러 개인데 `startDepot`이 없으면 어느 차고인지
-추측할 수 없으므로 `INVALID_INPUT`이다 (§12).
+**`startDepot` / `endDepot`은 둘 다 optional이다 (MUST, 2026-08-14 — 2026-08-12 채움 규칙 폐기).**
+화물 방향과 차의 출·종료는 다른 축이다. 정규화는 부재를 채우지 않는다.
+
+| 필드 | 부재의 뜻 |
+|---|---|
+| `startDepot` | 첫 고객 방문에서 경로 시작. 앞 arc 없음. 가상 depot으로 흉내 내지 않는다 (MUST NOT — self arc는 D=999,000·U=86,400) |
+| `endDepot` | 마지막 고객에서 종료. 복귀 arc 없음 |
+
+명시한 값이 차고 목록에 없으면 `INVALID_INPUT`이다. 차고 개수는 부재 해석을 바꾸지 않는다
+(1개여도 비움 유지, 여러 개여도 비움 유지).
+
+**현 규약 wire의 채움은 adapter 정책이다 (Stage 6).** floor fixture는 차량 31/31이 `startDepot`
+없이 오고 차고는 `WIN_0` 하나다. 이 파일을 `PlanInput`으로 직접 넣으면 canonical `startDepot`은
+비어 있다. 앱 접수(Stage 6)는 현 규약 CVRPTW(주문 전부 `DELIVERY_ONLY`, start 키 없음, depot
+정확히 1개)에서 그 차고 ID를 `VehicleInput.startDepotLocId`에 넣는다 — Domain/정규화가 채우지
+않는다. 1차 성공 기준·Win 비교는 이 앱 접수 경로 기준이라 `WIN_0` 출발이 유지된다.
+fixture 파일 자체는 고치지 않는다.
+
+`DELIVERY_ONLY`를 받으려면 그 차량에 `startDepot`이 있어야 하고, `PICKUP_ONLY`를 받으려면
+`endDepot`이 있어야 한다. 없으면 그 차량과 호환되지 않는다 (§3.4). 정규화는 이 조합을 거절하지
+않는다 — 혼합 차대가 유효하다.
 
 **Optional — 없으면 그 축의 제약을 아예 적용하지 않는다 (MUST: 몰래 기본값을 채우지 않는다)**
 
 | 필드 | 뜻 |
 |---|---|
 | `capabilities` | 특수 능력(설치 기술 등). 규약 `driverSkill` 대응 |
-| `zoneIds` (복수) | 운행 가능 구역. **미입력 = 전 구역 가능** |
+| `zoneIds` (복수) | 운행 가능 구역. **미입력 = 전 구역 가능**. `["ALL"]` 단독도 전 구역, 다른 구역과 섞이면 `INVALID_INPUT` (§3.4) |
+| `startDepot` | 출발 차고. 있으면 그 장소에서 출발. 없으면 첫 고객에서 시작 |
 | `endDepot` | 도착 차고. 있으면 start와 달라도 됨. 없으면 마지막 고객에서 종료 |
 
 **canonical에 담지 않는 차량 축 (2026-08-11 유예)** — 아래 셋은 **실물 wire에 없다**
@@ -316,11 +367,11 @@ fixture는 depot 1개에 차량 31/31이 `startDepot` 없이 온다). 규칙: �
 
 | 규칙 | 내용 |
 |---|---|
-| 차고 여러 개 | 가능. 차량마다 `startDepot` 지정, `endDepot`은 optional. `startDepot` 부재 규칙은 §2.4 |
-| `trips` | `oneway` = 도착 차고 없음(차량에 `endDepot` 있으면 그것 우선). `roundtrip` = `endDepot` 미지정 차량은 `startDepot`으로 복귀. **전체 설정 하나다** — 차량별 지정은 wire에 없어 유예했다 (§2.4 유예 표). 아래 주석 |
+| 차고 여러 개 | 가능. 차량마다 `startDepot`/`endDepot`은 각각 optional (§2.4). 명시한 값만 차고 목록에서 검증 |
+| `trips` | `oneway` = 도착 차고 없음(차량에 `endDepot` 있으면 그것 우선). `roundtrip` = `endDepot` 미지정 차량은 `startDepot`으로 복귀 — **`startDepot`도 없으면 `INVALID_INPUT`** (접을 대상이 없다. 조용히 oneway로 떨어뜨리지 않는다). **전체 설정 하나다** — 차량별 지정은 wire에 없어 유예했다 (§2.4 유예 표). 아래 주석 |
 | `multiRotation` | **차량이 도는 바퀴 수**를 센다. **core 지원 범위 = 경로당 trip 1개**(= 1바퀴, 차고 재방문 없음)이므로 **통과하는 값은 `{0, 1}` 둘뿐**이다 — `0`은 미설정(규약 기본값)이고 `1`과 같게 취급한다. `-1`(무제한 복귀)·`2` 이상은 범위를 넘으므로 `UNSUPPORTED_INPUT`으로 거부 (MUST). `-2` 이하는 규약 자체가 금지한 값이라 `INVALID_INPUT`. 아래 주석 |
-| `waitInDepot` | `Y` = 첫 방문 시간창에 맞춰 차고에서 늦게 출발 가능. `N` = **근무 시작과 차고 개장 중 늦은 쪽에 즉시 출발** |
-| `depot.openTime`/`closeTime` | 차고 시간창. **출발·복귀 두 순간에 적용**한다 (§7.1). 날마다 반복 (§3.2). 위반은 `DEPOT_WINDOW` |
+| `waitInDepot` | `Y` = 첫 방문 시간창에 맞춰 차고에서 늦게 출발 가능 (`startDepot` 있을 때만 적용. 없으면 무시 — 오류 아님). `N` = **근무 시작과 차고 개장 중 늦은 쪽에 즉시 출발** (start 없으면 절차 0' — 앞 arc 없음) |
+| `depot.openTime`/`closeTime` | 차고 시간창. **있는** 출·도착 순간에만 적용한다 (§7.1). 날마다 반복 (§3.2). 위반은 `DEPOT_WINDOW` |
 | `depot.taskTime` | **차고로 복귀해 다시 선적하는 데 걸리는 시간이다** (2026-08-11 시스템 소유자 확정). `multiRotation`이 `{0, 1}` = 1바퀴뿐인 현재 범위에서는 **복귀 후 재선적이 없으므로 이 시간도 발생하지 않는다** (roundtrip의 복귀 자체는 있다 — §7.1 `DEPOT_WINDOW` 검사 대상) — canonical에 담지 않고 시간 계산에도 쓰지 않는다. multi-trip을 여는 시점에 함께 되살린다 ([Stage Extra E1](implementation/stage-extra-deferred-features.md)) |
 | `defaultSpeed` | 이동표 준비 규칙에 사용 (§4). 실물 wire 표기는 `Optimizer.DefaultSpeed`다 (fixture 실측 — PDF 정의는 `defaultSpeed`) |
 
@@ -374,7 +425,17 @@ fixture는 depot 1개에 차량 31/31이 `startDepot` 없이 온다). 규칙: �
 **`trips`는 `endDepot`으로 접혀 사라진다 (설계 판단)**
 
 정규화가 `trips`를 **차량마다 `endDepot`이 있냐 없냐로 접어** 없앤다 (위 표의 `trips` 행 =
-접기 규칙). canonical `Vehicle`에는 차량별 `endDepot`만 남는다.
+접기 규칙). canonical `Vehicle`에는 차량별 `endDepot`(과 `startDepot`)만 남는다.
+
+접기 표 (MUST):
+
+| `trips` | start 입력 | end 입력 | canonical `endDepot` |
+|---|---|---|---|
+| `oneway` | ∅ / 있음 | 명시 | 그 값 (차고 목록 검증) |
+| `oneway` | ∅ / 있음 | 부재 | empty |
+| `roundtrip` | 있음 | 부재 | `:= startDepot` |
+| `roundtrip` | 없음 | 부재 | **`INVALID_INPUT`** — 복귀할 차고가 없다 |
+| `roundtrip` | ∅ / 있음 | 명시 | 그 값 (차고 목록 검증) |
 
 - **차량별 `trips` 지정은 유예했다 (2026-08-11).** 현행 wire에 그 필드가 없어
   `options.trips` 하나로 접기가 완결된다. 되살릴 때는 `차량 trips ▷ options.trips`
@@ -426,6 +487,11 @@ fixture는 depot 1개에 차량 31/31이 `startDepot` 없이 온다). 규칙: �
 ## 3. 정규화 — 숫자·시간을 하나의 의미로
 
 정규화 결과는 솔버와 재검증이 **공유하는 유일한 의미**다. 같은 입력이면 같은 정규화 결과가 나와야 한다.
+
+**목록·집합의 원소가 빈 값(null)이면 `INVALID_INPUT`이다 (MUST, 2026-08-15 시스템 소유자 확정).**
+차량·주문·차고·이동표 목록, item 목록, `capabilities`·`zoneIds`·`vehicleFeatureList` 같은 집합
+전부에 적용한다. 관문이 `field` 경로와 함께 막으므로 **정규화 이후의 코드(전파·평가·탐색·재검증)는
+원소가 null인 경우를 가정하지 않는다** — 뒤에서 null을 방어하지 말고 앞에서 못 들어오게 한다.
 
 ### 3.1 단위 (전역 고정, MUST)
 
@@ -557,7 +623,12 @@ serviceEndTime    = serviceStartTime + serviceTime
 sizeCompatible       = vehicle이 전 차급(vehicleFeature 부재·"ALL")  OR  list == ["ALL"]
                        OR  vehicle.vehicleFeature ∈ request.vehicleFeatureList
 capabilityCompatible = request가 capability 미요구  OR  요구 ⊆ vehicle.capabilities
-zoneCompatible       = vehicle.zoneIds 미입력(전 구역)  OR  방문 zoneId ∈ vehicle.zoneIds
+zoneCompatible       = vehicle이 전 구역(zoneIds 미입력, 또는 ["ALL"] 단독)
+                       OR  방문 zoneId 부재·"ALL"  OR  방문 zoneId ∈ vehicle.zoneIds
+                       (존재하는 side만 AND — 없는 side는 검사하지 않는다)
+depotAnchors         = DELIVERY_ONLY → vehicle.startDepot 존재
+                       PICKUP_ONLY   → vehicle.endDepot 존재
+                       PICKUP_DELIVERY → 참 (start/end 각각 optional)
 ```
 
 **차량 쪽 `"ALL"`·부재는 와일드카드다 (2026-08-12 확정).** 규약 PDF가 차량 `vehicleFeature`의
@@ -566,11 +637,24 @@ Default를 `"ALL"`로 정의하므로, 생략됐거나 `"ALL"`인 차량은 **�
 철학이다. 정규화는 부재와 `"ALL"`을 같은 상태(전 차급)로 접는다. 문자 비교만 하면 이런 차량이
 어느 주문도 싣지 못하는 유령 차량이 된다 — 종전 문면의 결함이었다.
 
+**구역의 `"ALL"`도 와일드카드다 (2026-08-15 시스템 소유자 확정).** `"ALL"`은 **구역 이름이 될 수
+없는 예약어**이고, **목록에는 단독(`["ALL"]`)으로만 올 수 있다.** 차량 `zoneIds`가 `["ALL"]`이면
+전 구역 운행이고, 다른 구역과 섞인 `["ALL","ZONE_1"]`은 `INVALID_INPUT`이다 — 전 구역인지 그
+구역만인지 애매하다 (§2.1 추측 금지. 주문 차급의 `["ALL","T1"]`과 **같은 규칙**이다).
+방문 쪽 `zoneId`가 `"ALL"`·빈 문자열·부재면 그 방문에 구역 제약이 없다 (2026-08-15 확정 — 부재를
+`"ALL"`과 같게 본다).
+정규화가 양쪽을 **같은 상태(제약 없음)로 접으므로** 판정은 "빈 값이면 통과" 하나만 본다 —
+차량 차급과 같은 방식이다. 실물 wire는 차고 `zoneId`가 `"ALL"`이고 주문
+452건은 전부 구체 구역(`ZONE_15`\~`ZONE_29` 11종), 차량 31대는 `zoneIds` 키 자체가 없다 (실측).
+
 **치수 축은 없다 (2026-08-11 유예).** `Item`에 치수가 없어 검사 대상 자체가 없었다.
 3D 적재 고객이 확정되면 §2.1.1 경로로 되살리고, **판정은 core `Compatibility`가 아니라
 그 고객 profile의 `HardConstraint`가 한다** ([Stage Extra E2](implementation/stage-extra-deferred-features.md)).
 
 호환 차량이 0대인 Request는 구조 오류가 아니다 — 풀이는 진행되고 그 Request는 미배정+사유로 남는다.
+`DELIVERY_ONLY`인데 모든 차량이 `startDepot` 없거나, `PICKUP_ONLY`인데 모든 차량이 `endDepot`
+없어도 같다 — 정규화는 통과하고 사유는 `NO_COMPATIBLE_VEHICLE`이다 (§11.1). 혼합 차대
+(일부만 차고 출발, 일부만 복귀)는 유효하다.
 
 ---
 
@@ -645,6 +729,7 @@ Problem (고정)                          Solution (탐색이 바꿈)
   V1 = startDepot 차고A, end 없음
                                         다른 예: Route of V1: 차고A → R2픽 → R2배
                                                 bank = { R1 }   // R1은 아직 미배정
+                                        start 없는 V2: 첫 고객에서 경로 시작 (앞 arc 없음)
 ```
 
 ### 6.2 경로가 유효하려면 (MUST)
@@ -652,9 +737,9 @@ Problem (고정)                          Solution (탐색이 바꿈)
 | 규칙 | 내용 |
 |---|---|
 | 차량 하나 | 한 경로는 정확히 한 `VehicleId` 소유 |
-| 출발/도착 | `startDepot`에서 출발. `endDepot` 있으면 거기서 종료, 없으면 마지막 고객에서 종료 |
-| pair | 같은 Request의 pickup·delivery가 같은 경로에, pickup 먼저 (§1.4) |
-| `servicePattern` | `DELIVERY_ONLY`는 delivery 방문만 (가짜 픽업 방문 금지) |
+| 출발/도착 | `startDepot` 있으면 거기서 출발, 없으면 첫 고객에서 시작. `endDepot` 있으면 거기서 종료, 없으면 마지막 고객에서 종료 |
+| pair | 같은 Request의 **있는 방문**이 같은 경로에. 둘 다 있으면 pickup 먼저 (§1.4) |
+| `servicePattern` | `DELIVERY_ONLY`는 delivery 방문만, `PICKUP_ONLY`는 pickup 방문만 (가짜 픽업·하차 방문 금지) |
 | 적재 | 모든 구간에서 `0 ≤ load ≤ capacity`. 아래 부호 규칙 |
 | 이동 | 준비된 이동표만 사용 |
 | hard | 시간창·근무창·**차고 창**·`reqDate`·한도 축(`maxStopCnt`·`maxDriveTime`·`maxDriveDist` — §2.6 경계 포함) 전부 충족 |
@@ -664,11 +749,20 @@ Problem (고정)                          Solution (탐색이 바꿈)
 
 ```text
 initialLoad(route) = Σ 그 경로에 배정된 DELIVERY_ONLY request의 수요   // 출발 전 적재
-DELIVERY_ONLY delivery 방문      → load 감소
-PICKUP_DELIVERY pickup 방문      → load 증가
-PICKUP_DELIVERY delivery 방문    → load 감소
+
+DELIVERY_ONLY   +startDepot(방문 아님)  −delivery방문
+PICKUP_ONLY     +pickup방문             −endDepot도착(방문 아님)
+PICKUP_DELIVERY +pickup방문             −delivery방문
+
 경로 종료 시 load = 0            // 미완료 pair로 우회 금지
 ```
+
+- `PICKUP_ONLY`는 `initialLoad`에 넣지 않는다. 집하 방문에서 늘고, `endDepot` **도착 사건**에서
+  그 경로에 배정된 `PICKUP_ONLY` 수요만 뺀다.
+- endDepot 도착에서 "남은 짐 전부 하차"로 뭉개지 않는다 (MUST NOT) — 배송 잔량과 backhaul을
+  구분하지 못하게 되고, 미하차 `DELIVERY_ONLY`/`PICKUP_DELIVERY` 버그를 숨긴다.
+- `delivery` 칸에서 수량 부호만 뒤집는 backhaul 우회, pickup=고객·delivery=depot 좌표로 차고를
+  `NodeId` 방문으로 만드는 우회는 금지한다 (MUST NOT).
 
 ### 6.3 route–bank 배타 규칙 (XOR, MUST)
 
@@ -717,11 +811,11 @@ bank는 **`RequestId`만** 담는다. 실패 사유·에러 메시지·비용을
 
 ### 7.1 출발·방문·종료 절차
 
-전제: 차량의 근무창 목록, 출발 차고의 창 목록, (있으면) 도착 차고의 창 목록은 전부 §3.2로
+전제: 차량의 근무창 목록, (있으면) 출발 차고의 창 목록, (있으면) 도착 차고의 창 목록은 전부 §3.2로
 전개·병합된 목록이다. 경로를 따라 시각은 줄지 않으므로 각 목록은 포인터를 앞으로만 밀며 훑는다.
 
 ```text
-0. 출발
+0. 출발  — startDepot 있음
    spanStart = 첫 근무창의 open                      // 경로 시간의 기준점 (§7.3)
    departure = 아래를 모두 만족하는 가장 이른 시각
        · 어느 근무창 안                                (근무 중에만 움직인다)
@@ -733,6 +827,12 @@ bank는 **`RequestId`만** 담는다. 실패 사유·에러 메시지·비용을
      첫 방문 serviceStart는 **N 출발을 가정하고 먼저 계산**한다 (N의 출발 시각도 조건을
      만족하므로 후보 집합은 비지 않는다). Y는 늦추기만 한다 — serviceStart 시각들은 N과 같고,
      대기의 귀속만 옮겨진다 (§7.3)
+
+0'. 출발 — startDepot 없음
+   spanStart = 첫 근무창의 open
+   앞 arc 없음. 차고 창 검사 없음. waitInDepot 미적용 (적용할 차고가 없다 — 오류가 아니다).
+   첫 방문 arrival = spanStart. 이어서 절차 2부터 (고객 창·근무창에 서비스 배치).
+   depotDeparture 부재 (§11.1 — depotReturn이 endDepot 없을 때 부재인 것과 대칭)
 
 1. arrival        = 직전 출발 시각 + 이동표[직전 장소 → 이번 장소]
                     (이동을 통째로 담는 창을 골라 출발했으므로 arrival은 항상 근무창 안이다)
@@ -753,6 +853,8 @@ bank는 **`RequestId`만** 담는다. 실패 사유·에러 메시지·비용을
    endDepot 없음 : routeEnd = 마지막 serviceEnd
    endDepot 있음 : routeEnd = endDepot 도착 시각.
                    그 시각이 endDepot 창 어느 것에도 들어가지 않으면 DEPOT_WINDOW
+                   도착 사건에서 그 경로에 배정된 PICKUP_ONLY 수요만 뺀다 (§6.2).
+                   잔량을 0으로 대입하지 않는다 (MUST NOT)
 ```
 
 - **시간창 close 판정 기준은 `serviceStart`다 (MUST).** 그 방문에서 `serviceStartTime ≤ closeTime`이면
@@ -766,9 +868,11 @@ bank는 **`RequestId`만** 담는다. 실패 사유·에러 메시지·비용을
   없으면 `TIME_WINDOW`다. 어느 경우에도 `serviceEnd`는 조건이 아니다.
   (**근무창은 이와 다르다** — 서비스는 근무창을 넘겨 끝날 수 없다. 고객의 close는 "언제까지
   받아 주는가"이고, 근무창은 "언제까지 일할 수 있는가"라 성격이 다르다.)
-- **차고 창은 출발·복귀 두 순간에 적용한다 (MUST).** 규약이 *"All vehicles must **depart and
-  arrive** between opening time and closing time of depot."*로 정의한다. 차고 창도 날마다
-  반복되므로(§3.2) 판정은 "어느 창 안인가"이지 "어느 하루의 close 이하인가"가 아니다.
+- **차고 창은 있는 출·도착 순간에만 적용한다 (MUST).** `startDepot`이 있으면 출발 순간,
+  `endDepot`이 있으면 도착 순간. 없는 쪽은 검사하지 않는다. 규약이 *"All vehicles must
+  **depart and arrive** between opening time and closing time of depot."*로 정의하는 것은
+  차고가 있을 때의 규칙이다. 차고 창도 날마다 반복되므로(§3.2) 판정은 "어느 창 안인가"이지
+  "어느 하루의 close 이하인가"가 아니다.
 - **복귀는 미루지 않는다** (2026-08-10 확정). 도착 시각이 차고 창 밖이면 그대로 `DEPOT_WINDOW`이며,
   "문 열 때까지 기다렸다 들어간다"로 미루지 않는다 — 경로는 거기서 끝나므로 미뤄 봐야 마지막
   고객 지점에서 하루를 버릴 뿐이다. 나중에 완화하더라도 canonical은 그대로이고 전파 규칙만
@@ -847,7 +951,8 @@ routeOperationalTime = driveTime + customerWaitingTime + depotWaitingTime
 spanStart               = 첫 근무창의 open                       // §7.1 절차 0
 customerWaitingTime     = Σ 방문마다 [(serviceStart − arrival) + (departure − serviceEnd)]
                           중 근무창에 걸친 부분     // 방문 지점에서 근무 시간 중 기다린 시간
-depotWaitingTime        = [spanStart, 출발 시각] 중 근무창에 걸친 부분
+depotWaitingTime        = startDepot 있음: [spanStart, 출발 시각] 중 근무창에 걸친 부분
+                          startDepot 없음: 0
 interWorkWindowRestTime = (routeEnd − spanStart) − (그 구간 중 근무창에 걸친 시간)
 ```
 
@@ -869,8 +974,8 @@ stopCount: 서로 다른 연속 고객 장소 그룹마다 +1 — 첫 고객 방
            직전 고객 장소가 없어도 센다). depot는 세지 않음. 같은 장소 연속 방문은 첫 진입만 +1.
            검산: Win 참조 해 V027·V030 = 방문 28곳 = 정차 28 = 한도 28 경계 (§2.6과 정합 —
            첫 방문을 안 세면 27이 되어 경계 실측이 성립하지 않는다)
-driveDist = Σ 실제 지난 D (meter)      // depot→첫고객, 고객→고객, (있으면) 마지막→endDepot
-driveTime = Σ 실제 지난 U (second)     // 대기·서비스·휴식은 불포함
+driveDist = Σ 실제 지난 D (meter)      // (있으면) startDepot→첫고객, 고객→고객, (있으면) 마지막→endDepot
+driveTime = Σ 실제 지난 U (second)     // 대기·서비스·휴식은 불포함. start 없으면 앞 arc를 더하지 않는다
 ```
 
 ### 7.5 하면 안 되는 것 (MUST NOT)
@@ -1014,7 +1119,7 @@ profile (고객별)                     ✅ 추가 hard 제약, score 축 구성
 |---|---|
 | 시점 | 결과 저장 직전 1회 (매 trial마다 돌리지 않는다) |
 | 입력 | 최종 `Solution` 전체 + 같은 `Problem` + **같은 profile 인스턴스** (§8.4) |
-| 검사 | **유효 조건의 정본을 참조한다 (2026-08-12 참조형 전환)**: §6.2 표 전 항목(pair·servicePattern·적재 곡선·종료 load=0·이동표 사용·시간창·`reqDate`·근무창·차고 창·maxStop·maxDrive 한도) + §6.3 배정 XOR + §3.4 호환성 + §2.6 경계 포함(≤) + profile hard(§8.4) — 전부 캐시 없이 재계산한다. 근무창·차고 창은 재계산한 시각이 실제로 창 안에 있는지 훑어 확인한다 (모든 이동·서비스가 한 근무창 안, 차고 출발·복귀 순간이 차고 창 안 — §7.1). 그리고 metric(③)과 score 축(④)을 각각 재계산해 탐색이 보고한 값과 대조. **여기서 목록을 따로 유지하지 않는다** — hard 축이 늘면 §6.2가 늘고 재검증은 자동으로 따라간다 |
+| 검사 | **유효 조건의 정본을 참조한다 (2026-08-12 참조형 전환)**: §6.2 표 전 항목(pair·servicePattern·적재 곡선·종료 load=0·이동표 사용·시간창·`reqDate`·근무창·차고 창·maxStop·maxDrive 한도) + §6.3 배정 XOR + §3.4 호환성 + §2.6 경계 포함(≤) + profile hard(§8.4) — 전부 캐시 없이 재계산한다. 근무창·차고 창은 재계산한 시각이 실제로 창 안에 있는지 훑어 확인한다 (모든 이동·서비스가 한 근무창 안, **있는** 차고 출발·복귀 순간이 그 차고 창 안 — §7.1). 그리고 metric(③)과 score 축(④)을 각각 재계산해 탐색이 보고한 값과 대조. **여기서 목록을 따로 유지하지 않는다** — hard 축이 늘면 §6.2가 늘고 재검증은 자동으로 따라간다 |
 | 범위 | 바뀐 경로만이 아니라 **해 전체** (bank 포함) |
 | 독립성 | 탐색의 증분 캐시·내부 상태를 믿지 않는다. 코드도 `verify` 패키지로 분리, 탐색 내부 참조 금지 (Architecture §2) |
 | 예산 무관 | 탐색 예산(§2.5.1)을 읽지 않는다 (MUST NOT). 시간·step 한도와 무관하게 해 전체를 검사한다 |
@@ -1049,9 +1154,10 @@ routes: 차량별로 —
             loadWeight·loadVolume (적재 2축 — §7.3)
             (방문의 `departure`(§7.3)는 계산·기록되지만 결과 노출 여부는 wire 협의 항목이다 —
              다일 계획에서는 `serviceEnd`와 달라진다)
-  경로 시각: depotDeparture(차고 출발 — §7.1 절차 0), depotReturn(도착 차고 도착 — §7.1 절차 8,
-            endDepot 있을 때만). 2026-08-11 추가 — 이 값이 없으면 호출 측이 이동표 없이는
-            "차가 몇 시에 차고를 나서는가"를 알 수 없다. wire 필드명·형식은 협의(§11.2, Plan D2)
+  경로 시각: depotDeparture(차고 출발 — §7.1 절차 0, startDepot 있을 때만),
+            depotReturn(도착 차고 도착 — §7.1 절차 8, endDepot 있을 때만). 2026-08-11 추가,
+            2026-08-14 start 부재와 대칭. 이 값이 없으면 호출 측이 이동표 없이는
+            "차가 몇 시에 차고를 나서는가/돌아오는가"를 알 수 없다. wire 필드명·형식은 협의(§11.2, Plan D2)
   경로 지표: driveDist, driveTime, stopCount, routeOperationalTime
 unassigned[]: orderId + reason — 4종 고정(NO_COMPATIBLE_VEHICLE, CAPACITY,
               TIME_WINDOW_INFEASIBLE, NOT_PLACED), 판정 규칙은 아래 (2026-08-12 확정)
@@ -1087,7 +1193,7 @@ metrics: unassignedCount, usedVehicleCount, totalDistance, totalRouteOperational
 
 | 분류 | 예 | 처리 |
 |---|---|---|
-| 입력 오류 | 스키마 위반, 소수 거리, 수치를 문자열로 인코딩(§3.1), `close == open`인 시간창(§3.2), depot 여러 개인데 `startDepot` 없음(§2.4), `multiRotation ≤ -2`(규약이 금지한 값, §2.5) | 접수 시 4xx (S3 저장 없음) |
+| 입력 오류 | 스키마 위반, 소수 거리, 수치를 문자열로 인코딩(§3.1), `close == open`인 시간창(§3.2), pickup·delivery 둘 다 없는 Request(§1.3), `trips=roundtrip`인데 접을 차고가 없음(end 부재 + start 부재, §2.5), 명시한 start/end가 차고 목록 밖(§2.4), `multiRotation ≤ -2`(규약이 금지한 값, §2.5) | 접수 시 4xx (S3 저장 없음) |
 | 미지원 입력 | `multiRotation`이 `{0, 1}` 밖 — 즉 `-1` 또는 `2` 이상 (§2.5) | `UNSUPPORTED_INPUT` — 접수 거부 |
 | Problem 생성 실패 | ID 참조 깨짐, 이동표 불완전 | FAILED 상태 + 원인 |
 | 탐색 중단 | 시간 한도 도달 | 그 시점 best로 재검증 진행 (정상) |
@@ -1102,7 +1208,7 @@ metrics: unassignedCount, usedVehicleCount, totalDistance, totalRouteOperational
 |---|---|---|
 | 1 | destroy/repair가 pair 단위인가? | 예 |
 | 2 | 각 Request가 경로 또는 bank 정확히 하나에 있는가? | 예 |
-| 3 | `DELIVERY_ONLY`에 픽업 방문이 생기지 않는가? | 예 (initial load만) |
+| 3 | `DELIVERY_ONLY`에 픽업 방문이, `PICKUP_ONLY`에 하차 방문이 생기지 않는가? | 예 (각각 initial load / endDepot 도착 하차만) |
 | 4 | 탐색이 `Problem`·이동표를 수정하지 않는가? | 예 |
 | 5 | bank에 사유 문자열을 저장하지 않는가? | 예 (ID만) |
 | 6 | hard 위반을 감점으로 통과시키지 않는가? | 예 |
@@ -1111,10 +1217,10 @@ metrics: unassignedCount, usedVehicleCount, totalDistance, totalRouteOperational
 | 9 | 탐색과 재검증이 같은 profile 인스턴스·이동표를 쓰는가? | 예 |
 | 10 | 재검증 FAIL 시 결과가 저장되지 않는가? | 예 |
 | 11 | 미등록 customerId가 default profile로 풀리는가? | 예 |
-| 12 | optional 필드 부재 시 그 축 제약이 사라지는가? | 예 (몰래 채움 없음) |
+| 12 | optional 필드 부재 시 그 축 제약이 사라지는가? `startDepot` 부재를 단일 차고로 채우지 않는가? | 예 (몰래 채움 없음 — 현 규약 wire 채움은 Stage 6) |
 | 13 | `Problem`에 profile·탐색 예산이 들어 있지 않은가? | 예 (§5) |
 | 14 | 재검증이 시간·step·idle 한도를 참조하지 않는가? | 예 (§2.5.1·§10.2) |
 | 15 | 여러 축을 한 숫자로 뭉개는 비교가 없는가? | 예 — 사전식 비교 하나뿐 (§8.3) |
 | 16 | 고객별로 갈라진 canonical·`Problem`·adapter가 없는가? | 예 (§2.1.1) |
 | 17 | 모든 이동·서비스가 한 근무창 안에 통째로 들어가는가? | 예 — 창을 넘으면 다음 창으로 미룬다 (§3.2·§7.1) |
-| 18 | 차고 창을 출발·복귀 **둘 다**에 적용했는가? | 예 (§7.1 — 위반은 `DEPOT_WINDOW`) |
+| 18 | 차고 창을 **있는** 출·도착에 적용했는가? | 예 (§7.1 — 위반은 `DEPOT_WINDOW`. 없는 쪽은 검사하지 않는다) |

@@ -56,6 +56,21 @@ revisions:
     Domain §2.5·§7.1 정합) · §2.3 "규약 차량 키 7개"의 규약↔fixture 어휘 분리 ·
     §5·T12의 capability/zone 축 "항상 참" 논거 분리(zone은 차량 부재, capability는 주문
     요구 부재). 설계 무변경
+  - 2026-08-14 Domain `startDepot` optional + `PICKUP_ONLY` 정합 — `Vehicle.startDepot`·
+    `Request.delivery`를 `Optional`로, `ServicePattern.PICKUP_ONLY` 추가. 절차 5 start 부재
+    채움(E20) **뒤집기**(비움 유지). E19b(roundtrip+start∅+end∅ = INVALID)·E32~E34 신설.
+    T11·T12·T13 확장. `Compatibility.depotAnchors`. 생성자는 null·blank만 유지.
+    Win/CVRPTW 채움은 Stage 6 adapter (Domain §2.4)
+  - 2026-08-15 `Depot.windows` 주석을 Domain §7.1에 맞춤 (있는 출·도착만). T12에
+    depotAnchors 교차 실패·성공 추가 (startOnly×PICKUP_ONLY·endOnly×DELIVERY_ONLY)
+  - 2026-08-15 **구현 감사 반영 (시스템 소유자 확정 3건)** — ① 구역 `"ALL"` 와일드카드
+    (Domain §3.4 2026-08-15): 절차 3·5·6에 zone 접기 추가(`["ALL"]` 단독만 전 구역, 섞이면
+    거부 — 차급과 같은 규칙. 방문 zoneId 부재 = `"ALL"`과 동일) · §5 zone 축 설명 개정 ·
+    E15 확장·E35·E35b 신설 · T17 신설. ② 목록·집합 원소 null = `INVALID_INPUT`
+    (Domain §3 서두): 절차 서두 규칙 · E36·T18 신설. ③ 차량 `vehicleFeature`의 **빈 문자열도
+    부재로** 접는다 (절차 5·E26 — 종전 문면은 blank를 차급 이름으로 읽혀 유령 차량이 됐다).
+    함께: 절차 7의 `field` 조립을 실패 경로로 미루도록 명시(§3 Supplier 근거의 이행 —
+    이동표 205,209행에서 prefix가 성공 경로에서도 조립되고 있었다)
 ---
 
 # Stage 1 — canonical 입력과 정규화
@@ -106,7 +121,7 @@ solver-core의 `domain` 패키지에 canonical 모델(`Plan`·`Request`·`Vehicl
 | `domain/VehicleId.java` | 차량 ID (record) | Domain §1.2 |
 | `domain/NodeId.java` | "장소에서 하는 역할 한 칸" ID + 발급 팩토리 | Domain §1.2 |
 | `domain/LocationId.java` | 지도상 장소 ID + locId 부재 시 좌표 기반 생성 | Domain §1.2·§2.3 |
-| `domain/ServicePattern.java` | enum `DELIVERY_ONLY` / `PICKUP_DELIVERY` | Domain §1.3 |
+| `domain/ServicePattern.java` | enum `DELIVERY_ONLY` / `PICKUP_ONLY` / `PICKUP_DELIVERY` | Domain §1.3 |
 | `domain/TimeWindow.java` | 양끝 포함 시간창 (원점 기준 초) | Domain §2.3·§3.2 |
 | `domain/Location.java` | 장소 = LocationId + 좌표 (Stage 2 Great Circle 보정용) | Domain §4 |
 | `domain/Item.java` | 개당 무게·부피(milli)·qty·taskTime | Domain §2.3·§3.1 |
@@ -179,7 +194,7 @@ public record NodeId(String value) {          // 방문 순서·시간창의 칸
 ### 2.2 정규화 모델 (Domain §2·§3의 결과 형태)
 
 ```java
-public enum ServicePattern { DELIVERY_ONLY, PICKUP_DELIVERY }        // Domain §1.3
+public enum ServicePattern { DELIVERY_ONLY, PICKUP_ONLY, PICKUP_DELIVERY }  // Domain §1.3
 public enum Trips { ONEWAY, ROUNDTRIP }                              // Domain §2.5
 
 public record TimeWindow(long openSec, long closeSec) {}             // 양끝 포함, openSec ≤ closeSec (Domain §3.2)
@@ -196,14 +211,15 @@ public record RequestSide(
     long durationSec,                  // 방문 자체 시간 (item 작업시간과 별개)
     long serviceTimeSec,               // duration + Σ(taskTime×qty) — 정규화 시 확정 (Domain §3.3)
     long reqDateSec,                   // 기본 planEnd. serviceStart ≤ reqDate 전용 (Domain §2.3 MUST)
-    Optional<String> zoneId) {}
+    Optional<String> zoneId) {}        // empty = 구역 제약 없음 — 부재·blank·"ALL" 접힘 (Domain §3.4)
 
 public record Request(
     RequestId id,
     ServicePattern pattern,
-    Optional<RequestSide> pickup,      // PICKUP_DELIVERY만 존재 — DELIVERY_ONLY의 pickup 쪽은
-                                       // 방문을 만들지 않으므로 모델에서 부재로 강제 (Domain §1.3 MUST NOT)
-    RequestSide delivery,
+    Optional<RequestSide> pickup,      // PICKUP_ONLY·PICKUP_DELIVERY만 존재.
+                                       // DELIVERY_ONLY의 pickup 쪽은 방문을 만들지 않으므로 부재 (Domain §1.3 MUST NOT)
+    Optional<RequestSide> delivery,    // DELIVERY_ONLY·PICKUP_DELIVERY만 존재.
+                                       // PICKUP_ONLY의 delivery 쪽은 방문을 만들지 않으므로 부재 (Domain §1.3 MUST NOT)
     List<Item> items,
     long totalWeightMilliKg,           // Σ(item 환산값 × qty) — item 단위 환산 후 합산 (Domain §3.1)
     long totalVolumeMilliCbm,
@@ -212,8 +228,8 @@ public record Request(
 
 public record Vehicle(
     VehicleId id,
-    Optional<String> vehicleFeature,   // 차급 코드 하나. empty = 전 차급 — 부재·"ALL" 접힘
-                                       // (Domain §3.4, 2026-08-12 확정)
+    Optional<String> vehicleFeature,   // 차급 코드 하나. empty = 전 차급 — 부재·blank·"ALL" 접힘
+                                       // (Domain §3.4, 2026-08-12 확정 / blank는 2026-08-15)
     long maxWeightMilliKg,
     long maxVolumeMilliCbm,
     List<TimeWindow> workWindows,      // workStart/workEnd (기본 00:00:00/23:59:59). 날마다 반복 →
@@ -223,14 +239,16 @@ public record Vehicle(
     OptionalLong maxDriveTimeSec,
     OptionalLong maxDriveDistMeter,
     Set<String> capabilities,          // 빈 집합 = 능력 없음 (Domain §2.4)
-    Optional<Set<String>> zoneIds,     // empty Optional = 전 구역 (Domain §2.4 MUST)
-    LocationId startDepot,
+    Optional<Set<String>> zoneIds,     // empty Optional = 전 구역 — 부재 또는 ["ALL"] 단독이
+                                       // 접힌 것 (Domain §2.4 MUST·§3.4 2026-08-15)
+    Optional<LocationId> startDepot,   // 부재 = 첫 고객에서 시작. 정규화는 채우지 않는다 (Domain §2.4)
     Optional<LocationId> endDepot) {}  // trips 접기 결과 — §4 절차 5
 
 public record Depot(
     LocationId locationId,
-    List<TimeWindow> windows,          // 날마다 반복 → 전개 목록. 출발·복귀 순간에 적용 (Domain §7.1)
-    Optional<String> zoneId) {}        // 차고는 Route.visits에 오지 않아 NodeId가 없다 (Stage 3 §4.4)
+    List<TimeWindow> windows,          // 날마다 반복 → 전개 목록. 있는 출·도착 순간에만 적용 (Domain §7.1)
+    Optional<String> zoneId) {}        // 부재·blank·"ALL" 접힘 (Domain §3.4 — 실물 wire 차고는 "ALL").
+                                       // 차고는 Route.visits에 오지 않아 NodeId가 없다 (Stage 3 §4.4)
 
 public record DeliveryPolicy(
     Trips trips,
@@ -301,8 +319,11 @@ public record ItemInput(
     Long taskTimeSec) {}                         // null → 0 (규약 default)
 ```
 
-- `RequestInput(String orderId, SideInput pickup /*nullable*/, SideInput delivery, List<ItemInput> items, List<String> vehicleFeatures /*nullable*/, Set<String> requiredCapabilities /*nullable*/)`
-  — pickup side가 있으면 `PICKUP_DELIVERY`, 없으면 `DELIVERY_ONLY`로 정규화된다 (Domain §1.3).
+- `RequestInput(String orderId, SideInput pickup /*nullable*/, SideInput delivery /*nullable*/, List<ItemInput> items, List<String> vehicleFeatures /*nullable*/, Set<String> requiredCapabilities /*nullable*/)`
+  — side 존재로 pattern을 확정한다: pickup만 → `PICKUP_ONLY`, delivery만 → `DELIVERY_ONLY`,
+  둘 다 → `PICKUP_DELIVERY`, 둘 다 없음 → `INVALID_INPUT` (Domain §1.3).
+  compact constructor는 null·blank만 검사한다. 패턴 ↔ side 일치는 정규화(절차 6)와
+  Stage 2 freeze가 맡는다.
 - `SideInput(String locId /*nullable*/, String latText, String lonText, LocalTime openTime, LocalTime closeTime, Long durationSec, LocalDateTime reqDate, String zoneId)` — 시각류 전부 nullable.
 - `VehicleInput(String vehicleId, String vehicleFeature, BigDecimal maxWeightKg, BigDecimal maxVolumeCbm, LocalTime workStart, LocalTime workEnd, Integer speedKmH, Integer maxStopCnt, Long maxDriveTimeSec, Long maxDriveDistMeter, Set<String> capabilities, Set<String> zoneIds, String startDepotLocId, String endDepotLocId)`
   — 차량별 `trips`·`vhclOwnTyp`·치수 3필드는 **없다** (2026-08-11 유예). 이 셋은 **규약 차량
@@ -386,6 +407,11 @@ floor fixture의 이동표는 205,209줄이고 줄마다 D·U 두 번 호출하�
 번호 순서대로 실행하고, 첫 위반에서 `InputException`으로 중단한다.
 "규칙으로 정해진 기본값"만 채우고 그 외 애매함은 오류다 — 추측 금지 (Domain §2.1).
 
+**모든 절차에 공통 (2026-08-15, Domain §3 서두)**: 목록·집합을 읽을 때 **원소가 null이면
+`INVALID_INPUT`**이다 (`depots[]`·`orders[]`·`vehicles[]`·`distanceMatrix[]`·`items[]`·
+`capabilities`·`zoneIds`·`vehicleFeatureList`). 관문이 `field` 경로와 함께 막으므로 canonical
+컬렉션에는 null이 들어가지 않고, 이후 코드는 null 원소를 가정하지 않는다 (§6 E36).
+
 ```text
 1. 봉투    planId non-blank. planStart < planEnd (아니면 INVALID_INPUT).
           timeBase = TimeBase(planStart), planEndSec = toSeconds(planEnd).
@@ -404,6 +430,7 @@ floor fixture의 이동표는 205,209줄이고 줄마다 D·U 두 번 호출하�
           창 전개 = timeBase.dailyWindows(open, close, planEndSec) (기본 00:00:00/23:59:59,
             Domain §3.2 규칙 1–5 — 날마다 반복·자정 넘김·클리핑·병합).
           중복 LocationId → INVALID_INPUT.
+          zoneId: 부재·blank·"ALL" → Optional.empty (구역 제약 없음 — Domain §3.4).
 4. 장소    차고·모든 request side의 (LocationId, 좌표) 수집 → locations 맵.
           같은 LocationId에 서로 다른 좌표 → INVALID_INPUT (추측 금지).
           좌표 파싱 실패·범위(±90/±180) 밖 → INVALID_INPUT.
@@ -414,38 +441,49 @@ floor fixture의 이동표는 205,209줄이고 줄마다 D·U 두 번 호출하�
           optional 축(maxStopCnt·maxDrive*·capabilities·zoneIds·speed):
             null → Optional.empty — sentinel 금지 (Domain §2.4 MUST·§2.6 MUST NOT).
             zoneIds가 '빈 집합'으로 오면 INVALID_INPUT (전 구역인지 금지인지 애매 — 추측 금지).
+            zoneIds가 정확히 ["ALL"] → Optional.empty (전 구역). "ALL"이 다른 구역과 섞이면
+              INVALID_INPUT — "ALL"은 구역 이름이 될 수 없고 목록에 단독으로만 온다
+              (Domain §3.4 2026-08-15. 주문 차급의 ["ALL","T1"]과 같은 규칙. §6 E35).
           effectiveMaxStopCount = min(존재하는 것만: maxStopCnt, optionsInput.globalVehicleMaxStopCount).
             둘 다 없으면 Optional.empty (Domain §2.6).
           startDepot: 명시 → depots에 존재 검증(없으면 INVALID_INPUT).
-            부재 → 차고가 정확히 1개면 그 차고, 여러 개면 INVALID_INPUT
-            (Domain §2.4 부재 규칙, 2026-08-12 확정 — §6 E20).
+            부재 → Optional.empty 유지 (차고 개수 무관. 2026-08-12 채움 규칙 폐기 —
+            Domain §2.4, 2026-08-14. §6 E20). 현 규약 wire의 단일 차고 채움은 Stage 6.
           endDepot 접기 (Domain §2.5) — 절차 2의 options.trips로 판정한다
             (차량별 trips는 wire에 없어 유예 — Stage Extra E1):
             명시 → 존재 검증 후 그 값 (oneway여도 유지 — "있으면 그것 우선").
-            부재 + roundtrip → startDepot. 부재 + oneway → Optional.empty.
+            부재 + oneway → Optional.empty.
+            부재 + roundtrip + start 있음 → startDepot.
+            부재 + roundtrip + start 없음 → INVALID_INPUT (§6 E19b).
             접은 뒤 canonical Vehicle에 trips 필드는 남지 않는다 (Domain §2.5 접기 유지 판단).
-          vehicleFeature: 부재 또는 "ALL" → Optional.empty (전 차급 와일드카드 —
-            Domain §3.4, 2026-08-12 확정. §6 E26).
+          vehicleFeature: 부재·blank 또는 "ALL" → Optional.empty (전 차급 와일드카드 —
+            Domain §3.4, 2026-08-12 확정. blank 포함은 2026-08-15. §6 E26).
 6. 주문    중복 RequestId → INVALID_INPUT. items 없음·빈 배열 → INVALID_INPUT (Domain §3.3).
           item별: qty null→1, qty < 1 → INVALID_INPUT (Domain §3.1 양의 정수).
             weight/volume → Units.toMilli (개당). taskTime null→0, 음수 → INVALID_INPUT.
           합산: total = Σ multiplyExact(개당 milli, qty) 를 addExact로 —
             overflow 시 INVALID_INPUT (Domain §3.1 overflow 검사).
-          side별 (delivery는 필수, pickup은 있을 때만):
-            NodeId 발급. 창 전개 = timeBase.dailyWindows(open, close, planEndSec)
+          side별 (pickup·delivery 둘 다 nullable. 존재하는 side만 정규화):
+            둘 다 없음 → INVALID_INPUT (§6 E32).
+            NodeId 발급 (있는 side만 — pickup → NodeId.pickup, delivery → NodeId.delivery).
+            창 전개 = timeBase.dailyWindows(open, close, planEndSec)
               (기본 00:00:00/23:59:59 — 주문 창도 날마다 반복한다, Domain §3.2).
             duration null→0, 음수 → INVALID_INPUT.
             serviceTime = duration + Σ(taskTime × qty)   (Domain §3.3 — 개당 taskTime × 수량)
             reqDate null → planEnd (Domain §2.3 기본값). 각 side가 자기 reqDate만 갖는다 (대체 금지 MUST).
+            zoneId: 부재·blank·"ALL" → Optional.empty (구역 제약 없음 — Domain §3.4, §6 E35).
           vehicleFeatures: null 또는 정확히 ["ALL"] → Optional.empty (전 차급).
             "ALL"이 다른 값과 섞임 / 빈 배열 → INVALID_INPUT (§6 E14).
           requiredCapabilities: null → 빈 집합 (미요구, Domain §3.4).
-          pattern: pickup side 존재 여부로 확정 (Domain §1.3).
+          pattern: side 존재로 확정 (Domain §1.3) — pickup만 PICKUP_ONLY, delivery만
+            DELIVERY_ONLY, 둘 다 PICKUP_DELIVERY (§6 E33).
 7. 이동표  entry별: from/to non-blank.
           from == to (self arc) 행은 값을 읽지 않고 버린다 — 단위 검증(소수 거부)의 검사
             대상도 아니다 (Domain §4, 2026-08-12 확정. 실물 wire는 self arc 453건 전부
             D=9999·U=0을 보낸다).
           D → Units.toWholeMeters, U → Units.toWholeSeconds — 소수·음수 거부 (Domain §3.1·§4).
+          field 경로("distanceMatrix[i].D")는 **실패 경로에서만** 조립한다 — 205,209행을
+            도는 유일한 루프라 §3의 Supplier 근거가 여기서만 유효하다.
           여기서는 단위 검증만 한다. self arc sentinel(D=999,000·U=86,400) 강제·완전성·
           누락 보정(Great Circle, ceil(D×3.6/speed))·조회 키 구성은 전부 Stage 2 (Domain §4·§5).
 8. 조립    Plan 반환. 호환성 사실의 사전 계산·ID 참조 그래프 검증은 하지 않는다 —
@@ -476,6 +514,8 @@ number·정수화된 [win_poc_case_floor.json](../../data/win_poc_case_floor.jso
 차고 창도 `[0, 86399]`라 출발 시각을 앞당기지도 늦추지도 않고, `trips: "oneway"` + 차량에
 `endDepot` 필드가 없어 복귀 검사 자체가 없다 → **`DEPOT_WINDOW`는 이 fixture에서 발화하지 않는다.**
 `planEnd`(86400)가 차량 `workEnd`(84600)보다 늦으므로 규칙 4의 클리핑도 무영향이다.
+차량 31대는 `startDepot` 키도 없다 — `PlanInput`으로 직접 정규화하면 `startDepot`은 empty다
+(Domain §2.4, 2026-08-14). 앱 접수 경로의 `WIN_0` 채움은 Stage 6 adapter다.
 
 ---
 
@@ -488,13 +528,22 @@ number·정수화된 [win_poc_case_floor.json](../../data/win_poc_case_floor.jso
 public final class Compatibility {
     public static boolean size(Vehicle v, Request r);        // feature ∈ 목록 OR 목록 무제한
     public static boolean capability(Vehicle v, Request r);  // 미요구 OR 요구 ⊆ v.capabilities
-    public static boolean zone(Vehicle v, RequestSide s);    // v.zoneIds 부재(전 구역) OR s.zoneId ∈ v.zoneIds
+    public static boolean zone(Vehicle v, RequestSide s);    // v.zoneIds 부재(전 구역) OR s.zoneId 부재
+                                                             // OR s.zoneId ∈ v.zoneIds ("ALL"은 정규화가 접어
+                                                             // empty로 만들어 두므로 여기서 문자 비교하지 않는다)
+    public static boolean depotAnchors(Vehicle v, Request r); // Domain §3.4:
+                                                             // DELIVERY_ONLY → startDepot 존재
+                                                             // PICKUP_ONLY   → endDepot 존재
+                                                             // PICKUP_DELIVERY → 참
     public static boolean compatible(Vehicle v, Request r);  // 위 전부 AND (zone은 존재하는 모든 side)
 }
 ```
 
 - side의 `zoneId`가 부재이면 zone 축은 그 side에 대해 통과다 (검사할 값이 없으면 축 미사용 —
-  Domain §2.4 optional 원칙과 동일).
+  Domain §2.4 optional 원칙과 동일). **`"ALL"`도 같다** — 정규화(절차 3·5·6)가 양쪽의
+  부재·blank·`"ALL"`을 empty로 접어 두므로, 판정 코드는 `"ALL"`이라는 글자를 알지 못한다
+  (Domain §3.4 2026-08-15. 종전에는 `"ALL"`이 '이름이 ALL인 구역'으로 취급돼, 구역 제한 차량이
+  전 구역 주문을 못 받았다).
 - 치수 축은 **만들지 않는다** — canonical `Item`에도 `Vehicle`에도 치수 필드가 없어 검사
   대상이 없다 (2026-08-11 유예, [Stage Extra E2](stage-extra-deferred-features.md)).
 - `capability`·`zone` 두 축은 **현행 wire에서 항상 참이지만, 이유가 서로 다르다** —
@@ -530,23 +579,30 @@ Domain의 optional 규칙·경계값·오류 분류(§2·§3·§12)에서 뽑았
 | E12 | 차량 30 + 전역 28 | effective = 28 | §2.6 min |
 | E14 | vehicleFeature `["ALL"]` | 무제한. `["ALL","T1"]`·`[]` → INVALID_INPUT (애매 — 추측 금지) | §3.4·§2.1 |
 | E15 | 차량 zoneIds 부재 (fixture 전 차량) | 전 구역 가능 | §2.4 MUST |
+| E35 | 구역의 `"ALL"` (fixture 차고 `zoneId="ALL"`) | **와일드카드** — 차량 `zoneIds`가 `["ALL"]` 단독이면 전 구역, 방문 `zoneId`가 `"ALL"`·blank·부재면 구역 제약 없음. 정규화가 전부 `Optional.empty`로 접는다 | §3.4 (2026-08-15) |
+| E35b | 차량 `zoneIds` = `["ALL","ZONE_1"]` (섞임) | INVALID_INPUT — `"ALL"`은 구역 이름이 될 수 없어 **단독으로만** 온다. 전 구역인지 그 구역만인지 애매 (E14의 차급 `["ALL","T1"]`과 같은 규칙) | §3.4·§2.1 (2026-08-15) |
+| E36 | 목록·집합의 원소가 null (`["T1", null]` 등) | INVALID_INPUT — 관문에서 막는다. 이후 코드는 null 원소를 가정하지 않는다 (종전에는 `Set.copyOf`의 NPE로 5xx가 됐다) | §3 서두 (2026-08-15)·§12 |
 | E16 | reqDate 부재 (fixture는 전건 planEnd 값 명시) | planEnd로 기본값 | §2.3 |
 | E17 | reqDate < planStart | 수용 (음수 초로 정규화) — 실행 불가능성은 탐색·미배정의 일 | §2.3·§3.4 유추 |
 | E18 | planStart ≥ planEnd | INVALID_INPUT | §2.2 |
-| E19 | roundtrip + endDepot 부재 | endDepot := startDepot. oneway + endDepot 명시 → 그 값 유지 | §2.5 |
-| E20 | 차량 startDepot 부재 (fixture 전 차량) + 차고 1개 | 그 차고로 확정. 차고 여러 개면 INVALID_INPUT | §2.4 부재 규칙 (2026-08-12 확정 — §2.1 '몰래 채우는 기본값'에 안 걸리는 명시 규칙) |
+| E19 | roundtrip + endDepot 부재 + startDepot 있음 | endDepot := startDepot. oneway + endDepot 명시 → 그 값 유지 | §2.5 |
+| E19b | roundtrip + endDepot 부재 + startDepot 부재 | INVALID_INPUT — 접을 차고가 없다. 조용히 oneway로 떨어뜨리지 않는다 | §2.5 |
+| E20 | 차량 startDepot 부재 (fixture 전 차량, 차고 1개든 여러 개든) | `Optional.empty` 유지. 명시한 값이 차고 목록 밖이면 INVALID_INPUT | §2.4 (2026-08-14 — 2026-08-12 채움 규칙 폐기. Win 채움은 Stage 6) |
 | E21 | 같은 LocationId에 다른 좌표 | INVALID_INPUT | §2.1 추측 금지 |
 | E22 | locId 부재 | `LocationId.generated(좌표 원문)` — 같은 좌표 원문 = 같은 장소 | §2.3 |
 | E23 | capability 미요구 (빈 집합) | 모든 차량과 capability 축 통과 | §3.4 |
 | E24 | 호환 차량 0대인 Request | 오류 아님 — 정규화 통과, 풀이 진행 | §3.4 |
 | E25 | 중복 orderId / vehicleId | INVALID_INPUT | §5의 ID 참조 무결성 전제 |
-| E26 | 차량 vehicleFeature가 `"ALL"` 또는 부재 | **전 차급 와일드카드** — `Optional.empty`로 접는다 (2026-08-12 확정, 종전 "문자 그대로 비교" 규칙 폐기 — 규약 Default `"ALL"` 차량이 유령이 되던 결함 수선) | §3.4 |
+| E26 | 차량 vehicleFeature가 `"ALL"`·부재·blank | **전 차급 와일드카드** — `Optional.empty`로 접는다 (2026-08-12 확정, 종전 "문자 그대로 비교" 규칙 폐기 — 규약 Default `"ALL"` 차량이 유령이 되던 결함 수선) | §3.4 |
 | E27 | 시간창 close < open (예: 야간조 `22:00~06:00`) | **수용 — 자정을 넘는 창이다** (2026-08-10 D4 확정, 종전 INVALID_INPUT을 뒤집음). close를 다음 날짜의 그 시각으로 보고 전개한다. 계획 시작 '전날'에 시작한 창이 첫날 아침까지 이어지는 부분도 잘려 들어온다 | Domain §3.2 규칙 1·2 |
 | E27b | 시간창 close == open (예: `09:00~09:00`) | **INVALID_INPUT (신규)** — 1초짜리 창인지 24시간인지 애매하다 (추측 금지). E27을 수용하면서 생긴 구멍을 닫는다 | Domain §3.2 규칙 3·§2.1 |
 | E28 | 기본창 `00:00:00~23:59:59`, 3일 계획 | `[0,86399]`·`[86400,172799]`·`[172800,259199]`가 **병합돼 `[0,259199]` 하나**. 자정마다 1초 틈이 남으면 자정을 넘는 이동이 전부 막힌다 | Domain §3.2 규칙 5 |
 | E29 | planStart가 자정이 아님 (1일차 10:00) + 근무 `08:00~17:00` | 1일차 창이 앞에서 잘려 `[0(=10:00), 25200(=17:00)]`. 날짜 기준은 timezone 없는 벽시계 날짜다 (Domain §2.2) | Domain §3.2 규칙 1·4 |
 | E30 | 전개 결과가 **빈 목록**인 차량·차고 (예: 2시간 계획 `10:00~12:00`에 근무 `08:00~09:00`) | **오류 아님.** 그 차량·차고를 계획 기간에 쓸 수 없다는 뜻이고, 그것을 쓰는 경로가 불가가 될 뿐이다 (E24 "호환 차량 0대"와 같은 취급) | Domain §3.2·§3.4 |
 | E31 | planEnd가 `workEnd`보다 이름 (계획 18:00 종료, `workEnd` 23:59:59) | 근무창이 `[…, planEndSec − 1]`로 잘린다 — **하루짜리 계획에서도 동작이 바뀌는 지점**이다 (종전에는 planEnd를 넘겨 끝나는 경로를 아무도 막지 않았다). 근거는 규약 `dateRange` 설명 "Solver will create a plan in date range" | Domain §3.2 규칙 4 |
+| E32 | pickup·delivery 둘 다 없음 | INVALID_INPUT | §1.3 |
+| E33 | side 존재로 pattern 확정 (pickup만 / delivery만 / 둘 다) | `PICKUP_ONLY` / `DELIVERY_ONLY` / `PICKUP_DELIVERY`. 없는 side는 `Optional.empty` | §1.3 |
+| E34 | `DELIVERY_ONLY` × startDepot∅, `PICKUP_ONLY` × endDepot∅ | `depotAnchors` = false → `compatible` = false. 정규화는 통과 (호환 0대 = 미배정) | §3.4 |
 
 ---
 
@@ -568,14 +624,17 @@ Domain의 optional 규칙·경계값·오류 분류(§2·§3·§12)에서 뽑았
 | T8 | `PlanNormalizerTest.reqDateDefaultsToPlanEnd` | E16, side별 독립 reqDate (Domain §2.3 MUST) | Stage 범위 문장 |
 | T9 | `PlanNormalizerTest.foldsGlobalStopCount` | E11·E12 (min 접기) | 경계값 (Domain §2.6) |
 | T10 | `PlanNormalizerTest.rejectsAmbiguousInput` | E8·E14·E18·E21·E25 → INVALID_INPUT | 경계값·오류 분류 |
-| T11 | `PlanNormalizerTest.deliveryOnlyHasNoPickupSide` | pattern 확정 + pickup `Optional.empty` (Domain §1.3 MUST NOT) | Stage 범위 문장 "canonical 모델" |
-| T12 | `CompatibilityTest.axisTruthTable` | **size 축의 참/거짓 조합**(E26·E14의 `["ALL"]` 포함)과 `compatible`의 AND 결합 + E23·E24. `capability`·`zone`은 **현행 wire에서 항상 참**이라(zone은 차량 `zoneIds` 부재, capability는 주문 요구 부재 — §5) 미요구/부재 시 통과만 확인한다 — 도달 불가능한 조합의 진리표를 만들지 않는다 | Stage 범위 문장 "호환성 판정" |
-| T13 | `PlanNormalizerTest.depotResolution` | E19·E20: `options.trips = roundtrip` + endDepot 부재 → `startDepot` · `oneway` + endDepot 명시 → 그 값 유지 · startDepot 부재 + 차고 1개 → 그 차고, 여러 개 → INVALID_INPUT | 경계값 (Domain §2.5·§2.4) |
+| T11 | `PlanNormalizerTest.patternFollowsPresentSides` | E32·E33: delivery만 → `DELIVERY_ONLY` + pickup empty · pickup만 → `PICKUP_ONLY` + delivery empty · 둘 다 → `PICKUP_DELIVERY` · 둘 다 없음 → INVALID_INPUT (Domain §1.3 MUST NOT) | Stage 범위 문장 "canonical 모델" |
+| T12 | `CompatibilityTest.axisTruthTable` | **size 축의 참/거짓 조합**(E26·E14의 `["ALL"]` 포함)과 `compatible`의 AND 결합 + E23·E24·**E34(depotAnchors)**. `capability`·`zone`은 **현행 wire에서 항상 참**이라(zone은 차량 `zoneIds` 부재, capability는 주문 요구 부재 — §5) 여기서는 미요구/부재 시 통과만 확인한다 — 실물 입력으로 도달하지 않는 조합의 진리표를 이 표에서 만들지 않는다는 뜻이고, **합성 입력으로 만들 수 있는 zone 축의 참/거짓은 T17이 덮는다** (2026-08-15 — `zoneIds` 접기가 생기면서 정규화를 거친 합성 케이스로 도달 가능해졌다). depotAnchors는 합성 케이스로 세 패턴과 교차 실패·성공을 확인한다: startOnly×PICKUP_ONLY·endOnly×DELIVERY_ONLY → `depotAnchors`/`compatible` false, endOnly×PICKUP_ONLY·startOnly×DELIVERY_ONLY → true | Stage 범위 문장 "호환성 판정" |
+| T13 | `PlanNormalizerTest.depotResolution` | E19·E19b·E20: `options.trips = roundtrip` + end 부재 + start 있음 → `startDepot` · roundtrip + end 부재 + start 부재 → INVALID_INPUT · `oneway` + end 명시 → 그 값 유지 · start 부재 (차고 1개·여러 개) → `Optional.empty` · start 명시 + 목록 밖 → INVALID_INPUT | 경계값 (Domain §2.5·§2.4) |
 | T14 | `TimeBaseTest.expandsDailyWindows` | **창 전개 전수.** E28(기본창 3일 → 병합돼 1개) · E29(planStart 비자정 클리핑) · E31(planEnd 클리핑) · E30(빈 목록, 예외 없음) · Domain §3.2 예2(근무 08:00\~17:00 3일 → `[28800,61200]`·`[115200,147600]`·`[201600,234000]`) · 결과의 불변식(정렬·비겹침·병합 완료) | 경계값 (Domain §3.2) |
 | T15 | `TimeBaseTest.acceptsOvernightWindowAndRejectsZeroLength` | **야간조 케이스.** E27: `22:00~06:00` 3일 계획 → 전날에서 넘어온 `[0, 첫날 06:00]` + 날마다 `[22:00, 다음날 06:00]` · E27b: `09:00~09:00` → INVALID_INPUT | 경계값 (Domain §3.2 규칙 2·3) |
 | T16 | `PlanNormalizerTest.floorFixtureWindowsStayOneEach` | **1일 fixture 무영향 증명.** §4 말미 실측 표의 세 값(차량 `00:00:00~23:30:00` → `[[0,84600]]`, 차고 `00:00:00~23:59:59` → `[[0,86399]]`, 주문 `05:45~10:30` → 창 1개)을 `planEnd=86400`으로 손 조립해 **목록 길이가 전부 1**임을 단언 | 경계값 (Domain §3.2 — 회귀 방지) |
 
-T7·T8·T11\~T16은 DoD 두 문장 밖이지만 Plan Stage 1 범위 문장("canonical 모델, serviceTime 공식,
+| T17 | `PlanNormalizerTest.foldsWildcardFeatureToNoConstraint` | **와일드카드 접기 전수** (2026-08-15 신설 — 종전에는 접기를 확인하는 테스트가 없어, 접기가 깨져도 T12가 초록이었다). 차량 `vehicleFeature` `"ALL"`·blank → empty이고 `T1`만 받는 주문과 `size` 통과(E26) · 주문 `["ALL"]` → empty(E14 통과 케이스) · 차량 `zoneIds` `["ALL"]` → empty이고 구역 주문과 `zone` 통과, `["ALL","ZONE_1"]`(섞임) → INVALID_INPUT(E35b) · 방문 `zoneId` `"ALL"`·blank·부재 → empty이고 구역 제한 차량과도 통과(E35). **정규화 결과와 `Compatibility` 판정을 한 테스트에서 잇는다** — 접기가 깨지면 유령 차량이 되는 경로를 그대로 재현 | 경계값 (Domain §3.4) |
+| T18 | `PlanNormalizerTest.rejectsNullElements` | E36: `vehicleFeature`·`capabilities`·`zoneIds`·`items`·목록 자체의 원소가 null → INVALID_INPUT (NPE 아님). `field` 경로가 어느 목록인지 가리키는지 확인 | 오류 분류 (Domain §3 서두·§12) |
+
+T7·T8·T11\~T18은 DoD 두 문장 밖이지만 Plan Stage 1 범위 문장("canonical 모델, serviceTime 공식,
 호환성 판정, 오류 분류")과 Domain §3.2 시간창 전개의 직접 검증이다 — Plan §1의 편입(2026-08-11)에
 따라 이 표 전부가 완료 기준이다.
 

@@ -39,6 +39,10 @@ revisions:
     배송정책·탐색 예산뿐 — record 주석·§9 행과의 삼중 모순 해소) · §2.3 공유 목록의
     `RouteFacts` 오귀속 교정(profile 아닌 core `eval` — N1과 통일) · §2.3에 Domain §7.1
     위반 귀속 규약(두 창 축 동시 소진 시) 전파
+  - 2026-08-14 Domain `startDepot` optional + `PICKUP_ONLY` — pair 검사·단독 경로에
+    PICKUP_ONLY. `RouteResult.depotDeparture` Optional. replay는 Stage 3과 같은 출발/하차 규칙
+  - 2026-08-15 재검증 절차 6 `at`을 Stage 3 Evaluator와 정합 (있는 방문 NodeId).
+    `DEPOT_WINDOW` 설명을 Domain §7.1에 맞춤 (있는 출·도착만)
 ---
 
 # Stage 5 — 재검증과 결과
@@ -178,7 +182,7 @@ public record VerifyViolation(Kind kind,
         ASSIGNED_AND_BANKED, NOT_ASSIGNED_NOT_BANKED, UNKNOWN_REQUEST,
         // hard 재계산 (Domain §6.2·§7) — solve.Violation과 같은 의미, 독립 구현
         TIME_WINDOW, REQ_DATE, WORK_WINDOW,
-        DEPOT_WINDOW,                     // 차고 창 밖 출발·복귀 (Domain §7.1, D4 신설)
+        DEPOT_WINDOW,                     // 차고 창 밖 있는 출·도착 (Domain §7.1, D4 신설)
         CAPACITY_WEIGHT, CAPACITY_VOLUME, END_LOAD_NOT_ZERO,
         MAX_STOP_COUNT, MAX_DRIVE_TIME, MAX_DRIVE_DIST,
         INCOMPATIBLE_VEHICLE, PROFILE_HARD,
@@ -196,9 +200,10 @@ final class RouteReplay {                               // package-private — v
         record Ok(RouteFacts facts) implements Outcome {}
         record Violated(VerifyViolation violation) implements Outcome {}
     }
-    /** Domain §7.1 절차를 처음부터: initialLoad → 출발(근무창 ∩ startDepot 창, waitInDepot) →
+    /** Domain §7.1 절차를 처음부터: initialLoad → 출발(start 있으면 근무창 ∩ startDepot 창,
+        waitInDepot; 없으면 앞 arc 없음·첫 방문 arrival = spanStart) →
         방문 루프(arrival→대기→시간창→reqDate→load 곡선, 창을 넘으면 다음 창으로 미룸) →
-        endDepot 도착의 차고 창 → 휴식 계산 → 한도 → 종료 load == 0.
+        endDepot 도착의 차고 창 + PICKUP_ONLY만 −수요 → 휴식 계산 → 한도 → 종료 load == 0.
         이동은 problem.travel()만 (§4 MUST). solve.RoutePropagator 코드를 재사용하지 않는다.
         창을 걷는 코드(fitArc/fitService 상당)도 **여기서 따로 구현한다** (Stage 3 노트 N8). */
     static Outcome replay(Problem problem, VehicleId vehicleId, List<NodeId> visits);
@@ -233,9 +238,12 @@ final class RouteReplay {                               // package-private — v
 ```text
 1. 참조    각 VehicleId가 Problem에 존재 (UNKNOWN_VEHICLE). visits 빈 목록 (EMPTY_ROUTE).
           각 NodeId를 problem.nodeRef로 역참조 — 실패는 UNKNOWN_NODE
-          (DELIVERY_ONLY의 가짜 픽업 NodeId는 색인에 없어 여기서 자동 검출, §1.3 MUST NOT).
+          (DELIVERY_ONLY의 가짜 픽업·PICKUP_ONLY의 가짜 하차 NodeId는 색인에 없어 여기서
+          자동 검출, §1.3 MUST NOT).
           해 전체 NodeId 중복 (DUPLICATE_NODE). bank의 RequestId 존재 (UNKNOWN_REQUEST).
 2. pair   RequestId별 등장 방문 수집 (§1.4):
+          DELIVERY_ONLY — delivery 방문 1개.
+          PICKUP_ONLY — pickup 방문 1개.
           PICKUP_DELIVERY — 두 방문이 다른 경로 → PAIR_SPLIT. 한쪽만 → PAIR_INCOMPLETE.
           같은 경로에서 pickup index > delivery index → PICKUP_AFTER_DELIVERY.
 3. XOR    소유된 RequestId가 bank에도 있음 → ASSIGNED_AND_BANKED.
@@ -251,13 +259,15 @@ final class RouteReplay {                               // package-private — v
           (Domain §10.2 — Stage 3 노트 N5를 대체하는 검사):
           · 모든 이동 [departure, 다음 arrival]이 한 근무창 안 → 아니면 WORK_WINDOW
           · 모든 서비스 [serviceStart, serviceEnd]가 한 근무창 안 → 아니면 WORK_WINDOW
-          · 차고 출발 순간이 startDepot 창 안, endDepot 도착 순간이 endDepot 창 안
-            → 아니면 DEPOT_WINDOW
+          · startDepot 있으면 차고 출발 순간이 그 창 안, endDepot 있으면 도착 순간이 그 창 안
+            → 아니면 DEPOT_WINDOW. 없는 쪽은 검사하지 않는다
           replay가 옳게 배치했다면 산술적으로 통과하는 검사다 — END_LOAD_NOT_ZERO와 같은
           성격의 자기 방어이며, 창 걷는 코드를 따로 구현했기 때문에(N8) 값이 아니라
           **배치 자체**를 확인할 자리가 필요하다.
 6. 호환    경로가 소유한 각 RequestId에 대해 vehicleId ∈ problem.compatibleVehicles(id)
-          (§3.4 동결 사실). 위반 → INCOMPATIBLE_VEHICLE (노트 N5).
+          (§3.4 동결 사실). 위반 → INCOMPATIBLE_VEHICLE, at = 그 request의 있는 방문 NodeId
+          (DELIVERY_ONLY → delivery, PICKUP_ONLY → pickup, PICKUP_DELIVERY → delivery —
+          Stage 3 §4.2와 같음) (노트 N5).
 7. profile hard  profile.hardConstraints()의 각 h를 h.satisfied(problem, 재계산 RouteFacts)로 적용.
           위반 → PROFILE_HARD (detail에 h.id()). 인자로 받은 profile을 쓸 뿐 verify가
           따로 고르지 않는다 — 탐색과 같은 인스턴스인지는 호출자가 보장한다 (§8.4 MUST).
@@ -310,7 +320,8 @@ public record SolveResult(
                                long seed) {}
 
     public record RouteResult(VehicleId vehicleId, List<Visit> visits,   // visits = 방문 순서
-                              LocalDateTime depotDeparture,              // 차고 출발 (§7.1 절차 0 = RouteFacts.departureSec)
+                              Optional<LocalDateTime> depotDeparture,    // 차고 출발 (§7.1 절차 0 = RouteFacts.departureSec).
+                                                                         // 부재 = startDepot 없는 경로
                               Optional<LocalDateTime> depotReturn,       // 도착 차고 도착 (§7.1 절차 8 = endDepotArrivalSec).
                                                                          // 부재 = endDepot 없는 경로
                               long driveDistMeter, long driveTimeSec,
@@ -385,7 +396,8 @@ bank는 ID만 갖고 있으므로(§6.3 MUST NOT) 사유는 여기서 계산한�
                  ∧ r.totalVolumeMilliCbm ≤ v.maxVolumeMilliCbm }
    V₁ = ∅ → CAPACITY                               (호환 차량 전부가 혼자서도 실을 수 없음)
 3. V₂ = { v ∈ V₁ : RouteReplay.replay(problem, v, r만 있는 단독 경로) = Ok }
-   단독 경로: DELIVERY_ONLY → [delivery NodeId], PICKUP_DELIVERY → [pickup, delivery].
+   단독 경로: DELIVERY_ONLY → [delivery NodeId], PICKUP_ONLY → [pickup NodeId],
+              PICKUP_DELIVERY → [pickup, delivery].
    V₂ = ∅ → TIME_WINDOW_INFEASIBLE                 (혼자 넣어도 시간창·reqDate·근무창·
                                                     차고 창·maxDrive 등에서 불가 —
                                                     DEPOT_WINDOW·WORK_WINDOW로 불가한 경우도
@@ -442,7 +454,7 @@ solve와 verify는 서로를 모른다.
 | E2 | reported Evaluation의 한 축만 1 차이 | SCORE_MISMATCH → FAIL (detail에 양쪽 값) | §6.4·§10.2 |
 | E3 | PD의 pickup·delivery가 다른 경로 (짝 분리) | PAIR_SPLIT → FAIL (DoD 오염 1) | §1.4 |
 | E4 | 경로 수요 합 > capacity (용량 초과) | CAPACITY_* → FAIL (DoD 오염 2). 출발 적재 초과(DELIVERY_ONLY 몰림)도 동일 | §6.2 |
-| E5 | DELIVERY_ONLY의 pickup NodeId가 경로에 | UNKNOWN_NODE (nodeRef 색인에 없음 — 구조적 강제) | §1.3 MUST NOT |
+| E5 | DELIVERY_ONLY의 pickup NodeId·PICKUP_ONLY의 delivery NodeId가 경로에 | UNKNOWN_NODE (nodeRef 색인에 없음 — 구조적 강제) | §1.3 MUST NOT |
 | E6 | 구조 위반 존재 | 재전파·점수 대조 생략, Fail에는 구조 위반만 (관문 §3-4) | §6.5 순서 |
 | E7 | hard 위반 경로 여럿 | 경로별로 전부 수집해 보고 (첫 경로에서 멈추지 않음) | §12 원인 기록 |
 | E8 | serviceStart == **그 창의** close / == reqDate | 통과 — 양끝 포함. **Domain §7.1 확정 해석**(`serviceStart`가 어느 창 안인가 — 마지막 창의 close 하나만 보지 않는다)을 solve와 verify가 같이 따른다 (§2.3) | Domain §7.1·§2.3 |

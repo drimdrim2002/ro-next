@@ -33,6 +33,8 @@ revisions:
     강제" 거짓 인과 교정(ArchUnit은 타입 참조 차단, 값의 차단은 verify 시그니처 —
     Stage 5 §2와 정합) · §9 Q2를 해소로 갱신(stats는 run 메타에 안 실린다 — Domain §11.1,
     Stage 5 §9)하고 §3.2·§8의 같은 잔재 문구 동기. 설계 무변경
+  - 2026-08-14 Domain `PICKUP_ONLY` — 삽입 위치: pickup NodeId를 0..n (DELIVERY_ONLY와
+    대칭). 삽입 순서 키: delivery 창이 없으면 pickup의 마지막 창 close
 ---
 
 # Stage 4 — 초기해와 ALNS
@@ -259,9 +261,11 @@ public final class AdaptiveWeights {
 
 ```text
 1. 시작해 = Solution(routes = [], bank = 모든 RequestId).
-2. 삽입 순서: delivery의 **마지막 창 close** 오름차순, 동률은 RequestId 문자열 순
+2. 삽입 순서: **있는 delivery의 마지막 창 close**, delivery가 없으면 **pickup의 마지막
+   창 close** 오름차순, 동률은 RequestId 문자열 순
    (결정적 — rng 없음. 시간창이 목록이 됐으므로(Domain §3.2) 어느 close인지 정한다 —
-    "가장 늦게까지 받아 주는 시각"이 급한 정도를 나타내고, 창이 하나면 종전 값과 같다).
+    "가장 늦게까지 받아 주는 시각"이 급한 정도를 나타내고, 창이 하나면 종전 값과 같다.
+    `PICKUP_ONLY`는 pickup 창을 쓴다).
 3. 각 Request를 §4.3의 후보 탐색으로 최소 비용 위치에 삽입. 후보 0개면 bank에 남긴다.
 4. 반환. (이전 설계의 "초기해 ≤8개" 구조는 폐기 — 초기해는 1개다, Domain §9.3.)
 ```
@@ -321,6 +325,7 @@ Request 하나를 경로 하나에 넣는 후보 나열과 검증. `GreedyInsert
           + 그중 미사용 차량 하나로 여는 새 경로 (실제 VehicleId 소비 — §9.1.
             미사용 호환 차량이 여럿이면 VehicleId 문자열 순 첫 번째만 후보 — 결정성, 노트 N3).
 위치:      DELIVERY_ONLY — delivery NodeId를 각 삽입 위치 0..n에.
+          PICKUP_ONLY — pickup NodeId를 각 삽입 위치 0..n에 (DELIVERY_ONLY와 대칭).
           PICKUP_DELIVERY — pickup 위치 i ≤ delivery 위치 j 의 모든 (i, j) 쌍.
             픽업 선행이 후보 생성 규칙 자체로 보장된다 (§1.4·§9.1).
 검증:      후보 방문 목록으로 RoutePropagator.propagate(problem, vehicleId, visits′) —
@@ -394,7 +399,8 @@ best 갱신은 항상 strict: Scores.compare(draftScore, bestScore) < 0 일 때�
 | E4 | destroy로 경로의 마지막 Request 제거 | 경로째 제거 — 빈 visits Route는 생성 불가 (Stage 3 E30). 차량은 미사용 풀로 복귀 | §6.2·§8.2 |
 | E5 | repair 0건 삽입 | 정상 시도 — draft는 대개 미배정 증가로 패배, acceptance가 판단 | §9.1 |
 | E6 | destroy 이전부터 bank였던 Request | repair 대상에 포함 — 매 trial이 재배치 기회 | §6.3 (bank는 ID 집합일 뿐) |
-| E7 | PD 삽입 위치 | (i ≤ j) 쌍만 생성 — 픽업 선행이 규칙으로 보장. i = j는 pickup 바로 뒤 delivery | §1.4 |
+| E7 | PD 삽입 위치 | (i ≤ j) 쌍만 생성 — 픽업 선행이 규칙으로 보장. i = j는 pickup 바로 뒤 delivery. `PICKUP_ONLY`는 pickup 위치 0..n만 (E7b) | §1.4 |
+| E7b | PICKUP_ONLY 삽입 위치 | pickup NodeId를 각 위치 0..n. delivery 위치 쌍을 만들지 않는다 | §1.3·§1.4 |
 | E8 | 동점 (cmp == 0) | current 교체 수락, best는 불변 (strict <) | §8.3·Stage 3 E27 인계 |
 | E9 | 시간 한도가 초기해 생성 중 지남 | 반복 0회, initial = best 반환 — FAILED 아님 | §12 "탐색 중단 = 정상" |
 | E10 | draft'가 Evaluator Infeasible | 폐기 + 카운트. 연산자는 경로 전파로 사전 검증하므로 default profile에서 빈발하면 연산자 버그 신호 — profile hard가 있는 고객은 버그 없이도 잦을 수 있다 (N8. 로그로 관찰) | §8.1 (hard 감점 통과 금지) |
