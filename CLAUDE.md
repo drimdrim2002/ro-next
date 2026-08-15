@@ -2,19 +2,19 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## 이 저장소의 성격 — 설계가 본체, 코드는 아직 빈 뼈대
+## 이 저장소의 성격 — 설계가 본체, 코드는 입력층까지만 있다
 
-배차 최적화(RPDPTW) 서비스. **Stage 0 완료 (2026-08-10)** — 구 placeholder(`com.ronext.optimizer`,
-수제 `HttpServer`, 합성 데모 `AlnsBatchEngine`)와 GCP 잔재는 삭제됐고, 디스크의 코드는 이제
-확정 설계와 같은 3모듈 구조다. 다만 **뼈대일 뿐 솔버 로직은 아직 0**이다.
+배차 최적화(RPDPTW) 서비스. **Stage 0 완료 (2026-08-10) · Stage 1 구현본 존재 (2026-08-15 감사·수정)** —
+구 placeholder(`com.ronext.optimizer`, 수제 `HttpServer`, 합성 데모 `AlnsBatchEngine`)와 GCP 잔재는
+삭제됐고, 디스크의 코드는 확정 설계와 같은 3모듈 구조다. 다만 **솔버 로직(탐색·평가·재검증)은 아직 0**이다.
 
 - **확정 설계**: AWS ECS Fargate 위 단일 Spring Boot 서비스, 저장은 S3만.
-- **현 코드**: 4개 pom + `package-info.java` 10개 + `RoNextApplication` + `application.yml` +
-  테스트 클래스 2개(메서드 3개)가 전부.
-  `domain`·`problem`·`eval`·`solve`·`verify`·`profile`·`api`·`run`·`input`·`storage`는 **전부 빈 패키지**다
-  — 도메인 타입을 grep해서 안 나오는 게 정상이고, 아직 안 만든 것이지 다른 데 있는 게 아니다.
-- **다음 작업은 Stage 1** (canonical 입력·정규화, solver-core). 구현 직전 상세는
-  `docs/implementation/stage-01-canonical-input-normalization.md`.
+- **현 코드**: 4개 pom + `RoNextApplication` + `application.yml` +
+  `solver-core`의 `domain`(canonical 모델 20개) · `domain.input`(raw 운반체 8개 + `PlanNormalizer`) +
+  테스트(solver-core 5클래스 19개 + app 1클래스 2개). `problem`·`eval`·`solve`·`verify`·`profile`·`api`·`run`·`input`·`storage`는
+  **아직 빈 패키지**다 — 그 타입들을 grep해서 안 나오는 게 정상이고, 아직 안 만든 것이지 다른 데 있는 게 아니다.
+- Stage 1 코드는 [stage-01](docs/implementation/stage-01-canonical-input-normalization.md)의 §1 파일 표·
+  §2 시그니처·§4 절차와 1:1이다. **다음 작업은 Stage 2** (이동표·`Problem` 동결). 손대기 전에 그 문서를 읽는다.
 - 문서·커밋 메시지는 한국어다. 용어(`Request`/pair/`Problem`/`Solution`/bank/profile/재검증/
   solveKey)는 문서 표기를 그대로 쓴다 — 같은 개념에 새 이름을 붙이지 않는다.
 
@@ -96,7 +96,8 @@ app/             com.ronext.rpdptw.app      api · run · input · storage — S
 
 - 배정·제거의 원자 단위는 `Request`(pair) 전체 — pickup만 빼는 연산은 없다.
 - 모든 Request는 경로 또는 bank에 **정확히 하나**(XOR). bank에는 ID만 담고 사유 문자열을 넣지 않는다.
-- `DELIVERY_ONLY`는 pickup 방문을 만들지 않는다 (출발 적재에만 참여). 가짜 depot 방문으로 흉내 금지.
+- `DELIVERY_ONLY`는 pickup 방문을 만들지 않는다 (출발 적재에만 참여). `PICKUP_ONLY`는 delivery 방문을 만들지 않는다 (`endDepot` 도착에서 하차). 가짜 depot 방문·가상 depot으로 흉내 금지.
+- `startDepot`/`endDepot`은 각각 optional. 정규화는 start 부재를 단일 차고로 채우지 않는다 (현 규약 wire 채움은 Stage 6 adapter). `DELIVERY_ONLY`는 start 있는 차만, `PICKUP_ONLY`는 end 있는 차만 호환.
 - `Problem`은 동결 — 탐색이 문제·이동표를 고치면 버그. `Profile`과 탐색 예산은 `Problem`에 담지 않고
   인자로 전달한다 (탐색·재검증에 **같은 profile 인스턴스**).
 - 비교는 `long[]` 사전식 하나뿐. 가중합·Big-M으로 축을 뭉개지 않고, hard 위반을 감점으로 상쇄하지 않는다.
@@ -107,7 +108,7 @@ app/             com.ronext.rpdptw.app      api · run · input · storage — S
 - 단위: 무게·부피는 ×1000 FLOOR한 `long`, 거리 meter·시간 초 정수. double로 근사한 뒤 변환 금지.
 - 시간창(주문·차고·근무)은 **날마다 반복**되고 정규화가 절대 창 목록(`List<TimeWindow>`)으로 펼친다
   (Domain §3.2, 2026-08-10 D4). 이동·서비스는 통째로 한 근무창 안에 들어가야 하고, 창 끝을 넘으면
-  **다음 창으로 미룬다**(불가 판정이 아니다). 차고 창은 출발·복귀 두 순간에 적용 → `DEPOT_WINDOW`.
+  **다음 창으로 미룬다**(불가 판정이 아니다). 차고 창은 **있는** 출·도착 순간에 적용 → `DEPOT_WINDOW`.
   모든 소요 시간은 **두 시각의 차**로 잰다 — 초를 세면 창마다 1초 어긋난다.
 
 ## 작업 트리의 함정
