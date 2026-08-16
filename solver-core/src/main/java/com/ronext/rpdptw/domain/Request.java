@@ -11,8 +11,8 @@ public record Request(
         Optional<RequestSide> pickup,
         Optional<RequestSide> delivery,
         List<Item> items,
-        long totalWeightMilliKg,
-        long totalVolumeMilliCbm,
+        long totalWeight,
+        long totalVolume,
         Optional<Set<String>> allowedVehicleFeatures,
         Set<String> requiredCapabilities) {
 

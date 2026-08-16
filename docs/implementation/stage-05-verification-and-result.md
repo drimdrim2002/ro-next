@@ -43,6 +43,8 @@ revisions:
     PICKUP_ONLY. `RouteResult.depotDeparture` Optional. replay는 Stage 3과 같은 출발/하차 규칙
   - 2026-08-15 재검증 절차 6 `at`을 Stage 3 Evaluator와 정합 (있는 방문 NodeId).
     `DEPOT_WINDOW` 설명을 Domain §7.1에 맞춤 (있는 출·도착만)
+  - 2026-08-16 무게·부피 식별자에서 단위·스케일 접미 제거 — `Visit.loadWeight`/`loadVolume`,
+    용량 식의 `totalWeight`/`maxWeight` 등. 내부 단위는 Domain §3.1. 규칙 변경 없음
 ---
 
 # Stage 5 — 재검증과 결과
@@ -332,7 +334,7 @@ public record SolveResult(
                         boolean pickup,                  // PD의 같은 orderId 방문 2건 구분 (§9 Q4)
                         LocationId locationId,
                         LocalDateTime arrival, LocalDateTime serviceStart, LocalDateTime serviceEnd,
-                        long loadWeightMilliKg, long loadVolumeMilliCbm) {}  // 방문 처리 후 적재
+                        long loadWeight, long loadVolume) {}  // 방문 처리 후 적재. Domain §3.1 내부 단위
                         // `departure` 노출 여부는 wire 협의(Plan D2) — §9 Q5
 
     public record Unassigned(RequestId orderId, UnassignedReason reason) {}
@@ -392,8 +394,8 @@ bank는 ID만 갖고 있으므로(§6.3 MUST NOT) 사유는 여기서 계산한�
 각 r ∈ pass.bank()에 대해:
 1. V₀ = problem.compatibleVehicles(r)              (§3.4 동결 사실)
    V₀ = ∅ → NO_COMPATIBLE_VEHICLE.
-2. V₁ = { v ∈ V₀ : r.totalWeightMilliKg ≤ v.maxWeightMilliKg
-                 ∧ r.totalVolumeMilliCbm ≤ v.maxVolumeMilliCbm }
+2. V₁ = { v ∈ V₀ : r.totalWeight ≤ v.maxWeight
+                 ∧ r.totalVolume ≤ v.maxVolume }
    V₁ = ∅ → CAPACITY                               (호환 차량 전부가 혼자서도 실을 수 없음)
 3. V₂ = { v ∈ V₁ : RouteReplay.replay(problem, v, r만 있는 단독 경로) = Ok }
    단독 경로: DELIVERY_ONLY → [delivery NodeId], PICKUP_ONLY → [pickup NodeId],

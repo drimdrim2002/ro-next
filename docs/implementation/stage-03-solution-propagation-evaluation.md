@@ -41,6 +41,8 @@ revisions:
   - 2026-08-15 Evaluator 절차 2 `at` — PICKUP_ONLY는 delivery side가 없으므로 있는 방문 NodeId
     (DELIVERY_ONLY → delivery, PICKUP_ONLY → pickup, PICKUP_DELIVERY → delivery).
     §3.1 `DEPOT_WINDOW` 설명을 Domain §7.1에 맞춤 (있는 출·도착만)
+  - 2026-08-16 적재 식별자에서 단위·스케일 접미 제거 — `loadWeightAfter`/`loadVolumeAfter`,
+    `initialLoadWeight`/`initialLoadVolume`. 내부 단위는 Domain §3.1. 규칙 변경 없음
 ---
 
 # Stage 3 — Solution·전파·평가
@@ -263,14 +265,14 @@ public record VisitFacts(
     long departureSec,                  // 이 방문에서의 출발 (§7.1 절차 7). 근무창이 하나면
                                         // 항상 serviceEnd와 같다 — 그래서 종전엔 없던 필드다
     long waitingSec,                    // serviceStart − arrival (이 방문에서의 대기)
-    long loadWeightAfterMilliKg,        // 방문 처리 후 적재 (§7.2 표의 load 열)
-    long loadVolumeAfterMilliCbm) {}
+    long loadWeightAfter,               // 방문 처리 후 적재 (§7.2 표의 load 열). Domain §3.1 내부 단위
+    long loadVolumeAfter) {}
 
 public record RouteFacts(
     VehicleId vehicleId,
     long spanStartSec,                  // 첫 근무창의 open — 경로 시간의 기준점 (§7.3)
     Optional<Long> departureSec,        // 차고 출발 시각. startDepot 있을 때만 (Domain §7.1 절차 0)
-    long initialLoadWeightMilliKg, long initialLoadVolumeMilliCbm,   // §6.2 출발 적재
+    long initialLoadWeight, long initialLoadVolume,                  // §6.2 출발 적재. Domain §3.1 내부 단위
     List<VisitFacts> visits,
     Optional<Long> endDepotArrivalSec,  // endDepot 있을 때만
     long driveDistMeter, long driveTimeSec,                          // §7.4
@@ -397,13 +399,13 @@ waitInDepot=N, U[차고→분당]=2400, U[분당→강남100]=3000, R2=PICKUP_DE
 
 | Domain §7.2 | canonical 기대값 |
 |---|---|
-| 차고A 출발 08:00, load 10 | `spanStartSec=28800`, `departureSec=28800`, `initialLoadWeightMilliKg=10000` |
+| 차고A 출발 08:00, load 10 | `spanStartSec=28800`, `departureSec=28800`, `initialLoadWeight=10000` |
 | R2픽 도착 08:40 → 대기 | `arrivalSec=31200`, `waitingSec=1200` |
 | R2픽 서비스 09:00–09:05, reqDate 통과 | `serviceStartSec=32400`, `serviceEndSec=32700` (32400 ≤ 36000), `departureSec=32700` |
-| 픽업 후 load 20 | `loadWeightAfterMilliKg=20000` |
+| 픽업 후 load 20 | `loadWeightAfter=20000` |
 | R1배 도착 09:55 → 13:00까지 대기 | `arrivalSec=35700`, `waitingSec=11100` |
 | R1배 서비스 13:00–13:14, reqDate 통과 | `serviceStartSec=46800`, `serviceEndSec=47640` (46800 ≤ 54000), `departureSec=47640` |
-| 배송 후 load 10 | `loadWeightAfterMilliKg=10000` |
+| 배송 후 load 10 | `loadWeightAfter=10000` |
 | (집계) | `driveTimeSec=5400`, `customerWaitingTimeSec=12300`, `serviceTimeSec=1140`, `stopCount=2`, **`depotWaitingTimeSec=0`, `interWorkWindowRestTimeSec=0`** |
 
 **창이 하나이므로 이 표의 값은 D4(다일 근무창·차고 창) 전과 완전히 같다.** 방문의

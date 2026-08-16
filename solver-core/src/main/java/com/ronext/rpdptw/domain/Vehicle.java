@@ -10,8 +10,8 @@ import java.util.Set;
 public record Vehicle(
         VehicleId id,
         Optional<String> vehicleFeature,
-        long maxWeightMilliKg,
-        long maxVolumeMilliCbm,
+        long maxWeight,
+        long maxVolume,
         List<TimeWindow> workWindows,
         OptionalInt speedKmH,
         OptionalInt effectiveMaxStopCount,
