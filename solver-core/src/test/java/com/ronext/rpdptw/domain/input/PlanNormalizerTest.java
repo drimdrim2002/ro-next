@@ -249,6 +249,42 @@ class PlanNormalizerTest {
     }
 
     @Test
+    void blankItemIdFallsBackToOrderId() {
+        PlanInput blank = plan(
+                List.of(depot("WIN_0")),
+                List.of(new RequestInput(
+                        "WIN_2AD0",
+                        null,
+                        side("C1", null, null, null, null),
+                        List.of(item("", "26.2", "0.21", 1, 0L)),
+                        null,
+                        null)),
+                List.of(vehicle("V1", null, null, null, "WIN_0", null, null)),
+                defaults());
+        assertEquals("WIN_2AD0", normalizer.normalize(blank).requests().getFirst().items().getFirst().itemId());
+
+        PlanInput missing = plan(
+                List.of(depot("WIN_0")),
+                List.of(new RequestInput(
+                        "WIN_2AD0",
+                        null,
+                        side("C1", null, null, null, null),
+                        List.of(item(null, "26.2", "0.21", 1, 0L)),
+                        null,
+                        null)),
+                List.of(vehicle("V1", null, null, null, "WIN_0", null, null)),
+                defaults());
+        assertEquals("WIN_2AD0", normalizer.normalize(missing).requests().getFirst().items().getFirst().itemId());
+
+        PlanInput explicit = plan(
+                List.of(depot("WIN_0")),
+                List.of(deliveryOnly("O1", side("C1", null, null, null, null))),
+                List.of(vehicle("V1", null, null, null, "WIN_0", null, null)),
+                defaults());
+        assertEquals("I1", normalizer.normalize(explicit).requests().getFirst().items().getFirst().itemId());
+    }
+
+    @Test
     void foldsGlobalStopCount() {
         PlanInput globalOnly = plan(
                 List.of(depot("WIN_0")),
@@ -262,7 +298,7 @@ class PlanNormalizerTest {
                 List.of(),
                 List.of(vehicle("V1", null, 30, null, null, null, null)),
                 new OptionsInput(null, null, null, null, 28));
-        assertEquals(28, normalizer.normalize(both).vehicles().getFirst().effectiveMaxStopCount().orElseThrow());
+        assertEquals(30, normalizer.normalize(both).vehicles().getFirst().effectiveMaxStopCount().orElseThrow());
     }
 
     @Test

@@ -46,6 +46,8 @@ revisions:
     "복귀 후 다음 바퀴 선적이 없으므로"로 (C-4 정합). 비교 절차·지표 정의 무변경
   - 2026-08-14 Domain `startDepot` optional — 비교·Win 재생은 **앱 접수와 같은 채움**
     (Stage 6 adapter: start 키 없음 + depot 1개 → WIN_0). 정규화 단독으로는 start empty
+  - 2026-08-16 W10: 정차 한도 접기는 차량 우선 (Domain §2.6). 이 fixture는 차량
+    `maxStopCnt` 부재 + 전역 28이라 effective=28 유지 — Win 재현 숫자 무영향
 ---
 
 # Stage 8 — 벤치마크 비교
@@ -294,7 +296,7 @@ Win과 지표가 다를 때 파라미터보다 먼저 의심할, 이전 Stage들
 | W15 | 다일 근무창 | **이 fixture에는 차이 요인이 아니다** (2026-08-10 D4 확정 후 확인): `dateRange`가 `2023-09-13 00:00:00`\~`2023-09-14 00:00:00`로 하루라, 차량 31대의 `00:00:00~23:30:00` 근무창이 전개 후에도 **각 1개**다 (Stage 1 §4 실측 표). 미루기·`interWorkWindowRestTime`이 발생하지 않으므로 시각·지표가 D4 전과 같다 | Domain §3.2, Stage 1 §4 |
 | W8 | `taskTime × qty` | **확정 (2026-08-11, 시스템 소유자) — `taskTime`·`weight`·`volume` 전부 ×qty가 맞고 규약 PDF 문면("not quantity")이 부정확하다** (Domain §3.1·§3.3). 이번 비교엔 **이중으로 무영향**: floor fixture는 전 item `taskTime=0`이고 **qty도 452건 전건 `1`·order당 item 1개**다(실측). Win이 PDF 문면대로 구현했다면 qty>1·taskTime>0인 입력에서만 갈린다 | Domain §3.1 |
 | W9 | Great Circle 상수 | 잠정 확정 상수(R=6,371,000·HALF_UP)가 구 코드와 다를 수 있음. 단 floor fixture 행렬은 453² 완전이라 보정이 한 번도 돌지 않는다 — **이번 비교엔 무영향**. 행렬 불완전 입력으로 확장 시 요인 | Stage 2 §9 Q2·N4 |
-| W10 | stopCount 해석 | **첫 고객 방문도 +1** (2026-08-12 Domain §7.4 확정 — Win 실측 V027·V030 28방문=28정차=한도 경계로 검산 종결), 같은 장소 연속 방문 첫 진입만 +1, depot 미산입, 전역 28과 min 접기 | Domain §7.4·§2.6 |
+| W10 | stopCount 해석 | **첫 고객 방문도 +1** (2026-08-12 Domain §7.4 확정 — Win 실측 V027·V030 28방문=28정차=한도 경계로 검산 종결), 같은 장소 연속 방문 첫 진입만 +1, depot 미산입. 한도는 차량 우선(차량 없으면 전역). 이 fixture는 차량 `maxStopCnt` 부재 + 전역 28 → effective=28 | Domain §7.4·§2.6 |
 | W11 | 같은 조건에서도 변동 | 시간 한도 종료라 같은 seed·같은 커밋이어도 실행마다 반복 수가 달라 결과가 흔들릴 수 있다 (기계 부하 의존). 단일 실행으로 우열을 결론짓지 말고 복수 실행·복수 seed의 범위로 판단 | Stage 4 §4.2·N3 |
 | W12 | 미배정 사유 분포 | NO_COMPATIBLE_VEHICLE·CAPACITY 다수 = 입력 해석(호환·단위 환산) 오류 신호 — 튜닝 대상이 아니다. NOT_PLACED 위주면 탐색 품질 영역. 사유 bucket 폭 주의: maxDrive류 단독 불가도 TIME_WINDOW_INFEASIBLE로 묶인다 | Stage 5 §4.3·Q2 |
 | W13 | 무시된 wire 필드 | `driverRestTimeRatio`·`difficultySortType` 등은 무시 (fixture 값 0.0이라 무영향 추정). Win 엔진이 이를 썼다면 차이 요인 | Stage 6 §4.6·E19 |

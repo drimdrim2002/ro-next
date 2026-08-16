@@ -66,6 +66,10 @@ revisions:
   - 2026-08-15 §4.4 차량 `vehicleFeature` 행의 "비교는 문자 그대로" 삭제 — 2026-08-12
     E26(부재·`"ALL"` = 전 차급 접기)으로 폐기된 규칙의 잔재였다. adapter는 값을 그대로
     넘기고 접기는 Stage 1이 한다 (구역 `"ALL"`도 같다 — Domain §3.4 2026-08-15). 매핑 무변경
+  - 2026-08-16 §4.6 `VehicleMaxStopCount` 행·§4 공통 규칙 5: 정차 한도 접기는 정규화의
+    **차량 > 전역 > 없음** (Domain §2.6). adapter는 값을 옮기기만 한다. 매핑 무변경
+  - 2026-08-16 itemId 폴백 수행 위치를 Stage 1 정규화로 명시 (§4.3·E4). adapter는 blank를
+    그대로 `ItemInput`에 담는다. 규칙(orderId 사용)은 Domain §2.3 그대로
 ---
 
 # Stage 6 — 앱 조립
@@ -462,7 +466,7 @@ solveKey를 그대로 URL에 붙이면 된다. 최종 경로·필드명은 호�
 3. partial-time(`HH:mm:ss`) → `LocalTime`. 파싱 불가 → `INVALID_INPUT`.
 4. 좌표는 **원문 문자열 그대로** `latText`/`lonText`에 담는다 (`LocationId.generated`의
    결정성 — Stage 1 §2.1).
-5. 부재(optional)는 전부 null로 넘긴다 — 기본값 채움·min 접기는 `PlanNormalizer`의 일이다
+5. 부재(optional)는 전부 null로 넘긴다 — 기본값 채움·정차 한도 접기(차량 > 전역 > 없음)는 `PlanNormalizer`의 일이다
    (Stage 1 서두: adapter는 wire 형식 변환만).
 6. 아래 "무시" 필드와 미지(unknown) 필드는 조용히 버린다 (관용 수신 — wire 확장에 견딤).
    매핑된 필드의 값 오류만 거부한다. (정본 Domain §2.1 — 2026-08-12 시스템 소유자 확정.
@@ -510,7 +514,7 @@ solveKey를 그대로 URL에 붙이면 된다. 최종 경로·필드명은 호�
 
 | wire | ItemInput | 규칙 |
 |---|---|---|
-| `itemId` ▷ `orderId` | `itemId` | itemId는 필수 — blank이면 **그 주문의 orderId를 쓴다** (정본 Domain §2.3, 2026-08-12 시스템 소유자 확정). floor fixture는 452건 전부 itemId `""` (실측) → 전건 orderId 사용 (§7 E4) |
+| `itemId` | `itemId` | 원문 그대로 (blank·부재 포함). **orderId 폴백은 Stage 1 정규화** (Domain §2.3). floor fixture는 452건 전부 `""` (§7 E4) |
 | `weight` / `volume` | `weightKg` / `volumeCbm` | 필수, BigDecimal 원문. `weightUnitCd` 존재 시 `"KG"`, `volumeUnitCd` 존재 시 `"CBM"`만 허용 — 그 외 `INVALID_INPUT` (정본 Domain §3.1, 2026-08-12 확정) |
 | `qty` | `qty` | 부재 → null (→ 1) |
 | `taskTime` | `taskTimeSec` | 부재 → null (→ 0). **×qty 확정** (2026-08-11 소유자 — Domain §3.1·§3.3) |
@@ -553,7 +557,7 @@ solveKey를 그대로 URL에 붙이면 된다. 최종 경로·필드명은 호�
 | `distanceTimeCalculate` ▷ `distanceCalculate` | `distanceTimeCalculate` | fixture·Domain 표기 우선, 규약 PDF 표기(`distanceCalculate`)도 수용 |
 | `Optimizer.DefaultSpeed` ▷ `defaultSpeed` | `defaultSpeedKmH` | 정수만 |
 | `Termination.secondsSpentLimit` | (canonical 아님) `AlnsConfig.timeLimitSec` | floor fixture 값 600. **`Plan`에 담기지 않는다** — parse 반환 봉투 `ParseResult.secondsSpentLimit`(§2.2, 2026-08-12 확정)로 함께 나와 `AlnsConfigFactory`로 간다 (Domain §2.5.1) |
-| `Optimizer.VehicleMaxStopCount` | `globalVehicleMaxStopCount` | fixture 값 28 (min 접기는 정규화 — Domain §2.6) |
+| `Optimizer.VehicleMaxStopCount` | `globalVehicleMaxStopCount` | fixture 값 28 (차량 우선 접기는 정규화 — Domain §2.6) |
 | `driverRestTimeRatio`, `difficultySortType`, `customerAbbr` | 무시 | **무시 확정** — Domain §2.5 (2026-08-12 시스템 소유자). 0이 아닌 비율도 거부하지 않는다 (§7 E19) |
 
 ---
@@ -625,7 +629,7 @@ decimal kg/cbm 문자열(milli ÷ 1000, 소수 3자리), 거리 m·시간 초는
 | E1c | `multiRotation: -2` POST | 400 INVALID_INPUT, 저장 없음 (규약이 금지한 값) | Domain §2.5·§12 |
 | E2 | JSON 문법 오류·필수 필드 부재·단위 코드 위반 | 400, S3 저장 없음 | Domain §12, Architecture §3.1-1 |
 | E3 | 문자열 수치 인코딩(원본 win_poc_case.json)·소수 D/U(number)·`close == open` 시간창 | **400 — 저장 없음.** 문자열 수치는 파싱·매핑(공통 규칙 1, Domain §3.1 — 2026-08-12)에서, 소수 D/U·시간창은 접수 절차 2b의 정규화 검증(2026-08-11, Domain §12)에서 걸린다 — 원본 fixture는 인코딩 규칙만으로도 미접수다. 접수를 우회해 store에 직접 놓인 입력은 executor 정규화가 FAILED로 잡는다 (T8a — 최종 방어) | Domain §3.1·§12, §3.1-2b |
-| E4 | itemId 전건 blank (floor fixture 실측 452/452) | **orderId 폴백** (종전 prodId 폴백 폐기 — 2026-08-12 확정) | Domain §2.3 (규약 Mandatory와 fixture 실물의 충돌 해소) |
+| E4 | itemId 전건 blank (floor fixture 실측 452/452) | adapter는 `""`를 `ItemInput`에 그대로 담음. **orderId 폴백은 Stage 1 정규화** (종전 prodId 폴백·adapter 폴백 폐기) | Domain §2.3 · Stage 1 E37 |
 | E5 | planId·shprId에 `/`·공백 등 key 안전 문자 밖 | 400 INVALID_INPUT — **잠정 규칙** (Domain 미규정, key·URL 안전) | Architecture §3.3 (key 조립 소유) |
 | E6 | customerId(shprId) 부재 | key 세그먼트 `unknown`, profile은 default | §3.3, Domain §8.4 |
 | E6b | wire에 `Termination` 부재 | `fallback-time-limit-sec` 적용. 접수는 거부하지 않는다 (예산은 유효성 문제가 아님) | §1.1, Domain §2.5.1 |
@@ -658,7 +662,7 @@ decimal kg/cbm 문자열(milli ÷ 1000, 소수 3자리), 거리 m·시간 초는
 | # | 테스트 | 내용 | 대응 DoD 문장 |
 |---|---|---|---|
 | T1 | `PlanJsonAdapterTest.parsesFloorFixture` | win_poc_case_floor.json 전체 파싱 → 건수(452·31·205,209)·실값 spot check (weight `26.2`→BigDecimal 원문, duration 300, qty 1, D 310708 int, options **매핑 7키**(wire 원문은 10키 — `driverRestTimeRatio`·`difficultySortType`·`customerAbbr` 3키는 무시, §4.6), dateRange) · **E23: 차량 31대 `startDepotLocId == "WIN_0"`** (현 규약 CVRPTW 채움) | (Plan 범위 문장 "규약 JSON adapter — win_poc fixture로 검증") |
-| T2 | `PlanJsonAdapterTest.toleratesWireVariants` | 원본 win_poc_case.json → 문자열 수치 인코딩으로 INVALID_INPUT (공통 규칙 1·E3, Domain §3.1 — 수신 원형 보존 fixture) · itemId→orderId 폴백(E4) · `dueDate`·RFC3339(E21) 소형 케이스 · 소수 D/U(number)는 파싱 통과, BigDecimal 보존 — 거부는 정규화 몫 · E23 대조: depot 2개 또는 start 명시면 `startDepotLocId`를 채우지 않음 | 〃 |
+| T2 | `PlanJsonAdapterTest.toleratesWireVariants` | 원본 win_poc_case.json → 문자열 수치 인코딩으로 INVALID_INPUT (공통 규칙 1·E3, Domain §3.1 — 수신 원형 보존 fixture) · itemId blank가 `ItemInput`에 그대로 실림(E4). 폴백 후 orderId는 정규화(Stage 1 T19) · `dueDate`·RFC3339(E21) 소형 케이스 · 소수 D/U(number)는 파싱 통과, BigDecimal 보존 — 거부는 정규화 몫 · E23 대조: depot 2개 또는 start 명시면 `startDepotLocId`를 채우지 않음 | 〃 |
 | T3 | `SolveApiTest.acceptStoresInputAndStatus` | 유효 소형 JSON POST → 200 + solveKey 형식 · store에 input.json(원문 바이트 동일)+RECEIVED | (Plan 범위 문장 "접수 API — 검증→저장→200+solveKey") |
 | T4 | `SolveApiTest.rejectsWithoutStoring` | 문법 오류·필수 누락 → 400 · **소수 거리·문자열 수치 등 → 400 (E3 — 2026-08-11 절차 2b·2026-08-12 공통 규칙 1)** · multiRotation `2`·`-1` → 422 UNSUPPORTED_INPUT · `-2` → 400 · 이 경우 전부 store 빈 상태 (E1b·E1c·E2). **대조군으로 `1`은 200 + 저장됨**을 같이 단언한다 (E1) — 게이트가 반대로 구현되는 것을 막는 지점이다 | 〃 (Domain §12 "S3 저장 없음") |
 | T5 | `SolveKeyTest.issueAndObjectKeys` | 조립 형식·문자 집합 검증(E5)·runId 유일성·객체 key 3종·`of` 왕복 | (Plan 범위 문장 — Architecture §3.3 key 규칙) |

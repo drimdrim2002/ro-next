@@ -93,6 +93,10 @@ revisions:
     방문을 구역 제한 차량과 불합격으로 읽히던 결함이 있었다 ·
     ② §3 서두에 목록·집합 원소 null = `INVALID_INPUT` 신설 — 관문에서 막고 이후 코드는
     null을 가정하지 않는다 (Stage 1 감사 발견: `Set.copyOf`의 NPE가 4xx여야 할 것을 5xx로 만든다)
+  - 2026-08-16 §2.6 정차 한도 접기를 min(차량, 전역)에서 **차량 > 전역 > 없음**으로 변경
+    (덮어쓰기. 숫자 Default·sentinel 없음). `maxDrive*`·용량의 경계 포함(≤)은 그대로다
+  - 2026-08-16 §2.3 `itemId` 폴백의 수행 위치를 **정규화**로 명시 (adapter는 원문 전달).
+    규칙 자체는 2026-08-12 확정 그대로
 ---
 
 # RO-Next Domain Design
@@ -293,7 +297,8 @@ revisions:
 - `duration`과 `item.taskTime`은 다른 값이다. 방문 서비스 시간 계산은 §3.3.
 - **`itemId`는 필수다** (규약 Mandatory와 일치). **비어 있으면 그 주문의 `orderId`를
   itemId로 쓴다** (2026-08-12 시스템 소유자 확정 — §2.1이 허용하는 '규칙으로 정해진 기본값'.
-  실물 fixture는 452건 전부 빈 문자열이라 전건 orderId를 쓴다). `prodId`는 canonical이 읽지
+  실물 fixture는 452건 전부 빈 문자열이라 전건 orderId를 쓴다). **수행은 정규화**다
+  (2026-08-16 — adapter는 wire 원문을 그대로 넘긴다). `prodId`는 canonical이 읽지
   않는다 — 종전 stage 문서의 `prodId` 폴백은 시스템 소유자 확정이 아닌 작성 시 발명이라 폐기했다.
 
 ### 2.4 Vehicle 필드
@@ -474,8 +479,12 @@ fixture 파일 자체는 고치지 않는다.
 
 ### 2.6 전역 한도
 
-`Optimizer.VehicleMaxStopCount` 같은 전역 한도가 차량별 한도와 같이 있으면 **min(둘)** 적용.
-한도가 아예 없으면 **제약 없음**이다 — 큰 수(sentinel)로 채우지 않는다 (MUST NOT).
+정차 한도만 전역 값이 있다. `effectiveMaxStopCount`는 **차량 > 전역 > 없음**이다 (MUST):
+차량 `maxStopCnt`가 있으면 그 값, 없으면 전역 `Optimizer.VehicleMaxStopCount`, 둘 다
+없으면 **제약 없음**. 덮어쓰기이며 min이 아니다. 큰 수(sentinel)로 채우지 않는다 (MUST NOT).
+
+`maxDriveTime`·`maxDriveDist`·용량에는 전역 한도가 없다. 그 축의 차량 값 부재는 제약 없음이며,
+정차 한도의 접기 규칙과 섞지 않는다.
 
 모든 한도 축(`maxStopCnt`·`maxDriveTime`·`maxDriveDist`·용량)은 **경계 포함**이다 (MUST) —
 값이 한도와 **같으면 통과**, 넘어야 위반이다. 시간창의 양끝 포함(§3.2)과 같은 규약이다.

@@ -196,16 +196,8 @@ public final class PlanNormalizer {
 
     private static OptionalInt foldMaxStop(Integer vehicleMax, OptionsInput options) {
         Integer global = options == null ? null : options.globalVehicleMaxStopCount();
-        if (vehicleMax == null && global == null) {
-            return OptionalInt.empty();
-        }
-        if (vehicleMax == null) {
-            return OptionalInt.of(global);
-        }
-        if (global == null) {
-            return OptionalInt.of(vehicleMax);
-        }
-        return OptionalInt.of(Math.min(vehicleMax, global));
+        Integer chosen = vehicleMax != null ? vehicleMax : global;
+        return chosen == null ? OptionalInt.empty() : OptionalInt.of(chosen);
     }
 
     private static Optional<LocationId> resolveStartDepot(
@@ -278,8 +270,9 @@ public final class PlanNormalizer {
             for (int j = 0; j < raw.items().size(); j++) {
                 String itemField = field + ".items[" + j + "]";
                 ItemInput itemRaw = requireElement(raw.items().get(j), itemField);
-                if (itemRaw.itemId() == null || itemRaw.itemId().isBlank()) {
-                    throw invalid(itemField + ".itemId", "blank");
+                String itemId = itemRaw.itemId();
+                if (itemId == null || itemId.isBlank()) {
+                    itemId = raw.orderId();
                 }
                 int qty = itemRaw.qty() == null ? 1 : itemRaw.qty();
                 if (qty < 1) {
@@ -304,7 +297,7 @@ public final class PlanNormalizer {
                 } catch (ArithmeticException ex) {
                     throw invalid(itemField, "overflow");
                 }
-                items.add(new Item(itemRaw.itemId(), weight, volume, qty, taskTime));
+                items.add(new Item(itemId, weight, volume, qty, taskTime));
             }
             Optional<RequestSide> pickup = raw.pickup() == null
                     ? Optional.empty()
