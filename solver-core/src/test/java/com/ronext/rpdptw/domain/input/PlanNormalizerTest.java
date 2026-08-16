@@ -24,6 +24,7 @@ import com.ronext.rpdptw.domain.Request;
 import com.ronext.rpdptw.domain.RequestSide;
 import com.ronext.rpdptw.domain.ServicePattern;
 import com.ronext.rpdptw.domain.TimeWindow;
+import com.ronext.rpdptw.domain.TravelEntry;
 import com.ronext.rpdptw.domain.Vehicle;
 
 class PlanNormalizerTest {
@@ -520,6 +521,36 @@ class PlanNormalizerTest {
                 plan.requests().getFirst().delivery().orElseThrow().windows());
     }
 
+    @Test
+    void normalizesTravelMatrix() {
+        // self arc 행은 값을 '읽지 않고' 버린다 — 건너뛰기가 단위 검증 앞에 있다는 순서의 검증이다.
+        // 뒤집히면 실물 wire의 self arc 453건(D=9999)이 검사에 걸려 fixture가 접수되지 않는다
+        // (Domain §4, 2026-08-12). 그래서 일부러 소수 D를 담은 self arc를 쓴다.
+        Plan plan = normalizer.normalize(planWithTravel(List.of(
+                travel("WIN_0", "WIN_0", "9999.5", "0"),
+                travel("WIN_0", "C1", "1200", "90"))));
+
+        assertEquals(1, plan.travelEntries().size());
+        TravelEntry entry = plan.travelEntries().getFirst();
+        assertEquals(new LocationId("WIN_0"), entry.from());
+        assertEquals(new LocationId("C1"), entry.to());
+        assertEquals(1_200, entry.distanceMeter());
+        assertEquals(90, entry.timeSec());
+
+        // 정상 행의 소수는 관문이 거부한다 (E5, fixture 실값). field가 어느 행·어느 열인지 가리킨다.
+        InputException distance = failure(planWithTravel(List.of(travel("WIN_0", "C1", "310708.03", "90"))));
+        assertEquals(InputException.Kind.INVALID_INPUT, distance.kind());
+        assertEquals("distanceMatrix[0].D", distance.field());
+
+        InputException time = failure(planWithTravel(List.of(travel("WIN_0", "C1", "1200", "17265.5"))));
+        assertEquals(InputException.Kind.INVALID_INPUT, time.kind());
+        assertEquals("distanceMatrix[0].U", time.field());
+
+        assertEquals("distanceMatrix[0].from", failure(planWithTravel(List.of(travel("", "C1", "1200", "90")))).field());
+        assertEquals(
+                "distanceMatrix[0].to", failure(planWithTravel(List.of(travel("WIN_0", null, "1200", "90")))).field());
+    }
+
     private InputException.Kind kindOf(PlanInput input) {
         return failure(input).kind();
     }
@@ -577,6 +608,23 @@ class PlanNormalizerTest {
                 List.of(),
                 List.of(vehicle("V1", null, null, null, null, null, null)),
                 new OptionsInput(null, multiRotation, null, null, null));
+    }
+
+    static PlanInput planWithTravel(List<TravelEntryInput> travelEntries) {
+        return new PlanInput(
+                "P1",
+                null,
+                PLAN_START,
+                PLAN_END,
+                List.of(depot("WIN_0")),
+                List.of(),
+                List.of(vehicle("V1", null, null, null, null, null, null)),
+                travelEntries,
+                defaults());
+    }
+
+    static TravelEntryInput travel(String from, String to, String distance, String time) {
+        return new TravelEntryInput(from, to, new BigDecimal(distance), new BigDecimal(time));
     }
 
     static PlanInput plan(

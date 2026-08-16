@@ -4,14 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 이 저장소의 성격 — 설계가 본체, 코드는 입력층까지만 있다
 
-배차 최적화(RPDPTW) 서비스. **Stage 0 완료 (2026-08-10) · Stage 1 구현본 존재 (2026-08-15 감사·수정)** —
+배차 최적화(RPDPTW) 서비스. **Stage 0 완료 (2026-08-10) · Stage 1 완료 (2026-08-16 구현 검토 반영)** —
 구 placeholder(`com.ronext.optimizer`, 수제 `HttpServer`, 합성 데모 `AlnsBatchEngine`)와 GCP 잔재는
 삭제됐고, 디스크의 코드는 확정 설계와 같은 3모듈 구조다. 다만 **솔버 로직(탐색·평가·재검증)은 아직 0**이다.
 
 - **확정 설계**: AWS ECS Fargate 위 단일 Spring Boot 서비스, 저장은 S3만.
 - **현 코드**: 4개 pom + `RoNextApplication` + `application.yml` +
   `solver-core`의 `domain`(canonical 모델 20개) · `domain.input`(raw 운반체 8개 + `PlanNormalizer`) +
-  테스트(solver-core 5클래스 19개 + app 1클래스 2개). `problem`·`eval`·`solve`·`verify`·`profile`·`api`·`run`·`input`·`storage`는
+  테스트(solver-core 5클래스 21개 = stage-01 §7의 T1–T20 + ArchUnit, app 1클래스 2개).
+  `problem`·`eval`·`solve`·`verify`·`profile`·`api`·`run`·`input`·`storage`는
   **아직 빈 패키지**다 — 그 타입들을 grep해서 안 나오는 게 정상이고, 아직 안 만든 것이지 다른 데 있는 게 아니다.
 - Stage 1 코드는 [stage-01](docs/implementation/stage-01-canonical-input-normalization.md)의 §1 파일 표·
   §2 시그니처·§4 절차와 1:1이다. **다음 작업은 Stage 2** (이동표·`Problem` 동결). 손대기 전에 그 문서를 읽는다.

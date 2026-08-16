@@ -78,6 +78,11 @@ revisions:
     식·E12(30+28 → 30)·T9 설명. E11(전역만 28)은 유지. 시그니처 무변경
   - 2026-08-16 `itemId` 부재·blank → 그 주문의 `orderId` (Domain §2.3). 절차 6·E37·T19.
     수행 위치는 정규화 — adapter는 원문을 그대로 넘긴다
+  - 2026-08-16 **구현 검토 반영 2건** — ① T20 신설: 절차 7(이동표)을 실행하는 테스트가
+    하나도 없었다 (T1\~T19가 전부 `travelEntries`에 빈 목록을 넘겼다). self arc를 단위 검증
+    **앞에서** 건너뛰는 순서가 실물 fixture 접수의 전제인데 회귀 장치가 없던 자리다 ·
+    ② §2.2 `Plan.locations`에 **삽입 순서 보존** 명시 — Stage 2가 이 맵으로 색인을 매기므로
+    순서가 실행마다 흔들리면 같은 입력이 다른 색인을 받는다. 시그니처 무변경
 ---
 
 # Stage 1 — canonical 입력과 정규화
@@ -274,7 +279,9 @@ public record Plan(
     List<Depot> depots,
     List<Request> requests,
     List<Vehicle> vehicles,
-    Map<LocationId, Location> locations,
+    Map<LocationId, Location> locations,   // 삽입 순서 보존 (MUST) — 차고 → 주문 side 순서.
+                                       // Stage 2가 이 맵을 훑어 색인을 매기므로, 순서가 실행마다
+                                       // 흔들리면 같은 입력이 다른 색인을 받는다 (2026-08-16)
     List<TravelEntry> travelEntries,   // 이동표 '재료' — 키 구성·완전성·누락 보정은 Stage 2 (Domain §4)
     DeliveryPolicy deliveryPolicy) {}
 ```
@@ -645,8 +652,9 @@ Domain의 optional 규칙·경계값·오류 분류(§2·§3·§12)에서 뽑았
 | T17 | `PlanNormalizerTest.foldsWildcardFeatureToNoConstraint` | **와일드카드 접기 전수** (2026-08-15 신설 — 종전에는 접기를 확인하는 테스트가 없어, 접기가 깨져도 T12가 초록이었다). 차량 `vehicleFeature` `"ALL"`·blank → empty이고 `T1`만 받는 주문과 `size` 통과(E26) · 주문 `["ALL"]` → empty(E14 통과 케이스) · 차량 `zoneIds` `["ALL"]` → empty이고 구역 주문과 `zone` 통과, `["ALL","ZONE_1"]`(섞임) → INVALID_INPUT(E35b) · 방문 `zoneId` `"ALL"`·blank·부재 → empty이고 구역 제한 차량과도 통과(E35). **정규화 결과와 `Compatibility` 판정을 한 테스트에서 잇는다** — 접기가 깨지면 유령 차량이 되는 경로를 그대로 재현 | 경계값 (Domain §3.4) |
 | T18 | `PlanNormalizerTest.rejectsNullElements` | E36: `vehicleFeature`·`capabilities`·`zoneIds`·`items`·목록 자체의 원소가 null → INVALID_INPUT (NPE 아님). `field` 경로가 어느 목록인지 가리키는지 확인 | 오류 분류 (Domain §3 서두·§12) |
 | T19 | `PlanNormalizerTest.blankItemIdFallsBackToOrderId` | E37: itemId `""`·null → `orderId`. 명시 id는 유지 | Stage 범위 문장 / Domain §2.3 |
+| T20 | `PlanNormalizerTest.normalizesTravelMatrix` | **절차 7 자체의 유일한 테스트** (2026-08-16 신설 — 종전에는 T1\~T19가 전부 `travelEntries`에 빈 목록을 넣어 절차 7의 루프 본문이 한 번도 실행되지 않았다. `Units`를 직접 부르는 T3은 관문 배선을 덮지 못한다). ① self arc 행은 **소수 D를 담고 있어도** 버려진다 — 단위 검증 **앞에서** 건너뛴다는 순서의 직접 검증이고, 실물 wire의 self arc 453건(`D=9999`)이 접수되는 근거다. 순서가 뒤집히면 이 테스트만 깨진다 · ② 정상 행 `D=310708.03` → INVALID_INPUT, `field = "distanceMatrix[i].D"` · ③ `U` 소수도 같음 · ④ from/to blank 거부 · ⑤ 통과 행이 `TravelEntry`로 실리고 self arc는 개수에서 빠짐 | 경계값·오류 분류 (Domain §3.1·§4) |
 
-T7·T8·T11\~T19는 DoD 두 문장 밖이지만 Plan Stage 1 범위 문장("canonical 모델, serviceTime 공식,
+T7·T8·T11\~T20은 DoD 두 문장 밖이지만 Plan Stage 1 범위 문장("canonical 모델, serviceTime 공식,
 호환성 판정, 오류 분류")과 Domain §3.2 시간창 전개의 직접 검증이다 — Plan §1의 편입(2026-08-11)에
 따라 이 표 전부가 완료 기준이다.
 
