@@ -14,6 +14,12 @@ class TimeBaseTest {
 
     private static final LocalDateTime ORIGIN = LocalDateTime.of(2023, 9, 13, 0, 0, 0);
 
+    record DateTimeRange(LocalDateTime start, LocalDateTime end) {
+        static DateTimeRange of(LocalDateTime start, LocalDateTime end) {
+            return new DateTimeRange(start, end);
+        }
+    }
+
     @Test
     void secondsFromPlanStart() {
         TimeBase timeBase = new TimeBase(ORIGIN);
@@ -33,66 +39,127 @@ class TimeBaseTest {
     @Test
     void expandsDailyWindows() {
         TimeBase midnight = new TimeBase(ORIGIN);
-        long threeDays = 3 * 86_400L;
+        LocalDateTime threeDaysEnd = ORIGIN.plusDays(3);
 
-        List<TimeWindow> mergedDefault = midnight.dailyWindows(
-                LocalTime.of(0, 0, 0), LocalTime.of(23, 59, 59), threeDays, "depot.windows");
-        assertEquals(List.of(new TimeWindow(0, 259_199)), mergedDefault);
+        List<DateTimeRange> mergedDefault = expandToDateTimeRanges(
+                midnight,
+                LocalTime.of(0, 0, 0),
+                LocalTime.of(23, 59, 59),
+                threeDaysEnd,
+                "depot.windows");
+        assertEquals(
+                List.of(DateTimeRange.of(
+                        LocalDateTime.of(2023, 9, 13, 0, 0, 0),
+                        LocalDateTime.of(2023, 9, 15, 23, 59, 59))),
+                mergedDefault);
 
-        List<TimeWindow> workThreeDays = midnight.dailyWindows(
-                LocalTime.of(8, 0, 0), LocalTime.of(17, 0, 0), threeDays, "vehicle.workWindows");
+        List<DateTimeRange> workThreeDays = expandToDateTimeRanges(
+                midnight,
+                LocalTime.of(8, 0, 0),
+                LocalTime.of(17, 0, 0),
+                threeDaysEnd,
+                "vehicle.workWindows");
         assertEquals(
                 List.of(
-                        new TimeWindow(28_800, 61_200),
-                        new TimeWindow(115_200, 147_600),
-                        new TimeWindow(201_600, 234_000)),
+                        DateTimeRange.of(
+                                LocalDateTime.of(2023, 9, 13, 8, 0, 0),
+                                LocalDateTime.of(2023, 9, 13, 17, 0, 0)),
+                        DateTimeRange.of(
+                                LocalDateTime.of(2023, 9, 14, 8, 0, 0),
+                                LocalDateTime.of(2023, 9, 14, 17, 0, 0)),
+                        DateTimeRange.of(
+                                LocalDateTime.of(2023, 9, 15, 8, 0, 0),
+                                LocalDateTime.of(2023, 9, 15, 17, 0, 0))),
                 workThreeDays);
 
         TimeBase startsAtTen = new TimeBase(ORIGIN.withHour(10));
-        List<TimeWindow> clippedOpen = startsAtTen.dailyWindows(
+        LocalDateTime fourteenHoursEnd = ORIGIN.withHour(10).plusHours(14);
+        List<DateTimeRange> clippedOpen = expandToDateTimeRanges(
+                startsAtTen,
                 LocalTime.of(8, 0, 0),
                 LocalTime.of(17, 0, 0),
-                14 * 3_600L,
+                fourteenHoursEnd,
                 "vehicle.workWindows");
-        assertEquals(List.of(new TimeWindow(0, 25_200)), clippedOpen);
+        assertEquals(
+                List.of(DateTimeRange.of(
+                        LocalDateTime.of(2023, 9, 13, 10, 0, 0),
+                        LocalDateTime.of(2023, 9, 13, 17, 0, 0))),
+                clippedOpen);
 
-        List<TimeWindow> clippedClose = midnight.dailyWindows(
-                LocalTime.of(0, 0, 0), LocalTime.of(23, 59, 59), 18 * 3_600L, "vehicle.workWindows");
-        assertEquals(List.of(new TimeWindow(0, 64_799)), clippedClose);
+        LocalDateTime eighteenHoursEnd = ORIGIN.plusHours(18);
+        List<DateTimeRange> clippedClose = expandToDateTimeRanges(
+                midnight,
+                LocalTime.of(0, 0, 0),
+                LocalTime.of(23, 59, 59),
+                eighteenHoursEnd,
+                "vehicle.workWindows");
+        assertEquals(
+                List.of(DateTimeRange.of(
+                        LocalDateTime.of(2023, 9, 13, 0, 0, 0),
+                        LocalDateTime.of(2023, 9, 13, 17, 59, 59))),
+                clippedClose);
 
-        List<TimeWindow> empty = startsAtTen.dailyWindows(
-                LocalTime.of(8, 0, 0), LocalTime.of(9, 0, 0), 2 * 3_600L, "vehicle.workWindows");
+        LocalDateTime twoHoursEnd = startsAtTen.origin().plusHours(2);
+        List<DateTimeRange> empty = expandToDateTimeRanges(
+                startsAtTen,
+                LocalTime.of(8, 0, 0),
+                LocalTime.of(9, 0, 0),
+                twoHoursEnd,
+                "vehicle.workWindows");
         assertEquals(List.of(), empty);
-
-        assertWindowInvariants(mergedDefault);
-        assertWindowInvariants(workThreeDays);
-        assertWindowInvariants(clippedOpen);
-        assertWindowInvariants(clippedClose);
-        assertWindowInvariants(empty);
     }
 
     @Test
     void acceptsOvernightWindowAndRejectsZeroLength() {
         TimeBase midnight = new TimeBase(ORIGIN);
-        long threeDays = 3 * 86_400L;
+        LocalDateTime threeDaysEnd = ORIGIN.plusDays(3);
 
-        List<TimeWindow> overnight = midnight.dailyWindows(
-                LocalTime.of(22, 0, 0), LocalTime.of(6, 0, 0), threeDays, "vehicle.workWindows");
+        List<DateTimeRange> overnight = expandToDateTimeRanges(
+                midnight,
+                LocalTime.of(22, 0, 0),
+                LocalTime.of(6, 0, 0),
+                threeDaysEnd,
+                "vehicle.workWindows");
         assertEquals(
                 List.of(
-                        new TimeWindow(0, 21_600),
-                        new TimeWindow(79_200, 108_000),
-                        new TimeWindow(165_600, 194_400),
-                        new TimeWindow(252_000, 259_199)),
+                        DateTimeRange.of(
+                                LocalDateTime.of(2023, 9, 13, 0, 0, 0),
+                                LocalDateTime.of(2023, 9, 13, 6, 0, 0)),
+                        DateTimeRange.of(
+                                LocalDateTime.of(2023, 9, 13, 22, 0, 0),
+                                LocalDateTime.of(2023, 9, 14, 6, 0, 0)),
+                        DateTimeRange.of(
+                                LocalDateTime.of(2023, 9, 14, 22, 0, 0),
+                                LocalDateTime.of(2023, 9, 15, 6, 0, 0)),
+                        DateTimeRange.of(
+                                LocalDateTime.of(2023, 9, 15, 22, 0, 0),
+                                LocalDateTime.of(2023, 9, 15, 23, 59, 59))),
                 overnight);
-        assertWindowInvariants(overnight);
 
         InputException zeroLength = assertThrows(
                 InputException.class,
-                () -> midnight.dailyWindows(
-                        LocalTime.of(9, 0, 0), LocalTime.of(9, 0, 0), threeDays, "orders[0].windows"));
+                () -> expandToDateTimeRanges(
+                        midnight,
+                        LocalTime.of(9, 0, 0),
+                        LocalTime.of(9, 0, 0),
+                        threeDaysEnd,
+                        "orders[0].windows"));
         assertEquals(InputException.Kind.INVALID_INPUT, zeroLength.kind());
         assertEquals("orders[0].windows", zeroLength.field());
+    }
+
+    private List<DateTimeRange> expandToDateTimeRanges(
+            TimeBase timeBase,
+            LocalTime open,
+            LocalTime close,
+            LocalDateTime planEnd,
+            String field) {
+        long planEndSec = timeBase.toSeconds(planEnd);
+        List<TimeWindow> windows = timeBase.dailyWindows(open, close, planEndSec, field);
+        assertWindowInvariants(windows);
+        return windows.stream()
+                .map(w -> DateTimeRange.of(timeBase.toWallClock(w.openSec()), timeBase.toWallClock(w.closeSec())))
+                .toList();
     }
 
     private static void assertWindowInvariants(List<TimeWindow> windows) {
