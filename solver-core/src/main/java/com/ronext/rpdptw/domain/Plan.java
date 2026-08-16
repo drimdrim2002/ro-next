@@ -29,8 +29,12 @@ public record Plan(
         requests = List.copyOf(requests);
         vehicles = List.copyOf(vehicles);
         // Map.copyOf는 순회 순서를 JVM 실행마다 흔든다 — Stage 2가 이 맵으로 색인을 매기므로
-        // 같은 입력이 다른 색인을 받는다. 정규화의 삽입 순서(차고 → 주문 side)를 보존한다.
-        locations = Collections.unmodifiableMap(new LinkedHashMap<>(locations));
+        // 같은 입력이 다른 색인을 받는다. 정규화의 삽입 순서(차고 → 주문 side)를 보존하되,
+        // Map.copyOf가 하던 null 거부는 다른 필드(List.copyOf)와 맞춰 그대로 남긴다.
+        Map<LocationId, Location> ordered = new LinkedHashMap<>();
+        locations.forEach((id, location) -> ordered.put(
+                Objects.requireNonNull(id, "locations key"), Objects.requireNonNull(location, "locations value")));
+        locations = Collections.unmodifiableMap(ordered);
         travelEntries = List.copyOf(travelEntries);
         Objects.requireNonNull(deliveryPolicy, "deliveryPolicy");
     }
