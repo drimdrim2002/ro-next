@@ -42,6 +42,10 @@ revisions:
     `startDepot`을 "규칙으로 정해진 기본값"에서 제외(부재 = 첫 고객 시작). trips 접기에
     start도 없으면 INVALID 추가. §0 fixture: 직접 정규화 시 start empty, 앱 접수(Stage 6)는
     단일 차고를 채움. 2026-08-12 채움 규칙과 구분
+  - 2026-08-17 Domain §4 self arc 원복(sentinel 999,000/86,400 → D=0·U=0) 인지 — 본문 무변경.
+    Stage 2 범위·DoD 문장에 대각값이 없고, Stage 3의 E18·E19가 함께 갱신됐다
+  - 2026-08-17 Domain §6.2 방문 유일·참조 후속 — Stage 3 그림의 구조 검사 목록만
+    `pair·XOR·방문 유일·참조`로 맞춤. 범위·DoD 무변경
 ---
 
 # RO-Next Implementation Plan
@@ -251,7 +255,7 @@ Stage 3(탐색 쪽 평가)과 Stage 5(재검증)가 **같은 규칙 문장**을 
 ```text
 Problem (동결) + Profile(인자)
         │
-Solution = routes + bank  ──구조 검사(pair·XOR)──▶ 위반 목록
+Solution = routes + bank  ──구조 검사(pair·XOR·방문 유일·참조)──▶ 위반 목록
         │
         ▼
 전파(경로마다 시각·적재·hard) ──▶ 사실 값(RouteFacts 등)

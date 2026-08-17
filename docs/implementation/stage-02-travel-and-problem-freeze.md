@@ -28,6 +28,13 @@ revisions:
     §7 말미 Plan 인용을 의역 표기로 · §9 서두를 README 공통 규칙(표시하고 남김)으로. 설계 무변경
   - 2026-08-14 Domain `startDepot` optional + `PICKUP_ONLY` — freeze 절차 3을 3패턴 ↔ side로.
     start/end는 **있으면** 차고 집합. E16 확장. start 부재는 실패가 아님
+  - 2026-08-17 구현 검토 반영 — §4 절차 3에 차고 locationId 중복 검사 추가(E21 신설,
+    T9에 편입): Request·Vehicle·NodeId에만 걸려 있던 방어를 차고에도 맞춘다 ·
+    §7 T8에서 "원본 Plan 리스트 변조" 절 삭제(`Plan`이 이미 불변이라 항상 통과하는 단언) ·
+    §7 T12를 freeze 1회 계측 + 전 쌍 조회 검증으로(계측용 `prepare` 중복 호출 제거)
+  - 2026-08-17 Domain §4 self arc 원복 정합 — §2.2 주석·§3 절차 2·6·§6 E3·E4를 **D=0·U=0**으로,
+    §7 T4를 `selfArcAlwaysZero`로 개명. 새 가드·새 테스트 없음 (자기 순환·가상 depot 금지는
+    구조 검사가 이미 집행한다 — Domain §4)
 ---
 
 # Stage 2 — 이동표와 Problem 동결
@@ -111,7 +118,7 @@ public final class TravelMatrix {
                                        List<TravelEntry> entries,
                                        Set<Integer> resolvedSpeedsKmH);
 
-    public int distanceMeter(LocationId from, LocationId to);              // 방향 있음. self = sentinel 999,000
+    public int distanceMeter(LocationId from, LocationId to);              // 방향 있음. self = 0
     public int timeSec(LocationId from, LocationId to, int resolvedSpeedKmH);
     public Set<LocationId> locationIds();                                  // 표가 아는 장소 전체
 }
@@ -181,7 +188,7 @@ public final class ProblemCreationException extends RuntimeException {
 2. 입력   entries 순회:
          - from 또는 to가 locations 밖 → 그 항목은 버린다 (§6 E6 — 문제의 장소가 아니면
            어떤 방문도 그 arc를 쓸 수 없으므로 오류가 아니다).
-         - from == to (self arc) → 값을 읽지 않고 버린다. self는 절차 6의 sentinel이 이긴다 (§6 E3).
+         - from == to (self arc) → 값을 읽지 않고 버린다. self는 절차 6이 0으로 확정한다 (§6 E3).
          - 같은 (from,to)가 두 번 → 실패 (값이 달라도 같아도 — 추측 금지, Domain §2.1).
          - 채택된 항목의 D·U는 그대로 표에 놓는다. 역방향은 별개 arc다 —
            대칭화 금지 (Domain §4 MUST NOT).
@@ -195,9 +202,10 @@ public final class ProblemCreationException extends RuntimeException {
          resolvedSpeed(차량) = vehicle.speedKmH ▷ deliveryPolicy.defaultSpeedKmH ▷ 45
          이 계산은 Problem.freeze가 하고(§4 절차 4), prepare는 distinct 집합만 받는다.
          speed ≤ 0이 섞여 있으면 실패 (÷0 방지 — §6 E10). 주어진 arc의 U는 speed 무관 공유.
-6. self   모든 (i,i): D = 999,000, U = 86,400 (전 speed — sentinel, Domain §4 2026-08-12
-         확정. 0이면 자기 순환이 공짜, Long.MAX_VALUE류는 addExact overflow). 입력이 준
-         self 값(floor fixture는 453건 전부 D=9999·U=0)은 읽지 않고 버린다 — 근거는 §6 E3.
+6. self   모든 (i,i): D = 0, U = 0 (전 speed — 같은 장소면 이동이 없다. Domain §4 2026-08-17
+         원복. 퇴화 경로 금지는 값이 아니라 구조 검사가 소유한다 — DUPLICATE_NODE·UNKNOWN_NODE).
+         입력이 준 self 값(floor fixture는 453건 전부 D=9999·U=0 legacy sentinel)은 읽지 않고
+         버린다 — 근거는 §6 E3.
          §5 규칙 4의 완전성 검사에서 self arc는 누락으로 세지 않는다 (여기서 항상 채워진다).
 7. 동결   불변 구조로 확정. 이후 어떤 경로로도 값이 바뀌지 않는다.
 ```
@@ -219,7 +227,8 @@ Stage 1 §2.2). 결과 run 메타에 남길지는 Stage 6 재량이며, 그 경�
 
 ```text
 1. 복사   depots/requests/vehicles/locations를 방어 복사 (List.copyOf 등).
-         이후 원본 Plan을 고쳐도 Problem은 변하지 않는다 (§7 T8).
+         `Plan`이 이미 불변이라 이 복사는 **중복 방어**다 — 지금은 없어도 결과가 같지만,
+         `Plan` 계약이 바뀌어도 `Problem`이 흔들리지 않게 남긴다 (§7 T8, 2026-08-17).
 2. ID    RequestId·VehicleId 중복 없음. 전 NodeId(모든 side) 중복 없음.
          (차고는 NodeId를 갖지 않는다 — Stage 1 §2.2, Stage 3 §4.4)
          위반 → 실패 (Domain §5 "ID 참조").
@@ -229,6 +238,9 @@ Stage 1 §2.2). 결과 run 메타에 남길지는 Stage 6 재량이며, 그 경�
          - PICKUP_DELIVERY ⇔ pickup 존재 ∧ delivery 존재
          불일치 → 실패.
          모든 side·depot의 locationId ∈ locations 맵. 아니면 → 실패.
+         차고 locationId 중복 없음 — 차고→Depot 색인을 만드는 그 자리에서 본다.
+         막지 않으면 뒤엣 차고가 앞엣 차고를 덮어 `depotAt`이 조용히 다른 시간창을
+         돌려준다 (E21, 2026-08-17).
          vehicle.startDepot·endDepot(**있으면**) ∈ 차고 LocationId 집합. 아니면 → 실패.
          부재는 실패가 아니다 (첫 고객 시작 / 마지막 고객 종료 — Domain §2.4).
 4. speed  차량별 resolvedSpeedKmH 확정 (§3 절차 5 체인). ≤ 0 → 실패.
@@ -255,7 +267,7 @@ Stage 1 §2.2). 결과 run 메타에 남길지는 Stage 6 재량이며, 그 경�
 | N1 | `distanceTimeCalculate` 비분기 — §3 끝 문단. Domain §2.5.1이 canonical 제거로 확정 (§9 Q3 해소) |
 | N2 | 예외 번역 seam: `domain`(TravelMatrix)이 `problem`의 예외를 던지면 역방향 패키지 참조가 생긴다. 그래서 prepare는 `IllegalArgumentException`, freeze가 `ProblemCreationException`으로 감싼다. 패키지 의존은 `problem → domain` 한 방향 유지 |
 | N3 | 부분 항목(D만 있고 U 없음)은 Stage 2에 도달하지 않는다 — Stage 1 `TravelEntry`가 두 필드 필수 int라서다. wire가 부분 항목을 주면 Stage 6 adapter의 일 (Stage 1 절차 7 단위 검증에서 거부 권고) |
-| N4 | fixture 사실 (2026-08-09 확인): floor fixture 행렬은 453 장소 완전 정방(453² = 205,209행, 중복 0)이라 보정이 한 번도 안 돈다. self arc 453건 전부 D=9999·U=0 (읽지 않고 버린다 — 절차 2·6). 전 차량 speed 45, `Optimizer.DefaultSpeed` 45 (수치 표기는 2026-08-12 number 정정 반영 — Domain §3.1), `distanceTimeCalculate` "GreatCircle". `C` 열(O/G)은 Stage 1이 구조적으로 배제. **비대각 arc 1건이 D=9999다** (`WIN_2306→WIN_3225`, U=991 — 2026-08-11 실측): wire의 self arc 대각 값(9999)과 같아 결측 표시의 누출이 의심되나, 규칙상 실거리 9999 m로 그대로 쓰인다. 실거리/결측 확인은 Plan D2 안건 (Stage 8 W16) |
+| N4 | fixture 사실 (2026-08-09 확인): floor fixture 행렬은 453 장소 완전 정방(453² = 205,209행, 중복 0)이라 보정이 한 번도 안 돈다. self arc 453건 전부 D=9999·U=0 legacy sentinel (읽지 않고 버린다 — 절차 2·6). 전 차량 speed 45, `Optimizer.DefaultSpeed` 45 (수치 표기는 2026-08-12 number 정정 반영 — Domain §3.1), `distanceTimeCalculate` "GreatCircle". `C` 열(O/G)은 Stage 1이 구조적으로 배제. **비대각 arc 1건이 D=9999다** (`WIN_2306→WIN_3225`, U=991 — 2026-08-11 실측): wire의 self arc 대각 값(9999)과 같아 결측 표시의 누출이 의심되나, 규칙상 실거리 9999 m로 그대로 쓰인다. 실거리/결측 확인은 Plan D2 안건 (Stage 8 W16) |
 
 ---
 
@@ -268,8 +280,8 @@ Domain §4·§5의 규칙·경계값·오류 분류에서 뽑았다. "실패" = 
 |---|---|---|---|
 | E1 | (from,to) 항목 있음, 역방향 없음 | 정방향은 그대로, 역방향은 보정 — 대칭화 금지 | §4 MUST NOT |
 | E2 | 쌍 자체가 행렬에 없음 | D = Great Circle(HALF_UP), U = ceil 체인 | §4 |
-| E3 | self arc 입력 D=9999·U=0 (floor fixture 453건 전부) | 값을 읽지 않고 버린다 — 표의 self는 항상 sentinel D=999,000·U=86,400 (입력값 무관. 소수 거부의 검사 대상도 아니다). 종전 "self arc = 0" 규정은 2026-08-12 폐기 — 0이면 자기 순환이 공짜, 극단값은 addExact overflow | §4 (2026-08-12 확정) |
-| E4 | self arc 입력 없음 | sentinel 999,000/86,400 (규칙값 — GC 보정 호출 없음. 있어도 없어도 된다) | §4 |
+| E3 | self arc 입력 D=9999·U=0 (floor fixture 453건 전부) | 값을 읽지 않고 버린다 — 표의 self는 항상 **D=0·U=0** (입력값 무관. 소수 거부의 검사 대상도 아니다). wire의 9999는 legacy sentinel이지 실거리가 아니다. 2026-08-12의 sentinel(999,000/86,400) 강제는 **2026-08-17 원복** — 서로 다른 두 Request가 같은 장소를 쓰는 것은 정상 입력이라 큰 값이 정상 케이스에 벌점을 매겼다. 자기 순환·가상 depot 금지는 구조 검사(`DUPLICATE_NODE`·`UNKNOWN_NODE`)가 집행한다 | §4 (2026-08-17 원복) |
+| E4 | self arc 입력 없음 | D=0·U=0 (규칙값 — 있어도 없어도 같다. 같은 좌표라 GC 보정을 태워도 0이 나오지만, **입력 self 값을 절대 읽지 않는다**는 규칙을 코드에 남기려고 분기로 채운다 — §3 절차 6) | §4 |
 | E5 | 같은 (from,to) 항목 중복 | 실패 (값 충돌이면 추측 금지, 동일 값이어도 거부해 결정성 단순화) | §2.1 |
 | E6 | locations 밖 장소의 항목 (여분 행) | 버림 — 표의 장소 전체집합은 locations 맵이 권위 | §5 |
 | E7 | locId 오타로 행렬 전체가 밖 → 전부 보정 | 수용 (규칙상 관측 불가) — GC로 채워져 풀이는 진행. 조용한 품질 저하 가능성은 Stage 8 지표 비교에서 드러남 | §4 |
@@ -286,6 +298,7 @@ Domain §4·§5의 규칙·경계값·오류 분류에서 뽑았다. "실패" = 
 | E18 | 호환 차량 0대인 Request | 통과 — `compatibleVehicles` = ∅로 동결. 미배정+사유는 Stage 5 | §3.4 |
 | E19 | vehicles 또는 requests가 빈 목록 | 통과 — 전부 bank(또는 **경로 0개**)인 해로 풀이 진행. 빈 visits의 `Route`가 아니다 — 그건 Stage 3이 금지한다 (미사용 차량 = Route 부재, Stage 3 E30) | §3.4 유추 (금지 규칙 없음) |
 | E20 | RequestId 중복 등으로 NodeId 충돌 | 실패 | §5 |
+| E21 | 차고 locationId 중복 (Plan 직접 조립) | 실패 (ID 참조) — 정상 경로에선 Stage 1이 선차단(`duplicate LocationId`), freeze는 방어 재검증. 막지 않으면 `depots()`엔 둘 다 남고 `depotAt()`은 뒤엣것만 돌려줘 앞 차고의 시간창이 조용히 사라진다 (예외가 아니라 오답) | §5 |
 
 ---
 
@@ -299,15 +312,15 @@ Domain §4·§5의 규칙·경계값·오류 분류에서 뽑았다. "실패" = 
 | T1 | `GreatCircleTest.knownDistances` | 같은 좌표 → 0. 같은 경도에서 위도 1° 차 → 111,195 m (R=6,371,000·HALF_UP 검증값) | "이동표 보정 규칙 테스트" |
 | T2 | `TravelMatrixTest.correctsMissingDistanceByGreatCircle` | E2: 누락 쌍 D = GC. 주어진 쌍은 GC와 달라도 그대로 (§3 절차 2) | 〃 |
 | T3 | `TravelMatrixTest.correctsMissingTimeByCeilFormula` | E12 경계값 두 건 + U는 보정 D 기반 | 〃 |
-| T4 | `TravelMatrixTest.selfArcAlwaysSentinel` | E3·E4: self 입력 D=9999·U=0(fixture 값)이어도, 없어도 조회는 999,000/86,400 | 〃 |
+| T4 | `TravelMatrixTest.selfArcAlwaysZero` | E3·E4: self 입력 D=9999·U=0(fixture 값)이어도, 없어도 조회는 **0/0** | 〃 |
 | T5 | `TravelMatrixTest.keepsGivenArcsAsymmetric` | E1: D[a→b] ≠ D[b→a] 유지, 역방향만 보정 | 〃 |
 | T6 | `TravelMatrixTest.rejectsDuplicateAndDropsForeignEntries` | E5 실패 / E6 버림 (버린 뒤 그 쌍은 보정값) | 〃 |
 | T7 | `TravelMatrixTest.perSpeedCorrectedTimes` | E8·E9·E11: 체인 결과별 U, 주어진 arc는 speed 무관 동일. 미준비 speed·장소 조회 → 예외 | 〃 |
-| T8 | `ProblemFreezeTest.immutableAfterFreeze` | 반환 컬렉션 전부 unmodifiable(수정 시 예외) + 원본 Plan 리스트 변조가 Problem에 안 비침(방어 복사) + reflection으로 `Problem`·`TravelMatrix` public 메서드에 set*/add*/remove*/put* 부재 확인 | "Problem 생성 후 불변성(문제 쪽 mutator 부재) 확인" |
-| T9 | `ProblemFreezeTest.validatesReferencesAndPairs` | E10·E16·E17·E20 전부 `ProblemCreationException` | (Plan 범위 문장 "생성 시 참조 검증") |
+| T8 | `ProblemFreezeTest.immutableAfterFreeze` | 반환 컬렉션 전부 unmodifiable(수정 시 예외) + reflection으로 `Problem`·`TravelMatrix` public 메서드에 set\*/add\*/remove\*/put\* 부재 확인. **원본 Plan 컬렉션 변조 검사는 두지 않는다** — `Plan`의 canonical 생성자가 이미 `List.copyOf`·`unmodifiableMap`으로 스냅샷을 떠서, freeze가 방어 복사를 하든 안 하든 **항상 통과하는 단언**이 된다 (2026-08-17 확인). §4 절차 1의 복사는 `Plan` 계약에 대한 중복 방어로 그대로 유지하되, 검증 불가임을 여기 남긴다 | "Problem 생성 후 불변성(문제 쪽 mutator 부재) 확인" |
+| T9 | `ProblemFreezeTest.validatesReferencesAndPairs` | E10·E16·E17·E20·E21 전부 `ProblemCreationException` | (Plan 범위 문장 "생성 시 참조 검증") |
 | T10 | `ProblemFreezeTest.freezesCompatibilityFacts` | E18: ∅ 포함, 결과가 `Compatibility.compatible` 전수 대조와 일치 | (Plan 범위 문장 — Domain §5 호환성 사실) |
 | T11 | `ProblemFreezeTest.travelCompleteAfterFreeze` | 희소 입력 후 n² 전 쌍 조회 성공 (완전성) | (Plan 범위 문장 "완전성 검증") |
-| T12 | `ProblemScaleTest.freezesFullScaleSyntheticProblem` | **규모 측정.** 실물과 같은 규모의 합성 입력(장소 453 = 주문 452 + 차고 1, 차량 31, 이동표 **453² = 205,209쌍을 전부 채워서**)으로 `TravelMatrix.prepare` + `Problem.freeze` 1회 → 예외 없이 완료. **소요 시간·힙 사용량을 출력해 기록한다.** 쌍을 비우면 Great Circle 보정이 대신 채워 측정이 무의미해지므로 전 쌍을 준다. 입력은 프로그램으로 조립한다 (fixture JSON 파싱 없음 — 위 서두 원칙, app 모듈 불필요) | Plan Stage 2 "**규모**" 문장 |
+| T12 | `ProblemScaleTest.freezesFullScaleSyntheticProblem` | **규모 측정.** 실물과 같은 규모의 합성 입력(장소 453 = 주문 452 + 차고 1, 차량 31, 이동표 **453² = 205,209쌍을 전부 채워서**)으로 `Problem.freeze` **1회** → 예외 없이 완료. **소요 시간·힙 사용량을 출력해 기록한다.** 계측은 `freeze` 하나만 감싼다 — `prepare`는 그 안에서 정확히 한 번 도므로, 계측용으로 따로 또 호출하면 시간이 이중 계상되고 이동표 두 벌이 힙에 남아 숫자가 실물의 2배가 된다 (2026-08-17). 이어서 **전 쌍(453² = 205,209) D·U를 전수 조회**해 실물 규모의 완전성(T11의 규모판)을 확인하고 합계로 값까지 대조한다. 쌍을 비우면 Great Circle 보정이 대신 채워 측정이 무의미해지므로 전 쌍을 준다. 입력은 프로그램으로 조립한다 (fixture JSON 파싱 없음 — 위 서두 원칙, app 모듈 불필요). **출력 시간은 warm-up 없는 단발 cold 실행이라 회차 간 편차가 크다**(실측 22~41 ms) — 규모가 감당 가능한지 보는 sanity check이지 벤치마크가 아니다. 탐색 예산 산정(Stage 4·8)에 쓸 값이 필요하면 그때 따로 잰다 | Plan Stage 2 "**규모**" 문장 |
 
 T9–T11은 Plan DoD 요약 문장 밖이지만 Plan Stage 2 범위 문장(취지 — `Problem` 생성 시
 참조 일관성·완전성 검사 후 동결)의 직접 검증이다 — Plan §1의 편입(2026-08-11)에 따라

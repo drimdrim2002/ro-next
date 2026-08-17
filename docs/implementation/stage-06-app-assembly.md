@@ -70,6 +70,8 @@ revisions:
     **차량 > 전역 > 없음** (Domain §2.6). adapter는 값을 옮기기만 한다. 매핑 무변경
   - 2026-08-16 itemId 폴백 수행 위치를 Stage 1 정규화로 명시 (§4.3·E4). adapter는 blank를
     그대로 `ItemInput`에 담는다. 규칙(orderId 사용)은 Domain §2.3 그대로
+  - 2026-08-17 Domain §4 self arc 원복 정합 — §4.5 `D`/`U` 행의 sentinel 인용을 D=0·U=0으로.
+    adapter 동작·매핑 무변경 (self 행을 버리는 것은 여전히 Stage 1 정규화의 일)
 ---
 
 # Stage 6 — 앱 조립
@@ -544,7 +546,7 @@ solveKey를 그대로 URL에 붙이면 된다. 최종 경로·필드명은 호�
 | wire | TravelEntryInput | 규칙 |
 |---|---|---|
 | `F` / `T` | `fromLocId` / `toLocId` | 필수 |
-| `D` / `U` | `distance` / `time` | BigDecimal 원문 — 소수 표기 검사(scale > 0 거부, 표기 기준)는 정규화 (Stage 1 절차 7). self arc(`F` == `T`) 행은 정규화가 값을 읽지 않고 버린다 — 소수 검사 대상도 아니다 (Domain §4, 2026-08-12) |
+| `D` / `U` | `distance` / `time` | BigDecimal 원문 — 소수 표기 검사(scale > 0 거부, 표기 기준)는 정규화 (Stage 1 절차 7). self arc(`F` == `T`) 행은 정규화가 값을 읽지 않고 버린다 — 소수 검사 대상도 아니다. 표의 self는 Stage 2가 D=0·U=0으로 확정한다 (Domain §4, 2026-08-17 원복) |
 | `C` | — | 구조적 배제: **`TravelEntryInput`에 `C` 필드를 만들지 않는다** — wire에는 전 행에 존재하지만(fixture 실값 O·G) 읽지 않는다 (Domain §4 MUST NOT) |
 
 ### 4.6 `options` → `OptionsInput` (전부 optional — 부재 → null, 기본값은 정규화가)

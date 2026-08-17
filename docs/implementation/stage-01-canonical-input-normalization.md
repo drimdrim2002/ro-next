@@ -83,6 +83,8 @@ revisions:
     **앞에서** 건너뛰는 순서가 실물 fixture 접수의 전제인데 회귀 장치가 없던 자리다 ·
     ② §2.2 `Plan.locations`에 **삽입 순서 보존** 명시 — Stage 2가 이 맵으로 색인을 매기므로
     순서가 실행마다 흔들리면 같은 입력이 다른 색인을 받는다. 시그니처 무변경
+  - 2026-08-17 Domain §4 self arc 원복 정합 — §4 절차 7 말미·§8 책임 이관 표의 sentinel 수치
+    인용을 **D=0·U=0**으로. 절차 7의 동작(self 행을 단위 검증 **앞에서** 버림)과 T20은 무변경
 ---
 
 # Stage 1 — canonical 입력과 정규화
@@ -501,7 +503,7 @@ floor fixture의 이동표는 205,209줄이고 줄마다 D·U 두 번 호출하�
           D → Units.toWholeMeters, U → Units.toWholeSeconds — 소수·음수 거부 (Domain §3.1·§4).
           field 경로("distanceMatrix[i].D")는 **실패 경로에서만** 조립한다 — 205,209행을
             도는 유일한 루프라 §3의 Supplier 근거가 여기서만 유효하다.
-          여기서는 단위 검증만 한다. self arc sentinel(D=999,000·U=86,400) 강제·완전성·
+          여기서는 단위 검증만 한다. self arc를 D=0·U=0으로 확정하는 일·완전성·
           누락 보정(Great Circle, ceil(D×3.6/speed))·조회 키 구성은 전부 Stage 2 (Domain §4·§5).
 8. 조립    Plan 반환. 호환성 사실의 사전 계산·ID 참조 그래프 검증은 하지 않는다 —
           그것은 Problem 생성(Stage 2, Domain §5) 몫이다.
@@ -663,7 +665,7 @@ T7·T8·T11\~T20은 DoD 두 문장 밖이지만 Plan Stage 1 범위 문장("cano
 
 | 안 하는 것 | 담당 | 근거 |
 |---|---|---|
-| 이동표 키 구성·완전성 검사·self arc sentinel(D=999,000·U=86,400) 강제·누락 보정(Great Circle, `ceil(D×3.6/speed)`) | Stage 2 | Domain §4 |
+| 이동표 키 구성·완전성 검사·self arc D=0·U=0 확정·누락 보정(Great Circle, `ceil(D×3.6/speed)`) | Stage 2 | Domain §4 |
 | `Problem` 동결·ID 참조 그래프 검증·호환성 사실 사전 계산 | Stage 2 | Domain §5 |
 | `Solution`·전파·평가·`Profile`(core `eval`)·`ProfileRegistry`(solver-profile 모듈) | Stage 3 | Domain §6–§8 |
 | 미배정 사유 산출 (`NO_COMPATIBLE_VEHICLE` 등) | Stage 5 | Domain §11 |

@@ -43,6 +43,9 @@ revisions:
     §3.1 `DEPOT_WINDOW` 설명을 Domain §7.1에 맞춤 (있는 출·도착만)
   - 2026-08-16 적재 식별자에서 단위·스케일 접미 제거 — `loadWeightAfter`/`loadVolumeAfter`,
     `initialLoadWeight`/`initialLoadVolume`. 내부 단위는 Domain §3.1. 규칙 변경 없음
+  - 2026-08-17 Domain §4 self arc 원복 정합 — §3.3 의사코드 주석·E18·E19의 U=86,400을
+    **D=0·U=0**으로. 같은 장소 연속 방문은 정상 입력이고, 길이 0 arc는 기존 `fitArc` 정의가
+    확정하므로 규칙 신설 없음. 노드 중복 금지는 §2.2 `DUPLICATE_NODE`가 그대로 소유
 ---
 
 # Stage 3 — Solution·전파·평가
@@ -345,7 +348,7 @@ fitService(창목록, from, S)  = [t, t+S]가 한 창 안에 통째로 들어가
             차고가 근무 시작보다 늦게 열면 **N에서도 0이 아니다**.
 2. 방문 루프  각 방문 i에 대해 Domain §7.1의 1–7 순서 그대로:
           arrival    = 첫 방문 ∧ startDepot 없음: spanStart (절차 1).
-                       그 외: 직전 departure + U[직전 장소 → locᵢ]  // §7.1-1 (self arc는 sentinel U=86,400 — §4)
+                       그 외: 직전 departure + U[직전 장소 → locᵢ]  // §7.1-1 (self arc는 D=0·U=0 — 같은 장소면 이동 없음, §4)
                        (직전 출발이 이동을 담는 창을 골랐으므로 arrival은 근무창 안이다)
           serviceStart = arrival 이상이면서 side.windows 중 하나 안이고
                        fitService(W, ·, serviceTime)도 만족하는 가장 이른 시각   // §7.1-2
@@ -661,8 +664,8 @@ Domain §6–§8의 optional 규칙·경계값·오류 분류에서 뽑았다.
 | E15 | 비호환 차량 경로에 배정 | Evaluator INCOMPATIBLE_VEHICLE (hard — 감점 아님) | §3.4·§8.1 |
 | E16 | maxStop·maxDrive·치수 축 부재 | 검사 자체 없음 (sentinel 비교 금지) | §2.4·§2.6 |
 | E17 | stopCount == effectiveMaxStopCount | 통과 (`≤`). +1이면 MAX_STOP_COUNT | §2.6 |
-| E18 | 같은 장소 연속 방문 | 첫 진입만 stopCount +1, 사이 U = 86,400 (self arc sentinel — Domain §4, 2026-08-12 확정: 유효한 경로에 self arc가 나타나지 않게 하는 값. 종전 "U=0"은 폐기) | §7.4·§4 |
-| E19 | 첫 방문이 startDepot과 같은 장소 | stopCount +1 (depot는 비교 대상 아님), U = 86,400 (self arc sentinel — §4) | §7.4·§4 |
+| E18 | 같은 장소 연속 방문 | 첫 진입만 stopCount +1, 사이 **D = 0 · U = 0** (self arc — Domain §4, 2026-08-17 원복: 같은 장소면 이동이 없다. 서로 다른 두 Request가 같은 `LocationId`를 쓰는 것은 정상 입력이고, 노드 중복은 §2.2 `DUPLICATE_NODE`가 잡는다. 2026-08-12의 sentinel U=86,400은 폐기 — 정상 케이스에 24시간을 매겼다). 길이 0 arc는 §3.3 `fitArc` 정의가 그대로 확정한다: `[t, t]`라 `t`가 창 안이면 그 자리에서 성립하고 미루기가 일어나지 않는다 | §7.4·§4·§3.3 |
+| E19 | 첫 방문이 startDepot과 같은 장소 | stopCount +1 (depot는 비교 대상 아님), **D = 0 · U = 0** (self arc — §4). 차고에서 같은 장소의 첫 고객으로 나가는 것은 **이동 0**이지 위반이 아니다 — 차고는 `visits`에 없으므로(§2.1) 노드 중복도 아니다 | §7.4·§4 |
 | E20 | waitInDepot=Y | 첫 방문 대기가 depotWaiting으로 이동, serviceStart·routeOperationalTime은 N과 동일. **다일이면 그 대기 중 창 사이의 틈은 rest로 간다** (근무 시간 부분만 depotWaiting) | §2.5·§7.3 |
 | E21 | waitInDepot=Y인데 최속 출발도 창에 늦음 | TIME_WINDOW (Y는 늦추기만 — 이르게 못 함) | §2.5 |
 | E22 | endDepot 존재 | 마지막→endDepot 이동을 driveDist·Time·근무창에 포함 | §7.4·§6.2 |
