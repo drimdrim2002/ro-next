@@ -1,7 +1,3 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## 이 저장소의 성격 — 설계가 본체, 코드는 입력층까지만 있다
 
 배차 최적화(RPDPTW) 서비스. **Stage 0 완료 (2026-08-10) · Stage 1 완료 (2026-08-16 구현 검토 반영)** —
