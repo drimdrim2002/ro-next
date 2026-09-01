@@ -46,6 +46,12 @@ revisions:
     Stage 2 범위·DoD 문장에 대각값이 없고, Stage 3의 E18·E19가 함께 갱신됐다
   - 2026-08-17 Domain §6.2 방문 유일·참조 후속 — Stage 3 그림의 구조 검사 목록만
     `pair·XOR·방문 유일·참조`로 맞춤. 범위·DoD 무변경
+  - 2026-09-02 Stage 4 초기해를 **결정적 construction 8개 포트폴리오**로 확정 —
+    본문 "만드는 것" 갱신 + DoD 2줄 추가(8개 전부 Feasible·결정성 / 기법별 실측 기록).
+    상세는 implementation/stage-04-initial-solution-heuristics.md. 다른 Stage 무변경
+  - 2026-09-02 Stage 4를 **4-초기해 / 4-ALNS 두 구현 단계로 분리** (5-재검증/5-결과와 같은
+    형식 — 번호는 그대로). §2.2 순서 그림·표 행 추가, Stage 4 절의 '만드는 것'과 DoD를
+    단계별로 재작성. 범위·설계 내용 무변경 — 만드는 순서와 완료 판정 시점만 나뉜다
 ---
 
 # RO-Next Implementation Plan
@@ -301,10 +307,21 @@ destroy/repair 루프, 초기해 휴리스틱, HTTP.
 초기 배차안을 만들고, destroy/repair로 **해를 반복 개선**한다. 한 번에 넣거나 빼는 단위는
 항상 Request 전체(pair)다.
 
-**이 단계에서 만드는 것** (Domain §9)  
-- 초기해 생성(greedy 삽입 등 — 알고리즘 세부는 재량).  
-- ALNS: destroy / repair(pair 단위), acceptance, 시간 한도 종료.  
-- 삽입 shortlist 근사는 재량. **수락·기각 판정은 정식 평가(Stage 3)만** 사용.
+**두 단계로 나눠 구현한다 (2026-09-02).** 하나의 Stage지만 **따로 만들고 따로 끝낸다** —
+`4-초기해`가 green이 된 뒤 `4-ALNS`를 시작한다 (§2.2 순서 표).
+
+**4-초기해에서 만드는 것** (Domain §9.3 재량)  
+- **난수를 쓰지 않는 rule 기반 construction 8개**와, 그것을 돌려 정식 평가로 최선 하나를
+  고르는 포트폴리오. 기법 목록·의사코드·기권 규칙·테스트는
+  [stage-04-initial-solution-heuristics.md](implementation/stage-04-initial-solution-heuristics.md).  
+- 삽입 후보 탐색·검증(`InsertionSearch`) — 4-ALNS의 repair 연산자가 그대로 재사용한다.  
+- **ALNS 타입을 하나도 참조하지 않는다** — 그래서 이 단계만으로 완결되고 단독으로 green이 된다.
+
+**4-ALNS에서 만드는 것** (Domain §9)  
+- destroy / repair(pair 단위), acceptance, 시간 한도 종료.  
+- 삽입 shortlist 근사는 재량. **수락·기각 판정은 정식 평가(Stage 3)만** 사용.  
+- 초기해는 **인자로 받는 오버로드**가 있어(Stage 4 문서 §3.2), 4-초기해가 없어도 손 조립
+  해로 단독 검증된다. 기본 경로에서는 4-초기해의 포트폴리오를 쓴다.
 
 ALNS 이론(파괴·재삽입·수용 기준·시간 예산)은 이미 안다고 가정한다.
 이 시스템이 추가로 고정하는 것은 **pair 원자성·XOR 유지·수락은 정식 평가만**이다.
@@ -312,18 +329,31 @@ ALNS 이론(파괴·재삽입·수용 기준·시간 예산)은 이미 안다고
 **왜 이 순서인가**  
 Stage 3의 평가 없이는 “더 나은 해”를 정의할 수 없다.
 재검증(Stage 5의 앞부분)은 ALNS **없이** 만들 수 있고, 오히려 ALNS보다 **먼저** 만드는 것이
-맞다 — Stage 5 절 참고. 구현 순서상으로는 3 → 5-재검증 → 4 → 5-결과.
+맞다 — Stage 5 절 참고. 구현 순서상으로는 3 → 5-재검증 → **4-초기해 → 4-ALNS** → 5-결과.
 
 **의도적으로 안 하는 것**  
 결과 JSON 조립, 발행, HTTP. 탐색 파라미터의 최종 튜닝은 Stage 8.
 
-**완료 기준 (DoD)**  
-- 소형 fixture에서 초기해 대비 개선이 관측된다.  
+**완료 기준 (DoD) — 4-초기해**  
+- 8개가 각각 구조 검사를 통과하고 **정식 평가에서 Feasible**이다
+  (미배정이 남는 것은 Feasible이다 — 미배정 수는 점수 1번 축이지 제약 위반이 아니다).
+  성립하지 않는 기법은 기권하고 건너뛴다.  
+- 난수를 쓰지 않으므로 **같은 입력에 대해 언제나 같은 초기해**가 나온다.  
+- **기법별 실측 기록**: 규모 측정에서 8개 각각의 소요·미배정 수·score와
+  총 소요 / `timeLimitSec` 비를 출력한다 — 8 → 4 축소 판단의 입력이다 (결정은 Stage 8).  
+- **규모**: Stage 2와 같은 합성 문제로 포트폴리오 1회 — 정상 종료를 확인하고 위 수치를 기록한다.  
+- 판정: `mvn verify` green + heuristics 문서 §8의 T13–T25.
+  **이 시점에 ALNS는 아직 없다** — 그래도 이 목록이 전부 통과해야 다음으로 간다.
+
+**완료 기준 (DoD) — 4-ALNS**  
+- 소형 fixture에서 초기해 대비 개선이 관측된다.
+  (2026-09-02: 기준값이 **포트폴리오 8개 중 최선**이라 이 단언은 더 엄격해졌다.)  
 - pair·XOR 불변식이 탐색 중 유지된다 — **property 테스트**
   (예: 랜덤 스텝 N회 후 구조 검사).  
 - **규모**: Stage 2와 같은 합성 문제로 ALNS 1회 — 시간 한도 안에 몇 번 반복했는지 기록한다.
   여기서도 실물 JSON을 읽지 않는다. 실물 fixture 전 구간 실행은 Stage 6.
-  (품질을 Win과 맞추는 목표는 Stage 8.)
+  (품질을 Win과 맞추는 목표는 Stage 8.)  
+- 판정: `mvn verify` green + Stage 4 문서 §7의 T1–T12.
 
 **용어 메모**
 
@@ -332,7 +362,7 @@ Stage 3의 평가 없이는 “더 나은 해”를 정의할 수 없다.
 - **shortlist 근사**: 삽입 후보를 줄이기 위한 빠른 대략 평가. **채택 여부**는 근사로 정하지 않고
   Stage 3 정식 평가로 정한다.
 
-**상세 설계**: [stage-04-initial-solution-and-alns.md](implementation/stage-04-initial-solution-and-alns.md) · Domain §9
+**상세 설계**: [stage-04-alns.md](implementation/stage-04-alns.md) · Domain §9
 
 ---
 
@@ -503,7 +533,7 @@ W 표다 — 벤치마크 해석의 문제이지 구현 작업 항목이 아니�
 **범위 선언**(무엇이 범위 밖인가)은 [Master §4·§6](master-design.md)이다.
 
 **완료 기준 (DoD)**  
-없다 — 완료되는 Stage가 아니다. 트리거가 발동하면 Stage Extra 문서의 §5 승격 절차를 거쳐
+없다 — 완료되는 Stage가 아니다. 트리거가 발동하면 Stage Extra 문서의 §6 승격 절차를 거쳐
 정식 Stage로 옮겨지고 등재부에서 빠진다.
 
 **상세 설계**: [stage-extra-deferred-features.md](implementation/stage-extra-deferred-features.md)
@@ -549,8 +579,8 @@ Stage 1부터 8까지 순서대로 진행하면 된다.
 ### 2.2 순서와 병행
 
 ```text
-0 → [fixture 실측] → 1 → 2 → [Domain 해석 확정] → 3 → 5-재검증 → 4 → 5-결과
-  → 6 → 7 → 8
+0 → [fixture 실측] → 1 → 2 → [Domain 해석 확정] → 3 → 5-재검증
+  → 4-초기해 → 4-ALNS → 5-결과 → 6 → 7 → 8
 ```
 
 솔버(1–5)가 중심이고 앱(6)은 얇다. 한 Stage를 끝내고(테스트 green) 다음으로 간다.
@@ -562,6 +592,7 @@ Stage 1부터 8까지 순서대로 진행하면 된다.
 | **[fixture 실측]** | 실물 fixture의 크기·값을 **미리 재서** Stage 2·4의 규모 DoD 목표 숫자를 고정한다. 세는 것뿐이라 코드가 없다. 2026-08-10 실측(`data/win_poc_case_floor.json`): 주문 452 · 차량 31 · 차고 1 · 장소 **453** · 이동표 **205,209쌍 = 453² (전 쌍이 입력에 주어짐, 희소하지 않다)** · `multiRotation 1`(**D1 확정 후 이 값은 그대로 접수 통과한다** — 1바퀴, 교정 불필요) · `Termination.secondsSpentLimit 600` · `Optimizer.VehicleMaxStopCount 28` · `Optimizer.DefaultSpeed 45` (수치 표기는 2026-08-12 number 인코딩 정정 반영 — Domain §3.1) |
 | **[Domain 해석 확정]** | **완료 (2026-08-10).** 전파 규칙의 해석을 Domain에 올려 Stage 3·5가 **같은 문장**을 보고 구현하게 했다. 시간창 close 기준(Domain §7.1)과 차고 창·다일 근무창(**D4** → Domain §3.2·§7.1·§7.3) 둘 다 확정됐다 |
 | **5-재검증 / 5-결과** | Stage 5 문서를 쪼개지 않는다. 그 문서는 이미 §1~§3이 재검증, §4가 결과 모델이라 **읽는 순서만** 바뀐다 (Stage 5 절 참고) |
+| **4-초기해 / 4-ALNS** | **따로 구현하고 따로 끝낸다 (2026-09-02).** 5-재검증/5-결과와 달리 문서도 이미 둘이다 — `stage-04-initial-solution-heuristics.md`가 4-초기해, `stage-04-alns.md`가 4-ALNS다. 각자 DoD와 테스트 표를 따로 갖고, 4-초기해는 ALNS 타입을 **하나도 쓰지 않아** 단독으로 green이 된다. 4-ALNS도 초기해를 인자로 받는 오버로드가 있어 손 조립 해로 단독 검증된다 (Stage 4 문서 §3.2) |
 
 **Stage 6의 병행 가능성** (이전 판의 "6의 adapter·storage는 3 이후 병행 가능"은 사실이 틀렸다):
 

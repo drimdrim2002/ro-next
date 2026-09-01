@@ -9,7 +9,7 @@ sources:
   - ../../data/ro_input_json_spec.pdf + win_poc_case.json·win_poc_case_floor.json (wire 실물)
   - stage-00-cleanup-and-skeleton.md (§3.1 이름 기준, §4.4 app pom, §11 Q2)
   - stage-01-canonical-input-normalization.md (§2.3 raw 운반체, §3 PlanNormalizer·InputException, §9 Q1·Q4·Q6)
-  - stage-04-initial-solution-and-alns.md (§3.2 AlnsSolver·AlnsConfig·AlnsResult, §9 Q1)
+  - stage-04-alns.md (§3.2 AlnsSolver·AlnsConfig·AlnsResult, §9 Q1)
   - stage-05-verification-and-result.md (§2 SolutionVerifier, §4 SolveResult·ResultAssembler·RunStamp, §9 인계)
 revisions:
   - 2026-08-10 최초 작성

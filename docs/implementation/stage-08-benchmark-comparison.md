@@ -8,7 +8,7 @@ sources:
   - ../implementation-plan.md (§0 최종 성공 기준, Stage 8)
   - ../domain-design.md (§8.2 metric, §11 결과 JSON)
   - stage-03-solution-propagation-evaluation.md (§3 RoutePropagator, §4 Evaluator·Evaluation — §3.1 재생의 계산기)
-  - stage-04-initial-solution-and-alns.md (§1 고정/재량 경계, §3.3 AlnsConfig, §8 연산자 이관)
+  - stage-04-alns.md (§1 고정/재량 경계, §3.3 AlnsConfig, §8 연산자 이관)
   - stage-05-verification-and-result.md (§4 SolveResult·미배정 사유, N4)
   - stage-06-app-assembly.md (§1.1 설정 키, §5 result.json wire, §10 Q1·Q5)
   - stage-07-ecs-deployment.md (§4 배포 절차, §6 E2, §7 V6)
@@ -51,6 +51,9 @@ revisions:
   - 2026-08-17 Domain §4 self arc 원복 정합 — W4를 D=0·U=0으로. 이 fixture는 재생 경로가
     self arc를 밟지 않아 **결론 무변경**이고, Win이 같은 좌표 쌍에 0/0을 쓰는 행렬 실측을
     근거로 추가했다. W16(비대각 D=9999)은 wire 사실 서술이라 무변경
+  - 2026-09-02 초기해 포트폴리오 반영 — §6 변경 수단 표의 '초기해 휴리스틱' 행을
+    포트폴리오 구성(8 → 4)·기법별 파라미터 두 행으로 교체하고, 축소 판단의 재료와
+    결정 주체를 명시. 실험 계획은 여전히 사전 확정하지 않는다 (기존 원칙 무변경)
 ---
 
 # Stage 8 — 벤치마크 비교
@@ -262,13 +265,24 @@ fingerprint·provenance 추적 체계를 만들지 않는다 — 아래 표 한 
 | seed | Stage 6 §1.1 `ro-next.solve.seed` | 환경변수 `RONEXT_SOLVE_SEED` (태스크 정의 revision) | 필요 |
 | `AlnsConfig` 나머지 (destroy 비율·q 상한, worse 수락 확률, 적응 가중치 segment·ρ·σ) | Stage 4 §3.3 | 코드 기본값 변경 → 새 이미지 | 필요 |
 | destroy/repair 연산자 추가 (Shaw/worst removal 등) | Stage 4 §8이 Stage 8 실험으로 이관한 SPI 확장 | 코드 추가 → 새 이미지 | 필요 |
-| 초기해 휴리스틱 | Stage 4 §4.1 (재량) | 코드 변경 → 새 이미지 | 필요 |
+| 초기해 포트폴리오 구성 (**8 → 4 축소**) | [stage-04-initial-solution-heuristics.md](stage-04-initial-solution-heuristics.md) §5·§10 Q1 | 코드 변경 → 새 이미지 | 필요 |
+| 초기해 기법별 파라미터 (H3 적재율 0.85, H2 4분위 등급 등) | 〃 §5 (재량) | 코드 변경 → 새 이미지 | 필요 |
 | 탐색 시간 한도 | 입력 `Termination.secondsSpentLimit` | 입력 JSON **사본**에서 변경 | 불필요 |
 
 `maxSteps`(최대 step 수 — 종전 이 표의 `maxIterations` 표기는 존재하지 않는 이름이었다,
 2026-08-13 교정)는 튜닝이 아니라 **예산 축**이라 이 목록에 두지 않는다 (Domain §2.5.1,
 Stage 4 §3.3) — seed·시간 한도처럼 실행 조건으로 `run.searchBudget`에 기록되며, 바꾸려면
 Stage 6 §1.1 설정(`ro-next.solve.max-steps` — 환경변수)으로 한다. `idleSteps`·`idleSec`도 같다.
+
+**초기해 8 → 4 축소는 이 Stage가 재료를 내고 사용자가 정한다 (2026-09-02).**
+[heuristics 문서](stage-04-initial-solution-heuristics.md) §10 Q1이 이 Stage로 넘긴 미결이다.
+재료는 T25가 출력하는 **기법별 소요·미배정 수·score**와 **포트폴리오 총 소요 / `timeLimitSec` 비**이고
+(절대 초는 그 자체로 해석되지 않는다 — 이 비가 1에 가까우면 초기해가 ALNS 예산만큼 쓰고 있다는 뜻이다),
+여기에 실물 규모 실행에서
+"한 번이라도 best로 뽑힌 적이 있는가"(`InitialSolutionResult.heuristicId`)를 더한다 —
+한 번도 뽑히지 않은 기법은 계산만 하고 결과에 기여하지 않는다. 이 Stage는 표를 만들 뿐
+자르지 않는다. 자를 4개가 정해지면 [Stage Extra E4](stage-extra-deferred-features.md)의
+병렬화 트리거가 발동한다.
 
 진행 원칙:
 

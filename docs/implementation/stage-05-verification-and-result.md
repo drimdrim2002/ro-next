@@ -10,7 +10,7 @@ sources:
   - stage-01-canonical-input-normalization.md (§2 canonical 모델, §3 TimeBase.toWallClock)
   - stage-02-travel-and-problem-freeze.md (§2.3 Problem 조회 메서드)
   - stage-03-solution-propagation-evaluation.md (§3.2 VisitFacts·RouteFacts·Evaluation, §4.3 Profile·Scores, N1·N2·N6)
-  - stage-04-initial-solution-and-alns.md (§3.2 AlnsResult, N6)
+  - stage-04-alns.md (§3.2 AlnsResult, N6)
 revisions:
   - 2026-08-10 최초 작성
   - 2026-08-10 3계층 반영 — `profile`→`eval` 배치, profile 인자화, score 배열 대조 추가

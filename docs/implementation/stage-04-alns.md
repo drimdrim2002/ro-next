@@ -1,5 +1,5 @@
 ---
-title: Stage 4 — 초기해와 ALNS (상세 구현 설계)
+title: Stage 4 — ALNS (상세 구현 설계)
 stage: 4
 date: 2026-08-10
 plan: ../implementation-plan.md
@@ -35,12 +35,25 @@ revisions:
     Stage 5 §9)하고 §3.2·§8의 같은 잔재 문구 동기. 설계 무변경
   - 2026-08-14 Domain `PICKUP_ONLY` — 삽입 위치: pickup NodeId를 0..n (DELIVERY_ONLY와
     대칭). 삽입 순서 키: delivery 창이 없으면 pickup의 마지막 창 close
+  - 2026-09-02 초기해를 **결정적 construction 8개 포트폴리오**로 대체 —
+    상세는 [stage-04-initial-solution-heuristics.md](stage-04-initial-solution-heuristics.md).
+    §3.4 `build(Problem, Profile)` · §4.1 포트폴리오 요약 · §4.3 후보 검증에 profile hard 추가 ·
+    §4.2-2 Infeasible 강등 폐기(예외로 승격) · N5·N8 개정 · E16 폐기(E16b 존치) ·
+    T1·T12 개정 · §9 **Q1 해소**(시간 한도는 ALNS 루프에만)
+  - 2026-09-02 **4-초기해 / 4-ALNS 분리 구현** 반영 (Plan §2.2) — 서두에 소유 범위 명시 ·
+    §3.2에 `solve(problem, profile, initial)` 오버로드 추가(초기해 없이 루프 단독 검증) ·
+    §4.2-2가 인자 초기해를 받도록 · §7 말미에 완료 기준의 경계 명시. 설계 무변경
+  - 2026-09-02 **파일명 변경** `stage-04-initial-solution-and-alns.md` → `stage-04-alns.md`.
+    4-초기해 분리로 이 문서가 초기해를 더는 소유하지 않아 옛 이름이 사실과 어긋났다.
+    frontmatter `title`·H1·서두 문장도 함께 정정. 참조 10건을 전부 갱신했고,
+    날짜가 박힌 과거 감사 기록(`.audit/partition-7.md`)은 **당시 사실이므로 고치지 않았다**
 ---
 
-# Stage 4 — 초기해와 ALNS
+# Stage 4 — ALNS
 
-solver-core의 `solve` 패키지에 초기해 생성과 ALNS 탐색(destroy/repair·acceptance·종료)을
-만든다. 주 근거: [Domain §9](../domain-design.md). Stage 3이 확정한
+solver-core의 `solve` 패키지에 ALNS 탐색(destroy/repair·acceptance·종료)을 만든다.
+초기해는 [4-초기해](stage-04-initial-solution-heuristics.md)가 소유하고, 여기서는 그 결과를
+받아 쓰기만 한다. 주 근거: [Domain §9](../domain-design.md). Stage 3이 확정한
 `Solution`·`Route`·`StructureCheck`·`RoutePropagator`·`Evaluator`·`EvaluationResult`·
 `Evaluation`·비교 규약(`Scores.compare < 0 ⟺ 더 좋음`)과 Stage 2·3의
 `Problem`(`freeze(Plan)`·`compatibleVehicles()`·`nodeRef()`)을 그대로 잇는다 —
@@ -53,13 +66,21 @@ solver-core의 `solve` 패키지에 초기해 생성과 ALNS 탐색(destroy/repa
 것(Stage 5 §2.1)이 담당한다 (예산 값 자체는 결과 기록용 `SearchBudget`으로 verify 패키지에
 존재한다 — Stage 5 §4.1. ArchUnit green이 곧 "예산 무관 검증"의 증거는 아니다).
 
-**DoD** ([Plan Stage 4](../implementation-plan.md)): 소형 fixture에서 초기해 대비 개선 확인 ·
-pair·XOR 불변식이 탐색 중 유지되는 property 테스트 (예: 랜덤 스텝 N회 후 구조 검사).
+**이 문서는 `4-ALNS`를 소유한다 (2026-09-02).** Stage 4는 **따로 만들고 따로 끝내는 두 단계**다 —
+`4-초기해`([stage-04-initial-solution-heuristics.md](stage-04-initial-solution-heuristics.md))가
+green이 된 뒤 이 문서를 시작한다 (Plan §2.2). 다만 **의존은 한 방향이고 약하다**:
+초기해 쪽은 ALNS 타입을 하나도 쓰지 않고, 이쪽은 §3.2의 오버로드로 초기해를 **인자로 받을 수**
+있어 손 조립 해만으로 단독 검증된다. 순서를 바꿔도 막히지 않는다는 뜻이지, 권장 순서가
+바뀌는 것은 아니다.
+
+**DoD** ([Plan Stage 4 — 4-ALNS](../implementation-plan.md)): 소형 fixture에서 초기해 대비 개선
+확인 · pair·XOR 불변식이 탐색 중 유지되는 property 테스트 (예: 랜덤 스텝 N회 후 구조 검사).
+4-초기해의 DoD는 이 문서가 판정하지 않는다.
 
 핵심 구도 — Domain §9.1의 한 스텝을 Stage 3 타입 위에 그대로 올린다:
 
 ```text
-[Problem (동결)]  ──InitialSolutionBuilder──▶  [initial Solution]  = current = best
+[Problem (동결)]  ──InitialSolutionBuilder(8개 포트폴리오)──▶  [initial Solution] = current = best
                                                       │
       ┌────────── 반복 (시간·step·idle 한도까지, Domain §12) ─────────────┐
       │ current ─destroy(pair 단위)─▶ draft ─repair(pair 삽입)─▶ draft'  │
@@ -88,7 +109,7 @@ pair·XOR 불변식이 탐색 중 유지되는 property 테스트 (예: 랜덤 �
 | **고정** | 종료 조건 도달(시간·step·idle) = 정상 종료 — 그 시점 best를 반환하고 재검증으로 넘긴다 | §12·Master §2 |
 | **고정** | 탐색은 `Problem`·이동표·profile을 수정하지 않는다 (읽기 전용) | §5 MUST |
 | **고정** | 탐색 예산은 `AlnsConfig`에만 있다. `Problem`에서 예산을 읽는 코드 금지 | §2.5.1 MUST NOT |
-| 재량 | 초기해 휴리스틱·개수(본 문서: 결정적 greedy 1개) | §9.3 |
+| 재량 | 초기해 휴리스틱·개수(본 문서: **결정적 construction 8개 포트폴리오** — [상세](stage-04-initial-solution-heuristics.md)) | §9.3 |
 | 재량 | 연산자 목록(본 문서: destroy 2 + repair 2)·q 범위·적응 가중치 | §9.3 |
 | 재량 | acceptance 세부(동점·worse 수락 확률)·예산 기본값·시드 정책 | §9.3 |
 | 재량 | 삽입 후보 shortlist·증분 계산 (도입 시 노트 N4의 대조 테스트 필수) | §9.2·§6.4 |
@@ -106,7 +127,7 @@ Solution·전파·평가·ALNS", Stage 0 §3.1). 하위 패키지를 만들지 �
 | `solve/AlnsConfig.java` | **탐색 예산**(시간·step·idle 한도·seed) + 알고리즘 튜닝 (§3.3) | Domain §2.5.1·§9.3 |
 | `solve/AlnsResult.java` | 탐색 산출: best + `Evaluation`(③) + `long[] score`(④) + 통계 | Domain §9·§10.2 |
 | `solve/AlnsRunStats.java` | 간단한 실행 통계 (반복·수락·경과·종료 사유) — 추적 장치 아님 | Domain §11.1 |
-| `solve/InitialSolutionBuilder.java` | 결정적 greedy 초기해 1개 생성 | Domain §9.3 재량 |
+| `solve/InitialSolutionBuilder.java` | 초기해 포트폴리오 실행기 — 결정적 construction 8개를 돌려 정식 평가로 best 1개 선택. **파일·기법 상세는 [stage-04-initial-solution-heuristics.md](stage-04-initial-solution-heuristics.md)** | Domain §9.3 재량 |
 | `solve/DestroyOperator.java` | destroy SPI: pair 단위로 빼서 bank로 | Domain §9.1 |
 | `solve/RepairOperator.java` | repair SPI: bank의 Request를 pair 삽입 | Domain §9.1 |
 | `solve/RandomRemoval.java` | 배정된 Request 중 무작위 q개 제거 | 재량 기본 연산자 |
@@ -114,6 +135,7 @@ Solution·전파·평가·ALNS", Stage 0 §3.1). 하위 패키지를 만들지 �
 | `solve/GreedyInsertion.java` | 후보 중 최소 비용 위치에 순차 삽입 | 재량 기본 연산자 |
 | `solve/RegretInsertion.java` | regret-2: 차선과의 격차가 큰 Request부터 삽입 | 재량 기본 연산자 |
 | `solve/AdaptiveWeights.java` | 연산자 룰렛 선택 + segment 가중치 갱신 | 재량 (ALNS 적응층) |
+| `solve/InsertionSearch.java` | §4.3 삽입 후보 탐색·검증·비용의 구현체 — repair 연산자와 초기해 8개가 공유 (노트 N5). **정의는 [heuristics 문서 §3.3](stage-04-initial-solution-heuristics.md)** | Domain §9.1 |
 
 Stage 3 산출물(`Solution`·`StructureCheck`·`Evaluator` 등)과 `Problem`·`Profile`·`Scores`는
 수정하지 않는다. 테스트 파일은 §7.
@@ -162,8 +184,16 @@ public final class AlnsSolver {
 
     /** 초기해 → ALNS 반복 → best 반환. Problem·profile은 읽기만 한다 (Domain §5).
         profile은 인자다 — Problem에 담기지 않으며, 호출자가 재검증에도 같은 인스턴스를
-        넘긴다 (Domain §8.4 MUST). */
+        넘긴다 (Domain §8.4 MUST).
+        초기해는 InitialSolutionBuilder.build(problem, profile)로 만든다. */
     public AlnsResult solve(Problem problem, Profile profile);
+
+    /** 초기해를 이미 가진 호출자용. 4-ALNS를 4-초기해와 **따로 구현·검증**하기 위한
+        진입점이다 (2026-09-02, Plan §2.2) — 손 조립 해나 빈 해를 넣으면 포트폴리오 8개
+        없이도 루프 전체를 시험할 수 있다.
+        받은 해는 위와 똑같이 다뤄진다: StructureCheck 위반이면 예외, Evaluator Infeasible이면
+        예외(§4.2-2). 예산·acceptance·종료는 전부 동일하다. */
+    public AlnsResult solve(Problem problem, Profile profile, Solution initial);
 }
 
 public record AlnsResult(
@@ -171,6 +201,7 @@ public record AlnsResult(
     Evaluation bestEvaluation,               // 층 ③ — Stage 5 재검증의 대조 대상 (§10.2)
     long[] bestScore,                        // 층 ④ — 〃 (Arrays.equals로 대조)
     Evaluation initialEvaluation,            // DoD "초기해 대비 개선"의 기준값
+                                             //   = 포트폴리오 8개 중 최선의 평가 (기준이 올라간다)
     long[] initialScore,                     // 〃 (개선 판정은 score로 — Scores.compare)
     AlnsRunStats stats) {}
 
@@ -238,10 +269,13 @@ public record AlnsConfig(
 ```java
 public final class InitialSolutionBuilder {
     /**
-     * 결정적 greedy 1개: 빈 해(전 Request bank)에서 GreedyInsertion을 결정적 순서로 적용.
-     * 같은 Problem이면 같은 초기해. 삽입 못 한 Request는 bank에 남는다 (유효한 해, §9.1).
+     * 결정적 construction 8개를 우선순위 순으로 실행해 정식 평가(Evaluator)로 best 하나를
+     * 고른다. 난수를 쓰지 않으므로 같은 Problem·Profile이면 같은 초기해.
+     * 삽입 못 한 Request는 bank에 남는다 (유효한 해, §9.1).
+     * profile을 받는다 — 후보 검증이 profile hard까지 보기 때문이다 (§4.3, 2026-09-02).
+     * 기법 목록·의사코드·기권 규칙은 stage-04-initial-solution-heuristics.md.
      */
-    public static Solution build(Problem problem);
+    public static InitialSolutionResult build(Problem problem, Profile profile);
 }
 
 public final class AdaptiveWeights {
@@ -259,17 +293,24 @@ public final class AdaptiveWeights {
 
 ### 4.1 초기해 생성 (`InitialSolutionBuilder.build`) — 재량 기본
 
+**상세는 [stage-04-initial-solution-heuristics.md](stage-04-initial-solution-heuristics.md).**
+여기서는 ALNS가 의존하는 계약만 적는다.
+
 ```text
-1. 시작해 = Solution(routes = [], bank = 모든 RequestId).
-2. 삽입 순서: **있는 delivery의 마지막 창 close**, delivery가 없으면 **pickup의 마지막
-   창 close** 오름차순, 동률은 RequestId 문자열 순
-   (결정적 — rng 없음. 시간창이 목록이 됐으므로(Domain §3.2) 어느 close인지 정한다 —
-    "가장 늦게까지 받아 주는 시각"이 급한 정도를 나타내고, 창이 하나면 종전 값과 같다.
-    `PICKUP_ONLY`는 pickup 창을 쓴다).
-3. 각 Request를 §4.3의 후보 탐색으로 최소 비용 위치에 삽입. 후보 0개면 bank에 남긴다.
-4. 반환. (이전 설계의 "초기해 ≤8개" 구조는 폐기 — 초기해는 1개다, Domain §9.3.)
+1. 우선순위 순으로 고정된 결정적 construction 8개를 순서대로 실행한다 (난수 없음).
+   그 Problem에서 성립하지 않는 기법은 기권하고 건너뛴다 (예: PICKUP_DELIVERY가 있으면
+   savings·sweep 계열).
+2. 각 결과는 StructureCheck 통과 + Evaluator Feasible이어야 한다 — 아니면 예외(버그).
+   §4.3의 후보 검증이 Evaluator가 보는 것 전부를 이미 보기 때문이다.
+3. best = Scores.compare 최소. 동률이면 우선순위가 앞선 기법이 이긴다 (결정적).
+4. 전원 기권이면 빈 해(전 Request bank)를 반환한다 — 유효한 해다 (§9.1).
+5. 초기해에는 시간 상한이 없다. 종료는 시간이 아니라 구조로 보장한다
+   (모든 바깥 루프가 매 반복에서 Request 하나를 삽입하거나 제외하므로 ≤ |requests|).
 ```
 
+- 종전의 "결정적 greedy 1개"는 8개 중 `deadline-sequential` 하나로 편입됐다 (2026-09-02).
+- 여기서 폐기된 채로 남는 것은 **이전 설계의 근사 phase-1 screening 2단계 파이프라인**이다
+  (Domain §9.3). 다수 후보를 만들어 **정식 평가로** 고르는 것은 그 구조가 아니다.
 - 호환 차량 0대·시간창 불가능 Request가 bank에 남아도 정상이다 — 사유 기록은 Stage 5의 일
   (bank는 ID만, §6.3 MUST NOT).
 
@@ -280,15 +321,16 @@ public final class AdaptiveWeights {
           deadline = now + config.timeLimitSec.        // 예산은 이미 결정돼 들어온다 (§3.3)
           lastBestStep = 0, lastBestAt = now.          // idle 카운터 기준점
           weights = destroy·repair 각각 AdaptiveWeights (초기 가중치 균등).
-2. 초기해  initial = InitialSolutionBuilder.build(problem).
+2. 초기해  initial = 인자로 받았으면 그것, 아니면
+                    InitialSolutionBuilder.build(problem, profile).best().  // §3.2 오버로드
           StructureCheck 위반 → IllegalStateException (버그 — §12 구조 결함).
-          Evaluator Infeasible → 빈 해(전 Request bank)로 강등하고 다시 평가한다
-          (2026-08-12 확정 — 버그가 아니다. 빌더의 후보 검증(§4.3)은 경로 단위 전파뿐이라
-           profile hard(§8.4)를 모르므로, hard 제약 profile 고객에서는 greedy 초기해의 첫
-           평가가 Infeasible일 수 있다. 빈 해는 유효한 해고(§9.1) 채우는 것은 repair의
-           일이다(N5) — 루프의 Infeasible draft 폐기(e·E10)와 같은 취급. 노트 N8).
-          빈 해마저 Infeasible → IllegalStateException (profile 구성 결함 — E16b).
-          current = best = initial(강등 시 빈 해). currentEval = bestEval = 그 해의 평가.
+          Evaluator Infeasible → IllegalStateException (2026-09-02 개정 — 버그다.
+           §4.3의 후보 검증이 전파·호환·profile hard를 전부 보므로 construction 결과가
+           Infeasible일 수 없다. 종전의 "빈 해 강등"(E16·N8)은 후보 검증이 profile hard를
+           모르던 시절의 규칙이라 폐기).
+          전원 기권이어서 빈 해가 왔는데 그마저 Infeasible → IllegalStateException
+           (profile 구성 결함 — E16b, 존치).
+          current = best = initial. currentEval = bestEval = 그 해의 평가.
           currentScore = bestScore = 그 해의 score.
 3. 반복    while (종료 조건 미충족):
         종료 조건 = now ≥ deadline                                    → TIME_LIMIT
@@ -328,8 +370,12 @@ Request 하나를 경로 하나에 넣는 후보 나열과 검증. `GreedyInsert
           PICKUP_ONLY — pickup NodeId를 각 삽입 위치 0..n에 (DELIVERY_ONLY와 대칭).
           PICKUP_DELIVERY — pickup 위치 i ≤ delivery 위치 j 의 모든 (i, j) 쌍.
             픽업 선행이 후보 생성 규칙 자체로 보장된다 (§1.4·§9.1).
-검증:      후보 방문 목록으로 RoutePropagator.propagate(problem, vehicleId, visits′) —
-          Infeasible이면 후보 탈락. (그 경로의 정확한 물리 계산이지 근사가 아니다 — 노트 N7.)
+검증:      ① 후보 방문 목록으로 RoutePropagator.propagate(problem, vehicleId, visits′) —
+             Infeasible이면 후보 탈락. (그 경로의 정확한 물리 계산이지 근사가 아니다 — 노트 N7.)
+          ② profile.hardConstraints() 전부 satisfied(problem, facts) — 거짓이면 탈락
+             (2026-09-02 추가). HardConstraint가 시그니처상 경로 단위라 이 검증은 완결적이고,
+             그래서 §4.1 초기해와 루프의 draft 모두 profile hard로 Infeasible이 될 수 없다.
+             해 전체 수준 요구는 이 SPI로 표현 불가 — 점수 축으로 정의한다 (E16b).
 비용(재량): (새 경로 여부, ΔdriveDistMeter, ΔrouteOperationalTimeSec) 사전식 —
           기존 경로 우선, 거리 증가 최소. 이 비용은 후보 '고르기'에만 쓴다.
           수락은 §4.4의 정식 평가만이 결정한다 (§9.2 MUST NOT).
@@ -382,10 +428,10 @@ best 갱신은 항상 strict: Scores.compare(draftScore, bestScore) < 0 일 때�
 | N2 | **구조 위반은 폐기가 아니라 예외**: 구조 결함은 품질 문제가 아니라 버그다 (§1.4·§6.3·§12). draft를 조용히 버리면 버그가 재검증(Stage 5)까지 숨는다. `IllegalStateException`으로 solve를 중단시키고 executor(Stage 6)가 FAILED로 기록한다 |
 | N3 | **같은 seed = 같은 결과**: `Set`·`Map` 순회 순서에 의존하지 않도록 연산자는 후보를 ID 문자열 정렬 후 rng를 적용한다. 시드 정책 자체는 재량(§9.3)이지만, 시드가 주어졌을 때의 결정성은 테스트 안정성(T1·T5)의 전제라 기본 연산자의 계약으로 둔다 |
 | N4 | **증분 계산은 아직 없다**: 이 Stage의 평가는 항상 전체 재계산(Stage 3 N7)이고 후보 검증은 경로 단위 전파다. 규모(경로 ~30 × 방문 ~20)에서 충분하다. 증분 캐시·shortlist를 나중에 넣는 것은 재량이나, 도입 시 "캐시 점수 = 전체 재계산 점수" 대조 테스트(§6.4)가 필수다 |
-| N5 | **초기해 = 빈 해의 repair**: `InitialSolutionBuilder`는 §4.3 후보 탐색을 결정적 순서로 쓰는 특수 사례다. 삽입 루틴을 하나만 구현·검증하면 된다 |
+| N5 | **초기해 = 빈 해의 repair**: 8개 construction 전부가 §4.3 후보 탐색을 서로 다른 결정적 순서로 쓰는 특수 사례다. 삽입 루틴(`InsertionSearch`)을 하나만 구현·검증하면 8개와 repair 연산자가 함께 그것을 쓴다 (2026-09-02 — 기법이 8개가 돼도 이 노트의 취지는 그대로다) |
 | N6 | **Stage 5 인계**: 재검증 진입값은 `AlnsResult.best`(분해는 Stage 3 N6 — routes/bank가 곧 domain 타입 분해값)와 `bestEvaluation`(점수 대조 대상, §10.2)이다. verify가 `solve` 타입을 직접 받을 수 없으므로(ArchUnit) 변환 어댑팅은 Stage 5가 정의한다 |
 | N7 | **경로 단위 전파는 근사가 아니다**: `RoutePropagator`는 그 경로의 정확한 물리·hard 판정이다(§7). 다만 호환성·profile hard·해 전체 집계는 `Evaluator`만 하므로, 수락 직전의 전체 정식 평가는 생략할 수 없다 (§4.2-e가 항상 돈다) |
-| N8 | **초기해 Infeasible은 버그가 아니라 profile hard의 정상 경로다** (2026-08-12): N7이 말하듯 profile hard는 `Evaluator`만 안다 — `build(problem)`은 profile을 받지 않으므로 그 제약을 지킬 방법이 없고, "전파를 통과했으니 Feasible"은 default profile에서만 참이다. 그래서 §4.2-2는 Infeasible 초기해를 예외가 아니라 **빈 해 강등**으로 처리한다(§9.1). 빌더에 profile을 넘겨 삽입 때부터 hard를 보는 개선(초기 품질·폐기율)은 §9.3 재량 — Stage 8 실험에서 필요가 확인되면 그때 |
+| N8 | **초기해 Infeasible은 버그다** (2026-09-02 개정): 종전 N8은 "`build(problem)`이 profile을 받지 않으므로 profile hard를 지킬 방법이 없다"를 근거로 Infeasible 초기해를 정상 경로로 두고 빈 해 강등을 규정했다. 그 전제가 사라졌다 — `build(problem, profile)`이 profile을 받고 §4.3-②가 후보 단계에서 hard를 보므로, construction 결과의 Infeasible은 논리적으로 불가능하다. "Stage 8에서 필요가 확인되면"으로 미뤄 뒀던 개선을, 포트폴리오 선택이 정식 평가로 이뤄지는 이상 Infeasible 후보를 만들어 버리는 것이 낭비라 당겨 적용했다. 빈 해 강등(E16)은 폐기, E16b는 존치 |
 
 ---
 
@@ -411,7 +457,7 @@ best 갱신은 항상 strict: Scores.compare(draftScore, bestScore) < 0 일 때�
 | E13b | `idleSteps`·`idleSec` 둘 다 부재 | 정상 — 시간·step 한도만으로 종료 (기존 동작과 동일) | §3.3 |
 | E14 | 같은 seed·같은 Problem 재실행 | 동일한 AlnsResult (노트 N3) | 재량이되 계약화 |
 | E15 | destroy가 removeCount보다 덜 뺌 (RouteRemoval 등) | 허용 — removeCount는 힌트 (§3.1) | §9.3 재량 |
-| E16 | 초기해 평가가 Infeasible (profile hard) | 빈 해(전 Request bank)로 강등해 재평가 후 진행 — 예외 아님 (§4.2-2·N8) | §8.4·§9.1 |
+| E16 | 초기해 평가가 Infeasible (profile hard) | **폐기 (2026-09-02).** §4.3-②가 후보 단계에서 profile hard를 보므로 이 상황이 생기지 않는다. 생기면 IllegalStateException (버그 — §4.2-2·N8) | §8.4·§4.3 |
 | E16b | 빈 해 평가마저 Infeasible | IllegalStateException — 빈 해를 거부하는 hard(최소 배정량 등)는 이 루프가 탐색할 수 없다(Infeasible엔 score가 없어 acceptance 불능). 그런 요구는 hard가 아니라 점수 축으로 정의한다 — profile 구성 결함으로 즉시 드러낸다 | §8.1·§8.3·N2 |
 
 ---
@@ -425,7 +471,7 @@ jqwik류 property 라이브러리를 추가하지 않는다 (Stage 0 §4.2가 te
 
 | # | 테스트 | 내용 | 대응 DoD 문장 |
 |---|---|---|---|
-| T1 | `AlnsSolverTest.improvesOverInitialOnSmallFixture` | 소형 fixture(손 조립: 두 지역 클러스터 × 차량 2대, 창 마감 순 greedy가 클러스터를 교차 배정하도록 배치) + 고정 seed + `maxSteps` 상한 → `Scores.compare(bestScore, initialScore) < 0` | "소형 fixture에서 초기해 대비 개선 확인" |
+| T1 | `AlnsSolverTest.improvesOverInitialOnSmallFixture` | 소형 fixture(손 조립: 두 지역 클러스터 × 차량 2대, 창 마감 순 greedy가 클러스터를 교차 배정하도록 배치) + 고정 seed + `maxSteps` 상한 → `Scores.compare(bestScore, initialScore) < 0`. **기준값이 포트폴리오 8개 중 최선**이라 2026-09-02 이후 이 단언은 더 엄격해진다 | "소형 fixture에서 초기해 대비 개선 확인" |
 | T2 | `AlnsInvariantPropertyTest.structureHoldsUnderRandomSteps` | seed ~20개 × 랜덤 연산자 시퀀스 ~200스텝: **destroy 직후와 repair 직후 각각** `StructureCheck.check` 위반 0 단언 + 각 스텝의 배정↔bank 이동이 Request 단위(부분 pair 이동 없음)임을 단언. PICKUP_DELIVERY 포함 문제로 수행 | "pair·XOR 불변식이 탐색 중 유지되는 property 테스트 (랜덤 스텝 N회 후 구조 검사)" |
 | T3 | `AlnsSolverTest.stopsAtTimeLimitAndReturnsBest` | 아주 짧은 한도로 solve → 정상 반환·best 존재·`stats.elapsedMillis` 기록·`termination == TIME_LIMIT` (E9 포함: 한도 0 → initial 반환) | (Plan 범위 문장 "시간 한도 종료") |
 | T4 | `AlnsSolverTest.reportedEvaluationMatchesFreshEvaluation` | solve 후 `Evaluator.evaluate(problem, profile, result.best())`를 새로 실행 → `bestEvaluation`은 record 동등, `bestScore`는 `Arrays.equals` (§6.4 "캐시 = 재계산", 체크리스트 #7 — Stage 5 대조의 전제) | (Plan 범위 문장 "acceptance" — 수락 권위가 정식 평가임의 증명) |
@@ -436,11 +482,16 @@ jqwik류 property 라이브러리를 추가하지 않는다 (Stage 0 §4.2가 te
 | T9 | `AlnsSolverTest.degenerateProblemsReturnValidResult` | E1(주문 0)·E2(차량 0) → 예외 없이 유효한 AlnsResult | (Plan 범위 문장 "초기해 생성") |
 | T10 | `AlnsSolverTest.stopsOnIdleLimits` | 넉넉한 시간 한도 + 작은 `idleSteps`(및 별도 케이스로 `idleSec`) → 한도 훨씬 전에 종료하고 `termination`이 IDLE_STEPS / IDLE_TIME. worse 수락이 일어나도 idle 카운터가 리셋되지 않음을 단언 (§4.2-f) | (본 개정에서 추가된 종료 조건의 직접 검증) |
 | T11 | `AlnsScaleTest.runsOnFullScaleSyntheticProblem` | **규모 측정.** Stage 2 T12와 **같은 합성 문제**(장소 453·주문 452·차량 31·이동표 453² 전 쌍)로 `AlnsSolver.solve` 1회 → 시간 한도 안에 정상 종료. **시간 한도 안에서 몇 번 반복했는지(`AlnsRunStats`의 반복·수락 수, `elapsedMillis`)를 출력해 기록한다.** 해의 품질·개선폭은 판정하지 않는다 (그건 Stage 8). 실물 JSON은 읽지 않는다 — 입력은 프로그램으로 조립한다 | Plan Stage 4 "**규모**" 문장 |
-| T12 | `AlnsSolverTest.infeasibleInitialFallsBackToEmptySolution` | 테스트 전용 hard 제약 profile(greedy 초기해의 삽입 결과를 거부하되 빈 해는 통과시키는 것 — 예: "경로당 방문 1개 초과 금지")로 solve → 예외 없이 진행, `initialEvaluation`이 빈 해 기준, 결과 유효 (E16). 별도 케이스: 빈 해도 거부하는 hard → `IllegalStateException` (E16b) | (§4.2-2 강등 규칙의 직접 검증) |
+| T12 | `AlnsSolverTest.profileHardIsHonoredFromConstruction` | **2026-09-02 개정** (종전 `infeasibleInitialFallsBackToEmptySolution`은 E16 폐기와 함께 폐기). 테스트 전용 hard 제약 profile("경로당 방문 1개 초과 금지")로 solve → 초기해가 **Feasible**이고 넣지 못한 Request는 bank에 남는다 · 루프 전체가 예외 없이 진행 · 결과 유효. 별도 케이스: 빈 해도 거부하는 hard → `IllegalStateException` (E16b) | (§4.3-② 후보 검증의 직접 검증) |
 
 T3–T10은 Plan DoD 요약 문장 밖이지만 Plan Stage 4 범위 문장("초기해 생성, destroy/repair(pair 단위),
 acceptance, 시간 한도 종료")의 직접 검증이다 — Plan §1의 편입(2026-08-11)에 따라 이 표 전부가
 완료 기준이다.
+
+**이 표는 `4-ALNS`의 완료 기준 전부다 (2026-09-02).** 초기해 8개의 테스트(T13–T25)는
+[heuristics 문서 §8](stage-04-initial-solution-heuristics.md)이 소유하며 `4-초기해`에서
+먼저 green이 된다. T1·T5·T9·T11·T12는 기본 경로(포트폴리오로 초기해를 만드는 경로)를 쓰고,
+나머지는 §3.2 오버로드에 손 조립 초기해를 넣어 포트폴리오와 무관하게 돌릴 수 있다.
 
 ---
 
@@ -458,15 +509,16 @@ acceptance, 시간 한도 종료")의 직접 검증이다 — Plan §1의 편입
 | profile별 탐색 예산 차등 (profile은 hard 제약·score 축만 소유) | 안 함 | Domain §8.4·§2.5.1 |
 | property 라이브러리(jqwik 등) 의존 추가 | 안 함 | Stage 0 §4.2 |
 | `Solution`·`Evaluator` 등 Stage 3 타입 변경 | 안 함 (그대로 소비) | Stage 3 §2–§4 |
+| 초기해 기법 8개의 파일·의사코드·기권 규칙·테스트 | [stage-04-initial-solution-heuristics.md](stage-04-initial-solution-heuristics.md) | 이 문서는 ALNS 본체만 소유 |
 
 ---
 
 ## 9. 미해결 질문
 
 닫힌 질문은 해소 표시를 달아 남긴다 ([README](README.md) 공통 규칙, 2026-08-13) —
-이 절의 미결은 Q1 하나다. Stage 4 구현은 각 항목의 "잠정 처리"로 진행한다.
+**이 절에 남은 미결은 없다** (Q1이 2026-09-02에 닫혔다).
 
 | # | 질문 | 잠정 처리 |
 |---|---|---|
-| Q1 | wire `Termination.secondsSpentLimit`의 적용 범위 — ALNS 루프만인지, 초기해·Problem 동결·재검증까지 포함한 전체 풀이인지 어느 문서도 정의하지 않았다 | `AlnsSolver`는 자기 예산(초기해 + 반복 루프)에만 적용. 전체 풀이 타임박스가 필요하면 Stage 6 executor에서 별도 결정 (Architecture §3.2 "시간 한도 = 입력 옵션 또는 설정"과 정합) |
+| Q1 | wire `Termination.secondsSpentLimit`의 적용 범위 — ALNS 루프만인지, 초기해·Problem 동결·재검증까지 포함한 전체 풀이인지 어느 문서도 정의하지 않았다 | **해소 (2026-09-02).** `timeLimitSec`은 **ALNS 반복 루프에만** 적용한다 — 초기해에는 시간 상한이 없다. 초기해의 종료는 시간이 아니라 구조가 보장하고(모든 바깥 루프가 ≤ \|requests\|), 시간 컷오프는 같은 입력에 대한 결정성(E14)을 깨므로 채택하지 않는다. 전체 풀이 타임박스(초기해+ALNS+재검증)는 Stage 6 executor 몫이다 (Architecture §3.2와 정합). 본문 반영: §4.2-1 주석·[heuristics 문서 §4.3](stage-04-initial-solution-heuristics.md) |
 | Q2 | `AlnsRunStats`(반복·수락 수 등)를 결과 JSON run 메타에 넣을지 | **해소 (2026-08-11, Stage 5 §9).** 넣지 않는다 — Domain §11.1 run 항목은 배송정책·탐색 예산(§2.5.1의 시간·step·idle·seed)만 따로 기록하고, stats(반복·수락 카운터·종료 사유)는 로그·실험용으로만 남는다 (§3.2 주석 동기) |
