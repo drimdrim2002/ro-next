@@ -46,6 +46,21 @@ revisions:
   - 2026-08-17 Domain §4 self arc 원복 정합 — §3.3 의사코드 주석·E18·E19의 U=86,400을
     **D=0·U=0**으로. 같은 장소 연속 방문은 정상 입력이고, 길이 0 arc는 기존 `fitArc` 정의가
     확정하므로 규칙 신설 없음. 노드 중복 금지는 §2.2 `DUPLICATE_NODE`가 그대로 소유
+  - 2026-08-22 테스트 계약 정정 — §7 T13 이름 오타(`deferSToNextWorkWindow` →
+    `defersToNextWorkWindow`) · T5의 "통과 경계"에 용량 경계 목표값 명시(적재 == `maxWeight`를
+    실제로 전파. 종전 문구로는 경계용 차량을 만들고 버려도 통과처럼 보였다 — 실제로 그랬다) ·
+    §7 위치 문단에 공용 fixture 보관소 `SolveFixtures` 등재. 전파 절차·판정 무변경
+  - 2026-08-25 테스트 계약 확장 — §7 T5·T14에 두 창 축 **동시 소진** 목표값 명시(차고 출발 →
+    `WORK_WINDOW` · 서비스 시작 → `TIME_WINDOW`, §3.3 절차 1·2의 2026-08-13 위반 귀속 규약) ·
+    T5에 **방문지** 창 목록이 빈 경우(→ `TIME_WINDOW`) 추가 · §3.3 보조 함수 문단에 `fitArc`의
+    실제 가시성(package-private) 기재. 종전 표는 "먼저 소진"만 덮어 tie 분기가, 빈 목록은
+    근무창 쪽만 덮여 방문지 쪽이 무검증이었다. 전파 절차·판정 무변경
+  - 2026-09-02 테스트 계약 정정 — §7 fixture 문단을 실제 구성(`TimeFixtures`·`SolveFixtures`·
+    `RoutePropagatorFixtures` 세 곳)에 맞춰 개정. 종전 "`SolveFixtures` 한 곳" 문면은 구현과
+    어긋났다(`TimeFixtures`를 나머지 둘이 함께 쓴다) · T5에 운전 두 축(`MAX_DRIVE_TIME`·
+    `MAX_DRIVE_DIST`)과 `CAPACITY_VOLUME`의 목표값 명시. 종전 "MAX_* 각 1건"은
+    `MAX_STOP_COUNT`만 검증돼 `checkRouteLimits`의 두 분기와 부피 분기가 미실행이었다.
+    전파 절차·판정 무변경
 ---
 
 # Stage 3 — Solution·전파·평가
@@ -318,6 +333,10 @@ off-by-one으로 보인다.
 fitArc(창목록, from, U)      = [t, t+U]가 한 창 안에 통째로 들어가는 가장 이른 t ≥ from (없으면 부재)
 fitService(창목록, from, S)  = [t, t+S]가 한 창 안에 통째로 들어가는 가장 이른 t ≥ from (없으면 부재)
 ```
+
+가시성은 `fitArc`(및 별개 보조인 시간 겹침 합산)만 **package-private**이다 — T13이 미루기·대기
+귀속을 직접 단언하기 때문이다. 나머지는 private이고, 이 완화는 `solve` 패키지 안에서만 유효하므로
+N8("창을 걷는 코드는 `verify`와 공유하지 않는다")에 영향이 없다 (`verify ↛ solve`는 ArchUnit이 강제).
 
 ```text
 0. 준비    v = problem.vehicle(vehicleId). 각 NodeId → problem.nodeRef (미등록이면 예외).
@@ -699,6 +718,15 @@ Domain §6–§8의 optional 규칙·경계값·오류 분류에서 뽑았다.
 `ProfileRegistryTest`만 `solver-profile/src/test/java/com/ronext/rpdptw/profile/`.
 의존은 JUnit만. Problem은 Stage 1·2의 정규화·freeze 경로로 손 조립한다 (fixture JSON 파싱은
 Stage 6 — Stage 1 §7과 동일 원칙).
+`solve` 패키지 테스트의 fixture는 책임별로 세 곳이다 (Stage 4·5가 그대로 이어받는다):
+**`TimeFixtures`**(시각·시간창 리터럴 — 나머지 둘도 이것을 쓴다) ·
+**`SolveFixtures`**(`Problem`·`Request`·`Vehicle` 조립과 §7.2 구성 — `solve` 전 테스트 공용) ·
+**`RoutePropagatorFixtures`**(전파 테스트 전용 `Problem` 변형). 새 fixture는 쓰는 테스트가
+둘 이상이면 `SolveFixtures`에, 전파 한 곳뿐이면 `RoutePropagatorFixtures`에 둔다 —
+**같은 fixture를 두 곳에 복제하지 않는다**(2026-09-02 개정: 종전 "`SolveFixtures` 한 곳"은
+구현과 어긋난 문면이었다). **일정 번호를 클래스·메서드 이름에 넣지 않는다** —
+문서 좌표(`section72…`)는 권위 문서를 가리키므로 그대로 쓴다
+([README](README.md) 이름 규칙, 2026-08-22).
 
 | # | 테스트 | 내용 | 대응 DoD 문장 |
 |---|---|---|---|
@@ -706,7 +734,9 @@ Stage 6 — Stage 1 §7과 동일 원칙).
 | T2 | `RoutePropagatorTest.reqDateFailsOnLateServiceStart` | §7.2 마지막 문단 변형 → `Infeasible(REQ_DATE)`. E1·E2 경계 포함 (serviceEnd는 조건 아님) | 〃 + "hard 위반 검출" |
 | T3 | `StructureCheckTest.detectsXorViolations` | E11·E12·E13(위반 0) + DUPLICATE_NODE·UNKNOWN_REQUEST | "XOR 위반 검출" |
 | T4 | `StructureCheckTest.detectsPairViolations` | E7·E8·E9·E10 각각 정확한 Kind로 검출 | 〃 (§1.4 pair는 XOR의 전제) |
-| T5 | `RoutePropagatorTest.detectsHardViolations` | E3·E5·E6·E17·E23·E39: TIME_WINDOW·CAPACITY(출발 적재 포함)·WORK_WINDOW(배치 실패·빈 창 목록)·MAX_* 각 1건 + 통과 경계 | "hard 위반 검출" |
+| T5 | `RoutePropagatorTest.detectsHardViolations` | E3·E5·E6·E17·E23·E39: TIME_WINDOW·CAPACITY(출발 적재 포함)·WORK_WINDOW(배치 실패·빈 창 목록)·MAX_* 각 1건 + 통과 경계 — 용량 경계는 **출발 적재 10,000 == `maxWeight` 10,000 → 통과**(`≤`)를 실제로 전파해 확인한다. 경계용 차량을 만들고 쓰지 않으면 이 칸은 비어 있는 것이다. **운전 두 축**: 이 경로의 합계
+5,400초·25,000m에 한도를 맞춰 `==`는 통과하고 1 낮추면 `MAX_DRIVE_TIME`·`MAX_DRIVE_DIST`(at 부재).
+**부피**: 무게와 별개 분기이므로 출발 적재 부피만 넘긴 구성으로 `CAPACITY_VOLUME`(at 부재). **서비스 시작의 두 창 축**: 근무창과 방문지 창이 **같은 시각에 함께 소진**되면 `TIME_WINDOW`(at = 그 방문 — §3.3 절차 2의 "먼저 적힌 쪽") · **방문지** 창 목록이 비면 `TIME_WINDOW`(그 축이 즉시 소진 — E6의 "빈 창 목록"은 근무창 쪽 `WORK_WINDOW`를 가리킨다) | "hard 위반 검출" |
 | T6 | `EvaluatorTest.incompatibleVehicleAndProfileHardAreHard` | E15 + 항상-false HardConstraint를 가진 테스트 profile → PROFILE_HARD (감점 통과 없음) | 〃 |
 | T7 | `ProfileRegistryTest.unregisteredResolvesToDefault` | E24·E25·E26: 미등록·부재 → default, 등록 → 해당 profile (solver-profile 모듈) | "미등록 customerId → default profile" |
 | T8 | `EvaluatorTest.usesGivenProfileInstance` | `evaluate(problem, profile, solution)`이 인자로 받은 그 profile의 `hardConstraints`·`score`만 호출 (스파이 profile로 확인). `Problem`에는 profile이 없다 | 〃 (§8.4 — 탐색·재검증 같은 profile의 전제) |
@@ -714,8 +744,8 @@ Stage 6 — Stage 1 §7과 동일 원칙).
 | T10 | `RoutePropagatorTest.waitInDepotRelocatesFirstWait` | E20·E21·**E34**: Y/N에서 serviceStart 동일, 대기 귀속만 이동, routeOperationalTime 불변. 차고가 늦게 여는 케이스에서 **N인데도 depotWaiting > 0** | (Plan 범위 문장 "전파 루프·기록 값 §7.3") |
 | T11 | `RoutePropagatorTest.stopCountAndDriveAggregation` | E18·E19·E22: 같은 장소 연속·depot 미산입·endDepot 포함 driveDist/Time | (Plan 범위 문장 "기록 값 §7.3") |
 | T12 | `EvaluatorTest.hardConstraintReadsProblemFacts` | 차급(`vehicleFeature`)을 보고 판정하는 테스트 `HardConstraint` → `problem` 인자로 그 값에 도달함을 확인 (§4.3 고객 구현 예의 전제) | (노트 N2 — 이번 변경의 목적 자체) |
-| T13 | `RoutePropagatorTest.deferSToNextWorkWindow` | **다일 전파.** §3.5 대응표의 전 셀 — 2일차 16:30 90분 이동이 3일차 08:00으로 미뤄지고 `customerWaitingTimeSec += 1800`·`interWorkWindowRestTimeSec += 54000`(2026-08-11 정정 — 종전 목표값 "rest 55800"은 §7.3 공식과 모순), 도착 207000 (E37) · 서비스가 창을 넘는 변형 (E38) · 대기가 근무 시간/틈으로 갈리는 변형 (customerWaiting 3600 + rest 54000) | (Domain §7.2.1 재현 — D4 확정분) |
-| T14 | `RoutePropagatorTest.depotWindowAppliesToDepartureAndReturn` | **차고 창.** E35(출발 불가, **Ds 목록이 먼저 소진되는 구성** → DEPOT_WINDOW, at 부재 — 창 구성은 E35의 데이터 조건 그대로) · E36(복귀가 창 틈 → DEPOT_WINDOW, 미루지 않음) · 차고 창이 전일이면 종전과 동일 | (Domain §7.1 — D4 확정분) |
+| T13 | `RoutePropagatorTest.defersToNextWorkWindow` | **다일 전파.** §3.5 대응표의 전 셀 — 2일차 16:30 90분 이동이 3일차 08:00으로 미뤄지고 `customerWaitingTimeSec += 1800`·`interWorkWindowRestTimeSec += 54000`(2026-08-11 정정 — 종전 목표값 "rest 55800"은 §7.3 공식과 모순), 도착 207000 (E37) · 서비스가 창을 넘는 변형 (E38) · 대기가 근무 시간/틈으로 갈리는 변형 (customerWaiting 3600 + rest 54000) | (Domain §7.2.1 재현 — D4 확정분) |
+| T14 | `RoutePropagatorTest.depotWindowAppliesToDepartureAndReturn` | **차고 창.** E35(출발 불가, **Ds 목록이 먼저 소진되는 구성** → DEPOT_WINDOW, at 부재 — 창 구성은 E35의 데이터 조건 그대로) · E36(복귀가 창 틈 → DEPOT_WINDOW, 미루지 않음) · 차고 창이 전일이면 종전과 동일 · **두 축 동시 소진**(근무창이 첫 이동을 못 담고 차고 창도 함께 닫히는 구성) → `WORK_WINDOW`, at 부재 — E35의 "Ds가 **먼저** 소진"과 구분되는 별개 데이터 조건이다 (§3.3 절차 1의 2026-08-13 위반 귀속 규약) | (Domain §7.1 — D4 확정분) |
 | T15 | `RoutePropagatorTest.routeOperationalTimeIdentityHolds` | **항등식.** 단일 창·다일·waitInDepot Y/N·endDepot 유무·**startDepot 유무** 조합에서 `routeOperationalTimeSec() == routeEndSec() − spanStartSec()` (Domain §7.3). E41·E42·E43 포함. 성분 정의가 어긋나면 여기서 먼저 깨진다 | (Domain §7.3 — 두 구현 대조의 전제) |
 | T16 | `RoutePropagatorTest.singleWindowMatchesPreD4Values` | **회귀 방지.** 현행 fixture 모양(창 1개·차고 전일창·endDepot 없음)에서 `departureSec == serviceEndSec`(전 방문)·`interWorkWindowRestTimeSec == 0`·`depotWaitingTimeSec == 0` (E40) — D4가 1일 입력의 값을 바꾸지 않았다는 증명 | (Domain §3.2 — D4 무영향 근거) |
 

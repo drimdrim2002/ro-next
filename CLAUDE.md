@@ -4,24 +4,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 이 저장소의 성격 — 설계가 본체, 코드는 입력층까지만 있다
 
-배차 최적화(RPDPTW) 서비스. **Stage 0 완료 (2026-08-10) · Stage 1 완료 (2026-08-16 구현 검토 반영)** —
-구 placeholder(`com.ronext.optimizer`, 수제 `HttpServer`, 합성 데모 `AlnsBatchEngine`)와 GCP 잔재는
-삭제됐고, 디스크의 코드는 확정 설계와 같은 3모듈 구조다. 다만 **솔버 로직(탐색·평가·재검증)은 아직 0**이다.
+배차 최적화(RPDPTW) 서비스. **Stage 0 완료 (2026-08-10) · Stage 1 완료 (2026-08-16) ·
+Stage 2 완료 (2026-08-17) · Stage 3 완료 (2026-09-02)** — 구 placeholder(`com.ronext.optimizer`,
+수제 `HttpServer`, 합성 데모 `AlnsBatchEngine`)와 GCP 잔재는 삭제됐고, 디스크의 코드는 확정 설계와
+같은 3모듈 구조다. 정식 평가(전파·metric·profile)까지 서 있고, **탐색(ALNS)과 재검증은 아직 0**이다.
 
 - **확정 설계**: AWS ECS Fargate 위 단일 Spring Boot 서비스, 저장은 S3만.
 - **현 코드**: 4개 pom + `RoNextApplication` + `application.yml` +
-  `solver-core`의 `domain`(canonical 모델 20개) · `domain.input`(raw 운반체 8개 + `PlanNormalizer`) +
-  테스트(solver-core 5클래스 21개 = stage-01 §7의 T1–T20 + ArchUnit, app 1클래스 2개).
-  `problem`·`eval`·`solve`·`verify`·`profile`·`api`·`run`·`input`·`storage`는
-  **아직 빈 패키지**다 — 그 타입들을 grep해서 안 나오는 게 정상이고, 아직 안 만든 것이지 다른 데 있는 게 아니다.
-- Stage 1 코드는 [stage-01](docs/implementation/stage-01-canonical-input-normalization.md)의 §1 파일 표·
-  §2 시그니처·§4 절차와 1:1이다. **다음 작업은 Stage 2** (이동표·`Problem` 동결). 손대기 전에 그 문서를 읽는다.
+  `solver-core`의 `domain`(canonical 모델 20개) · `domain.input`(raw 운반체 8개 + `PlanNormalizer`) ·
+  `problem`(`Problem`·`NodeRef`) · `eval`(사실 값·`Evaluation`·profile SPI·`DefaultProfile`·`Scores`) ·
+  `solve`(`Solution`·`StructureCheck`·`RoutePropagator`·`Evaluator`) + `solver-profile`의
+  `ProfileRegistry` + 테스트(solver-core 13클래스 51개, solver-profile 1클래스 1개, app 1클래스 2개).
+  `verify`·`api`·`run`·`input`·`storage`는 **아직 빈 패키지**다 — 그 타입들을 grep해서 안 나오는 게
+  정상이고, 아직 안 만든 것이지 다른 데 있는 게 아니다.
+- Stage 1–3 코드는 각 stage 문서의 §1 파일 표·§2 시그니처·§3~§4 절차와 1:1이다.
+  **다음 작업은 Stage 4** ([stage-04](docs/implementation/stage-04-initial-solution-and-alns.md) —
+  초기해·destroy/repair·acceptance). 손대기 전에 그 문서를 읽는다.
 - 문서·커밋 메시지는 한국어다. 용어(`Request`/pair/`Problem`/`Solution`/bank/profile/재검증/
   solveKey)는 문서 표기를 그대로 쓴다 — 같은 개념에 새 이름을 붙이지 않는다.
 
 ## 명령
 
-아래 전부 현재 동작한다 (Stage 0 완료 상태). DoD 판정은 항상 **루트 실행** 기준이다.
+아래 전부 현재 동작한다. DoD 판정은 항상 **루트 실행** 기준이다.
 
 ```bash
 source "$HOME/.sdkman/bin/sdkman-init.sh" && sdk env   # Java 25.0.3-amzn · Maven 3.9.14 (.sdkmanrc)
@@ -178,7 +182,7 @@ app/             com.ronext.rpdptw.app      api · run · input · storage — S
   `-q` 없이 좌표를 grep한다 (위 명령 절). 검사가 살아 있는지는 scope 제한을 푼 대조군
   (`mvn dependency:list -pl solver-core | grep -cE '^\[INFO\]\s+\S+:\S+:\S+:'` → 0이 아니어야 함)으로 본다.
 - **루트에서 `mvn test -Dtest=X`는 BUILD FAILURE다.** 3모듈이 된 뒤로는 패턴이 안 맞는 모듈
-  (`solver-profile`은 테스트 0개)에서 surefire가 "No tests matching pattern"으로 죽는다.
+  (테스트가 1개뿐인 `solver-profile` 등)에서 surefire가 "No tests matching pattern"으로 죽는다.
   `-pl <모듈>`을 같이 주거나 `-Dsurefire.failIfNoSpecifiedTests=false`를 붙인다.
 - `rpdptw/`·`adapters/`·`build/`·`apps/`·`gcp/`·`src/`·`.serverless/`·`node_modules/`·`Dockerfile` —
   **전부 삭제됐다** (Stage 0). 옛 문서·대화에서 이 경로가 보이면 지금은 존재하지 않는 것이다.

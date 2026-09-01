@@ -8,6 +8,11 @@
 이름 규칙: `stage-NN-<slug>.md`. 이전 Stage 문서가 정한 클래스명·패키지·시그니처는
 다음 Stage가 그대로 이어받는다 (같은 개념에 새 이름 금지).
 
+**일정 번호는 식별자에 넣지 않는다 (2026-08-22).** `Stage3Fixtures` 같은 이름은 Stage가 끝나면
+가리킬 대상이 없는데도 다음 Stage가 그대로 물려받는다(Stage 4 테스트가 `Stage3Fixtures`를
+import하게 된다). 반대로 설계 문서의 **절 좌표**는 권위 문서를 가리키므로 그대로 쓴다 —
+`section72Problem`·`reproducesDomainSection72`는 "Domain §7.2를 재현한다"는 뜻이라 정당하다.
+
 **읽는 법**: Plan의 Stage N 본문(배차/시스템 관점·평문 DoD) → Domain 해당 절 → 이 폴더의
 stage-NN 문서(파일·테스트 계약). Plan이 지도, 여기가 구현 직전 상세다.
 

@@ -43,6 +43,7 @@ public final class Problem {
     private final Map<LocationId, Depot> depotsByLocation;
     private final Map<VehicleId, Integer> resolvedSpeedKmH;
     private final Map<RequestId, Set<VehicleId>> compatibleVehicles;
+    private final Map<NodeId, NodeRef> nodeRefs;
 
     private Problem(
             String planId,
@@ -59,7 +60,8 @@ public final class Problem {
             Map<VehicleId, Vehicle> vehiclesById,
             Map<LocationId, Depot> depotsByLocation,
             Map<VehicleId, Integer> resolvedSpeedKmH,
-            Map<RequestId, Set<VehicleId>> compatibleVehicles) {
+            Map<RequestId, Set<VehicleId>> compatibleVehicles,
+            Map<NodeId, NodeRef> nodeRefs) {
         this.planId = planId;
         this.customerId = customerId;
         this.timeBase = timeBase;
@@ -75,6 +77,7 @@ public final class Problem {
         this.depotsByLocation = depotsByLocation;
         this.resolvedSpeedKmH = resolvedSpeedKmH;
         this.compatibleVehicles = compatibleVehicles;
+        this.nodeRefs = nodeRefs;
     }
 
     /** 검증 + 이동표 준비 + 호환성 사전 계산 + 동결. 실패 시 ProblemCreationException. */
@@ -155,6 +158,14 @@ public final class Problem {
             compatibleVehicles.put(request.id(), Collections.unmodifiableSet(compatible));
         }
 
+        Map<NodeId, NodeRef> nodeRefs = new LinkedHashMap<>();
+        for (Request request : requests) {
+            request.pickup().ifPresent(side ->
+                    nodeRefs.put(side.nodeId(), new NodeRef(request.id(), true, side)));
+            request.delivery().ifPresent(side ->
+                    nodeRefs.put(side.nodeId(), new NodeRef(request.id(), false, side)));
+        }
+
         return new Problem(
                 plan.planId(),
                 plan.customerId(),
@@ -170,7 +181,8 @@ public final class Problem {
                 Collections.unmodifiableMap(vehiclesById),
                 Collections.unmodifiableMap(depotsByLocation),
                 Collections.unmodifiableMap(resolvedSpeedKmH),
-                Collections.unmodifiableMap(compatibleVehicles));
+                Collections.unmodifiableMap(compatibleVehicles),
+                Collections.unmodifiableMap(nodeRefs));
     }
 
     public String planId() {
@@ -251,6 +263,10 @@ public final class Problem {
             throw new IllegalArgumentException("unknown request: " + id);
         }
         return ids;
+    }
+
+    public Optional<NodeRef> nodeRef(NodeId id) {
+        return Optional.ofNullable(nodeRefs.get(id));
     }
 
     private static Map<LocationId, Location> copyLocations(Map<LocationId, Location> source) {
