@@ -5,27 +5,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 이 저장소의 성격 — 설계가 본체, 코드는 입력층까지만 있다
 
 배차 최적화(RPDPTW) 서비스. **Stage 0 완료 (2026-08-10) · Stage 1 완료 (2026-08-16) ·
-Stage 2 완료 (2026-08-17) · Stage 3 완료 (2026-09-02)** — 구 placeholder(`com.ronext.optimizer`,
-수제 `HttpServer`, 합성 데모 `AlnsBatchEngine`)와 GCP 잔재는 삭제됐고, 디스크의 코드는 확정 설계와
-같은 3모듈 구조다. 정식 평가(전파·metric·profile)까지 서 있고, **탐색(ALNS)과 재검증은 아직 0**이다.
+Stage 2 완료 (2026-08-17) · Stage 3 완료 (2026-09-02) · Stage 4-초기해 완료 (2026-09-02)** —
+구 placeholder(`com.ronext.optimizer`, 수제 `HttpServer`, 합성 데모 `AlnsBatchEngine`)와 GCP 잔재는
+삭제됐고, 디스크의 코드는 확정 설계와 같은 3모듈 구조다. 정식 평가(전파·metric·profile)와
+초기해 construction 22개 포트폴리오까지 서 있고, **ALNS 본체와 재검증은 아직 0**이다.
 
 - **확정 설계**: AWS ECS Fargate 위 단일 Spring Boot 서비스, 저장은 S3만.
 - **현 코드**: 4개 pom + `RoNextApplication` + `application.yml` +
   `solver-core`의 `domain`(canonical 모델 20개) · `domain.input`(raw 운반체 8개 + `PlanNormalizer`) ·
   `problem`(`Problem`·`NodeRef`) · `eval`(사실 값·`Evaluation`·profile SPI·`DefaultProfile`·`Scores`) ·
-  `solve`(`Solution`·`StructureCheck`·`RoutePropagator`·`Evaluator`) + `solver-profile`의
-  `ProfileRegistry` + 테스트(solver-core 13클래스 51개, solver-profile 1클래스 1개, app 1클래스 2개).
+  `solve`(`Solution`·`StructureCheck`·`RoutePropagator`·`Evaluator` + 초기해: `InsertionSearch`·
+  `ConstructionHeuristic` SPI·`InitialSolutionBuilder`·`InitialSolutionResult`·`ConstructionOutcome`·
+  construction 22개 `*Construction`·`GiantTourSplit`) + `solver-profile`의
+  `ProfileRegistry` + 테스트(solver-core 30클래스 80개, solver-profile 1클래스 1개, app 1클래스 2개).
+  `solve`에 하위 패키지는 없다 — `AlnsSolver`·`AlnsConfig` 등 ALNS 타입은 아직 없다.
   `verify`·`api`·`run`·`input`·`storage`는 **아직 빈 패키지**다 — 그 타입들을 grep해서 안 나오는 게
   정상이고, 아직 안 만든 것이지 다른 데 있는 게 아니다.
-- Stage 1–3 코드는 각 stage 문서의 §1 파일 표·§2 시그니처·§3~§4 절차와 1:1이다.
-  **다음 작업은 Stage 4이고, 두 단계로 나눠 구현한다 — `4-초기해` → `4-ALNS`** (Plan §2.2):
-  ① [stage-04-heuristics](docs/implementation/stage-04-initial-solution-heuristics.md) —
-  초기해 construction 22개 포트폴리오(기본 8 + 확장 14, 결정적·rule 기반 — 확장 근거는
-  [survey](docs/implementation/stage-04-initial-solution-heuristics-survey.md)).
-  **ALNS 타입을 하나도 쓰지 않아 단독으로 green이 된다** (T13–T37). 여기부터 한다.
-  ② [stage-04](docs/implementation/stage-04-alns.md) — ALNS 본체
-  (루프·acceptance·종료, T1–T12). ①이 green이 된 뒤 시작한다.
+- Stage 1–3 코드는 각 stage 문서의 §1 파일 표·§2 시그니처·§3~§4 절차와 1:1이고,
+  4-초기해 코드는 [stage-04-heuristics](docs/implementation/stage-04-initial-solution-heuristics.md)의
+  §2 파일 표·§3 시그니처·§5 의사코드와 1:1이다 (구현 중 정정 3건은 그 문서 frontmatter `revisions`
+  2026-09-02 항목 — `apply`의 `Problem` 인자, T25 정차 한도 28, `InsertionSearch.Cache`).
+  **다음 작업은 `4-ALNS`** — [stage-04](docs/implementation/stage-04-alns.md) — ALNS 본체
+  (루프·acceptance·종료, T1–T12). 초기해 진입점은 `InitialSolutionBuilder.build(problem, profile)`이고
+  그 결과의 `evaluation`·`score`가 `AlnsResult.initialEvaluation`·`initialScore`로 흐른다.
   손대기 전에 **해당 단계의 문서를** 읽는다 — 두 문서는 소유 범위가 갈라져 있다.
+- T25(`InitialSolutionScaleTest`)는 규모 측정이라 수십 초 걸린다 — 단일 테스트를 돌릴 때는
+  `-Dtest='!InitialSolutionScaleTest' -Dsurefire.failIfNoSpecifiedTests=false`로 뺄 수 있다.
 - 문서·커밋 메시지는 한국어다. 용어(`Request`/pair/`Problem`/`Solution`/bank/profile/재검증/
   solveKey)는 문서 표기를 그대로 쓴다 — 같은 개념에 새 이름을 붙이지 않는다.
 

@@ -51,6 +51,9 @@ import java.util.OptionalLong;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
+import com.ronext.rpdptw.domain.VehicleId;
+import com.ronext.rpdptw.domain.RequestId;
+import com.ronext.rpdptw.domain.LocationId;
 
 import com.ronext.rpdptw.domain.Depot;
 import com.ronext.rpdptw.domain.Item;
@@ -584,6 +587,72 @@ class RoutePropagatorTest {
     private static void assertIdentity(Problem problem, List<NodeId> visits) {
         RouteFacts facts = feasible(RoutePropagator.propagate(problem, V1, visits));
         assertEquals(facts.routeEndSec() - facts.spanStartSec(), facts.routeOperationalTimeSec());
+    }
+
+    /** T17 — E44 경로 구역 단일성: A→ALL→A→A→ALL 통과 · A→ALL→B → ZONE_MIX(at = B 방문) · PD 양단 상이 → ZONE_MIX · ALL→ALL 통과. */
+    @Test
+    void zoneMixIsHard() {
+        LocationId a1 = new LocationId("A1");
+        LocationId a2 = new LocationId("A2");
+        LocationId a3 = new LocationId("A3");
+        LocationId n1 = new LocationId("N1");
+        LocationId n2 = new LocationId("N2");
+        LocationId b1 = new LocationId("B1");
+        TimeWindow work = ConstructionFixtures.WORK;
+        Problem problem = ConstructionFixtures.freeze(
+                List.of(new Depot(ConstructionFixtures.DEPOT, List.of(ConstructionFixtures.ALL_DAY), Optional.of("ALL"))),
+                List.of(
+                        ConstructionFixtures.delivery("A1", a1, 100L, work, Optional.of("A")),
+                        ConstructionFixtures.delivery("A2", a2, 100L, work, Optional.of("A")),
+                        ConstructionFixtures.delivery("A3", a3, 100L, work, Optional.of("A")),
+                        ConstructionFixtures.delivery("N1", n1, 100L, work, Optional.empty()),    // ALL·부재 = 중립
+                        ConstructionFixtures.delivery("N2", n2, 100L, work, Optional.empty()),
+                        ConstructionFixtures.delivery("B1", b1, 100L, work, Optional.of("B")),
+                        pdAcrossZones("PD", a1, b1)),
+                List.of(ConstructionFixtures.vehicle("V1", 30_000L, Optional.of(ConstructionFixtures.DEPOT), Optional.empty())),
+                ConstructionFixtures.locations(
+                        ConstructionFixtures.at(ConstructionFixtures.DEPOT, 37.0, 127.0),
+                        ConstructionFixtures.at(a1, 37.01, 127.0), ConstructionFixtures.at(a2, 37.02, 127.0),
+                        ConstructionFixtures.at(a3, 37.03, 127.0), ConstructionFixtures.at(n1, 37.0, 127.01),
+                        ConstructionFixtures.at(n2, 37.0, 127.02), ConstructionFixtures.at(b1, 37.0, 127.03)),
+                List.of());
+        VehicleId v1 = new VehicleId("V1");
+
+        // A → ALL → A → A → ALL : 구체 구역 {A} 하나 → 통과
+        feasible(RoutePropagator.propagate(problem, v1, List.of(d("A1"), d("N1"), d("A2"), d("A3"), d("N2"))));
+        // ALL → ALL : 구체 구역 ∅ → 통과
+        feasible(RoutePropagator.propagate(problem, v1, List.of(d("N1"), d("N2"))));
+        // A → ALL → B : {A, B} → ZONE_MIX, at = B 방문
+        PropagationResult.Infeasible mixed = infeasible(RoutePropagator.propagate(problem, v1, List.of(d("A1"), d("N1"), d("B1"))));
+        assertEquals(Violation.ZONE_MIX, mixed.violation());
+        assertEquals(Optional.of(d("B1")), mixed.at());
+        // B → A 순서를 바꿔도 두 번째 구체 구역의 첫 방문에서 걸린다
+        assertEquals(Optional.of(d("A1")), infeasible(RoutePropagator.propagate(problem, v1, List.of(d("B1"), d("A1")))).at());
+        // PD 양단이 다른 구체 구역 → 단독 경로도 ZONE_MIX
+        RequestId pd = new RequestId("PD");
+        PropagationResult.Infeasible pair = infeasible(RoutePropagator.propagate(problem, v1, List.of(NodeId.pickup(pd), NodeId.delivery(pd))));
+        assertEquals(Violation.ZONE_MIX, pair.violation());
+        assertEquals(Optional.of(NodeId.delivery(pd)), pair.at());
+        // 차고의 zoneId("ALL")는 방문이 아니라 세지 않는다 — 위 통과 케이스가 그 증거다
+    }
+
+    private static NodeId d(String id) {
+        return NodeId.delivery(new RequestId(id));
+    }
+
+    /** pickup은 구역 A, delivery는 구역 B인 PD. */
+    private static Request pdAcrossZones(String id, LocationId from, LocationId to) {
+        RequestId requestId = new RequestId(id);
+        return new Request(
+                requestId,
+                ServicePattern.PICKUP_DELIVERY,
+                Optional.of(ConstructionFixtures.side(NodeId.pickup(requestId), from, ConstructionFixtures.WORK, 60L, Optional.of("A"))),
+                Optional.of(ConstructionFixtures.side(NodeId.delivery(requestId), to, ConstructionFixtures.WORK, 60L, Optional.of("B"))),
+                List.of(new Item("I-" + id, 100L, 100L, 1, 0L)),
+                100L,
+                100L,
+                Optional.empty(),
+                Set.of());
     }
 
     private static Optional<Long> optional(OptionalLong value) {

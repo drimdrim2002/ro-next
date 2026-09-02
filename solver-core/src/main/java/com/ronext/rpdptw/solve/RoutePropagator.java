@@ -101,6 +101,8 @@ public final class RoutePropagator {
         private long depotWaitingSec;
         private long serviceTimeSec;
         private int stopCount;
+        /** 경로의 구체 구역 — 첫 구체 zoneId 방문에서 정해지고 이후 다른 구체 zoneId는 ZONE_MIX (Domain §3.4). */
+        private String routeZone;
 
         Propagation(Problem problem, VehicleId vehicleId, List<NodeId> visits) {
             this.problem = problem;
@@ -249,7 +251,8 @@ public final class RoutePropagator {
          *       (서비스 소요 시간이 당일 근무창을 넘어가면 다음 근무창으로 미룸).</li>
          *   <li><b>3. 서비스 종료:</b> 서비스 시작 시각 + 서비스 소요 시간.</li>
          *   <li><b>4. 희망 마감 시각 검증:</b> 서비스 시작 시각이 고객 희망 마감 시각(reqDateSec)을 초과하면 REQ_DATE 위반.</li>
-         *   <li><b>5~6. 적재량 갱신 및 용량 검증 (updateLoad):</b> 픽업(+수요) / 배송(-수요) 반영 후 차량 용량 초과 검증.</li>
+         *   <li><b>5~6. 적재량 갱신 및 용량 검증 (updateLoad):</b> 픽업(+수요) / 배송(-수요) 반영 후 차량 용량 초과 검증.
+         *       이어서 구역 단일성: 이 방문의 구체 zoneId가 경로의 앞선 구체 zoneId와 다르면 ZONE_MIX (Domain §3.4·§7.1-6).</li>
          *   <li><b>7. 다음 이동 출발 시각 결정 (departFrom):</b> 다음 목적지까지의 이동 시간이 온전히 들어가는 가장 이른 근무창 탐색
          *       (현재 근무창에서 다음 이동을 완료할 수 없으면 다음 근무창 시작 시각으로 출발을 미룸).</li>
          * </ol>
@@ -275,6 +278,13 @@ public final class RoutePropagator {
             Optional<PropagationResult.Infeasible> overCapacity = updateLoad(visit);
             if (overCapacity.isPresent()) {
                 return overCapacity;
+            }
+            Optional<String> zone = visit.side().zoneId();          // ALL·부재는 정규화가 비웠다 (Domain §3.4)
+            if (zone.isPresent()) {
+                if (routeZone != null && !routeZone.equals(zone.get())) {
+                    return infeasible(Violation.ZONE_MIX, visit.nodeId());
+                }
+                routeZone = zone.get();
             }
 
             OptionalLong departure = departFrom(index, location, serviceEndSec);

@@ -31,6 +31,16 @@ revisions:
     §3.3에 `standaloneDistMeter`·`Candidate.deltaForwardSlackSec` 추가(H11·H14·H13 전용),
     §4.3 종료 상한을 기법별 명시로 일반화(차량 소비 (c) 추가), §4.4 기권 표에 H19·H20,
     §5 표·의사코드 14개, §7 X15~X19, §8 T26~T37 추가. 기존 H1~H8 규정은 무변경
+  - 2026-09-02 구현 중 정정 — `InsertionSearch.apply`에 `Problem` 인자 추가.
+    bank에서 뺄 `RequestId`는 삽입된 `NodeId`로부터 `Problem.nodeRef`로만 알 수 있다
+    (`Solution`·`Candidate`에는 NodeId뿐). XOR을 apply 한 곳에서 지키기 위한 최소 변경
+  - 2026-09-02 구현 중 정정 — **T25 합성 문제에 정차 한도 28 추가**(실물 fixture의
+    `VehicleMaxStopCount 28`, Plan fixture 실측). Stage 2 T12 문제 그대로(시간창 종일·용량 무제한·
+    정차 한도 없음)는 **경로 하나가 452건을 전부 삼켜** regret 계열이 `O(n⁴)`가 된다 — 실측 H1
+    724초(routes 1). 그 값은 실물과 무관한 단일 거대 경로의 소요라 22 → 4 판단의 입력이 못 된다.
+    같은 이유로 §9의 재량 항목 **증분 평가를 parallel-regret·matching·global-cheapest 계열
+    (H1·H2·H9·H10·H12·H17)에 도입** — `InsertionSearch.Cache`(경로 버전 캐시, 차량별 상위 3개)와
+    "캐시 = 전체 재계산" 대조 테스트(T13b). 나머지 기법은 전체 재전파 그대로 (§4.1)
 ---
 
 # Stage 4 — 초기해 휴리스틱 포트폴리오
@@ -225,8 +235,9 @@ public final class InsertionSearch {
     public static List<Candidate> candidates(Problem problem, Profile profile,
                                              Solution current, RequestId requestId);
 
-    /** 후보를 적용한 새 Solution (불변 — 원본은 그대로). */
-    public static Solution apply(Solution current, Candidate candidate);
+    /** 후보를 적용한 새 Solution (불변 — 원본은 그대로). 삽입된 Request는 bank에서 빠진다
+     *  — NodeId → RequestId는 problem.nodeRef로 푼다 (XOR 유지, Domain §6.3). */
+    public static Solution apply(Problem problem, Solution current, Candidate candidate);
 
     /**
      * 요청 하나를 차량 v의 단독 경로로 돌 때의 이동표 거리 합 —
@@ -291,6 +302,10 @@ construction 결과의 Infeasible은 **논리적으로 불가능** — 나오면
   **속도별 표이므로 "그" 시간표를 캐싱하면 혼합 속도 차대에서 버그다.**
 - 증분 계산·shortlist는 이 문서 범위 밖이다 (stage-04 N4 그대로 — 후보 1개 검증은 경로
   전체 재전파다). 도입 시 "캐시 점수 = 전체 재계산 점수" 대조 테스트가 필수다.
+  **2026-09-02 도입분**: `InsertionSearch.Cache` — 요청별·차량별로 "그 경로의 방문 목록 → 그 경로의
+  상위 3개 후보"를 기억하고, 경로가 바뀐 차량만 다시 전파한다. 후보 1개의 검증 자체는 여전히
+  경로 전체 재전파다(shortlist 아님). 상위 3개면 regret-2·regret-3·regret-m(경로별 최선)·최선이
+  전부 전체 재계산과 같다 — T13b가 이를 대조한다. 사용처는 H1·H2·H9·H10·H12·H17뿐이다.
 
 ### 4.2 결정성 규칙 (전 기법 공통)
 
@@ -927,6 +942,7 @@ priority(r) = 0. R = 5 라운드 (재량 상수):
 
 | # | 테스트 | 내용 | 대응 |
 |---|---|---|---|
+| T13b | `InsertionSearchTest.cachedCandidatesMatchFullRecomputation` | `InsertionSearch.Cache`의 상위 3개·차량별 최선이 삽입을 거듭한 여러 상태에서 전체 재계산과 일치 (§4.1 대조 테스트) | §4.1 |
 | T13 | `InsertionSearchTest.candidateValidationIncludesProfileHard` | 테스트 전용 hard 제약("경로당 방문 1개 초과 금지") profile에서 2개째 삽입 후보가 **후보 단계에서** 탈락 | §4.1 ② |
 | T14 | `InitialSolutionBuilderTest.selectsBestByOfficialEvaluation` | 결과가 다른 기법 2개 이상에서 `Scores.compare` 최소인 해가 선택됨 · 동률이면 우선순위 앞선 기법 (X7) | §6-4 |
 | T15 | `InitialSolutionBuilderTest.abstainedHeuristicsAreSkipped` | PD 포함(다중 depot) 문제 → H7·H8(·H19·H20)이 `ABSTAINED`, 나머지는 `BUILT`, 결과 유효 | §4.4 |
@@ -939,7 +955,7 @@ priority(r) = 0. R = 5 라운드 (재량 상수):
 | T22 | `SweepNextFitConstructionTest.coordinatesOrderOnly` | 좌표를 바꿔 각도 순서만 바꾸고 이동표는 고정 → 방문 **순서**는 바뀌되 보고된 거리는 표 값과 일치 | Domain §4 |
 | T23 | `VehicleZoneFillConstructionTest.commitsOnlyBestZonePerVehicle` | 차량 1대·존 2개에서 적재율 규칙대로 한 존만 커밋 · what-if가 다른 존을 오염시키지 않음 | §5 H3 |
 | T24 | `InitialSolutionBuilderTest.recordsPerHeuristicOutcome` | `outcomes`가 우선순위 순이고 기법마다 상태·미배정 수·score·소요를 담음 | §9 (8→4 입력) |
-| T25 | `InitialSolutionScaleTest.runsPortfolioOnFullScaleSyntheticProblem` | **규모 측정.** Stage 2 T12·stage-04 T11과 **같은 합성 문제**(장소 453·주문 452·차량 31·이동표 453² 전 쌍)로 포트폴리오 1회 → 정상 종료. **기법별(22개) 소요·미배정 수·score와, 포트폴리오 총 소요를 `AlnsConfig.timeLimitSec`으로 나눈 비(比)를 출력해 기록한다** — 절대 초는 그 자체로 해석되지 않는다. 이 비가 1에 가까우면 초기해가 ALNS 예산만큼 시간을 쓰고 있다는 뜻이고, 그것이 22 → 4 축소의 판단 근거가 된다 ([survey §5](stage-04-initial-solution-heuristics-survey.md)). **한도가 아니다** — 넘겨도 중단하지 않는다 (§4.3). 품질은 판정하지 않는다 | Plan Stage 4 규모 DoD |
+| T25 | `InitialSolutionScaleTest.runsPortfolioOnFullScaleSyntheticProblem` | **규모 측정.** Stage 2 T12·stage-04 T11과 **같은 합성 문제**(장소 453·주문 452·차량 31·이동표 453² 전 쌍)에 **정차 한도 28**(실물 fixture `VehicleMaxStopCount`)을 더해 포트폴리오 1회 → 정상 종료. 한도가 없으면 경로 하나가 전 주문을 삼켜(2026-09-02 실측 H1 724초·routes 1) 실물과 무관한 값이 된다. **기법별(22개) 소요·미배정 수·score와, 포트폴리오 총 소요를 `AlnsConfig.timeLimitSec`으로 나눈 비(比)를 출력해 기록한다** — 절대 초는 그 자체로 해석되지 않는다. 이 비가 1에 가까우면 초기해가 ALNS 예산만큼 시간을 쓰고 있다는 뜻이고, 그것이 22 → 4 축소의 판단 근거가 된다 ([survey §5](stage-04-initial-solution-heuristics-survey.md)). **한도가 아니다** — 넘겨도 중단하지 않는다 (§4.3). 품질은 판정하지 않는다 | Plan Stage 4 규모 DoD |
 | T26 | `InsertionSearchTest.standaloneDistUsesDirectedMatrix` | `d(i,j) ≠ d(j,i)`인 이동표에서 `standaloneDistMeter`가 방향별 값을 그대로 합산 · 좌표 미사용 | Domain §4 |
 | T27 | `InsertionSearchTest.candidateReportsForwardSlackDelta` | `deltaForwardSlackSec`이 "삽입 전후를 각각 전파해 기존 방문 slack 합을 재계산한 값"과 일치 · 새 방문은 불포함 | §4.1 |
 | T28 | `FeasibleRoutesRegretMConstructionTest.dynamicFeasibleRouteCountLeads` | 정적 호환 수는 같지만 경로가 차서 동적 가능 경로 수가 다른 두 요청에서 적은 쪽이 먼저 삽입됨 | §5 H9 |

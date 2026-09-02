@@ -114,6 +114,12 @@ revisions:
   - 2026-09-02 §9.3 정밀화 — 폐기된 것은 '근사 phase-1 screening 2단계'이고,
     다수 초기해를 **정식 평가로** 고르는 것은 재량('초기해 개수')임을 명시.
     Stage 4 포트폴리오 설계의 근거 (구현: stage-04-initial-solution-heuristics.md). 규칙 무변경
+  - 2026-09-02 **경로 구역 단일성 복원** — 세션 29 Q-COMP-02(RESOLVED, 사용자 확정)의
+    "차량은 2개 이상의 zoneId를 방문할 수 없음 · 서울→ALL→서울 가능 · 서울→ALL→경기도 불가"가
+    2026-08-09 재설계에서 §3.4의 호환 판정 절반만 옮겨지고 **경로 단위 규칙이 누락**돼 있었다
+    (폐기 master-design §"전용 차량과 zone"·세션 31 통합표 "route zone 제약 분리"에는 있었다).
+    §3.4에 경로 규칙 문단, §7.1 절차 6에 `ZONE_MIX` 판정 추가. 전파가 판정하므로 탐색(§9)·
+    재검증(§10)이 같은 식을 쓴다. 구현: stage-03 revisions 2026-09-02 항목
 ---
 
 # RO-Next Domain Design
@@ -683,6 +689,25 @@ Default를 `"ALL"`로 정의하므로, 생략됐거나 `"ALL"`인 차량은 **�
 3D 적재 고객이 확정되면 §2.1.1 경로로 되살리고, **판정은 core `Compatibility`가 아니라
 그 고객 profile의 `HardConstraint`가 한다** ([Stage Extra E2](implementation/stage-extra-deferred-features.md)).
 
+**경로 구역 단일성 (route-level hard, 2026-09-02 복원 — 세션 29 Q-COMP-02 확정).** 위 판정은
+"이 차량이 이 방문에 갈 수 있는가"이고, 그와 별개로 **한 경로가 방문하는 구체 구역은 최대 한
+종류**다. 구체 구역 = 방문 side의 `zoneId` 중 부재·`"ALL"`이 아닌 것. 규칙:
+
+```text
+routeZones(route) = { side.zoneId : route의 방문 side, zoneId 존재 }        // ALL·부재는 정규화가 비운다
+유효 ⇔ |routeZones(route)| ≤ 1
+  A → ALL → A → A → ALL   가능 (구체 구역 {A})
+  ALL → ALL               가능 (구체 구역 ∅)
+  A → ALL → B             불가 (구체 구역 {A, B}) → ZONE_MIX (§7.1 절차 6)
+```
+
+- 구역이 지정되지 않은 차량(`zoneIds` 부재·`["ALL"]`)도 이 규칙을 따른다 — "전 구역 가능"은
+  어느 한 구역이든 맡을 수 있다는 뜻이지 한 경로에서 섞어도 된다는 뜻이 아니다.
+- `PICKUP_DELIVERY`의 두 side가 서로 다른 구체 구역이면 그 Request는 **어느 경로에도 들어갈 수
+  없다** (pair가 한 경로에 있어야 하므로) — 정규화 오류가 아니라 미배정으로 남는다.
+- 차고의 `zoneId`는 방문이 아니므로 세지 않는다 (`DELIVERY_ONLY`의 출발 적재도 마찬가지).
+- 판정은 전파(§7.1 절차 6)가 한다 — 후보 삽입·정식 평가·재검증이 같은 코드 경로를 지난다.
+
 호환 차량이 0대인 Request는 구조 오류가 아니다 — 풀이는 진행되고 그 Request는 미배정+사유로 남는다.
 `DELIVERY_ONLY`인데 모든 차량이 `startDepot` 없거나, `PICKUP_ONLY`인데 모든 차량이 `endDepot`
 없어도 같다 — 정규화는 통과하고 사유는 `NO_COMPATIBLE_VEHICLE`이다 (§11.1). 혼합 차대
@@ -891,7 +916,9 @@ bank는 **`RequestId`만** 담는다. 실패 사유·에러 메시지·비용을
 3. serviceEnd     = serviceStart + serviceTime      // §3.3
 4. reqDate 검사    : serviceStart ≤ reqDate          // §2.3. serviceEnd는 조건 아님
 5. load 갱신       : 픽업 +, 배송 −                   // §6.2 부호 규칙
-6. hard 검사       : 이 절차가 새로 판정하는 것은 **용량과 한도(경로 누적, §2.6)**뿐이다
+6. hard 검사       : 이 절차가 새로 판정하는 것은 **용량과 한도(경로 누적, §2.6)**, 그리고
+                    **구역 단일성**(§3.4 — 이 방문의 구체 zoneId가 경로의 앞선 구체 zoneId와 다르면
+                    ZONE_MIX, at = 이 방문)뿐이다
                     (시간창(serviceStart ≤ closeTime)·근무창은 절차 2·7이, 차고 창은 절차 0·8이 판정한다)
 7. departure      = serviceEnd 이상이면서 다음 이동을 통째로 담는 가장 이른 시각
                     창 끝을 넘으면 다음 창으로 미룬다. 남은 창이 없으면 WORK_WINDOW

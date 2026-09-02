@@ -61,6 +61,9 @@ revisions:
     `MAX_DRIVE_DIST`)과 `CAPACITY_VOLUME`의 목표값 명시. 종전 "MAX_* 각 1건"은
     `MAX_STOP_COUNT`만 검증돼 `checkRouteLimits`의 두 분기와 부피 분기가 미실행이었다.
     전파 절차·판정 무변경
+  - 2026-09-02 **`ZONE_MIX` 추가** — Domain §3.4 경로 구역 단일성 복원(세션 29 Q-COMP-02)에 따라
+    `Violation.ZONE_MIX`와 §3.3 절차 2의 판정(이 방문의 구체 zoneId ≠ 경로의 앞선 구체 zoneId →
+    `Infeasible(ZONE_MIX, at = 이 방문)`) 추가. E44·T17 추가. 다른 절차·판정 무변경
 ---
 
 # Stage 3 — Solution·전파·평가
@@ -262,6 +265,7 @@ public enum Violation {
     DEPOT_WINDOW,           // 차고 창 밖 있는 출·도착 (Domain §7.1, 2026-08-10 D4 신설)
     CAPACITY_WEIGHT, CAPACITY_VOLUME,
     MAX_STOP_COUNT, MAX_DRIVE_TIME, MAX_DRIVE_DIST,
+    ZONE_MIX,               // 경로 구역 단일성 (Domain §3.4·§7.1-6, 2026-09-02 복원)
     INCOMPATIBLE_VEHICLE,   // Evaluator가 사용 (§4.2)
     PROFILE_HARD            // Evaluator가 사용 (§4.2)
 }
@@ -379,6 +383,8 @@ N8("창을 걷는 코드는 `verify`와 공유하지 않는다")에 영향이 �
           serviceStart > side.reqDateSec → REQ_DATE                // §7.1-4. serviceEnd는 조건 아님 (MUST NOT)
           load 갱신   : pickup 방문 +수요, delivery 방문 −수요       // §7.1-5·§6.2 (PICKUP_ONLY는 pickup만)
           0 ≤ load ≤ capacity 위반 → CAPACITY_*                    // §7.1-6
+          side.zoneId 존재 ∧ 경로의 앞선 구체 zoneId 존재 ∧ 둘이 다름 → ZONE_MIX (at = 이 방문)
+                        // §7.1-6·Domain §3.4 — ALL·부재는 정규화가 비웠으므로 "존재"만 본다
           departure   = fitArc(W, serviceEnd, U[locᵢ → 다음 장소])  // §7.1-7 — 창 끝을 넘으면
                         부재이면 WORK_WINDOW                        //          다음 창으로 미룬다
                         (마지막 방문이면 다음 장소 = endDepot, 없으면 departure = serviceEnd)
@@ -708,6 +714,7 @@ Domain §6–§8의 optional 규칙·경계값·오류 분류에서 뽑았다.
 | E33 | `HardConstraint`가 `problem`에서 optional 필드(치수 등)를 읽었는데 부재 | 그 제약의 판단이다 — core는 관여하지 않는다 (부재 = 그 축 미사용은 Domain §2.4의 core 규칙) | §8.4 |
 | E41 | startDepot 부재 | 앞 arc 없음. 첫 방문 arrival = spanStart. departureSec empty. depotWaitingTime = 0. waitInDepot 미적용 | Domain §7.1 절차 0' |
 | E42 | PICKUP_ONLY pickup 방문 | load +수요. endDepot 도착에서 같은 수요만 −. 잔량 일괄 0 대입 금지 | Domain §6.2 |
+| E44 | 경로의 구체 zoneId가 둘 이상 (A → ALL → B) | ZONE_MIX (at = 두 번째 구체 구역의 첫 방문). A → ALL → A → A → ALL·ALL → ALL은 통과. PD 양단이 다른 구체 구역이면 어느 경로에서도 ZONE_MIX | Domain §3.4·§7.1-6 |
 | E43 | startDepot 부재 + waitInDepot=Y | Y는 무시. 오류 아님. 시각은 N과 동일 | Domain §2.5·§7.1 |
 
 ---
@@ -748,6 +755,7 @@ Stage 6 — Stage 1 §7과 동일 원칙).
 | T14 | `RoutePropagatorTest.depotWindowAppliesToDepartureAndReturn` | **차고 창.** E35(출발 불가, **Ds 목록이 먼저 소진되는 구성** → DEPOT_WINDOW, at 부재 — 창 구성은 E35의 데이터 조건 그대로) · E36(복귀가 창 틈 → DEPOT_WINDOW, 미루지 않음) · 차고 창이 전일이면 종전과 동일 · **두 축 동시 소진**(근무창이 첫 이동을 못 담고 차고 창도 함께 닫히는 구성) → `WORK_WINDOW`, at 부재 — E35의 "Ds가 **먼저** 소진"과 구분되는 별개 데이터 조건이다 (§3.3 절차 1의 2026-08-13 위반 귀속 규약) | (Domain §7.1 — D4 확정분) |
 | T15 | `RoutePropagatorTest.routeOperationalTimeIdentityHolds` | **항등식.** 단일 창·다일·waitInDepot Y/N·endDepot 유무·**startDepot 유무** 조합에서 `routeOperationalTimeSec() == routeEndSec() − spanStartSec()` (Domain §7.3). E41·E42·E43 포함. 성분 정의가 어긋나면 여기서 먼저 깨진다 | (Domain §7.3 — 두 구현 대조의 전제) |
 | T16 | `RoutePropagatorTest.singleWindowMatchesPreD4Values` | **회귀 방지.** 현행 fixture 모양(창 1개·차고 전일창·endDepot 없음)에서 `departureSec == serviceEndSec`(전 방문)·`interWorkWindowRestTimeSec == 0`·`depotWaitingTimeSec == 0` (E40) — D4가 1일 입력의 값을 바꾸지 않았다는 증명 | (Domain §3.2 — D4 무영향 근거) |
+| T17 | `RoutePropagatorTest.zoneMixIsHard` | E44: A→ALL→A→A→ALL 통과 · A→ALL→B → `Infeasible(ZONE_MIX, at = B 방문)` · PD 양단 상이 → ZONE_MIX · ALL→ALL 통과 | Domain §3.4 경로 구역 단일성 |
 
 T9–T16은 DoD 세 문장 밖이지만 Plan Stage 3 범위 문장(취지 — 적재 부호 규칙, 전파 절차·기록
 값(§7.3), metric, 사전식 비교)과 Domain §3.2·§7.1(D4 확정분)의 직접 검증이다 — Plan §1의

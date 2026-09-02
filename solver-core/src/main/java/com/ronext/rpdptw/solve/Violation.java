@@ -10,6 +10,7 @@ public enum Violation {
     MAX_STOP_COUNT,
     MAX_DRIVE_TIME,
     MAX_DRIVE_DIST,
+    ZONE_MIX,
     INCOMPATIBLE_VEHICLE,
     PROFILE_HARD
 }
