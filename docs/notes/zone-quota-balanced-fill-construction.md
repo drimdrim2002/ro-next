@@ -113,6 +113,9 @@ record Allocation(List<VehicleType> types, List<Zone> zones, Map<String, List<Ve
 
 H23이 여기서 읽는 것은 딱 셋이다: `zones()`(순서 포함), `vehiclesByZone()`, 그리고 요청 정렬 키를 만들기 위한 `types()`.
 
+> DP의 상태·전이·`covers`·프론티어·역추적을 예제 하나로 끝까지 따라가는 보강 자료가 따로 있다 —
+> [`ZoneQuotaAllocation` — 존 배정 DP는 어떻게 최적화하는가](zone-quota-allocation-dp.md). greedy가 실패하는 반례와 층별 표·상태 격자 그림을 담았다.
+
 ### 2.2 `InsertionSearch` — 삽입 오라클[^oracle]
 
 H23이 부르는 메서드는 아래 표가 전부다.
