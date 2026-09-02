@@ -16,8 +16,9 @@ Stage 2 완료 (2026-08-17) · Stage 3 완료 (2026-09-02)** — 구 placeholder
 - Stage 1–3 코드는 각 stage 문서의 §1 파일 표·§2 시그니처·§3~§4 절차와 1:1이다.
   **다음 작업은 Stage 4이고, 두 단계로 나눠 구현한다 — `4-초기해` → `4-ALNS`** (Plan §2.2):
   ① [stage-04-heuristics](docs/implementation/stage-04-initial-solution-heuristics.md) —
-  초기해 construction 8개 포트폴리오(결정적·rule 기반). **ALNS 타입을 하나도 쓰지 않아
-  단독으로 green이 된다** (T13–T25). 여기부터 한다.
+  초기해 construction 22개 포트폴리오(기본 8 + 확장 14, 결정적·rule 기반 — 확장 근거는
+  [survey](docs/implementation/stage-04-initial-solution-heuristics-survey.md)).
+  **ALNS 타입을 하나도 쓰지 않아 단독으로 green이 된다** (T13–T37). 여기부터 한다.
   ② [stage-04](docs/implementation/stage-04-alns.md) — ALNS 본체
   (루프·acceptance·종료, T1–T12). ①이 green이 된 뒤 시작한다.
   손대기 전에 **해당 단계의 문서를** 읽는다 — 두 문서는 소유 범위가 갈라져 있다.

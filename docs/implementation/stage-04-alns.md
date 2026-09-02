@@ -11,6 +11,9 @@ sources:
   - stage-02-travel-and-problem-freeze.md (§2.3 Problem.compatibleVehicles)
   - stage-03-solution-propagation-evaluation.md (§2 Solution·StructureCheck, §3 RoutePropagator, §4 Evaluator·비교 규약)
 revisions:
+  - 2026-09-02 초기해 포트폴리오 확장 인지 — heuristics 문서의 확장 14개 편입(8 → 22개,
+    [survey](stage-04-initial-solution-heuristics-survey.md))으로 개수 언급만 갱신.
+    이 문서의 ALNS 계약은 무변경 (초기해는 진입점일 뿐)
   - 2026-08-10 최초 작성
   - 2026-08-10 탐색 예산을 `AlnsConfig`가 소유 (Domain §2.5.1) — idle 종료 조건 추가,
     profile 인자화, 비교를 `Scores.compare`로
@@ -80,7 +83,7 @@ green이 된 뒤 이 문서를 시작한다 (Plan §2.2). 다만 **의존은 한
 핵심 구도 — Domain §9.1의 한 스텝을 Stage 3 타입 위에 그대로 올린다:
 
 ```text
-[Problem (동결)]  ──InitialSolutionBuilder(8개 포트폴리오)──▶  [initial Solution] = current = best
+[Problem (동결)]  ──InitialSolutionBuilder(22개 포트폴리오)──▶  [initial Solution] = current = best
                                                       │
       ┌────────── 반복 (시간·step·idle 한도까지, Domain §12) ─────────────┐
       │ current ─destroy(pair 단위)─▶ draft ─repair(pair 삽입)─▶ draft'  │
@@ -109,7 +112,7 @@ green이 된 뒤 이 문서를 시작한다 (Plan §2.2). 다만 **의존은 한
 | **고정** | 종료 조건 도달(시간·step·idle) = 정상 종료 — 그 시점 best를 반환하고 재검증으로 넘긴다 | §12·Master §2 |
 | **고정** | 탐색은 `Problem`·이동표·profile을 수정하지 않는다 (읽기 전용) | §5 MUST |
 | **고정** | 탐색 예산은 `AlnsConfig`에만 있다. `Problem`에서 예산을 읽는 코드 금지 | §2.5.1 MUST NOT |
-| 재량 | 초기해 휴리스틱·개수(본 문서: **결정적 construction 8개 포트폴리오** — [상세](stage-04-initial-solution-heuristics.md)) | §9.3 |
+| 재량 | 초기해 휴리스틱·개수(본 문서: **결정적 construction 22개 포트폴리오** — [상세](stage-04-initial-solution-heuristics.md)) | §9.3 |
 | 재량 | 연산자 목록(본 문서: destroy 2 + repair 2)·q 범위·적응 가중치 | §9.3 |
 | 재량 | acceptance 세부(동점·worse 수락 확률)·예산 기본값·시드 정책 | §9.3 |
 | 재량 | 삽입 후보 shortlist·증분 계산 (도입 시 노트 N4의 대조 테스트 필수) | §9.2·§6.4 |
@@ -127,7 +130,7 @@ Solution·전파·평가·ALNS", Stage 0 §3.1). 하위 패키지를 만들지 �
 | `solve/AlnsConfig.java` | **탐색 예산**(시간·step·idle 한도·seed) + 알고리즘 튜닝 (§3.3) | Domain §2.5.1·§9.3 |
 | `solve/AlnsResult.java` | 탐색 산출: best + `Evaluation`(③) + `long[] score`(④) + 통계 | Domain §9·§10.2 |
 | `solve/AlnsRunStats.java` | 간단한 실행 통계 (반복·수락·경과·종료 사유) — 추적 장치 아님 | Domain §11.1 |
-| `solve/InitialSolutionBuilder.java` | 초기해 포트폴리오 실행기 — 결정적 construction 8개를 돌려 정식 평가로 best 1개 선택. **파일·기법 상세는 [stage-04-initial-solution-heuristics.md](stage-04-initial-solution-heuristics.md)** | Domain §9.3 재량 |
+| `solve/InitialSolutionBuilder.java` | 초기해 포트폴리오 실행기 — 결정적 construction 22개를 돌려 정식 평가로 best 1개 선택. **파일·기법 상세는 [stage-04-initial-solution-heuristics.md](stage-04-initial-solution-heuristics.md)** | Domain §9.3 재량 |
 | `solve/DestroyOperator.java` | destroy SPI: pair 단위로 빼서 bank로 | Domain §9.1 |
 | `solve/RepairOperator.java` | repair SPI: bank의 Request를 pair 삽입 | Domain §9.1 |
 | `solve/RandomRemoval.java` | 배정된 Request 중 무작위 q개 제거 | 재량 기본 연산자 |
@@ -135,7 +138,7 @@ Solution·전파·평가·ALNS", Stage 0 §3.1). 하위 패키지를 만들지 �
 | `solve/GreedyInsertion.java` | 후보 중 최소 비용 위치에 순차 삽입 | 재량 기본 연산자 |
 | `solve/RegretInsertion.java` | regret-2: 차선과의 격차가 큰 Request부터 삽입 | 재량 기본 연산자 |
 | `solve/AdaptiveWeights.java` | 연산자 룰렛 선택 + segment 가중치 갱신 | 재량 (ALNS 적응층) |
-| `solve/InsertionSearch.java` | §4.3 삽입 후보 탐색·검증·비용의 구현체 — repair 연산자와 초기해 8개가 공유 (노트 N5). **정의는 [heuristics 문서 §3.3](stage-04-initial-solution-heuristics.md)** | Domain §9.1 |
+| `solve/InsertionSearch.java` | §4.3 삽입 후보 탐색·검증·비용의 구현체 — repair 연산자와 초기해 기법들이 공유 (노트 N5). **정의는 [heuristics 문서 §3.3](stage-04-initial-solution-heuristics.md)** | Domain §9.1 |
 
 Stage 3 산출물(`Solution`·`StructureCheck`·`Evaluator` 등)과 `Problem`·`Profile`·`Scores`는
 수정하지 않는다. 테스트 파일은 §7.
@@ -189,7 +192,7 @@ public final class AlnsSolver {
     public AlnsResult solve(Problem problem, Profile profile);
 
     /** 초기해를 이미 가진 호출자용. 4-ALNS를 4-초기해와 **따로 구현·검증**하기 위한
-        진입점이다 (2026-09-02, Plan §2.2) — 손 조립 해나 빈 해를 넣으면 포트폴리오 8개
+        진입점이다 (2026-09-02, Plan §2.2) — 손 조립 해나 빈 해를 넣으면 포트폴리오
         없이도 루프 전체를 시험할 수 있다.
         받은 해는 위와 똑같이 다뤄진다: StructureCheck 위반이면 예외, Evaluator Infeasible이면
         예외(§4.2-2). 예산·acceptance·종료는 전부 동일하다. */
@@ -201,7 +204,7 @@ public record AlnsResult(
     Evaluation bestEvaluation,               // 층 ③ — Stage 5 재검증의 대조 대상 (§10.2)
     long[] bestScore,                        // 층 ④ — 〃 (Arrays.equals로 대조)
     Evaluation initialEvaluation,            // DoD "초기해 대비 개선"의 기준값
-                                             //   = 포트폴리오 8개 중 최선의 평가 (기준이 올라간다)
+                                             //   = 포트폴리오 22개 중 최선의 평가 (기준이 올라간다)
     long[] initialScore,                     // 〃 (개선 판정은 score로 — Scores.compare)
     AlnsRunStats stats) {}
 
@@ -269,7 +272,7 @@ public record AlnsConfig(
 ```java
 public final class InitialSolutionBuilder {
     /**
-     * 결정적 construction 8개를 우선순위 순으로 실행해 정식 평가(Evaluator)로 best 하나를
+     * 결정적 construction 22개(기본 8 + 확장 14)를 우선순위 순으로 실행해 정식 평가(Evaluator)로 best 하나를
      * 고른다. 난수를 쓰지 않으므로 같은 Problem·Profile이면 같은 초기해.
      * 삽입 못 한 Request는 bank에 남는다 (유효한 해, §9.1).
      * profile을 받는다 — 후보 검증이 profile hard까지 보기 때문이다 (§4.3, 2026-09-02).
@@ -297,7 +300,7 @@ public final class AdaptiveWeights {
 여기서는 ALNS가 의존하는 계약만 적는다.
 
 ```text
-1. 우선순위 순으로 고정된 결정적 construction 8개를 순서대로 실행한다 (난수 없음).
+1. 우선순위 순으로 고정된 결정적 construction 22개를 순서대로 실행한다 (난수 없음).
    그 Problem에서 성립하지 않는 기법은 기권하고 건너뛴다 (예: PICKUP_DELIVERY가 있으면
    savings·sweep 계열).
 2. 각 결과는 StructureCheck 통과 + Evaluator Feasible이어야 한다 — 아니면 예외(버그).
@@ -308,7 +311,7 @@ public final class AdaptiveWeights {
    (모든 바깥 루프가 매 반복에서 Request 하나를 삽입하거나 제외하므로 ≤ |requests|).
 ```
 
-- 종전의 "결정적 greedy 1개"는 8개 중 `deadline-sequential` 하나로 편입됐다 (2026-09-02).
+- 종전의 "결정적 greedy 1개"는 포트폴리오 중 `deadline-sequential` 하나로 편입됐다 (2026-09-02).
 - 여기서 폐기된 채로 남는 것은 **이전 설계의 근사 phase-1 screening 2단계 파이프라인**이다
   (Domain §9.3). 다수 후보를 만들어 **정식 평가로** 고르는 것은 그 구조가 아니다.
 - 호환 차량 0대·시간창 불가능 Request가 bank에 남아도 정상이다 — 사유 기록은 Stage 5의 일
@@ -428,7 +431,7 @@ best 갱신은 항상 strict: Scores.compare(draftScore, bestScore) < 0 일 때�
 | N2 | **구조 위반은 폐기가 아니라 예외**: 구조 결함은 품질 문제가 아니라 버그다 (§1.4·§6.3·§12). draft를 조용히 버리면 버그가 재검증(Stage 5)까지 숨는다. `IllegalStateException`으로 solve를 중단시키고 executor(Stage 6)가 FAILED로 기록한다 |
 | N3 | **같은 seed = 같은 결과**: `Set`·`Map` 순회 순서에 의존하지 않도록 연산자는 후보를 ID 문자열 정렬 후 rng를 적용한다. 시드 정책 자체는 재량(§9.3)이지만, 시드가 주어졌을 때의 결정성은 테스트 안정성(T1·T5)의 전제라 기본 연산자의 계약으로 둔다 |
 | N4 | **증분 계산은 아직 없다**: 이 Stage의 평가는 항상 전체 재계산(Stage 3 N7)이고 후보 검증은 경로 단위 전파다. 규모(경로 ~30 × 방문 ~20)에서 충분하다. 증분 캐시·shortlist를 나중에 넣는 것은 재량이나, 도입 시 "캐시 점수 = 전체 재계산 점수" 대조 테스트(§6.4)가 필수다 |
-| N5 | **초기해 = 빈 해의 repair**: 8개 construction 전부가 §4.3 후보 탐색을 서로 다른 결정적 순서로 쓰는 특수 사례다. 삽입 루틴(`InsertionSearch`)을 하나만 구현·검증하면 8개와 repair 연산자가 함께 그것을 쓴다 (2026-09-02 — 기법이 8개가 돼도 이 노트의 취지는 그대로다) |
+| N5 | **초기해 = 빈 해의 repair**: 대다수 construction이 §4.3 후보 탐색을 서로 다른 결정적 순서로 쓰는 특수 사례다 (Split·path-extension 계열만 자체 전파를 쓴다 — heuristics §5). 삽입 루틴(`InsertionSearch`)을 하나만 구현·검증하면 construction들과 repair 연산자가 함께 그것을 쓴다 (2026-09-02 — 기법이 몇 개가 돼도 이 노트의 취지는 그대로다) |
 | N6 | **Stage 5 인계**: 재검증 진입값은 `AlnsResult.best`(분해는 Stage 3 N6 — routes/bank가 곧 domain 타입 분해값)와 `bestEvaluation`(점수 대조 대상, §10.2)이다. verify가 `solve` 타입을 직접 받을 수 없으므로(ArchUnit) 변환 어댑팅은 Stage 5가 정의한다 |
 | N7 | **경로 단위 전파는 근사가 아니다**: `RoutePropagator`는 그 경로의 정확한 물리·hard 판정이다(§7). 다만 호환성·profile hard·해 전체 집계는 `Evaluator`만 하므로, 수락 직전의 전체 정식 평가는 생략할 수 없다 (§4.2-e가 항상 돈다) |
 | N8 | **초기해 Infeasible은 버그다** (2026-09-02 개정): 종전 N8은 "`build(problem)`이 profile을 받지 않으므로 profile hard를 지킬 방법이 없다"를 근거로 Infeasible 초기해를 정상 경로로 두고 빈 해 강등을 규정했다. 그 전제가 사라졌다 — `build(problem, profile)`이 profile을 받고 §4.3-②가 후보 단계에서 hard를 보므로, construction 결과의 Infeasible은 논리적으로 불가능하다. "Stage 8에서 필요가 확인되면"으로 미뤄 뒀던 개선을, 포트폴리오 선택이 정식 평가로 이뤄지는 이상 Infeasible 후보를 만들어 버리는 것이 낭비라 당겨 적용했다. 빈 해 강등(E16)은 폐기, E16b는 존치 |
@@ -471,7 +474,7 @@ jqwik류 property 라이브러리를 추가하지 않는다 (Stage 0 §4.2가 te
 
 | # | 테스트 | 내용 | 대응 DoD 문장 |
 |---|---|---|---|
-| T1 | `AlnsSolverTest.improvesOverInitialOnSmallFixture` | 소형 fixture(손 조립: 두 지역 클러스터 × 차량 2대, 창 마감 순 greedy가 클러스터를 교차 배정하도록 배치) + 고정 seed + `maxSteps` 상한 → `Scores.compare(bestScore, initialScore) < 0`. **기준값이 포트폴리오 8개 중 최선**이라 2026-09-02 이후 이 단언은 더 엄격해진다 | "소형 fixture에서 초기해 대비 개선 확인" |
+| T1 | `AlnsSolverTest.improvesOverInitialOnSmallFixture` | 소형 fixture(손 조립: 두 지역 클러스터 × 차량 2대, 창 마감 순 greedy가 클러스터를 교차 배정하도록 배치) + 고정 seed + `maxSteps` 상한 → `Scores.compare(bestScore, initialScore) < 0`. **기준값이 포트폴리오 22개 중 최선**이라 2026-09-02 이후 이 단언은 더 엄격해진다 | "소형 fixture에서 초기해 대비 개선 확인" |
 | T2 | `AlnsInvariantPropertyTest.structureHoldsUnderRandomSteps` | seed ~20개 × 랜덤 연산자 시퀀스 ~200스텝: **destroy 직후와 repair 직후 각각** `StructureCheck.check` 위반 0 단언 + 각 스텝의 배정↔bank 이동이 Request 단위(부분 pair 이동 없음)임을 단언. PICKUP_DELIVERY 포함 문제로 수행 | "pair·XOR 불변식이 탐색 중 유지되는 property 테스트 (랜덤 스텝 N회 후 구조 검사)" |
 | T3 | `AlnsSolverTest.stopsAtTimeLimitAndReturnsBest` | 아주 짧은 한도로 solve → 정상 반환·best 존재·`stats.elapsedMillis` 기록·`termination == TIME_LIMIT` (E9 포함: 한도 0 → initial 반환) | (Plan 범위 문장 "시간 한도 종료") |
 | T4 | `AlnsSolverTest.reportedEvaluationMatchesFreshEvaluation` | solve 후 `Evaluator.evaluate(problem, profile, result.best())`를 새로 실행 → `bestEvaluation`은 record 동등, `bestScore`는 `Arrays.equals` (§6.4 "캐시 = 재계산", 체크리스트 #7 — Stage 5 대조의 전제) | (Plan 범위 문장 "acceptance" — 수락 권위가 정식 평가임의 증명) |
@@ -488,7 +491,7 @@ T3–T10은 Plan DoD 요약 문장 밖이지만 Plan Stage 4 범위 문장("초�
 acceptance, 시간 한도 종료")의 직접 검증이다 — Plan §1의 편입(2026-08-11)에 따라 이 표 전부가
 완료 기준이다.
 
-**이 표는 `4-ALNS`의 완료 기준 전부다 (2026-09-02).** 초기해 8개의 테스트(T13–T25)는
+**이 표는 `4-ALNS`의 완료 기준 전부다 (2026-09-02).** 초기해 포트폴리오의 테스트(T13–T37)는
 [heuristics 문서 §8](stage-04-initial-solution-heuristics.md)이 소유하며 `4-초기해`에서
 먼저 green이 된다. T1·T5·T9·T11·T12는 기본 경로(포트폴리오로 초기해를 만드는 경로)를 쓰고,
 나머지는 §3.2 오버로드에 손 조립 초기해를 넣어 포트폴리오와 무관하게 돌릴 수 있다.
@@ -509,7 +512,7 @@ acceptance, 시간 한도 종료")의 직접 검증이다 — Plan §1의 편입
 | profile별 탐색 예산 차등 (profile은 hard 제약·score 축만 소유) | 안 함 | Domain §8.4·§2.5.1 |
 | property 라이브러리(jqwik 등) 의존 추가 | 안 함 | Stage 0 §4.2 |
 | `Solution`·`Evaluator` 등 Stage 3 타입 변경 | 안 함 (그대로 소비) | Stage 3 §2–§4 |
-| 초기해 기법 8개의 파일·의사코드·기권 규칙·테스트 | [stage-04-initial-solution-heuristics.md](stage-04-initial-solution-heuristics.md) | 이 문서는 ALNS 본체만 소유 |
+| 초기해 기법 22개의 파일·의사코드·기권 규칙·테스트 | [stage-04-initial-solution-heuristics.md](stage-04-initial-solution-heuristics.md) | 이 문서는 ALNS 본체만 소유 |
 
 ---
 

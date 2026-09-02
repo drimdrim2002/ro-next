@@ -13,6 +13,9 @@ sources:
   - stage-06-app-assembly.md (§1.1 설정 키, §5 result.json wire, §10 Q1·Q5)
   - stage-07-ecs-deployment.md (§4 배포 절차, §6 E2, §7 V6)
 revisions:
+  - 2026-09-02 초기해 포트폴리오 확장 인지 — 축소가 8 → 4에서 22 → 4로
+    ([survey](stage-04-initial-solution-heuristics-survey.md) §5에 자르는 순서 권고).
+    재료·결정 주체 무변경
   - 2026-08-10 최초 작성
   - 2026-08-10 run 메타에 배송정책·탐색 예산이 따로 실리게 되어(Domain §11.1) 실행 조건의
     근거가 §4 표 단독에서 result.json 병용으로 바뀜
@@ -52,7 +55,7 @@ revisions:
     self arc를 밟지 않아 **결론 무변경**이고, Win이 같은 좌표 쌍에 0/0을 쓰는 행렬 실측을
     근거로 추가했다. W16(비대각 D=9999)은 wire 사실 서술이라 무변경
   - 2026-09-02 초기해 포트폴리오 반영 — §6 변경 수단 표의 '초기해 휴리스틱' 행을
-    포트폴리오 구성(8 → 4)·기법별 파라미터 두 행으로 교체하고, 축소 판단의 재료와
+    포트폴리오 구성(→ 4개 축소)·기법별 파라미터 두 행으로 교체하고, 축소 판단의 재료와
     결정 주체를 명시. 실험 계획은 여전히 사전 확정하지 않는다 (기존 원칙 무변경)
 ---
 
@@ -274,7 +277,8 @@ fingerprint·provenance 추적 체계를 만들지 않는다 — 아래 표 한 
 Stage 4 §3.3) — seed·시간 한도처럼 실행 조건으로 `run.searchBudget`에 기록되며, 바꾸려면
 Stage 6 §1.1 설정(`ro-next.solve.max-steps` — 환경변수)으로 한다. `idleSteps`·`idleSec`도 같다.
 
-**초기해 8 → 4 축소는 이 Stage가 재료를 내고 사용자가 정한다 (2026-09-02).**
+**초기해 22 → 4 축소는 이 Stage가 재료를 내고 사용자가 정한다 (2026-09-02).**
+자르는 순서의 권고는 [heuristics-survey §5](stage-04-initial-solution-heuristics-survey.md).
 [heuristics 문서](stage-04-initial-solution-heuristics.md) §10 Q1이 이 Stage로 넘긴 미결이다.
 재료는 T25가 출력하는 **기법별 소요·미배정 수·score**와 **포트폴리오 총 소요 / `timeLimitSec` 비**이고
 (절대 초는 그 자체로 해석되지 않는다 — 이 비가 1에 가까우면 초기해가 ALNS 예산만큼 쓰고 있다는 뜻이다),

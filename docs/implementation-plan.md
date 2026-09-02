@@ -5,6 +5,10 @@ date: 2026-08-10
 supersedes: docs/deprecated/implementation-15phase/ (ARCHIVED)
 master: docs/master-design.md
 revisions:
+  - 2026-09-02 Stage 4 초기해 포트폴리오 확장 — 문헌·실전 솔버 조사
+    ([survey](implementation/stage-04-initial-solution-heuristics-survey.md))로 확장 14개를
+    편입해 8개 → **22개(기본 8 + 확장 14)**, 축소 목표 8 → 4 → **22 → 4**.
+    Stage 4 절의 개수·DoD 문구만 갱신, 구조 무변경
   - 2026-08-09 최초 확정
   - 2026-08-10 Spring Boot 4.1 · Stage 0 코드 정리에 구 Dockerfile 삭제 명시
   - 2026-08-10 **D4 완료** — 다일 근무창 + 차고 시간창 설계 확정. §2.1 D4 행을 확정 내용으로
@@ -311,9 +315,10 @@ destroy/repair 루프, 초기해 휴리스틱, HTTP.
 `4-초기해`가 green이 된 뒤 `4-ALNS`를 시작한다 (§2.2 순서 표).
 
 **4-초기해에서 만드는 것** (Domain §9.3 재량)  
-- **난수를 쓰지 않는 rule 기반 construction 8개**와, 그것을 돌려 정식 평가로 최선 하나를
-  고르는 포트폴리오. 기법 목록·의사코드·기권 규칙·테스트는
-  [stage-04-initial-solution-heuristics.md](implementation/stage-04-initial-solution-heuristics.md).  
+- **난수를 쓰지 않는 rule 기반 construction 22개(기본 8 + 확장 14)**와, 그것을 돌려 정식
+  평가로 최선 하나를 고르는 포트폴리오. 기법 목록·의사코드·기권 규칙·테스트는
+  [stage-04-initial-solution-heuristics.md](implementation/stage-04-initial-solution-heuristics.md),
+  확장 14개의 문헌 근거는 [heuristics-survey](implementation/stage-04-initial-solution-heuristics-survey.md).  
 - 삽입 후보 탐색·검증(`InsertionSearch`) — 4-ALNS의 repair 연산자가 그대로 재사용한다.  
 - **ALNS 타입을 하나도 참조하지 않는다** — 그래서 이 단계만으로 완결되고 단독으로 green이 된다.
 
@@ -335,19 +340,19 @@ Stage 3의 평가 없이는 “더 나은 해”를 정의할 수 없다.
 결과 JSON 조립, 발행, HTTP. 탐색 파라미터의 최종 튜닝은 Stage 8.
 
 **완료 기준 (DoD) — 4-초기해**  
-- 8개가 각각 구조 검사를 통과하고 **정식 평가에서 Feasible**이다
+- 22개가 각각 구조 검사를 통과하고 **정식 평가에서 Feasible**이다
   (미배정이 남는 것은 Feasible이다 — 미배정 수는 점수 1번 축이지 제약 위반이 아니다).
   성립하지 않는 기법은 기권하고 건너뛴다.  
 - 난수를 쓰지 않으므로 **같은 입력에 대해 언제나 같은 초기해**가 나온다.  
-- **기법별 실측 기록**: 규모 측정에서 8개 각각의 소요·미배정 수·score와
-  총 소요 / `timeLimitSec` 비를 출력한다 — 8 → 4 축소 판단의 입력이다 (결정은 Stage 8).  
+- **기법별 실측 기록**: 규모 측정에서 22개 각각의 소요·미배정 수·score와
+  총 소요 / `timeLimitSec` 비를 출력한다 — 22 → 4 축소 판단의 입력이다 (결정은 Stage 8).  
 - **규모**: Stage 2와 같은 합성 문제로 포트폴리오 1회 — 정상 종료를 확인하고 위 수치를 기록한다.  
-- 판정: `mvn verify` green + heuristics 문서 §8의 T13–T25.
+- 판정: `mvn verify` green + heuristics 문서 §8의 T13–T37.
   **이 시점에 ALNS는 아직 없다** — 그래도 이 목록이 전부 통과해야 다음으로 간다.
 
 **완료 기준 (DoD) — 4-ALNS**  
 - 소형 fixture에서 초기해 대비 개선이 관측된다.
-  (2026-09-02: 기준값이 **포트폴리오 8개 중 최선**이라 이 단언은 더 엄격해졌다.)  
+  (2026-09-02: 기준값이 **포트폴리오 22개 중 최선**이라 이 단언은 더 엄격해졌다.)  
 - pair·XOR 불변식이 탐색 중 유지된다 — **property 테스트**
   (예: 랜덤 스텝 N회 후 구조 검사).  
 - **규모**: Stage 2와 같은 합성 문제로 ALNS 1회 — 시간 한도 안에 몇 번 반복했는지 기록한다.
