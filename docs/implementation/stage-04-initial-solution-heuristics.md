@@ -34,6 +34,14 @@ revisions:
   - 2026-09-02 구현 중 정정 — `InsertionSearch.apply`에 `Problem` 인자 추가.
     bank에서 뺄 `RequestId`는 삽입된 `NodeId`로부터 `Problem.nodeRef`로만 알 수 있다
     (`Solution`·`Candidate`에는 NodeId뿐). XOR을 apply 한 곳에서 지키기 위한 최소 변경
+  - 2026-09-02 **실물 맞춤 2개(H23·H24) 편입** — 실물 fixture 실측(부피 여유 4.2%, 허용 차급이
+    존과 1:1, 경로 구역 단일성)에 맞춘 존 배정 DP(공통 `ZoneQuotaAllocation`) + 존 내부 적재 2종.
+    포트폴리오 22 → **24개**, 축소 목표 24 → 4. §2 파일 3개·§3.4 시그니처·§4.3 종료 상한·
+    §4.4 기권 사유(유형 조합 수 > 65,536)·§5 표·의사코드·§7 X20~X23·§8 T38~T43 추가.
+    `InsertionSearch.remove` 추가(H23 교환 전용). 근거는 survey §2.5. 기존 H1~H22 규정은 무변경
+  - 2026-09-02 **T44 실물 fixture 테스트** — `data/win_poc_case_floor.json`으로 H23 전량 배정·경로 감사·
+    H3 대비 사전식 우위를 고정. solver-core 테스트는 JUnit만 쓰므로 Jackson이 있는 **app 모듈**에 두고,
+    규약 JSON → `PlanInput` 매핑은 테스트 전용(Stage 6 adapter가 대체)
   - 2026-09-02 구현 중 정정 — **T25 합성 문제에 정차 한도 28 추가**(실물 fixture의
     `VehicleMaxStopCount 28`, Plan fixture 실측). Stage 2 T12 문제 그대로(시간창 종일·용량 무제한·
     정차 한도 없음)는 **경로 하나가 452건을 전부 삼켜** regret 계열이 `O(n⁴)`가 된다 — 실측 H1
@@ -46,7 +54,7 @@ revisions:
 # Stage 4 — 초기해 휴리스틱 포트폴리오
 
 `solver-core`의 `solve` 패키지에 **난수를 쓰지 않는 rule 기반 construction 휴리스틱
-22개(기본 8 + 확장 14)**와, 그 전부를 실행해 **정식 평가로 최선 하나를 고르는 포트폴리오
+24개(기본 8 + 확장 14 + 실물 맞춤 2)**와, 그 전부를 실행해 **정식 평가로 최선 하나를 고르는 포트폴리오
 실행기**를 만든다. 확장 14개의 출처·근거·기각된 후보는
 [survey 문서](stage-04-initial-solution-heuristics-survey.md)가 소유한다 — 이 문서의 §5
 의사코드가 구현 계약이다.
@@ -65,7 +73,7 @@ revisions:
 [Problem (동결)] + [Profile]
         │
         ▼
-  H1 … H22  (결정적 construction 22개 — 기권한 기법은 건너뜀)
+  H1 … H24  (결정적 construction 24개 — 기권한 기법은 건너뜀)
         │  각 결과: StructureCheck 통과 + Evaluator Feasible  ← 아니면 버그(예외)
         ▼
   Scores.compare 최소 → best 1개                      ← 선택 권위 = 정식 평가뿐
@@ -82,6 +90,7 @@ revisions:
 확장 14개는 2026-09-02 문헌·실전 솔버 조사에서 기본 8개에 없는 축(동적 희소도·경로 수 seed·
 DP 분할·시간창 거리 클러스터·매칭 모드 등)을 여는 것만 채택했다 —
 전 기법을 T25로 실측한 뒤 4개만 남긴다 ([survey §5](stage-04-initial-solution-heuristics-survey.md)).
+실물 맞춤 2개(H23·H24, 2026-09-02)는 실물 fixture 구조 실측에서 나왔다 — 근거는 [survey §2.5](stage-04-initial-solution-heuristics-survey.md).
 
 ---
 
@@ -90,7 +99,7 @@ DP 분할·시간창 거리 클러스터·매칭 모드 등)을 여는 것만 �
 | stage-04의 종전 규정 | 이 문서의 처리 |
 |---|---|
 | §3.4 `InitialSolutionBuilder.build(Problem)` — 결정적 greedy 1개 | **개정** — `build(Problem, Profile)`, 포트폴리오 (§3.1) |
-| §4.1 "초기해는 1개다" | **개정** — 후보 22개, 결과 1개 (§5) |
+| §4.1 "초기해는 1개다" | **개정** — 후보 24개, 결과 1개 (§5) |
 | §4.3 후보 검증 = `RoutePropagator`만 | **개정** — profile hard 포함 (§4.1). Infeasible 초기해가 원천 불가능해진다 |
 | §4.2-2 초기해 Infeasible → 빈 해 강등 (E16·N8) | **폐기** — Infeasible이면 버그(예외). E16b만 존치 (§7 X6) |
 | §4.3 후보 나열·위치 규칙·비용 사전식 | **그대로 이어받는다** (§4.1) |
@@ -106,7 +115,7 @@ DP 분할·시간창 거리 클러스터·매칭 모드 등)을 여는 것만 �
 
 | 구분 | 내용 | 근거 |
 |---|---|---|
-| **고정** | 22개 전부 **결정적**이다 — `RandomGenerator`를 받지도 쓰지도 않는다. 같은 `Problem`·`Profile`이면 언제나 같은 해 | 사용자 확정(rule 기반) |
+| **고정** | 24개 전부 **결정적**이다 — `RandomGenerator`를 받지도 쓰지도 않는다. 같은 `Problem`·`Profile`이면 언제나 같은 해 | 사용자 확정(rule 기반) |
 | **고정** | 모든 정렬·선택 비교자는 **`RequestId`/`VehicleId` 문자열로 끝맺어** 총 순서를 만든다. `Set`·`Map` 순회 순서에 의존 금지 | stage-04 N3 · §9 |
 | **고정** | 후보 검증 = 호환 필터 + `RoutePropagator` Feasible + **profile hard 전부 satisfied**. 그래서 construction 결과는 Infeasible일 수 없다 | §4.1 · Domain §8.4 |
 | **고정** | best 선택의 권위는 **정식 평가(`Evaluator`)뿐**. 근사·삽입 비용으로 고르지 않는다 | Domain §9.2 MUST NOT |
@@ -115,8 +124,8 @@ DP 분할·시간창 거리 클러스터·매칭 모드 등)을 여는 것만 �
 | **고정** | 거리·시간 값은 `TravelMatrix`에서만 온다. 좌표는 **정렬·분할에만** 쓰고 거리 계산에 쓰지 않으며 표를 대칭화하지 않는다 | Domain §4 MUST NOT |
 | **고정** | 새 경로는 실제 미사용 `VehicleId`를 소비한다 | Domain §9.1 |
 | **고정** | 초기해에 **시간 상한이 없다.** 종료는 시간이 아니라 구조로 보장한다 (§4.3) | 사용자 확정(D2·D3) |
-| 재량 | 22개의 구성·우선순위·기법별 파라미터(적재율 목표 0.85, 4분위 등급, H17 seed 비율 0.25, H22 라운드 5 등) | Domain §9.3 |
-| 재량 | 22 → 4 축소 (Stage 8 실측 후 사용자 결정 — [survey §5](stage-04-initial-solution-heuristics-survey.md) 프로토콜) | §9 |
+| 재량 | 24개의 구성·우선순위·기법별 파라미터(적재율 목표 0.85, 4분위 등급, H17 seed 비율 0.25, H22 라운드 5, H23·H24 유형 조합 한계 65,536, H24 부피 양자화 20,000·pool 배율 1.5·정차 하한 비례 0.8 등) | Domain §9.3 |
+| 재량 | 24 → 4 축소 (Stage 8 실측 후 사용자 결정 — [survey §5](stage-04-initial-solution-heuristics-survey.md) 프로토콜) | §9 |
 
 ---
 
@@ -128,7 +137,7 @@ DP 분할·시간창 거리 클러스터·매칭 모드 등)을 여는 것만 �
 | 파일 | 책임 한 줄 |
 |---|---|
 | `solve/ConstructionHeuristic.java` | construction SPI: 기권 판정 + 해 1개 생성 (§3.2) |
-| `solve/InitialSolutionBuilder.java` | **포트폴리오 실행기** — 22개 실행·정식 평가·best 선택 (§3.1·§5) |
+| `solve/InitialSolutionBuilder.java` | **포트폴리오 실행기** — 24개 실행·정식 평가·best 선택 (§3.1·§5) |
 | `solve/InitialSolutionResult.java` | best + 선택된 기법 id + 평가·score + 기법별 결과 요약 |
 | `solve/ConstructionOutcome.java` | 기법 1개의 실행 결과(id·상태·score·소요) — 로그·실험용 |
 | `solve/InsertionSearch.java` | **공통 삽입 후보 탐색·검증·비용** (stage-04 §4.3의 구현체, §4.1) |
@@ -155,6 +164,9 @@ DP 분할·시간창 거리 클러스터·매칭 모드 등)을 여는 것만 �
 | `solve/GapSweepBidirectionalConstruction.java` | H20 — 최대 간극 제로각 양방향 sweep (전 패턴) |
 | `solve/SpatiotemporalClusterConstruction.java` | H21 — 시공간 거리 응집 클러스터 → 차량 배정 |
 | `solve/SqueakyWheelSequentialConstruction.java` | H22 — 구성→blame→재정렬 반복 (SWO) |
+| `solve/ZoneQuotaAllocation.java` | H23·H24 공통 — 존 → 차량 유형 대수 배정 DP (호환 그룹 누적 검사 포함) |
+| `solve/ZoneQuotaBalancedFillConstruction.java` | H23 — 존 배정 DP + 부호 있는 정차 예산 best-fit + 1-1 교환 |
+| `solve/ZoneQuotaSubsetFillConstruction.java` | H24 — 존 배정 DP + seed pool subset-sum DP + 오라클 피드백 |
 
 Stage 3 산출물(`Solution`·`Route`·`StructureCheck`·`RoutePropagator`·`Evaluator`)과
 `Problem`·`Profile`·`Scores`는 **수정하지 않는다.** 테스트는 §8.
@@ -170,11 +182,11 @@ Stage 3 산출물(`Solution`·`Route`·`StructureCheck`·`RoutePropagator`·`Eva
 
 ```java
 public final class InitialSolutionBuilder {
-    /** 우선순위 순으로 고정된 22개 — 기본 8 + 확장 14 (§5). */
+    /** 우선순위 순으로 고정된 24개 — 기본 8 + 확장 14 + 실물 맞춤 2 (§5). */
     public static List<ConstructionHeuristic> defaults();
 
     /**
-     * 22개(또는 주어진 목록)를 순서대로 실행해 정식 평가로 최선 하나를 고른다.
+     * 24개(또는 주어진 목록)를 순서대로 실행해 정식 평가로 최선 하나를 고른다.
      * 기권한 기법은 건너뛴다. 전원 기권이면 빈 해(전 Request bank)를 반환한다.
      * profile은 인자다 — Problem에 담기지 않으며, 호출자가 탐색·재검증에 같은 인스턴스를
      * 넘긴다 (Domain §8.4 MUST).
@@ -246,6 +258,10 @@ public final class InsertionSearch {
      */
     public static long standaloneDistMeter(Problem problem, VehicleId vehicleId, RequestId requestId);
 
+    /** Request 하나를 경로에서 빼 bank로 돌린 새 Solution (불변). 경로가 비면 그 Route는 사라진다 —
+     *  빈 Route를 두지 않는다 (Stage 3 E30). H23 1-1 교환 전용 (§5 H23). */
+    static Solution remove(Problem problem, Solution current, RequestId requestId);
+
     public record Candidate(
         VehicleId vehicleId,
         boolean newRoute,
@@ -258,6 +274,27 @@ public final class InsertionSearch {
          *  deltaForwardSlackSec은 여기 들지 않는다 — H13만 자기 비교자로 쓴다 (§5 H13). */
         public static Comparator<Candidate> byCost();
     }
+}
+```
+
+### 3.4 존 배정 (H23·H24 공통)
+
+```java
+final class ZoneQuotaAllocation {
+    static final long MAX_COMBINATIONS = 65_536L;     // Π(유형별 대수 + 1) 한계 — 넘으면 H23·H24 기권 (§4.4)
+
+    /** 차량 유형 = (호환 Request 집합, maxWeight, maxVolume, effectiveMaxStopCount)이 같은 차량들.
+     *  유형 순서 (maxVolume ASC, maxWeight ASC, 첫 VehicleId ASC) · 유형 안 VehicleId ASC. */
+    record VehicleType(Set<RequestId> compatible, long maxWeight, long maxVolume,
+                       OptionalInt maxStopCount, List<VehicleId> vehicles) {}
+    /** 존 = anchor side zoneId(부재 "(none)")별 Request. 존 순서 (호환 유형 수 ASC, Σvolume DESC, zoneId ASC). */
+    record Zone(String zoneId, List<RequestId> members) {}
+    /** 유형 목록·존 순서대로의 존 목록·존별 배정 차량(유형 순서 × 유형 안 VehicleId ASC). 배정 없는 존은 빈 목록. */
+    record Allocation(List<VehicleType> types, List<Zone> zones, Map<String, List<VehicleId>> vehiclesByZone) {}
+
+    static List<VehicleType> vehicleTypes(Problem problem);
+    static long combinations(List<VehicleType> types);            // Π(대수 + 1) — abstains()가 본다
+    static Allocation allocate(Problem problem);                  // §5 H23 공통 의사코드의 DP
 }
 ```
 
@@ -332,7 +369,9 @@ construction 결과의 Infeasible은 **논리적으로 불가능** — 나오면
   H7 병합 ≤ |requests| (경로 수가 매 병합마다 1 감소) ·
   H18/H19 DP 상태 수 (|requests|+1)×(|vehicles|+1) 고정 ·
   H21 병합 ≤ |requests|−1 후 bin당 regret ≤ |requests| ·
-  H22 고정 R=5 라운드 × 라운드당 |requests|.
+  H22 고정 R=5 라운드 × 라운드당 |requests| ·
+  H23·H24 존 배정 DP 상태 수 ≤ Π(유형별 대수 + 1) ≤ 65,536 고정(§4.4) ·
+  H24 bin당 재DP ≤ |pool| (반복마다 제외 집합 +1 또는 nmax −1).
 방어 카운터가 기법별 상한(§5 표)을 넘으면 IllegalStateException — 조용히 자르지 않는다
 (stage-04 N2와 같은 취급: 구조 결함은 품질 문제가 아니라 버그다).
 ```
@@ -353,26 +392,28 @@ construction 결과의 Infeasible은 **논리적으로 불가능** — 나오면
 | `PICKUP_DELIVERY` Request가 하나라도 있음 | H7·H8 |
 | `PICKUP_ONLY` Request가 하나라도 있음 | H8 |
 | `problem.depots().size() != 1` | H5·H7·H8·H19·H20 |
+| 차량 유형 조합 수 Π(유형별 대수 + 1) > 65,536 (`ZoneQuotaAllocation.combinations`) | H23·H24 |
 
 **`zoneId` 부재는 기권 사유가 아니다.** 존이 하나도 없으면 H3·H6는 전체를 단일 그룹으로
 다루도록 **퇴화**하는데, 그래도 각자의 정책(차량 외곽 루프 / FFD 용량 분할)은 그대로 살아
 있어 H4와 다른 해를 낸다. 기권시킬 이유가 없다.
 
-- **기본 22개에서는 H1·H2·H3·H4·H6와 확장 12개(H9~H18·H21·H22)가 어떤 `Problem`에서도
+- **기본 24개에서는 H1·H2·H3·H4·H6와 확장 12개(H9~H18·H21·H22)가 어떤 `Problem`에서도
   기권하지 않는다** — 즉 전원 기권은 일어나지 않는다. 확장 14개 중 기권할 수 있는 것은
-  H19·H20(단일 depot 요구)뿐이다. §6-3의 빈 해 경로는 기법 목록을 직접 넘기는 오버로드(§3.1)를 위한 것이고,
+  H19·H20(단일 depot 요구)뿐이고, 실물 맞춤 H23·H24는 차량 유형 조합 수가 한계를 넘으면 기권한다
+  (전 차량이 제각각인 31대면 2³¹ — DP 상태 수를 구조로 묶기 위한 한계다). §6-3의 빈 해 경로는 기법 목록을 직접 넘기는 오버로드(§3.1)를 위한 것이고,
   T16이 그 오버로드로 검증한다.
 - 실물 fixture(`data/win_poc_case_floor.json` — 단일 depot·`DELIVERY_ONLY`·`zoneId` 존재)에서는
-  **22개 전부 실행된다.**
+  **24개 전부 실행된다** (유형 6종, 조합 25,920).
 
 ---
 
-## 5. 22개 기법 (우선순위 순 — 기본 H1~H8 + 확장 H9~H22)
+## 5. 24개 기법 (우선순위 순 — 기본 H1~H8 + 확장 H9~H22 + 실물 맞춤 H23~H24)
 
 우선순위 = **win 규모(주문 452·차량 31)에서의 기대 품질 × 구현 비용**의 잠정 판단이다.
 Stage 8 실측으로 재정렬될 수 있다 (§9). 우선순위는 두 곳에서 실제로 쓰인다 —
 **실행 순서**와, best가 **동점일 때의 승자**(앞선 기법이 이긴다).
-**확장 14개는 기본 8개 뒤에 둔다** — 실측 전에는 검증된 순서를 앞세운다는 뜻이고,
+**확장 14개는 기본 8개 뒤에, 실물 맞춤 2개는 그 뒤에 둔다** — 실측 전에는 검증된 순서를 앞세운다는 뜻이고,
 동점에서 기존 기법이 이기므로 확장 편입이 기존 결과를 바꾸는 경우는 "확장이 엄격히
 더 좋은 해를 낸 경우"뿐이다. 확장 기법의 출처·근거 수치는
 [survey 문서 §2~§3](stage-04-initial-solution-heuristics-survey.md)에 있다 — 여기 의사코드가 계약이다.
@@ -380,7 +421,7 @@ Stage 8 실측으로 재정렬될 수 있다 (§9). 우선순위는 두 곳에�
 생성 방식 계열을 흩어 놓았다 (참고 자료 §7 — 비슷한 정책을 여럿 넣으면 결과가 갈리지 않는다):
 parallel-regret 4 (H1·H2·H9·H10) · sequential 5 (H4·H5·H11·H13·H22) · vehicle-outer 3 (H3·H14·H15) ·
 cluster-first 3 (H6·H20·H21) · merge 1 (H7) · sweep 1 (H8) · matching 1 (H12) ·
-extension 1 (H16) · global-cheapest 1 (H17) · route-first(split) 2 (H18·H19).
+extension 1 (H16) · global-cheapest 1 (H17) · route-first(split) 2 (H18·H19) · zone-quota 2 (H23·H24).
 
 기호: `n` = Request 수, `m` = 차량 수, `L` = 경로 평균 길이.
 "반복당 작업"은 **후보 1개 검증 = 경로 전체 재전파 `O(L)`** 를 곱한 값이다 (§4.1).
@@ -415,8 +456,12 @@ extension 1 (H16) · global-cheapest 1 (H17) · route-first(split) 2 (H18·H19).
 | H20 | `gap-sweep-bidirectional` | cluster-first(sweep) | 전 패턴 | ≤ 2(n + m) | `O(L²)` × 2방향 |
 | H21 | `spatiotemporal-cluster` | cluster-first | 전 패턴 | ≤ 2n | `O(n² log n)` + bin당 regret |
 | H22 | `squeaky-wheel-sequential` | sequential(반복) | 전 패턴 | R·n (R = 5) | R × `O(m · L²)` |
+| H23 | `zone-quota-balanced-fill` | zone-quota | 전 패턴 | ≤ 3n | 배정 DP `O(Z · S · F · G)` (S ≤ Π(c_t+1), F ≤ S, G = 호환 그룹 수) + `O(m_z · L²)` |
+| H24 | `zone-quota-subset-fill` | zone-quota | 전 패턴 | ≤ n + m, bin당 재DP ≤ P | 배정 DP + bin당 `O(P · C · B)` × 반복 (P = pool, C ≤ 20,000, B = 정차 한도) + `O(P · L²)` |
 
-H1·H2·H9·H10·H12·H17이 가장 비싸고, H4·H5·H8·H13·H15·H16은 싸다. **이 표의 실측값이 22→4
+H1·H2·H9·H10·H12·H17이 가장 비싸고, H4·H5·H8·H13·H15·H16은 싸다. H23·H24는 실물 fixture 실측
+507 ms·773 ms(2026-09-02)이고 그중 존 배정 DP가 약 500 ms다(전이 3.3M — 두 기법이 각각 계산한다).
+**이 표의 실측값이 24→4
 결정의 입력**이므로 T25가 기법별 소요를 출력한다 (§8).
 
 ### H1 `scarcity-regret2` — 희소성 우선 regret-2
@@ -876,6 +921,139 @@ priority(r) = 0. R = 5 라운드 (재량 상수):
 - multi-start가 아니다 — 난수가 없고, 라운드 간 입력(priority)이 결정적으로 이어진다.
   §1이 금지한 것은 난수 기반 다중 실행이다.
 
+### H23 `zone-quota-balanced-fill` / H24 `zone-quota-subset-fill` — 존 배정 DP (공통) + 존 내부 적재 2종 (실물 맞춤, 2026-09-02)
+
+> 실물 fixture 실측([survey §2.5](stage-04-initial-solution-heuristics-survey.md))이 보인 구조 —
+> 부피 여유 4.2%, 허용 차급이 존과 1:1, 한 경로는 구체 구역 1종(Domain §3.4) — 에 맞춘 두 기법이다.
+> 공통 부품은 **"존에 어떤 차량 유형을 몇 대 주는가"를 전역 DP로 정하는 것**이고, 그 뒤 존 내부를
+> 채우는 축이 다르다: H23은 부피·정차 2차원 균형 greedy, H24는 부분집합 부피 합의 정확한 DP.
+> H3(`vehicle-zone-fill`)는 둘 다 한 차량씩 greedy라 존이 조각나고 뒤 차량이 반만 찬다 — 실측 15 미배정.
+> **H3 대비 새 정보 한 줄**: 존 전체의 차급 조합을 전역으로, 경로 하나의 적재를 부분집합 단위로 정한다.
+
+**공통 — 존 배정 DP (`ZoneQuotaAllocation.allocate`, §3.4).**
+
+```text
+차량 유형 = (호환 Request 집합, maxWeight, maxVolume, effectiveMaxStopCount)이 같은 차량들.
+  유형 순서 = (maxVolume ASC, maxWeight ASC, 첫 VehicleId ASC). 유형 안 차량 = VehicleId ASC.
+  근무창·depot·속도는 유형에 넣지 않는다 — 근사 단계이고 그 차이는 오라클(§4.1)이 판정한다.
+존 = anchor(r).zoneId 별 Request 목록 (부재 = "(none)"). 존 순서 = (호환 유형 수 ASC, Σvolume DESC, zoneId ASC).
+  호환 차량 0대인 Request는 존에 넣지 않는다 — 어느 경로에도 못 들어가므로 처음부터 bank다 (X2).
+존 수요 = 요청을 "호환 유형 집합"으로 다시 묶은 호환 그룹 g (|호환 유형 수| ASC, 유형 비트 ASC 정렬)의
+  누적값: 접두 k마다 Σvolume_k · Σweight_k · Σ방문수_k(단일 1, PD 2) · 접두 유형 합집합 mask_k,
+  그룹마다 최대 단품 volume·weight.
+covers(s, z)  — s = 유형별 대수 벡터:
+  ∀k: Σ_{t∈mask_k} s_t·maxVolume_t ≥ Σvolume_k ∧ Σ_{t∈mask_k} s_t·maxWeight_t ≥ Σweight_k
+      ∧ Σ_{t∈mask_k} s_t·B_t ≥ Σ방문수_k            (B_t = effectiveMaxStopCount, 부재 = +∞)
+  ∀g: s 안에 g와 호환이며 maxVolume ≥ 최대 단품 volume·maxWeight ≥ 최대 단품 weight인 유형이 있다
+  ← 호환 그룹 누적 검사(Hall 조건). 이것이 없으면 큰 차가 큰 차 금지 존에 배정된다 (T38).
+프론티어(남은 r, z) = 유형 순서로 재귀 나열(대수 0..r_t, covers가 되는 순간 그 유형에서 중단)한 s 중
+  (a) covers(s) ∧ ¬covers(s − e_{min 유형}) — 최소 덮개
+  (b) ¬covers(s) ∧ ∃t (r_t > s_t) ∧ ∀t (r_t = s_t ∨ covers(s + e_t)) — 한 대 모자란 최대 비덮개
+      (덮을 수 없는 존은 (c)만 남는다 — 남은 차량을 전부 쏟아붓는 선택지를 만들지 않는다)
+  (c) s = 0
+DP: 상태 = 남은 유형별 대수 벡터. f(초기 = 전 대수) = (0, 0, 0).
+  존 순서대로: 상태마다 프론티어 s를 나열해 값 + (부족, 낭비, Σs) 로 상태 r − s를 갱신.
+    부족 = covers면 0, 아니면 max(1, Σvolume_z − Σ_t s_t·maxVolume_t) · 낭비 = covers면 Σ_t s_t·maxVolume_t − Σvolume_z, 아니면 0
+  값 비교 = (Σ부족 ASC, Σ낭비 ASC, Σ사용 대수 ASC) 사전식. 동률 = 먼저 계산된 값 유지 (존 순서·상태 순회
+  순서·프론티어 나열 순서가 전부 고정이라 결정적).
+  존을 다 처리한 뒤 값 최소 상태(동률 = 남은 벡터 사전식 최소)에서 역추적 → 존별 (유형 → 대수)
+  → 존별 차량 목록 = 유형 순서 × 유형 안 VehicleId ASC로 소비.
+종료: 상태 수 ≤ Π(대수_t + 1) 고정, 전이 ≤ 상태 × 프론티어 — 루프 상한이 아니라 구조 (§4.3).
+기권: Π(대수_t + 1) > 65,536 (재량 상수, §4.4·X20). 실물 fixture 25,920 · T25 합성 32.
+```
+
+- 한 존을 여러 차량이 나누는 것은 (유형 → 대수)로 표현되고, 한 차량이 여러 존을 맡는 것은 상태가
+  대수를 차감하므로 불가능하다 — Domain §3.4의 비대칭이 DP 상태로 그대로 옮겨진다.
+- 공급이 수요보다 작으면 존 단위로 덮거나(최소 덮개) 비운다(빈 집합) — 부분 배정은 존 내부 적재가
+  남긴 요청과 함께 아래 leftover pass가 맡는다 (X21).
+- fixture 실측(부피 수준): DP 배정이 Win 엔진 결과의 존→차급 조합과 사실상 일치(ZONE_19·21·18·23·29
+  동일), 낭비 12.29 CBM = 여유 전부. 존 순서 greedy(제약 많은 존 우선·낭비 최소)는 같은 잣대에서
+  32 미배정 — 전역 DP가 필요한 이유다 ([survey §2.5](stage-04-initial-solution-heuristics-survey.md)).
+
+**H23 `zone-quota-balanced-fill` — 존 내부: 부호 있는 정차 예산 best-fit + 1-1 교환.**
+
+```text
+기권: Π(대수_t + 1) > 65,536
+배정 = ZoneQuotaAllocation.allocate(problem)
+for z in 존 순서:
+  bins = z에 배정된 차량 (전부 빈 경로). 순서 = 배정 목록 순
+  잔여 = z의 Request를 ( 호환 유형 수 ASC, totalVolume DESC, RequestId ASC ) 순으로
+  for r in 잔여 순서:                                                            (규칙 a/b — 바깥 루프 ≤ n)
+    평균 = 아직 처리하지 않은 z 요청(r 제외)의 totalVolume 평균 (없으면 0)
+    후보 bin = InsertionSearch.candidatesFor(problem, profile, s, r, v)가 비어 있지 않은 bin
+    bin마다 남을 부피 = (maxVolume − Σ실린 volume − volume(r)) − 평균 × (B_v − 정차 수 − 1)
+             정차 한도 부재면 남을 부피 = maxVolume − Σ실린 volume − volume(r)   (= 부피 best-fit)
+    선택 키 = ( 남을 부피 < 0 (정차가 먼저 바닥남) ASC, |남을 부피| ASC, 남은 부피 ASC, VehicleId ASC )
+    선택 bin의 최선 후보에 삽입. 후보 bin 없으면 z의 leftover
+  1-1 교환 (z의 leftover r, totalVolume DESC·RequestId 순):                       (성공마다 bank −1)
+    z의 경로 route (VehicleId ASC)마다, route의 방문 q (totalVolume ASC, RequestId ASC) 중 volume(q) < volume(r):
+      s′ = InsertionSearch.remove(problem, s, q) ; r을 s′의 route에 candidatesFor 최선 삽입 가능
+      ∧ q를 s′의 z 다른 경로에 candidatesFor 최선 삽입 가능 → 둘 다 apply, r 완료, 다음 leftover
+    첫 성공에서 멈춘다. 실패한 r은 leftover 그대로
+leftover pass: 전 존의 leftover를 ( 호환 유형 수 ASC, totalVolume DESC, RequestId ASC ) 순으로
+  InsertionSearch.candidates(problem, profile, s, r) 첫 원소(byCost)에 삽입 — 기존 경로든 미사용 차량의 새 경로든.
+  후보 0개면 bank (규칙 b)
+```
+
+- 선택 키의 뜻: "남은 정차를 평균 크기 요청으로 다 채웠을 때 남을 부피". 음수면 정차가 먼저
+  바닥나 부피가 낭비되므로 뒤로 미루고, 양수 중 가장 작은 bin이 가장 잘 맞는 bin이다. 정차 한도가
+  지배하는 소량·다건 존(ZONE_24·29)에서 부피 best-fit이 큰 차의 정차를 소량 주문으로 다 써 버리는
+  것을 막는다 (T40). 부동소수는 정렬 키로만 쓰고 동률은 VehicleId로 깬다 (§4.2).
+- 요청 순서의 첫 키(호환 유형 수 ASC)가 필수다 — 부피순만이면 여유 0.12 CBM 존(ZONE_21)에서 13 미배정,
+  호환 수 우선이면 2 (부피 수준 실측).
+- 종료: 존 내부 ≤ n, 교환 ≤ n (성공마다 bank −1, 실패는 다음 leftover로), leftover pass ≤ n → 바깥 루프 ≤ 3n.
+- **실물 fixture 정식 평가 실측 (2026-09-02, 스크래치 실행기)**: score [0, 31, 4,198,408, 1,002,069] · 507 ms —
+  452건 전량 배정·31대, 경로별 감사(구역 1종·차급·부피·무게·정차·시간창·reqDate) 31/31 PASS.
+  H3(15)보다 사전식으로 좋고 Win 엔진 결과(452 전량·31대)와 같은 축이다. 존 배정은 Win과 ZONE_19·21·23·29에서 동일.
+
+**H24 `zone-quota-subset-fill` — 존 내부: seed pool + subset-sum DP + 오라클 피드백.**
+
+```text
+기권·배정: H23과 동일
+for z in 존 순서:
+  bins 순서 = ( z 요청 중 호환 수 ASC, maxVolume DESC, VehicleId ASC )         ← 까다로운 차부터
+  미적재 = z의 Request
+  for b (i번째 bin):
+    후보 = 미적재 중 b 호환. 없으면 다음 bin
+    seed = 후보 중 ( travel.timeSec(b.startDepot → anchor 지점, b 속도) DESC, RequestId ASC ) 첫
+           (startDepot 부재면 endDepot 기준, 둘 다 없으면 RequestId ASC 첫)
+    pool = 후보를 ( travel.timeSec(seed anchor → anchor, b 속도) ASC, RequestId ASC )로 정렬해
+           Σvolume ≥ ⌈1.5 × maxVolume_b⌉ 이 되는 최소 접두, 단 ≥ B_b 개 (B_b 부재면 후보 전부)
+    nmax = min(B_b, |pool|)                                                  (B_b 부재 = |pool|)
+    nmin = min( nmax, max( |미적재| − Σ_{뒤 bin} B, ⌊0.8 × |미적재| × maxVolume_b / Σ_{i 이후 bin} maxVolume⌋ ) )
+    제외 = ∅
+    반복 (bin당 ≤ |pool| 회 — 매 반복이 제외를 늘리거나 nmax를 줄인다):
+      S = subsetSum(pool − 제외, maxVolume_b, maxWeight_b, nmin, nmax)
+      S = ∅ → bin 종료
+      순서화: S를 ( totalVolume DESC, RequestId ASC ) 순으로 candidatesFor(b) 최선 위치에 삽입.
+              실패 집합 F (그 요청은 넣지 않고 계속)
+      F = ∅ → bin 확정(삽입된 해 채택), 미적재 −= S, 다음 bin
+      F ≠ ∅ → 이 반복의 삽입을 버리고(해는 불변 — 그냥 base로 돌아간다) 제외 ∪= F, nmax = |S| − |F|
+              nmax < max(1, nmin) 이면 nmin = 0. nmax = 0 → bin 종료
+  z의 bin이 끝나면 남은 미적재를 z의 경로에 (bins 순서, candidatesFor 첫 성공) 삽입. 남으면 leftover
+leftover pass: H23과 동일
+
+subsetSum(items, cap, wcap, nmin, nmax):
+  u = ⌈cap / 20,000⌉ (재량 상수) · vol_i = ⌈totalVolume_i / u⌉ (올림 — 절대 넘치지 않는다) · C = ⌊cap / u⌋
+  c_i = 방문 수 (단일 1, PD 2)
+  상태 f[v][n] = 부피 합 v·방문 수 합 n인 부분집합의 최소 weight (wcap 초과는 버린다). f[0][0] = 0
+  items를 RequestId ASC로 하나씩, v = C..vol_i, n = nmax..c_i 내림차순 갱신 — 0/1 knapsack.
+    갱신됐으면 taken[i][v][n] = true (BitSet)
+  정차 한도 부재면 n 축이 없다 (f[v], nmin·nmax 무시)
+  선택 = ( v DESC, n ASC ) 첫 f[v][n] < ∞ 이며 nmin ≤ n ≤ nmax. 없으면 nmin = 0으로 다시 선택
+  역추적: i = 마지막..첫, taken[i][v][n]이면 포함하고 v −= vol_i, n −= c_i
+```
+
+- pool을 이동표 시간으로 자르는 이유: 존 폭 70 km인 ZONE_29에서 부피만 보는 subset-sum은 흩어진
+  소량 주문 28건을 한 경로에 몰아 시간창을 10건 어긴다 — 좌표가 아니라 `TravelMatrix` 시간이다
+  (Domain §4). 정차 하한이 없으면 큰 bin이 큰 주문만 먹고 마지막 bin이 정차 한도에 걸린다 (T41·T42).
+- 오라클 피드백이 이 기법의 유일한 되돌림이다. 상한은 구조: 반복마다 제외 집합이 ≥1 늘거나
+  nmax가 ≥1 준다 → bin당 ≤ |pool| 회 (T43). 경로 간 relocate·교환은 없다.
+- 비용: subsetSum 1회 = O(|pool| · C · B) 셀. fixture 최대 87 × 17,640 × 29 ≈ 44M(T5 bin, pool은
+  α로 잘려 실제 ≈ 40건). 메모리 = f 4 MB + taken 5.5 MB. T25 합성(용량 10⁶)은 u = 50이라 C = 20,000.
+- **실물 fixture 정식 평가 실측 (2026-09-02)**: score [8, 31, 3,942,905, 974,992] · 773 ms — H3(15)보다 좋지만
+  H23(0)에 진다. 남은 8건은 원거리 분산 존 몫이고, 거리 축은 H23보다 6% 짧다. 어느 쪽이 남을지는 Stage 8.
+
 ---
 
 ## 6. 포트폴리오 실행과 선택
@@ -902,7 +1080,7 @@ priority(r) = 0. R = 5 라운드 (재량 상수):
 
 - 4번의 동률 규칙 때문에 §5의 우선순위는 문서 장식이 아니라 **결과에 영향을 주는 계약**이다.
 - 이 결과가 stage-04 §4.2-2의 `initial`이 되고, `AlnsResult.initialEvaluation`·
-  `initialScore`로 그대로 흐른다 — DoD "초기해 대비 개선"의 기준값이 **22개 중 최선**이 된다.
+  `initialScore`로 그대로 흐른다 — DoD "초기해 대비 개선"의 기준값이 **24개 중 최선**이 된다.
   기준이 올라가므로 그 DoD는 더 엄격해진다.
 
 ---
@@ -911,9 +1089,9 @@ priority(r) = 0. R = 5 라운드 (재량 상수):
 
 | # | 상황 | 처리 | 근거 |
 |---|---|---|---|
-| X1 | requests 빈 목록 | 22개 전부 즉시 빈 해 반환. best = 빈 해 | Domain §9.1 |
+| X1 | requests 빈 목록 | 24개 전부 즉시 빈 해 반환. best = 빈 해 | Domain §9.1 |
 | X2 | vehicles 빈 목록 / 전 Request 호환 0대 | 전부 bank인 해. 예외 아님 | stage-04 E2 |
-| X3 | 전원 기권 | 빈 해 반환 (§6-3). **기본 22개로는 일어나지 않는다** — 기권 가능한 것은 H5·H7·H8·H19·H20뿐이다 (§4.4). 기법 목록을 직접 넘기는 오버로드에서만 도달한다 | §4.4 |
+| X3 | 전원 기권 | 빈 해 반환 (§6-3). **기본 24개로는 일어나지 않는다** — 기권 가능한 것은 H5·H7·H8·H19·H20·H23·H24뿐이다 (§4.4). 기법 목록을 직접 넘기는 오버로드에서만 도달한다 | §4.4 |
 | X4 | 한 기법이 0건 삽입 | 정상 — 전부 bank인 후보로 참여하고, 대개 score 1번 축에서 패배 | Domain §9.1 |
 | X5 | construction 결과가 Evaluator Infeasible | **IllegalStateException.** §4.1의 검증 3종이 Evaluator와 같은 것을 보므로 논리적으로 불가능하다 | 사용자 확정(D7)·§4.1 |
 | X6 | 빈 해 평가마저 Infeasible | IllegalStateException — profile 구성 결함 | stage-04 E16b 존치 |
@@ -924,12 +1102,16 @@ priority(r) = 0. R = 5 라운드 (재량 상수):
 | X11 | H7에서 saving ≤ 0만 존재 | 병합 0회 — 전부 단독 경로인 해. 차량 수 축에서 패배할 뿐 유효 | §5 H7 |
 | X12 | H8에서 두 Request의 각도가 부동소수로 같음 | `RequestId` 문자열로 동률을 깬다 | §4.2 |
 | X13 | 바깥 루프가 `\|requests\|`를 넘음 | IllegalStateException — 종료 불변식 위반 = 버그 | §4.3 |
-| X14 | profile hard가 강해 어떤 삽입도 통과 못 함 | 전부 bank인 해가 22개 나온다. Feasible이므로 정상 | §4.1 |
+| X14 | profile hard가 강해 어떤 삽입도 통과 못 함 | 전부 bank인 해가 24개 나온다. Feasible이므로 정상 | §4.1 |
 | X15 | H12 한 라운드에 수락 0건 | 전원 후보 0개였다는 뜻 — 남은 것 전부 bank, 정상 종료 | §5 H12 |
 | X16 | H18/H19 DP에서 어떤 경로 전이에도 못 드는 요청 | 전이 ②(bank)가 항상 있으므로 DP는 완주한다. 사전식 1축이 그 비용을 진다 | §5 H18 |
 | X17 | H21에서 병합 가능한 쌍이 0 | 요청당 클러스터 1개로 퇴화 — 단독 경로 위주 해. 유효 | §5 H21 |
 | X18 | H22에서 priority가 라운드 간 불변 | 불변점 — 이후 라운드도 같은 해이므로 조기 종료. R회를 다 돌지 않는 것은 정상 | §5 H22 |
 | X19 | H14에서 남은 호환 차량이 없는 요청 | `noAlt` 축이 최우선으로 끌어올린다 — big-M을 쓰지 않는다 (H1 onlyCandidate와 동일 수법) | §5 H14 |
+| X20 | H23·H24에서 차량 유형 조합 수 Π(대수+1) > 65,536 | 기권 — DP 상태 수를 구조로 묶는 한계. 예외 아님 | §4.4 |
+| X21 | H23·H24 존 배정 DP에서 어떤 존도 못 덮음 (공급 < 수요) | 프론티어에 빈 집합(c)이 항상 있어 DP는 완주한다. 존 단위로 덮거나 비우고, 남은 요청은 leftover pass가 기존 경로·미사용 차량에 삽입한다 | §5 H23 |
+| X22 | H24 순서화(오라클)가 subset-sum이 고른 요청을 못 넣음 | 그 요청을 bin의 제외 집합에 넣고 nmax를 줄여 재DP. 반복은 bin당 ≤ \|pool\| — 조용히 자르지 않고 구조로 끝난다 | §5 H24 |
+| X23 | H23·H24에서 정차 한도 부재 | H23 예산 = 남은 부피(부피 best-fit으로 퇴화) · H24 subsetSum은 방문 수 축 없이 부피만 (nmin·nmax 무시). 기권하지 않는다 | §5 H23·H24 |
 
 ---
 
@@ -937,7 +1119,8 @@ priority(r) = 0. R = 5 라운드 (재량 상수):
 
 위치: `solver-core/src/test/java/com/ronext/rpdptw/solve/`. 의존은 JUnit만
 (Stage 0 §4.2 — property 라이브러리를 추가하지 않는다). `Problem`은 Stage 1·2 경로로
-손 조립한다 (fixture JSON 파싱은 Stage 6).
+손 조립한다 (fixture JSON 파싱은 Stage 6). 예외는 T44 하나 — 실물 fixture는 Jackson이 있는 app 모듈
+(`app/src/test/java/com/ronext/rpdptw/app/`)에서 테스트 전용 매핑으로 읽는다.
 번호는 stage-04 §7의 T1–T12에 **이어서** 붙인다.
 
 | # | 테스트 | 내용 | 대응 |
@@ -947,15 +1130,15 @@ priority(r) = 0. R = 5 라운드 (재량 상수):
 | T14 | `InitialSolutionBuilderTest.selectsBestByOfficialEvaluation` | 결과가 다른 기법 2개 이상에서 `Scores.compare` 최소인 해가 선택됨 · 동률이면 우선순위 앞선 기법 (X7) | §6-4 |
 | T15 | `InitialSolutionBuilderTest.abstainedHeuristicsAreSkipped` | PD 포함(다중 depot) 문제 → H7·H8(·H19·H20)이 `ABSTAINED`, 나머지는 `BUILT`, 결과 유효 | §4.4 |
 | T16 | `InitialSolutionBuilderTest.allAbstainedYieldsEmptySolution` | **기권 기법만 담은 목록**을 `build(problem, profile, heuristics)` 오버로드에 넘김 → 빈 해, `heuristicId == "empty"`, 예외 없음 (X3) | §6-3 |
-| T17 | `InitialSolutionBuilderTest.everyConstructionResultIsFeasible` | 22개 각각을 직접 `Evaluator.evaluate` → 전부 Feasible. profile hard 있는 문제에서도 (X5·X14) | D7 |
+| T17 | `InitialSolutionBuilderTest.everyConstructionResultIsFeasible` | 24개 각각을 직접 `Evaluator.evaluate` → 전부 Feasible. profile hard 있는 문제에서도 (X5·X14) | D7 |
 | T18 | `InitialSolutionBuilderTest.deterministicAcrossRuns` | 같은 `Problem`·`Profile`로 두 번 → best 해·`heuristicId` 동등, `score`는 `Arrays.equals` (X8) | §1 |
-| T19 | `ConstructionHeuristicsTest.outerLoopBoundedByRequestCount` | 22개 각각 바깥 루프 반복 수 ≤ 기법별 상한(§4.3·§5 표) · 방어 카운터 초과 시 예외 (X13) | §4.3 |
-| T20 | `ConstructionHeuristicsTest.structureHoldsForEveryHeuristic` | 22개 결과 전부 `StructureCheck` 위반 0 · pair 원자성 · XOR. PD 포함 문제로도 수행 | Domain §6.3 |
+| T19 | `ConstructionHeuristicsTest.outerLoopBoundedByRequestCount` | 24개 각각 바깥 루프 반복 수 ≤ 기법별 상한(§4.3·§5 표) · 방어 카운터 초과 시 예외 (X13) | §4.3 |
+| T20 | `ConstructionHeuristicsTest.structureHoldsForEveryHeuristic` | 24개 결과 전부 `StructureCheck` 위반 0 · pair 원자성 · XOR. PD 포함 문제로도 수행 | Domain §6.3 |
 | T21 | `SavingsMergeConstructionTest.usesDirectedMatrixOnly` | `d(i,j) ≠ d(j,i)`인 이동표에서 saving이 방향을 구분함 · 좌표로 거리를 재계산하지 않음 | Domain §4 |
 | T22 | `SweepNextFitConstructionTest.coordinatesOrderOnly` | 좌표를 바꿔 각도 순서만 바꾸고 이동표는 고정 → 방문 **순서**는 바뀌되 보고된 거리는 표 값과 일치 | Domain §4 |
 | T23 | `VehicleZoneFillConstructionTest.commitsOnlyBestZonePerVehicle` | 차량 1대·존 2개에서 적재율 규칙대로 한 존만 커밋 · what-if가 다른 존을 오염시키지 않음 | §5 H3 |
 | T24 | `InitialSolutionBuilderTest.recordsPerHeuristicOutcome` | `outcomes`가 우선순위 순이고 기법마다 상태·미배정 수·score·소요를 담음 | §9 (8→4 입력) |
-| T25 | `InitialSolutionScaleTest.runsPortfolioOnFullScaleSyntheticProblem` | **규모 측정.** Stage 2 T12·stage-04 T11과 **같은 합성 문제**(장소 453·주문 452·차량 31·이동표 453² 전 쌍)에 **정차 한도 28**(실물 fixture `VehicleMaxStopCount`)을 더해 포트폴리오 1회 → 정상 종료. 한도가 없으면 경로 하나가 전 주문을 삼켜(2026-09-02 실측 H1 724초·routes 1) 실물과 무관한 값이 된다. **기법별(22개) 소요·미배정 수·score와, 포트폴리오 총 소요를 `AlnsConfig.timeLimitSec`으로 나눈 비(比)를 출력해 기록한다** — 절대 초는 그 자체로 해석되지 않는다. 이 비가 1에 가까우면 초기해가 ALNS 예산만큼 시간을 쓰고 있다는 뜻이고, 그것이 22 → 4 축소의 판단 근거가 된다 ([survey §5](stage-04-initial-solution-heuristics-survey.md)). **한도가 아니다** — 넘겨도 중단하지 않는다 (§4.3). 품질은 판정하지 않는다 | Plan Stage 4 규모 DoD |
+| T25 | `InitialSolutionScaleTest.runsPortfolioOnFullScaleSyntheticProblem` | **규모 측정.** Stage 2 T12·stage-04 T11과 **같은 합성 문제**(장소 453·주문 452·차량 31·이동표 453² 전 쌍)에 **정차 한도 28**(실물 fixture `VehicleMaxStopCount`)을 더해 포트폴리오 1회 → 정상 종료. 한도가 없으면 경로 하나가 전 주문을 삼켜(2026-09-02 실측 H1 724초·routes 1) 실물과 무관한 값이 된다. **기법별(24개) 소요·미배정 수·score와, 포트폴리오 총 소요를 `AlnsConfig.timeLimitSec`으로 나눈 비(比)를 출력해 기록한다** — 절대 초는 그 자체로 해석되지 않는다. 이 비가 1에 가까우면 초기해가 ALNS 예산만큼 시간을 쓰고 있다는 뜻이고, 그것이 24 → 4 축소의 판단 근거가 된다 ([survey §5](stage-04-initial-solution-heuristics-survey.md)). **한도가 아니다** — 넘겨도 중단하지 않는다 (§4.3). 품질은 판정하지 않는다 | Plan Stage 4 규모 DoD |
 | T26 | `InsertionSearchTest.standaloneDistUsesDirectedMatrix` | `d(i,j) ≠ d(j,i)`인 이동표에서 `standaloneDistMeter`가 방향별 값을 그대로 합산 · 좌표 미사용 | Domain §4 |
 | T27 | `InsertionSearchTest.candidateReportsForwardSlackDelta` | `deltaForwardSlackSec`이 "삽입 전후를 각각 전파해 기존 방문 slack 합을 재계산한 값"과 일치 · 새 방문은 불포함 | §4.1 |
 | T28 | `FeasibleRoutesRegretMConstructionTest.dynamicFeasibleRouteCountLeads` | 정적 호환 수는 같지만 경로가 차서 동적 가능 경로 수가 다른 두 요청에서 적은 쪽이 먼저 삽입됨 | §5 H9 |
@@ -968,6 +1151,13 @@ priority(r) = 0. R = 5 라운드 (재량 상수):
 | T35 | `GapSweepBidirectionalConstructionTest.coordinatesOrderOnlyAndDeterministicDirection` | 좌표 변경이 순서만 바꾸고 거리는 표 값과 일치(T22와 동형) · 양방향 동률이면 시계 방향 | §5 H20 |
 | T36 | `SpatiotemporalClusterConstructionTest.distanceUsesDirectedTravelOnly` | `S(i,j)`가 두 방향을 각각 계산해 최소를 취함 · `f < 0`인 방향 배제 · 좌표로 거리를 재계산하지 않음 (X17) | §5 H21 |
 | T37 | `SqueakyWheelSequentialConstructionTest.fixedRoundsDeterministicBlame` | 같은 입력 두 번 → 같은 라운드 전개·같은 best · priority 불변 시 조기 종료 (X18) | §5 H22 |
+| T38 | `ZoneQuotaAllocationTest.hallConditionKeepsBigVehiclesOffRestrictedZones` | 큰 차 1대·작은 차 2대, 큰 차 금지 존 A(작은 차 2대 몫)와 자유 존 B에서 DP가 A에 작은 차 2대·B에 큰 차를 배정. 낭비만 보면 큰 차가 A로 가는 수치의 입력 | §5 H23 공통 |
+| T39 | `ZoneQuotaAllocationTest.combinationsBoundAbstains` | 유형이 서로 다른 차량 17대(2¹⁷ > 65,536)면 H23·H24 `abstains` true · 같은 유형 31대(32)면 false (X20) | §4.4 |
+| T40 | `ZoneQuotaBalancedFillConstructionTest.signedBudgetAvoidsWastingStops` | 차량 (부피 20·정차 4)·(4·4), 요청 4×4건 + 1×4건: 부피 best-fit은 3건을 놓치지만 부호 예산 규칙은 전량 배정 · 동률은 VehicleId | §5 H23 |
+| T41 | `ZoneQuotaSubsetFillConstructionTest.subsetSumFillsExactly` | 용량 10 bin 2개·요청 5,4,4,3,2,2: 부피 best-fit은 1건을 놓치고 subsetSum은 두 bin을 정확히 채움 · 부피 올림 양자화가 용량을 넘기지 않음 | §5 H24 |
+| T42 | `ZoneQuotaSubsetFillConstructionTest.countLowerBoundSpreadsSmallRequests` | 용량 8·정차 3 bin 2개·요청 4,4,3,3,1,1: 하한 없이는 첫 bin이 {4,4}를 먹어 둘째 bin이 정차 한도에 걸리고, 하한(6 − 3 = 3)이 있으면 전량 배정 | §5 H24 |
+| T43 | `ZoneQuotaSubsetFillConstructionTest.oracleFeedbackExcludesInfeasibleAndTerminates` | 시간창 때문에 함께 못 도는 요청이 순서화에서 실패 → 제외·nmax 축소 후 재DP가 \|pool\| 안에 끝나고 그 요청은 bank · 결과 StructureCheck 통과·Feasible (X22) | §5 H24 |
+| T44 | `WinPocFixtureTest.zoneQuotaBalancedFillAssignsEveryRequestOnRealFixture` (**app 모듈**) | `data/win_poc_case_floor.json`(주문 452·차량 31·정차 28)을 테스트 전용 매핑으로 `Problem`까지 올려 H23 실행 → bank 0·31경로·`Evaluator` Feasible·score[0]=0·재실행 동일 score(X8)·H3보다 `Scores.compare` 우위 · 경로마다 구역 1종·차급·부피·무게·정차 28·시간창·reqDate 감사 | §5 H23 실측 |
 
 ---
 
@@ -981,7 +1171,7 @@ priority(r) = 0. R = 5 라운드 (재량 상수):
 | route pool·MIP set covering/partitioning column 생성 | **범위 밖** | Master §4·§6 |
 | top-K 다양해 보관 (best 1개만 넘긴다) | **안 함** | Domain §9.3 "초기해 생성 → ALNS 개선"이 전부 |
 | 병렬 실행 (Phase B) | 트리거 대기 | [Stage Extra E4](stage-extra-deferred-features.md) |
-| 22 → 4 축소 | Stage 8 실측 후 **사용자 결정** | §5 표의 실측값이 입력 ([survey §5](stage-04-initial-solution-heuristics-survey.md) 프로토콜) |
+| 24 → 4 축소 | Stage 8 실측 후 **사용자 결정** | §5 표의 실측값이 입력 ([survey §5](stage-04-initial-solution-heuristics-survey.md) 프로토콜) |
 | 보류 후보 구현 (Ioannou impact·2-petal·backhaul 매칭·다중 depot 배정·VROOM λ 격자) | 트리거 발동 시 survey 개정 후 | [survey §4](stage-04-initial-solution-heuristics-survey.md) |
 | route elimination 계열 (Nagata–Bräysy ejection pool) | `4-ALNS` 연산자 후보 | 사용자 확정 D4 · survey §4 F5 |
 | 증분 평가·삽입 shortlist | 재량 (필요 시) | stage-04 N4 |
@@ -996,7 +1186,7 @@ priority(r) = 0. R = 5 라운드 (재량 상수):
 
 | # | 질문 | 처리 |
 |---|---|---|
-| Q1 | 22개 중 어느 4개를 남길 것인가 | **미결 — 의도된 미결.** Stage 8이 T25로 기법별 소요·품질을 실측하고, 그 표와 [survey §5](stage-04-initial-solution-heuristics-survey.md) 프로토콜을 보고 사용자가 정한다. 그때까지 22개 전부 실행한다 |
+| Q1 | 24개 중 어느 4개를 남길 것인가 | **미결 — 의도된 미결.** Stage 8이 T25로 기법별 소요·품질을 실측하고, 그 표와 [survey §5](stage-04-initial-solution-heuristics-survey.md) 프로토콜을 보고 사용자가 정한다. 그때까지 24개 전부 실행한다 |
 | Q2 | 병렬 실행 시 스레드 총량 | **미결.** Architecture §3.2의 executor 동시 실행 수(기본 1~2)와 곱해지므로 함께 정해야 한다. 스레드풀을 core가 소유할지 app이 주입할지도 그때 결정 ([Stage Extra E4](stage-extra-deferred-features.md)) |
 | Q3 | 초기해 실행 시간의 상한 | **해소 (2026-09-02).** 두지 않는다 — 문제 규모에 따라 적정값이 달라져 고정 상한이 오히려 해를 버린다. 종료는 §4.3의 구조적 보장이 담당하고, 시간 컷오프는 결정성(X8)을 깨므로 채택하지 않는다 |
 | Q4 | construction이 profile hard를 볼 것인가 | **해소 (2026-09-02).** 본다 (§4.1 ②). stage-04 N8이 "Stage 8에서 필요가 확인되면"으로 유예했던 항목인데, 포트폴리오 선택이 정식 평가로 이뤄지는 이상 Infeasible 후보를 만들어 놓고 버리는 것이 낭비라 지금 당긴다 |

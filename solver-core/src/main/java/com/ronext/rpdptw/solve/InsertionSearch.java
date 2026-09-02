@@ -111,6 +111,32 @@ public final class InsertionSearch {
         return total;
     }
 
+    /**
+     * Request 하나를 경로에서 빼 bank로 돌린 새 Solution (불변). 경로가 비면 그 Route는 사라진다 —
+     * 빈 Route를 두지 않는다 (Stage 3 E30). H23 1-1 교환 전용 (heuristics 문서 §5 H23).
+     */
+    static Solution remove(Problem problem, Solution current, RequestId requestId) {
+        Request request = problem.request(requestId);
+        Set<NodeId> nodes = new HashSet<>();
+        request.pickup().ifPresent(side -> nodes.add(side.nodeId()));
+        request.delivery().ifPresent(side -> nodes.add(side.nodeId()));
+        List<Route> routes = new ArrayList<>(current.routes().size());
+        for (Route route : current.routes()) {
+            List<NodeId> kept = new ArrayList<>(route.visits().size());
+            for (NodeId nodeId : route.visits()) {
+                if (!nodes.contains(nodeId)) {
+                    kept.add(nodeId);
+                }
+            }
+            if (!kept.isEmpty()) {
+                routes.add(kept.size() == route.visits().size() ? route : new Route(route.vehicleId(), kept));
+            }
+        }
+        Set<RequestId> bank = new LinkedHashSet<>(current.bank());
+        bank.add(requestId);
+        return new Solution(routes, bank);
+    }
+
     /** §4.3 방어 카운터 — 바깥 루프가 기법별 상한을 넘으면 버그다. 조용히 자르지 않는다. */
     static void checkOuterLoop(String heuristicId, int iterations, int bound) {
         if (iterations > bound) {

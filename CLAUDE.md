@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Stage 2 완료 (2026-08-17) · Stage 3 완료 (2026-09-02) · Stage 4-초기해 완료 (2026-09-02)** —
 구 placeholder(`com.ronext.optimizer`, 수제 `HttpServer`, 합성 데모 `AlnsBatchEngine`)와 GCP 잔재는
 삭제됐고, 디스크의 코드는 확정 설계와 같은 3모듈 구조다. 정식 평가(전파·metric·profile)와
-초기해 construction 22개 포트폴리오까지 서 있고, **ALNS 본체와 재검증은 아직 0**이다.
+초기해 construction 24개 포트폴리오(기본 8 + 확장 14 + 실물 맞춤 2)까지 서 있고, **ALNS 본체와 재검증은 아직 0**이다.
 
 - **확정 설계**: AWS ECS Fargate 위 단일 Spring Boot 서비스, 저장은 S3만.
 - **현 코드**: 4개 pom + `RoNextApplication` + `application.yml` +
@@ -16,8 +16,8 @@ Stage 2 완료 (2026-08-17) · Stage 3 완료 (2026-09-02) · Stage 4-초기해 
   `problem`(`Problem`·`NodeRef`) · `eval`(사실 값·`Evaluation`·profile SPI·`DefaultProfile`·`Scores`) ·
   `solve`(`Solution`·`StructureCheck`·`RoutePropagator`·`Evaluator` + 초기해: `InsertionSearch`·
   `ConstructionHeuristic` SPI·`InitialSolutionBuilder`·`InitialSolutionResult`·`ConstructionOutcome`·
-  construction 22개 `*Construction`·`GiantTourSplit`) + `solver-profile`의
-  `ProfileRegistry` + 테스트(solver-core 30클래스 80개, solver-profile 1클래스 1개, app 1클래스 2개).
+  construction 24개 `*Construction`·`GiantTourSplit`·`ZoneQuotaAllocation`) + `solver-profile`의
+  `ProfileRegistry` + 테스트(solver-core 33클래스 86개, solver-profile 1클래스 1개, app 2클래스 3개).
   `solve`에 하위 패키지는 없다 — `AlnsSolver`·`AlnsConfig` 등 ALNS 타입은 아직 없다.
   `verify`·`api`·`run`·`input`·`storage`는 **아직 빈 패키지**다 — 그 타입들을 grep해서 안 나오는 게
   정상이고, 아직 안 만든 것이지 다른 데 있는 게 아니다.
@@ -25,6 +25,10 @@ Stage 2 완료 (2026-08-17) · Stage 3 완료 (2026-09-02) · Stage 4-초기해 
   4-초기해 코드는 [stage-04-heuristics](docs/implementation/stage-04-initial-solution-heuristics.md)의
   §2 파일 표·§3 시그니처·§5 의사코드와 1:1이다 (구현 중 정정 3건은 그 문서 frontmatter `revisions`
   2026-09-02 항목 — `apply`의 `Problem` 인자, T25 정차 한도 28, `InsertionSearch.Cache`).
+  실물 맞춤 H23·H24(존 배정 DP + 존 내부 적재 2종)의 근거·실측은
+  [survey §2.5](docs/implementation/stage-04-initial-solution-heuristics-survey.md)에 있다 —
+  실물 fixture에서 H23이 미배정 0·31대(H3는 15). 이 수치는 app 모듈의 T44(`WinPocFixtureTest`)가
+  고정한다(규약 JSON → `PlanInput` 매핑은 그 테스트 전용이고, 정식 어댑터는 Stage 6).
   **다음 작업은 `4-ALNS`** — [stage-04](docs/implementation/stage-04-alns.md) — ALNS 본체
   (루프·acceptance·종료, T1–T12). 초기해 진입점은 `InitialSolutionBuilder.build(problem, profile)`이고
   그 결과의 `evaluation`·`score`가 `AlnsResult.initialEvaluation`·`initialScore`로 흐른다.
