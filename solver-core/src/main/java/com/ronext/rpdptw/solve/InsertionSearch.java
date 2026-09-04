@@ -227,8 +227,13 @@ public final class InsertionSearch {
         RouteFacts before = null;
         Map<NodeId, Long> slackBefore = Map.of();
         if (!newRoute) {
-            before = validate(problem, profile, vehicleId, visits)
-                    .orElseThrow(() -> new IllegalStateException("existing route infeasible: " + vehicleId));
+            // 이미 Infeasible인 기존 경로는 후보 0개로 뺀다 — destroy가 만들 수 있는 상태이지 버그가 아니다
+            // (§4.3·N9: 이동표가 삼각부등식을 지키지 않으면 방문 하나를 빼는 것만으로 뒤 방문이 창을 넘긴다).
+            Optional<RouteFacts> validated = validate(problem, profile, vehicleId, visits);
+            if (validated.isEmpty()) {
+                return;
+            }
+            before = validated.get();
             slackBefore = forwardSlackByNode(problem, before);
         }
         Request request = problem.request(requestId);

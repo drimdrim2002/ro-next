@@ -5,10 +5,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 이 저장소의 성격 — 설계가 본체, 코드는 입력층까지만 있다
 
 배차 최적화(RPDPTW) 서비스. **Stage 0 완료 (2026-08-10) · Stage 1 완료 (2026-08-16) ·
-Stage 2 완료 (2026-08-17) · Stage 3 완료 (2026-09-02) · Stage 4-초기해 완료 (2026-09-02)** —
+Stage 2 완료 (2026-08-17) · Stage 3 완료 (2026-09-02) · Stage 4-초기해 완료 (2026-09-02) ·
+Stage 4-ALNS 완료 (2026-09-02, **2026-09-04 개정 반영**)** —
 구 placeholder(`com.ronext.optimizer`, 수제 `HttpServer`, 합성 데모 `AlnsBatchEngine`)와 GCP 잔재는
 삭제됐고, 디스크의 코드는 확정 설계와 같은 3모듈 구조다. 정식 평가(전파·metric·profile)와
-초기해 construction 24개 포트폴리오(기본 8 + 확장 14 + 실물 맞춤 2)까지 서 있고, **ALNS 본체와 재검증은 아직 0**이다.
+초기해 construction 24개 포트폴리오(기본 8 + 확장 14 + 실물 맞춤 2)와 ALNS 본체(연산자 5개·적응 가중치·
+acceptance·종료 4조건)까지 서 있고, **재검증은 아직 0**이다.
 
 - **확정 설계**: AWS ECS Fargate 위 단일 Spring Boot 서비스, 저장은 S3만.
 - **현 코드**: 4개 pom + `RoNextApplication` + `application.yml` +
@@ -16,9 +18,12 @@ Stage 2 완료 (2026-08-17) · Stage 3 완료 (2026-09-02) · Stage 4-초기해 
   `problem`(`Problem`·`NodeRef`) · `eval`(사실 값·`Evaluation`·profile SPI·`DefaultProfile`·`Scores`) ·
   `solve`(`Solution`·`StructureCheck`·`RoutePropagator`·`Evaluator` + 초기해: `InsertionSearch`·
   `ConstructionHeuristic` SPI·`InitialSolutionBuilder`·`InitialSolutionResult`·`ConstructionOutcome`·
-  construction 24개 `*Construction`·`GiantTourSplit`·`ZoneQuotaAllocation`) + `solver-profile`의
-  `ProfileRegistry` + 테스트(solver-core 33클래스 86개, solver-profile 1클래스 1개, app 2클래스 3개).
-  `solve`에 하위 패키지는 없다 — `AlnsSolver`·`AlnsConfig` 등 ALNS 타입은 아직 없다.
+  construction 24개 `*Construction`·`GiantTourSplit`·`ZoneQuotaAllocation` + ALNS: `AlnsSolver`·
+  `AlnsConfig`·`AlnsResult`·`AlnsRunStats`(`Termination` 중첩)·`DestroyOperator`·`RepairOperator`·
+  `RandomRemoval`·`RouteRemoval`·`StringRemoval`·`GreedyInsertion`·`RegretInsertion`·`AdaptiveWeights`) +
+  `solver-profile`의 `ProfileRegistry` + 테스트(solver-core 38클래스 102개, solver-profile 1클래스 1개,
+  app 3클래스 4개).
+  `solve`에 하위 패키지는 없다.
   `verify`·`api`·`run`·`input`·`storage`는 **아직 빈 패키지**다 — 그 타입들을 grep해서 안 나오는 게
   정상이고, 아직 안 만든 것이지 다른 데 있는 게 아니다.
 - Stage 1–3 코드는 각 stage 문서의 §1 파일 표·§2 시그니처·§3~§4 절차와 1:1이고,
@@ -29,12 +34,22 @@ Stage 2 완료 (2026-08-17) · Stage 3 완료 (2026-09-02) · Stage 4-초기해 
   [survey §2.5](docs/implementation/stage-04-initial-solution-heuristics-survey.md)에 있다 —
   실물 fixture에서 H23이 미배정 0·31대(H3는 15). 이 수치는 app 모듈의 T44(`WinPocFixtureTest`)가
   고정한다(규약 JSON → `PlanInput` 매핑은 그 테스트 전용이고, 정식 어댑터는 Stage 6).
-  **다음 작업은 `4-ALNS`** — [stage-04](docs/implementation/stage-04-alns.md) — ALNS 본체
-  (루프·acceptance·종료, T1–T12). 초기해 진입점은 `InitialSolutionBuilder.build(problem, profile)`이고
-  그 결과의 `evaluation`·`score`가 `AlnsResult.initialEvaluation`·`initialScore`로 흐른다.
-  손대기 전에 **해당 단계의 문서를** 읽는다 — 두 문서는 소유 범위가 갈라져 있다.
-- T25(`InitialSolutionScaleTest`)는 규모 측정이라 수십 초 걸린다 — 단일 테스트를 돌릴 때는
-  `-Dtest='!InitialSolutionScaleTest' -Dsurefire.failIfNoSpecifiedTests=false`로 뺄 수 있다.
+  4-ALNS 코드는 [stage-04-alns](docs/implementation/stage-04-alns.md)의 §2 파일 표·§3 시그니처·§4 절차와
+  1:1이다 (구현 중 확정 5건은 그 문서 frontmatter `revisions` 2026-09-02 "구현 직전 정합" 항목 —
+  `Termination`은 `AlnsRunStats` 중첩, `repair`가 `Profile`을 받음, `RegretInsertion`은 `InsertionSearch.Cache`,
+  E14/T5 결정성은 `maxSteps` 종료 + worse 확률 0 조건, T1 fixture는 PD 2건 포함 12건).
+  진입점은 `AlnsSolver.withDefaults(config).solve(problem, profile)`(포트폴리오 초기해) 또는
+  `solve(problem, profile, initial)`(손 조립 초기해)이고, 탐색 예산은 `AlnsConfig`에만 있다.
+  2026-09-04 개정 4건도 반영됐다 (frontmatter `revisions` 2026-09-04 항목) — §4.3의 "이미 Infeasible인
+  기존 경로는 후보에서 제외"(`InsertionSearch.collect`는 예외 대신 후보 0개를 낸다 — 비삼각 이동표에서는
+  방문을 빼는 것만으로 뒤 방문이 창을 넘긴다, N9), q를 비율에서 **절대 개수 5~20**으로,
+  §4.5 acceptance의 **축 가드**(앞 두 축이 동률일 때만 확률 수락), `StringRemoval` 신설(destroy 3종).
+  **다음 작업은 Stage 5** — [stage-05](docs/implementation/stage-05-verification-and-result.md) —
+  재검증(`verify`, ALNS 결과의 `best`·`bestEvaluation`·`bestScore`를 캐시 없이 대조)과 결과 모델.
+  손대기 전에 **해당 단계의 문서를** 읽는다.
+- T25(`InitialSolutionScaleTest`)·T11(`AlnsScaleTest`)은 규모 측정이라 수십 초 걸린다 — 단일 테스트를 돌릴 때는
+  `-Dtest='!InitialSolutionScaleTest,!AlnsScaleTest' -Dsurefire.failIfNoSpecifiedTests=false`로 뺄 수 있다.
+  app 모듈의 T15(`WinPocAlnsTest`)도 실물 fixture에 ALNS 20초라 그만큼 걸린다.
 - 문서·커밋 메시지는 한국어다. 용어(`Request`/pair/`Problem`/`Solution`/bank/profile/재검증/
   solveKey)는 문서 표기를 그대로 쓴다 — 같은 개념에 새 이름을 붙이지 않는다.
 

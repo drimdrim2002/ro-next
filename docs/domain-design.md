@@ -5,6 +5,7 @@ date: 2026-08-10
 supersedes: docs/deprecated/2026-07-31-phase-b-domain-design.md
 master: docs/master-design.md
 revisions:
+  - 2026-09-02 §9.3 포트폴리오 개수 재갱신 — 실물 맞춤 2개(H23·H24) 편입으로 22개 → 24개. 규칙 무변경
   - 2026-09-02 §9.3 포트폴리오 개수 갱신 — Stage 4 확장 14개 편입으로 8개 → 22개.
     재량 원칙 무변경 (개수는 원래 재량)
   - 2026-08-09 최초 확정
@@ -1184,7 +1185,7 @@ profile (고객별)                     ✅ 추가 hard 제약, score 축 구성
 반면 **초기해 후보를 여럿 만들어 정식 평가(`Evaluator`)로 하나를 고르는 것**은 폐기 대상이
 아니라 첫 문장이 말하는 재량("초기해 개수")에 그대로 든다 — 근사 screening이 없고 선택 권위가
 정식 평가뿐이므로 §9.2와 충돌하지 않는다. Stage 4 구현이 이 재량을 써서
-결정적 construction 22개(기본 8 + 확장 14) 포트폴리오를 쓴다
+결정적 construction 24개(기본 8 + 확장 14 + 실물 맞춤 2) 포트폴리오를 쓴다
 ([stage-04-initial-solution-heuristics.md](implementation/stage-04-initial-solution-heuristics.md)).
 
 ---

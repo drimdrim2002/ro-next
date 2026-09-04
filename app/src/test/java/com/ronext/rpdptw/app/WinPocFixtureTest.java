@@ -55,7 +55,8 @@ import tools.jackson.databind.ObjectMapper;
  */
 class WinPocFixtureTest {
 
-    private static final Path FIXTURE = Path.of("..", "data", "win_poc_case_floor.json");
+    /** T15(WinPocAlnsTest)도 이 경로와 아래 매핑을 그대로 쓴다 — 정식 adapter는 Stage 6이다. */
+    static final Path FIXTURE = Path.of("..", "data", "win_poc_case_floor.json");
     private static final int MAX_STOPS = 28;
 
     @Test
@@ -124,7 +125,7 @@ class WinPocFixtureTest {
 
     // ---- 규약 JSON → PlanInput (테스트 전용 매핑 · Stage 6 adapter가 대체한다) ----
 
-    private static PlanInput toInput(JsonNode root) {
+    static PlanInput toInput(JsonNode root) {
         JsonNode range = root.get("dateRange");
         List<DepotInput> depots = new ArrayList<>();
         for (JsonNode d : root.get("depot")) {

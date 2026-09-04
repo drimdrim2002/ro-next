@@ -65,7 +65,7 @@ revisions:
 **이 문서는 `4-초기해`를 소유하고, 단독으로 완결된다 (2026-09-02).** Stage 4는 따로 만들고
 따로 끝내는 두 단계이고(Plan §2.2), 이 단계가 먼저다. 여기서 만드는 어떤 타입도
 `AlnsSolver`·`AlnsConfig`·`AlnsResult`·`DestroyOperator`·`RepairOperator`를 **참조하지 않는다** —
-그래서 ALNS가 한 줄도 없는 상태에서 §8의 T13–T37이 전부 green이 될 수 있고, 그것이 이 단계의
+그래서 ALNS가 한 줄도 없는 상태에서 §8의 T13–T44가 전부 green이 될 수 있고, 그것이 이 단계의
 완료 판정이다. 의존은 한 방향(ALNS → 초기해)뿐이고, 그쪽마저
 [stage-04 §3.2](stage-04-alns.md)의 오버로드로 끊을 수 있다.
 
