@@ -1,0 +1,379 @@
+---
+title: Stage 4 — 존 배정 DP(`ZoneQuotaAllocation`)의 기권 제거와 메모리 상한 (설계안)
+stage: 4
+date: 2026-09-04
+status: 설계안 — 계약 문서(stage-04-initial-solution-heuristics.md) 개정 전. 구현은 §8의 개정을 먼저 반영한 뒤 한다
+plan: ../implementation-plan.md
+sources:
+  - stage-04-initial-solution-heuristics.md (§3.4 시그니처 · §4.3 종료 보장 · §4.4 기권 · §5 H23·H24 공통 의사코드 · §7 X20~X23 · §8 T38~T44)
+  - stage-04-initial-solution-heuristics-survey.md (§2.5 실물 구조 실측 — 존 배정 DP의 근거)
+  - ../notes/initial-solution-heuristics-h1-h24.md (§4.2 ① H23 행 · §4.4 결론 — 이 설계의 발단)
+  - solver-core/src/main/java/com/ronext/rpdptw/solve/ZoneQuotaAllocation.java (현 구현 — §1이 인용)
+revisions:
+  - 2026-09-04 최초 작성 — 사용자 확정(2026-09-04 대화): "OOM을 막는 제한은 필요하고, 동시에 Π가
+    불필요하게 커지는 것도 막는다. 차종 쪼개기·풍부한 차종 제외(답 동일) + 희소 상태 저장(상한 안이면
+    답 동일) + 폭 제한(넘칠 때만 근사)". H3를 기권 대체로 두는 안(notes §4.4)은 이 설계가 확정되면 필요 없어진다
+  - 2026-09-04 사용자 결정 반영 — §9 Q1~Q4·Q6 확정(262,144 · 축소 항상 · X21 흡수 · `Allocation.truncated`만 · H25 공유 그대로), Q5 해당 없음.
+    H25 설계([stage-04-h25](stage-04-h25-zone-quota-exchange.md))와 T·X 번호 정리 — 이 문서 T45~T52·X24~X27, H25는 T53~T56·X28~X33
+---
+
+# Stage 4 — 존 배정 DP의 기권 제거와 메모리 상한
+
+## 0. 한 장 요약
+
+**왜.** H23·H24의 공통 부품 `ZoneQuotaAllocation`은 "구역마다 어떤 차종을 몇 대 줄 것인가"를 DP로
+전역 최적으로 정한다. 그 DP가 상태를 **크기 Π = Π(차종별 대수 + 1)의 배열**로 미리 잡기 때문에, Π가
+65,536을 넘으면 배열을 만들 수 없어 **아예 돌리지 않는다**(기권 X20). 실물 fixture는 6종·31대라
+Π = 25,920으로 통과하지만, 같은 구조를 10배로 늘리면(주문 4,520·차량 310) 52⁶ ≈ 2×10¹⁰이라 기권한다.
+차종이 17종만 돼도(각 1대) 2¹⁷ = 131,072로 기권한다. 규모가 커지면 반드시 만나는 한계이고, 그때
+H23·H24는 아무것도 내지 못한다.
+
+**무엇.** 기권 조건을 없애고 메모리를 **입력과 무관한 상수**로 묶는다. 네 겹이다.
+
+| 겹 | 하는 일 | 답이 같은가 |
+|---|---|---|
+| ① 프론티어 범위 제한 | 존에 **호환되는 차종만**, 그것도 **그 존이 최대로 쓸 수 있는 대수까지만** 열거한다 | 존을 덮을 수 있는 입력에서는 같다. 덮을 수 없는 존(X21)에서는 현 코드가 호환 안 되는 차를 태우는 경우가 있어 달라진다 — §2.1 |
+| ② 답이 같은 축소 2개 | (a) 구역–차종 호환 그래프의 **연결 성분마다 따로** DP · (b) 대수가 남아도는 **풍부한 차종은 상태에서 제외** | 값(Σ부족·Σ낭비·Σ대수)은 **같다**(§2.2·§2.3 논증). 배정은 값이 동률인 후보가 여럿일 때만 동률 규칙 차이로 달라질 수 있다 |
+| ③ 희소 상태 저장 | 도달한 상태만 저장한다. Π 크기 배열 셋을 전부 없앤다 | 상한 안에 들면 **완전히 같은 계산** |
+| ④ 폭 제한 | 도달 상태 총량이 상한을 넘칠 때만 값 순으로 상위만 남긴다 | 이때만 근사. 비교 대상은 "정확한 H23"이 아니라 **"H23 없음"** — 지금은 그 입력에서 답이 없다 |
+
+메모리 = `성분당 상태 총량 상한 × 상태 하나 크기`. 상수 262,144(2¹⁸) 상태에 차종 6종이면 약 14 MB,
+20종이면 약 28 MB (§5).
+
+**안 하는 것.** H23·H24의 존 내부 적재(2단계)는 손대지 않는다. `ConstructionOutcome`·`InitialSolutionBuilder`
+계약은 바꾸지 않는다(근사 발생 표시는 §6·§9). 존 배정을 DP가 아닌 다른 방식(greedy + 교환)으로 바꾸는 안은
+별도 설계(H3 개선판)이고 이 문서와 무관하다.
+
+---
+
+## 1. 현 구조와 한계
+
+현 코드(`ZoneQuotaAllocation.allocate`)의 Π 크기 자료구조는 **셋**이다. 하나만 고치면 나머지에서 터진다.
+
+| 위치 | 지금 | 크기 |
+|---|---|---|
+| `Layer.value` · `parent` · `chosen` | 층마다 Π 크기 배열. 역추적 때문에 **구역 수 + 1개 층을 전부** 보관 | (8 + 4 + 8) B × Π × (Z + 1) |
+| `Demand.cached(radix)` → `cache` | 구역마다 `byte[Π]` — `covers(s)` 결과 캐시 | Π B × Z (구역마다 새로 잡음) |
+| 상태 키 부호화 `encodeIndex` | 남은 대수 벡터를 혼합 진법 `int`로 | Π ≤ 2³¹이어야 함 |
+
+그래서 `MAX_COMBINATIONS = 65,536`이 필요했다. 실물 fixture에서는 (8+4+8) × 25,920 × 13 ≈ 6.7 MB로 문제없지만,
+한계는 **품질과 무관한 메모리 안전장치**다 — 넘으면 답이 나빠지는 게 아니라 **답이 없다.**
+
+**프론티어 열거의 숨은 비용.** `enumerate`는 유형마다 `c = 0..remaining[t]`를 돌고 `covers`가 참이 되는 순간
+멈춘다. 그 존과 **호환되지 않는** 유형은 `covers`를 바꾸지 못하므로 멈추지 않고 `remaining[t]` 끝까지 돈다 —
+열거 비용이 수요가 아니라 **공급(대수)에 묶이는** 구멍이다. 같은 이유로 프론티어 (a)·(b)에 호환 안 되는
+차가 실린 벡터가 섞여 들어가고(§2.1), 그 벡터들이 도달 상태 수를 불린다. 희소 저장으로 가려면 이 구멍부터
+막아야 한다.
+
+---
+
+## 2. 개정 설계
+
+적용 순서: **① 범위 제한(정의) → ②(a) 성분 분해 → ②(b) 풍부 차종 제외 → ③ 희소 DP → ④ 폭 제한.**
+①은 프론티어의 *정의*를 바꾸는 것이고 ②~④는 그 정의 위에서의 계산 방식이다.
+
+### 2.1 ① 프론티어 범위 제한 — 호환 유형만, 최대 필요 대수까지만
+
+존 z의 프론티어를 열거할 때 유형 t의 범위를 다음으로 한정한다.
+
+```text
+compat(z)     = z의 요청 중 하나라도 호환인 유형 집합 (Demand의 groupMask 합집합)
+maxNeed(z, t) = t ∉ compat(z) → 0
+                t ∈ compat(z) → max( 1,
+                                     ⌈Σvolume_z / maxVolume_t⌉,
+                                     ⌈Σweight_z / maxWeight_t⌉,
+                                     ⌈Σvisits_z / B_t⌉ )           (B_t 부재 → 그 항 0 · 용량 0 → 그 항 0)
+R_t(z)        = min( 남은_t, maxNeed(z, t) )                        ← 열거 범위 c = 0..R_t(z)
+```
+
+프론티어 (a)(b)(c)의 정의는 그대로되, (b)의 "확장 가능"을 `남은_t > s_t`에서 **`R_t(z) > s_t`** 로 바꾼다.
+
+**왜 답이 보존되는가 (존을 덮을 수 있을 때).**
+- 호환 안 되는 유형은 `covers`에 기여하지 않는다(`compute`가 mask로 거른다). 그런 차를 실은 (a) 벡터는
+  같은 벡터에서 그 차를 뺀 것보다 낭비가 **엄격히** 크고 부족은 같다(0) — 값 사전식에서 절대 이기지 못한다.
+- maxNeed(z,t)대 이상의 t는 접두 자원 조건(부피·무게·방문)을 t 혼자서도 다 채우는 양이라, 그 이상 늘려도
+  `covers`는 변하지 않는다. 최소 덮개 (a)는 그 문턱 아래에서 멈추고, 덮을 수 있는 존의 (b)는 정의상 덮개
+  문턱 아래에 있으므로 범위 제한에 걸리지 않는다.
+
+**달라지는 경우 — 현 코드의 구멍.** 현 코드는 (i) 호환 안 되는 유형이 유형 순서상 뒤에 있으면 그 차를 실은
+벡터를 (a)로 받아들이고, (ii) 부족량을 `Σ_t s_t·maxVolume_t`로 계산해 **호환 안 되는 차의 용량까지 부족을
+줄이는 데 센다**(`allocate`의 `capacity` 합은 유형을 거르지 않는다). 그래서 공급이 수요를 못 덮는 존(X21)에서는
+호환 안 되는 차를 그 존에 태워 두는 것이 "부족이 작다"고 판정될 수 있고, 그렇게 소진된 차가 뒤 존의 (b)
+판정("모든 확장 가능 유형이 덮게 한다")을 바꿔 다른 경로를 열기도 한다. ①은 이 구멍을 없앤다. **실물
+fixture는 전 존이 덮이고(Win 결과와 같은 배정, 부족 0) 이 구멍을 밟지 않는다** — T44가 그대로 통과해야 하며,
+통과가 곧 ①의 회귀 확인이다(§7 T52). 전제: 이 구멍은 이 설계에서 처음 적는 것이고, 별도 결함으로 등재하지
+않는다 — ①이 곧 수정이다.
+
+### 2.2 ②(a) 호환 성분별 DP
+
+```text
+그래프 G: 정점 = 유형 ∪ 존. 간선 z–t ⇔ t ∈ compat(z).
+성분 C = G의 연결 성분 (union-find, 유형 순서 → 존 순서로 고정 순회 → 결정적).
+  존이 없는 성분(호환 존이 하나도 없는 유형)은 DP를 돌리지 않는다 — 그 차량은 배정 없음.
+성분 순서 = 성분에 든 첫 존의 존 순서.
+성분마다: 유형 부분 목록(유형 순서 유지) · 존 부분 목록(존 순서 유지) 위에서 §4의 DP를 독립 실행.
+vehiclesByZone = 성분 결과의 합집합. Allocation.types · zones는 전체 목록 그대로 (소비자 H23·H24 무변경).
+```
+
+**왜 값이 같은가.** 존 z의 프론티어는 ①에 의해 `compat(z)` 유형의 남은 대수에만 의존하고, 값은 존별
+`(부족, 낭비, 대수)`의 합이다. 서로 다른 성분은 유형을 공유하지 않으므로 한 성분의 선택이 다른 성분의
+프론티어·값에 영향을 주지 않는다 — 전체 최소 = 성분별 최소의 합.
+**동률.** 최종 상태 동률 규칙(값 최소 → 남은 벡터의 부호화 키 최소)은 좌표가 성분별로 나뉘므로 성분별
+최소의 곱과 같다(사전식 최소를 독립 좌표 묶음별로 나눠 구해도 결과가 같다). 층 전이의 "먼저 계산된 값
+유지"도 같은 성분 좌표만 다른 상태끼리만 충돌하므로 성분 안에서의 순회 순서로 결정된다. 따라서 (a)는
+값·배정 모두 같다.
+
+### 2.3 ②(b) 풍부한 차종 제외
+
+```text
+성분 C 안에서, 유형 t에 대해  N_t = Σ_{z ∈ C} maxNeed(z, t)
+대수_t ≥ N_t 이면 t는 "풍부":
+  상태 벡터에서 t 차원을 뺀다 (남은_t = ∞로 취급 → R_t(z) = maxNeed(z, t) 항상).
+  s_t는 프론티어·값(Σ대수)·낭비·용량 계산에 그대로 참여한다. 소비는 역추적 후 차량 목록을 잘라 줄 때만 센다.
+```
+
+**왜 값이 같은가.** 어느 층에서든 t의 소비 누적 ≤ Σ_{z'<z} maxNeed(z',t) < N_t ≤ 대수_t 이므로
+`남은_t ≥ maxNeed(z,t)`가 항상 성립하고, 따라서 `R_t(z) = maxNeed(z,t)`로 상태와 무관하다. 프론티어가 t의
+남은 대수를 읽지 않으니 그 차원을 상태에서 빼도 전이가 하나도 바뀌지 않는다 — 값이 같다.
+**동률.** 최종 동률 규칙이 "남은 벡터 사전식 최소"인데 t 좌표가 사라지므로, **값이 같은 최적 배정이 여럿일 때**
+어느 것을 고르는지가 달라질 수 있다. 값은 같으므로 미배정 수·낭비·대수는 같고, 존에 배정되는 구체 차량이
+바뀌어 2단계 결과(거리)가 달라질 수 있다. 실물 fixture에서 (b)가 발동하는지, 발동하면 동률이 있는지는
+T52가 판정한다 — 전제: 실물은 부피 여유 4.2%라 어느 유형도 풍부하지 않을 가능성이 높다(발동 안 함).
+
+### 2.4 ③ 희소 상태 저장
+
+Π 크기 배열 셋을 전부 없앤다.
+
+| 지금 | 개정 |
+|---|---|
+| `Layer.value[Π]` 등 | 층 = **도달 상태만** 담는 평면 배열 묶음: `int[] keys`(상태 × T′), `long[] values`(상태 × 3), `int[] parent`(직전 층 index). `chosen`은 저장하지 않는다 — **s = 부모 키 − 자식 키**로 역추적 때 복원한다 |
+| `encodeIndex`(혼합 진법 `int`) | 키 = `int[T′]` 남은 대수 벡터 그대로. 순서 비교자 `KEY_ORDER` = 마지막 유형부터 첫 유형 순으로 비교 (현 혼합 진법 키 오름차순과 **동일한 순서** — 동률 규칙이 지금과 같게 유지된다) |
+| `Demand.cached` `byte[Π]` | 없앤다. `covers`는 O(그룹 수 × 유형 수)라 캐시 없이 계산한다 (프론티어 한 번의 열거 안에서 같은 s를 두 번 묻지 않는다) |
+| 층 순회 = index 오름차순 | 층의 상태를 `KEY_ORDER`로 정렬해 보관하고 그 순서로 순회 — "먼저 계산된 값 유지"가 지금과 같은 순서로 작동한다 |
+| 다음 층 갱신 = 배열 index | `to` 키로 정렬 map(또는 정렬 후 병합)에 넣고, 같은 키가 이미 있으면 값 비교 — 작으면 교체, 같거나 크면 유지 |
+
+**답.** 상한(§2.5) 안에 들면 상태 집합·전이·동률 처리가 현 코드와 하나도 다르지 않다. 실물 fixture에서
+도달 상태는 Π = 25,920보다 훨씬 적다(층마다 프론티어 몇 개씩 갈라질 뿐) — 상한에 닿지 않는다.
+
+### 2.5 ④ 폭 제한 — 층별이 아니라 총량
+
+역추적 때문에 층을 전부 들고 있으므로 상한은 **한 성분의 DP가 보관하는 상태 총량**에 건다.
+
+```text
+MAX_TOTAL_STATES = 262,144                                        (재량 상수 — §5·§9 Q1)
+성분 C의 존 수 Z_C. 층 0 = 1 상태(초기).
+존 z (0-based)를 처리해 층 z+1을 만들 때:
+  cap_{z+1} = max( 1, ⌊ (MAX_TOTAL_STATES − Σ_{k≤z} |층_k|) / (Z_C − z) ⌋ )   ← 남은 예산을 남은 층 수로 나눔
+  층 z+1의 도달 상태 수 > cap_{z+1} 이면 ( 값 사전식 ASC, KEY_ORDER ASC ) 순으로 정렬해 앞 cap_{z+1}개만 남긴다
+  잘라냈으면 truncated = true
+Σ_k |층_k| ≤ MAX_TOTAL_STATES + Z_C  (max(1, ·) 때문에 층당 최대 1 초과)
+```
+
+- 남은 예산을 남은 층 수로 나누므로 앞 층이 예산을 다 먹어 뒤 층이 굶는 일이 없고, 앞 층이 덜 쓰면 뒤 층이
+  더 쓴다. 층 수는 존 수로 고정이라 규칙이 결정적이다(X8).
+- 절단 정렬의 2차 키가 `KEY_ORDER`라 같은 값의 상태 중 어느 것을 버리는지도 고정된다.
+- 절단은 **넘칠 때만** 작동한다. 넘치지 않는 입력(실물 fixture·T25 합성·§7의 합성 대부분)에서는 ③과 같다.
+- 성분은 순차 실행하고 끝난 성분의 층을 버리므로 메모리 정점은 **성분 중 최대**이지 합이 아니다.
+
+---
+
+## 3. 시그니처 변경 (§3.4 대체분)
+
+바뀌는 것만 적는다. 이름은 유지한다.
+
+```java
+final class ZoneQuotaAllocation {
+    /** 성분 하나의 DP가 층 전체에 보관하는 상태 수 총량 (재량 상수, §5). 넘치면 값 순으로 잘라 근사한다 — 기권하지 않는다. */
+    static final int MAX_TOTAL_STATES = 262_144;
+    // 삭제: MAX_COMBINATIONS · combinations(List<VehicleType>)
+
+    record VehicleType(...) {}                                    // 무변경
+    record Zone(String zoneId, List<RequestId> members) {}        // 무변경
+    /** truncated — 어느 성분에서든 폭 제한이 실제로 잘라냈으면 true (근사 발생). 나머지는 무변경. */
+    record Allocation(List<VehicleType> types, List<Zone> zones,
+                      Map<String, List<VehicleId>> vehiclesByZone, boolean truncated) {}
+    /** 성분 — 유형 index 목록(유형 순서)·존 index 목록(존 순서). */
+    record Component(List<Integer> typeIndexes, List<Integer> zoneIndexes) {}
+
+    static List<VehicleType> vehicleTypes(Problem problem);       // 무변경
+    static List<Zone> zones(Problem problem, List<VehicleType> types);   // 무변경
+    static List<Component> components(List<VehicleType> types, List<Zone> zones, Problem problem);  // §2.2 (T47)
+    static int maxNeed(Demand demand, VehicleType type);          // §2.1 (T49). Demand는 기존 중첩 클래스
+    /** 존 전이 하나의 값 (부족, 낭비, Σs) — ①대로 s에 든 유형만 합한다. DP와 H25(greedy + 교환)가 같은 함수를 쓴다. */
+    static long[] value(Demand demand, List<VehicleType> types, int[] s);
+    static Allocation allocate(Problem problem);                  // = allocate(problem, MAX_TOTAL_STATES)
+    static Allocation allocate(Problem problem, int maxTotalStates);   // 테스트 전용 오버로드 — 예산 주입 (T46~T48·T51)
+}
+```
+
+- **H25 설계와의 접점.** H25(H3 개선판 — greedy + 존 간 교환)는 `value()`와 H23 2단계
+  `ZoneQuotaBalancedFillConstruction.fill(problem, profile, allocation)`을 동작 무변경으로 추출해 공유하는
+  전제다. 이 문서는 `allocate(problem)` 진입점과 `Allocation`의 기존 세 필드를 유지하고, 값 계산을 `value()`
+  한 곳에 둔다 — ①의 "호환 유형만 합산"은 `value()` 안에 있어야 H25의 greedy도 같은 값을 본다.
+  유일한 형태 변경은 `Allocation.truncated` 추가다 — H25는 자기 결과를 `truncated = false`로 만든다 (§9 Q6).
+
+- H23·H24의 `abstains(Problem)`는 **`false`** 를 돌려준다 (H1~H4·H6·H9~H18·H21·H22와 같은 부류가 된다).
+- `Demand`: `cached(long[] radix)`·`cache` 삭제. `compat` 마스크(그룹 마스크 합집합)와 `totalWeight`·`totalVisits`
+  (maxNeed용)를 노출한다. `frontier(int[] remaining, Demand)`의 첫 인자 의미가 "남은 대수"에서 **"열거 범위 R"** 로
+  바뀐다 — 호출자가 `R_t = min(남은_t, maxNeed(z,t))`를 만들어 넘긴다.
+
+---
+
+## 4. 의사코드 (§5 "공통 — 존 배정 DP" 블록의 대체분)
+
+유형·존·존 수요(`Demand`)·`covers`·프론티어 분류 (a)(b)(c)·값 비교 사전식·동률 규칙은 현 계약 그대로다.
+아래가 바뀌는 부분이다.
+
+```text
+프론티어(R, z) — R = 유형별 열거 범위 벡터 (§2.1):
+  유형 순서로 재귀 나열 c_t = 0..R_t (covers가 되는 순간 그 유형에서 중단) — R_t = 0인 유형은 c_t = 0 고정.
+  (a) covers(s) ∧ ¬covers(s − e_{min 유형})        (b) ¬covers(s) ∧ ∃t (R_t > s_t) ∧ ∀t (R_t = s_t ∨ covers(s + e_t))        (c) s = 0
+  부족·낭비·용량은 s에 든 유형만 합한다 (R_t = 0인 유형은 s_t = 0이라 자동으로 빠진다).
+
+allocate(problem, maxTotalStates):
+  types = vehicleTypes(problem) · zones = zones(problem, types)
+  truncated = false · vehiclesByZone = 존마다 빈 목록
+  for C in components(types, zones):                                    (§2.2 — 성분 순서 고정)
+    T_C = C의 유형 (유형 순서) · Z_C = C의 존 (존 순서)
+    풍부 = { t ∈ T_C : 대수_t ≥ Σ_{z ∈ Z_C} maxNeed(z, t) }               (§2.3)
+    상태 차원 = T_C − 풍부 (유형 순서 유지) · T′ = |상태 차원|
+    층_0 = { 키 = (대수_t)_{t ∈ 상태 차원} : 값 (0,0,0), parent −1 }
+    for z (0-based) in Z_C:
+      cap = max(1, ⌊(maxTotalStates − Σ_{k≤z} |층_k|) / (|Z_C| − z)⌋)   (§2.5)
+      next = 빈 정렬 map (KEY_ORDER)
+      for 상태 in 층_z (KEY_ORDER 오름차순):
+        R_t = t ∈ 상태 차원 → min(키_t, maxNeed(z,t)) · t ∈ 풍부 → maxNeed(z,t) · t ∉ compat(z) → 0
+        for s in 프론티어(R, z):                                          (열거 순서 고정)
+          to = 키 − s|상태 차원 · 값′ = 값 + (부족, 낭비, Σs)
+          next[to]가 없거나 값′ < next[to].값 이면 next[to] = (값′, parent = 상태 index)   ← 동률 = 먼저 계산된 값 유지
+      if |next| > cap: next를 (값 ASC, KEY_ORDER ASC)로 정렬해 앞 cap개만 남김 · truncated = true
+      층_{z+1} = next (KEY_ORDER 순서로 평면 배열에 고정)
+    best = 층_{|Z_C|}에서 (값 ASC, KEY_ORDER ASC) 첫 상태
+    역추적: z = |Z_C|−1 .. 0: s|상태 차원 = parent 키 − 현재 키 · 풍부 유형의 s_t는 층 전이에 함께 기록해 둔 값(§9 재량 — 부모 index와 함께 int로)
+      → 존 z의 (유형 → 대수) 확정
+    존 z마다 차량 목록 = 유형 순서 × 유형 안 VehicleId ASC로 소비 (성분마다 cursor 별도 — 유형은 성분에 하나만 속한다)
+  return Allocation(types, zones, vehiclesByZone, truncated)
+```
+
+- **풍부 유형의 s_t 복원.** 상태 키에 없으므로 "부모 − 자식"으로 못 얻는다. 전이마다 풍부 유형의 대수를
+  `short[]`/`int[]`로 부모 index 옆에 함께 저장한다 — 풍부 유형 수 × 상태 수만큼이고 §5 공식에 포함한다.
+  (풍부 유형이 없으면 0 B.)
+- 현 계약의 "한 차량이 여러 존을 맡는 것은 불가능"(상태가 대수를 차감)은 그대로다. 풍부 유형도 역추적 뒤
+  cursor로 잘라 주므로 한 차량이 두 존에 가지 않는다 — 소비 합 ≤ N_t ≤ 대수_t가 그 보장이다.
+
+---
+
+## 5. 종료·메모리 상한 (§4.3 형식)
+
+```text
+성분 C: 층 수 = |Z_C| + 1 · 층당 상태 ≤ cap ≤ maxTotalStates · Σ층 ≤ maxTotalStates + |Z_C|
+전이 수 ≤ Σ_z |층_z| × F_z,  F_z = |프론티어(R, z)| ≤ Π_{t ∈ compat(z)} (maxNeed(z,t) + 1)   ← 공급이 아니라 수요에 묶인다
+프론티어 열거 1회 ≤ Π_{t ∈ compat(z)} (maxNeed(z,t) + 1) 벡터 × covers O(|그룹_z| × |compat(z)|)
+⇒ 시간 = 구조로 유한 (루프 상한 카운터 없음 — 현 계약과 같은 취급). 성분은 순차 실행.
+```
+
+**못 덮는 존의 열거.** 현 코드의 `enumerate`는 `covers`가 참이 되는 순간에만 멈추므로, 공급이 수요를 못 덮는
+존(X21)이나 호환 안 되는 유형에서는 끝내 멈추지 않고 `남은_t`까지 다 돈다 — 열거가 Π(남은 대수 + 1)에
+비례한다. 희소 저장·폭 제한은 **상태 수**를 묶을 뿐 이 **열거 비용**은 못 잡는다. 그래서 ①의 범위 `R_t(z) =
+min(남은_t, maxNeed(z,t))`가 **§4.3 의미의 상한**이다: 덮든 못 덮든 유형 t는 `maxNeed(z,t)`를 넘겨 열거되지
+않고, 호환 안 되는 유형은 0으로 고정된다. 위 식의 `F_z ≤ Π_{t∈compat(z)}(maxNeed(z,t)+1)`은 이 제한이 있어야
+성립하며, 계약 §4.3에는 이 형태로 적는다(§8).
+
+**메모리 (성분 하나, 정점).** 상태 하나 = 키 `4·T′` + 값 `24` + parent `4` + 풍부 s `4·|풍부|` B.
+
+| 상황 | T′ | 상태 하나 | 상한 262,144 상태 | 비고 |
+|---|---:|---:|---:|---|
+| 실물 fixture 규모 | 6 | 52 B | **13.6 MB** | 실제 도달 상태는 상한보다 훨씬 적다 |
+| 차종 20종 | 20 | 108 B | 28.3 MB | |
+| 차종 64종 한 성분 | 64 | 284 B | 74.4 MB | 극단 — 성분 분해 전 기준 |
+| 현 코드(참고) | — | 20 B × Π × (Z+1) | fixture 6.7 MB · Π 65,536·Z 30이면 40 MB | Π에 비례해 무한히 자란다 |
+
+여기에 정렬 map의 임시 객체(층 하나 분량, 위 표의 ≤ 1/2)와 `Demand`(존당 O(그룹 수))가 더해진다.
+상한이 **상수**이므로 입력 크기와 무관하게 OOM이 설계로 배제된다 — 지금의 65,536이 하던 역할을 262,144
+총량 상한이 대신하고, 넘칠 때의 동작이 "기권"에서 "근사"로 바뀐다.
+
+전제: `long[3]` 값을 평면 `long[]`로, 키를 평면 `int[]`로 두는 것을 계약으로 적는다(객체 배열이면 상태당
+헤더 ≈ 100 B가 더 붙어 표의 2~3배가 된다).
+
+---
+
+## 6. 예외·경계 (§7 X 표 대체·추가분)
+
+| # | 상황 | 처리 | 근거 |
+|---|---|---|---|
+| X20 (대체) | H23·H24에서 차종 조합 수가 큼 | **기권하지 않는다.** 도달 상태 총량이 `MAX_TOTAL_STATES`를 넘으면 값 순으로 잘라 근사하고 `Allocation.truncated = true`. 상태 수 상한은 상수라 메모리는 입력과 무관 | §2.5·§5 |
+| X21 (보강) | 어떤 존도 못 덮음 | 그대로 완주. ①에 의해 호환 안 되는 차는 그 존에 배정되지 않고, (b)는 `maxNeed`까지만 태운다 — 현 코드처럼 남은 차를 전부 쏟아붓지 않는다 | §2.1 |
+| X24 | 호환 존이 하나도 없는 유형 | 존 없는 성분 — DP 없이 배정 없음. leftover pass가 그 차량을 새 경로로 쓸 수 있다(현 계약대로) | §2.2 |
+| X25 | 성분의 존 수 + 1 > `MAX_TOTAL_STATES` | `cap = max(1, ·)`로 층마다 1 상태는 남긴다 — 총량이 존 수만큼 초과할 뿐 완주한다 | §2.5 |
+| X26 | 용량(`maxVolume`/`maxWeight`)이 0인 유형 | `maxNeed`에서 그 자원 항은 0 (나눗셈 없음). 호환이면 maxNeed ≥ 1로 후보에는 남고, 실을 수 없다는 판정은 `covers`·오라클이 한다 | §2.1 전제 |
+| X27 | 근사(`truncated`)가 발생 | H23·H24는 정상 실행 — 2단계·leftover pass·정식 평가 모두 그대로. 포트폴리오 선택은 정식 평가가 하므로 근사가 나빴으면 다른 기법이 이긴다 | §6 계약 |
+
+**근사 발생을 밖으로 알리는 방법 — 최소안과 대안.**
+- **최소안(채택 권고).** `Allocation.truncated`만 둔다. 테스트(T48·T51)와 H23·H24 내부에서만 보인다.
+  `ConstructionOutcome`·`InitialSolutionResult`는 무변경.
+- 대안 A. `ConstructionOutcome`에 `boolean approximate`(다른 기법은 항상 false) 추가 — §3.1·T24 계약 변경.
+  Stage 8의 T25 표에 "근사 여부" 열이 필요해지면 그때 당긴다.
+- 대안 B. core에서 JDK `System.Logger`로 한 줄 남김 — solver-core에 로깅이 처음 들어가는 것이라 권하지 않는다.
+
+---
+
+## 7. 테스트 (§8 T 표 추가·대체분)
+
+번호는 현 최대 T44에 이어 붙인다. 위치는 `solver-core/src/test/java/com/ronext/rpdptw/solve/ZoneQuotaAllocationTest.java`
+(T52만 app 모듈 T44의 확장).
+
+| # | 테스트 | 내용 | 대응 |
+|---|---|---|---|
+| T39 | ~~`combinationsBoundAbstains`~~ | **삭제** — 기권 조건이 사라진다. T45가 같은 입력으로 반대 사실을 고정한다 | §2 |
+| T45 | `ZoneQuotaAllocationTest.manyTypesNoLongerAbstain` | T39의 입력(유형이 서로 다른 17대) + 20종×각 1대 + 3종×각 67대(Π 314,432): H23·H24 `abstains == false`, `allocate` 완주, `truncated == false`(도달 상태가 상한에 못 미침), 존마다 배정 차량이 `compat(z)` 유형뿐 | X20 대체 |
+| T46 | `ZoneQuotaAllocationTest.abundantTypeLeavesStateVector` | 풍부 유형 1개(대수 ≥ Σ maxNeed) + 희소 유형 2개 + 존 3개: 예산 오버로드에 `Π(희소 대수+1) × (존 수+1)`을 넘겨도 `truncated == false`(풍부 차원이 상태에 없다는 증거) · 배정 값이 손 계산 최적과 같음 · 풍부 유형 소비 ≤ 대수 | §2.3 |
+| T47 | `ZoneQuotaAllocationTest.componentsSolvedIndependently` | 서로 호환이 없는 두 묶음(유형 A·존 a / 유형 B·존 b): `components`가 2개 · `vehiclesByZone`이 두 묶음을 각각 단독 문제로 돌린 결과와 같음 · 예산을 큰 묶음 하나 크기로 줘도 `truncated == false` | §2.2 |
+| T48 | `ZoneQuotaAllocationTest.truncationIsDeterministicAndValid` | T38 입력에 예산 2를 주입: `truncated == true` · 두 번 실행 결과 동일(X8) · 차량 중복 배정 없음 · 존마다 호환 유형만 · 그 `Allocation`으로 H23 `construct` → `Evaluator` Feasible | §2.5·X27 |
+| T49 | `ZoneQuotaAllocationTest.frontierBoundedByMaxNeed` | 호환 안 되는 유형 1대·호환 유형 100대·존 1개(필요 3대): 프론티어 벡터마다 `s_t ≤ maxNeed(z,t)` · 호환 안 되는 유형은 0 · 프론티어 크기 ≤ 4 (100대가 아니라 수요 3에 묶임) | §2.1·§5 |
+| T50 | `ZoneQuotaAllocationTest.uncoverableZoneTakesAtMostMaxNeed` | 공급 < 수요인 존: 배정 대수 ≤ maxNeed · 호환 안 되는 차 0 · 완주 (X21 보강) | X21 |
+| T51 | `ZoneQuotaAllocationScaleTest.largeFleetCompletesWithinBudget` | **규모.** 3종×각 67대·존 20(Π 314,432)과 20종×각 1대·존 20(Π 2²⁰): 기본 예산에서 완주·`truncated == false` · 예산 1,000에서 `truncated == true`이되 완주·유효(T48 조건) · 소요 출력(한도 아님, T25와 같은 취급) | §5 |
+| T52 | `WinPocFixtureTest` (**app**, T44 확장) | 기존 단언에 **score 전체 일치** `[0, 31, 4,198,408, 1,002,069]`를 더한다 — ①~④ 적용 후 실물 답이 그대로임을 고정 (`truncated == false`도 단언). 달라지면 §2.3 동률 발동 여부부터 본다 | §2 회귀 |
+| 재확인 | T38 · T40 · T41 · T42 · T43 · T25 | 무변경으로 통과해야 한다. T25 합성(1종·31대, Π 32)은 상태 ≤ 32라 ③과 현 코드가 동일 | §2.4 |
+
+---
+
+## 8. 계약 문서 개정 목록 (구현 전에 먼저)
+
+| 문서 | 위치 | 어떻게 |
+|---|---|---|
+| stage-04-initial-solution-heuristics.md | frontmatter `revisions` | 한 줄 추가: "2026-09-XX H23·H24 존 배정 DP 기권 제거 — 프론티어 호환·maxNeed 제한 + 성분 분해·풍부 유형 제외 + 희소 상태 + 총량 폭 제한(`MAX_TOTAL_STATES` 262,144). X20 대체·X24~X27·T39 삭제·T45~T52. 근거 [stage-04-zone-quota-allocation-scaling](stage-04-zone-quota-allocation-scaling.md)" |
+| 〃 | §2 파일 표 `ZoneQuotaAllocation.java` 행 | "존 → 차량 유형 대수 배정 DP (호환 그룹 누적 검사 포함)" 뒤에 "· 성분별 희소 DP + 총량 폭 제한 (기권 없음)" |
+| 〃 | §3.4 | 코드 블록을 이 문서 §3으로 교체 (`MAX_COMBINATIONS`·`combinations` 삭제, `MAX_TOTAL_STATES`·`Allocation.truncated`·`Component`·`components`·`maxNeed`·예산 오버로드) |
+| 〃 | §4.3 예외 상한 줄 | "H23·H24 존 배정 DP 상태 수 ≤ Π(유형별 대수 + 1) ≤ 65,536 고정(§4.4)" → "H23·H24 존 배정 DP: 성분당 보관 상태 ≤ `MAX_TOTAL_STATES` + 존 수 · 프론티어 열거 ≤ Π_{t∈compat(z)}(maxNeed(z,t)+1) — 못 덮는 존에서도 유형별 열거가 maxNeed에서 멈추므로 공급이 아니라 수요에 묶임" |
+| 〃 | §4.4 기권 표 | 마지막 행(차량 유형 조합 수 > 65,536 → H23·H24) **삭제**. 아래 글머리의 "실물 맞춤 H23·H24는 차량 유형 조합 수가 한계를 넘으면 기권한다 (전 차량이 제각각인 31대면 2³¹ …)" 문장 삭제 · "기권할 수 있는 것은 H19·H20(단일 depot 요구)뿐이고"로 정정 · "24개 전부 실행된다 (유형 6종, 조합 25,920)"의 괄호를 "(유형 6종)"으로 |
+| 〃 | §5 H23·H24 공통 블록 | "프론티어(남은 r, z) = …" 정의를 이 문서 §4의 "프론티어(R, z)"로, "DP: 상태 = 남은 유형별 대수 벡터 …" 단락 뒤에 §2.2·§2.3·§2.5 요약 3줄, "종료: 상태 수 ≤ Π(대수_t + 1) 고정" → §5 형식, "기권: Π(대수_t + 1) > 65,536 (재량 상수, §4.4·X20). 실물 fixture 25,920 · T25 합성 32." **삭제**. H24 블록의 "기권·배정: H23과 동일" → "배정: H23과 동일 (기권 없음)" |
+| 〃 | §7 X 표 | X3 "기권 가능한 것은 H5·H7·H8·H19·H20·H23·H24뿐" → "H5·H7·H8·H19·H20뿐" · X20 행을 이 문서 §6의 X20(대체)로 · X21 처리 문구 보강 · X24~X27 추가 |
+| 〃 | §8 T 표 | T39 행에 "삭제 (2026-09-XX, T45로 대체)" · T44 내용에 "score 전체 일치·`truncated == false`" · T45~T52 추가 |
+| 〃 | §9 표 | "증분 평가·삽입 shortlist" 행 아래에 "프론티어 memo(§9 재량)" 한 줄 (재량 명시) |
+| stage-04-initial-solution-heuristics-survey.md | §2.5 끝 | "판정은 Java 정식 평가뿐이다" 앞에 한 줄: "존 배정 DP의 규모 한계(기권)는 2026-09-XX 제거 — [scaling 문서]" |
+| CLAUDE.md | "이 저장소의 성격" 4-초기해 단락 | 구현 중 정정 3건 열거 뒤에 "존 배정 DP는 2026-09-XX 개정으로 기권 없음(성분별 희소 DP + 총량 폭 제한, [stage-04-zone-quota-allocation-scaling])" 한 줄. §작업 트리의 함정에는 추가 없음 |
+| docs/notes/initial-solution-heuristics-h1-h24.md | §4.2 ① H23 행 | 끝의 "(건너뜀은 차종 조합 수 > 65,536뿐)" → "(건너뜀 없음 — 차종 조합이 커지면 DP가 근사로 내려갈 뿐 답은 낸다, [scaling 문서])" |
+| 〃 | §4.4 결론 | "H23 기권 시 H3가 그 슬롯" 류의 문구가 있으면 삭제 — 기권이 없으므로 대체가 필요 없다 |
+| 〃 | §1 표 각주 | H23 502 ms는 개정 후 재실측해 갱신 (③이 더 빠를 것으로 예상하나 실측 전 기재하지 않는다) |
+
+---
+
+## 9. 하지 않는 것 · 미해결 질문
+
+**하지 않는 것.**
+- 프론티어 memo(같은 R 벡터면 프론티어가 같다 — 존마다 `Map<R, List<int[]>>`) — 시간 최적화이고 상한은 §5로
+  이미 구조다. 넣으면 memo 크기 ≤ Σ 프론티어 ≤ Π_{compat}(maxNeed+1)² 벡터를 §5 공식에 더해야 한다. 재량.
+- H23·H24 2단계(존 내부 적재)·leftover pass·1-1 교환 — 무변경.
+- 존 배정을 DP가 아닌 greedy + 존 간 교환으로 하는 안 — H3 개선판의 별도 설계.
+- `ConstructionOutcome`·`InitialSolutionResult` 변경 — §6 대안 A는 Stage 8이 필요를 확인하면.
+
+**질문과 결정 (2026-09-04 사용자).**
+
+| # | 질문 | 결정 |
+|---|---|---|
+| Q1 | `MAX_TOTAL_STATES` 값 | **262,144 확정.** 근거는 §5 표(6종 14 MB·20종 28 MB)와 "ALNS·재검증과 같은 프로세스에서 돈다"는 것뿐이다 — Stage 8 실측(Fargate 메모리·T51 소요)으로 조정 |
+| Q2 | ②(a)(b) 축소를 항상 적용할지, 넘칠 때만 적용할지 | **항상 확정.** 값이 같고 계산이 싸다. "넘칠 때만"은 2패스가 필요하고, 동률 배정이 예산에 따라 달라져 결정성 설명이 복잡해진다. 단 §2.3의 동률 주의는 남는다 — T52가 실물에서 답이 그대로임을 고정한다 |
+| Q3 | ①이 바꾸는 X21 동작(호환 안 되는 차를 태우던 현 코드의 구멍) | **결함 등재 없이 ①로 흡수 확정.** 실물은 밟지 않는다(T52) |
+| Q4 | 근사 발생 표시 | **최소안(`Allocation.truncated`) 확정.** `ConstructionOutcome` 무변경. Stage 8 T25 표에 열이 필요하면 그때 대안 A |
+| Q5 | notes §4.4의 "H23 기권 시 H3 대체" | **해당 없음** — 그 문구는 notes에 넣지 않았다. 지울 것이 없다 |
+| Q6 | H25와의 공유 부품 — `Allocation.truncated` 추가가 H25의 `Allocation` 조립에 인자 하나를 더한다 | **그대로 확정**(H25는 `false`). H25 문서 §3의 `value` 시그니처·값 정의를 이 문서 §3·§2.1 ①과 같은 문장으로 맞췄다(2026-09-04). 구현 순서는 **이 문서 먼저, H25 다음** |
