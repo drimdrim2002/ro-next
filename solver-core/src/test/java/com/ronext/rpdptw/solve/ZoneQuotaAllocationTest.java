@@ -207,6 +207,33 @@ class ZoneQuotaAllocationTest {
         }
     }
 
+    /**
+     * T57 — 호환 마스크가 `long`이라 차종 33개에서도 접히지 않는다 (X28 경계 바로 아래).
+     * ZBIG은 마지막 유형(index 32)만 허용하는데, 마스크가 `int`면 `1 << 32 == 1`이라 첫 유형(index 0)이
+     * 호환으로 보이고 — 낭비가 작아 — 그 차가 ZBIG에 배정된다. `1L << t` 치환을 하나라도 빠뜨리면 여기서 깨진다.
+     */
+    @Test
+    void thirtyThreeTypesUseLongMask() {
+        List<Vehicle> vehicles = new ArrayList<>();
+        for (int i = 0; i <= 32; i++) {
+            vehicles.add(vehicle(String.format("V%03d", i), 10_000L + i * 1_000L,
+                    Optional.of(DEPOT), Optional.empty(), OptionalInt.empty(), Optional.of(String.format("F%02d", i))));
+        }
+        Problem problem = zoned(vehicles, List.of(
+                new ZoneSpec("ZBIG", 2, 2_500L, Set.of("F32")),                       // 유형 32만 허용
+                new ZoneSpec("ZALL", 5, 3_000L, Set.of())));                          // 제한 없음 — 33종이 한 성분이 된다
+
+        List<ZoneQuotaAllocation.VehicleType> types = ZoneQuotaAllocation.vehicleTypes(problem);
+        assertEquals(33, types.size());
+        assertEquals(List.of(new VehicleId("V032")), types.get(32).vehicles());        // 유형 순서 = maxVolume ASC
+
+        Allocation allocation = ZoneQuotaAllocation.allocate(problem);
+        assertFalse(allocation.truncated());
+        assertEquals(List.of(new VehicleId("V032")), allocation.vehiclesByZone().get("ZBIG"));
+        assertCompatibleOnly(problem, allocation);
+        assertNoDuplicateVehicles(allocation);
+    }
+
     // ---- 손조립 도우미 ----
 
     /** T38·T48 공통 입력 — 큰 차 금지 존 A(작은 차 2대 몫)와 자유 존 B. */

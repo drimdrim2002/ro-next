@@ -52,6 +52,9 @@ revisions:
   - 2026-09-04 **H23·H24 존 배정 DP 기권 제거** — 프론티어 호환·maxNeed 제한 + 성분 분해·풍부 유형 제외
     + 희소 상태 + 총량 폭 제한(`MAX_TOTAL_STATES` 262,144). X20 대체·X24~X27·T39 삭제·T45~T52.
     근거 [stage-04-zone-quota-allocation-scaling](stage-04-zone-quota-allocation-scaling.md)
+  - 2026-09-05 존 배정 DP의 호환 마스크 **int → long** — 기권을 없애면서 종전 기권선이 맡던
+    "차종 ≤ 16" 가드가 사라져 `1 << t`의 32종 초과 aliasing이 도달 가능해졌다. **차종 ≤ 64**가 불변식이 되고
+    65종 이상은 X28에 한계로 등재만 한다(가드·기권 없음). 시험 T57
 ---
 
 # Stage 4 — 초기해 휴리스틱 포트폴리오
@@ -312,6 +315,8 @@ final class ZoneQuotaAllocation {
 ```
 
 - `Demand`(중첩)는 `compat` 마스크와 `totalWeight`·`totalVisits`를 노출한다 (maxNeed용). `covers` 결과 캐시는 없다.
+  마스크 3개(`compat`·`prefixMask`·`groupMask`)는 **`long`**이고 유형 t의 비트는 `1L << t`다 —
+  **차종 수 ≤ 64가 불변식**이고 65종 이상은 X28(알려진 한계)이다.
 - `frontier(int[] range, Demand)`의 첫 인자는 "남은 대수"가 아니라 **열거 범위 R**이다 —
   호출자가 `R_t = min(남은_t, maxNeed(z,t))`(호환 아니면 0)를 만들어 넘긴다.
 
@@ -1147,6 +1152,7 @@ subsetSum(items, cap, wcap, nmin, nmax):
 | X25 | 성분의 존 수 + 1 > `MAX_TOTAL_STATES` | 폭 `cap = max(1, ·)`로 층마다 1 상태는 남긴다 — 총량이 존 수만큼 초과할 뿐 완주한다 | §5 H23 공통 |
 | X26 | 용량(`maxVolume`/`maxWeight`)이 0인 유형 | `maxNeed`에서 그 자원 항은 0 (나눗셈 없음). 호환이면 maxNeed ≥ 1로 후보에는 남고, 실을 수 없다는 판정은 `covers`·오라클이 한다 | §5 H23 공통 |
 | X27 | 근사(`truncated`)가 발생 | H23·H24는 정상 실행 — 2단계·leftover pass·정식 평가 모두 그대로. 포트폴리오 선택은 정식 평가가 하므로 근사가 나빴으면 다른 기법이 이긴다 | §6 |
+| X28 | H23·H24에서 차종이 **65종 이상** | **알려진 한계 — 범위 밖.** 존 배정 DP의 호환 마스크가 `long`이라 유형 t의 비트 `1L << t`가 t ≥ 64에서 접힌다(예외 없이 답만 틀어진다). 가드·기권·예외를 두지 않는다 — `abstains`는 계속 `false`. 필요해지면 `BitSet` 별도 개정 | [scaling §2.6](stage-04-zone-quota-allocation-scaling.md) |
 
 ---
 
@@ -1200,6 +1206,7 @@ subsetSum(items, cap, wcap, nmin, nmax):
 | T49 | `ZoneQuotaAllocationTest.frontierBoundedByMaxNeed` | 호환 안 되는 유형 1대·호환 유형 100대·존 1개(필요 3대): 프론티어 벡터마다 `s_t ≤ maxNeed(z,t)` · 호환 안 되는 유형은 0 · 프론티어 크기 ≤ 4 | §4.3 |
 | T50 | `ZoneQuotaAllocationTest.uncoverableZoneTakesAtMostMaxNeed` | 공급 < 수요인 존: 배정 대수 ≤ maxNeed · 호환 안 되는 차 0 · 완주 | X21 |
 | T51 | `ZoneQuotaAllocationScaleTest.largeFleetCompletesWithinBudget` | **규모.** 3종×각 67대(Π 314,432)와 20종×각 1대(Π 2²⁰)를 존 수를 바꿔 가며: 존이 적으면(5·7) 기본 예산에서 `truncated == false`, 존 20이면 `truncated == true`이되 **완주·유효·결정적** · 예산 1,000에서도 같음 · 소요 출력(한도 아님, T25와 같은 취급). **2026-09-04 실측** — 존 5 14 ms(false) · 존 20 2.0 s(true) · 20종 존 7 709 ms(false) · 20종 존 20 1.3 s(true) | §4.3 |
+| T57 | `ZoneQuotaAllocationTest.thirtyThreeTypesUseLongMask` | 차종 33개·존마다 호환 유형이 다른 입력: 존마다 배정 차량이 `compat(z)` 유형뿐 — 마스크가 `int`면 t32가 t0으로 접혀 깨진다. `1L << t` 치환 누락은 경고가 없으므로 이 시험이 유일한 방어선이다 (T53~T56은 H25 대역) | X28·[scaling §2.6](stage-04-zone-quota-allocation-scaling.md) |
 | T52 | `WinPocFixtureTest.zoneQuotaBalancedFillAssignsEveryRequestOnRealFixture` (**app 모듈**, T44 확장) | 위 T44 행의 **score 전체 일치**·`truncated == false` 단언이 그것이다. `ZoneQuotaAllocation`이 package-private이라 `truncated` 관측은 app 테스트 소스의 `com.ronext.rpdptw.solve.ZoneQuotaAllocationAccess`(테스트 전용 접근자)를 거친다 — 운영 코드의 가시성은 그대로다 | §2 회귀 |
 
 ---

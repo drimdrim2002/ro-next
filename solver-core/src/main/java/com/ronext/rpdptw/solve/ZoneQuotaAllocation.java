@@ -213,7 +213,7 @@ final class ZoneQuotaAllocation {
     /** 존이 유형 t를 최대로 쓸 수 있는 대수 — 호환 아니면 0, 아니면 자원별 올림의 최대 (최소 1). 용량·한도 부재는 그 항 0. */
     static int maxNeed(Demand demand, VehicleType type) {
         int index = demand.types.indexOf(type);
-        if (index < 0 || (demand.compat & (1 << index)) == 0) {
+        if (index < 0 || (demand.compat & (1L << index)) == 0) {
             return 0;
         }
         long need = 1L;
@@ -532,18 +532,18 @@ final class ZoneQuotaAllocation {
         final long totalVolume;
         final long totalWeight;
         final long totalVisits;
-        final int compat;
-        private final int[] prefixMask;
+        final long compat;                                                  // 유형 t의 비트 = 1L << t (차종 ≤ 64)
+        private final long[] prefixMask;
         private final long[] prefixVolume;
         private final long[] prefixWeight;
         private final long[] prefixVisits;
-        private final int[] groupMask;
+        private final long[] groupMask;
         private final long[] groupMaxVolume;
         private final long[] groupMaxWeight;
 
-        private Demand(List<VehicleType> types, long totalVolume, long totalWeight, long totalVisits, int compat,
-                       int[] prefixMask, long[] prefixVolume, long[] prefixWeight, long[] prefixVisits,
-                       int[] groupMask, long[] groupMaxVolume, long[] groupMaxWeight) {
+        private Demand(List<VehicleType> types, long totalVolume, long totalWeight, long totalVisits, long compat,
+                       long[] prefixMask, long[] prefixVolume, long[] prefixWeight, long[] prefixVisits,
+                       long[] groupMask, long[] groupMaxVolume, long[] groupMaxWeight) {
             this.types = types;
             this.totalVolume = totalVolume;
             this.totalWeight = totalWeight;
@@ -559,15 +559,15 @@ final class ZoneQuotaAllocation {
         }
 
         static Demand of(Problem problem, List<VehicleType> types, Zone zone) {
-            TreeMap<Integer, long[]> groups = new TreeMap<>(
-                    Comparator.comparingInt(Integer::bitCount).thenComparing(Comparator.naturalOrder()));
+            TreeMap<Long, long[]> groups = new TreeMap<>(
+                    Comparator.comparingInt(Long::bitCount).thenComparing(Comparator.naturalOrder()));
             long total = 0L;
             for (RequestId id : zone.members()) {
                 Request request = problem.request(id);
-                int mask = 0;
+                long mask = 0L;
                 for (int t = 0; t < types.size(); t++) {
                     if (types.get(t).compatible().contains(id)) {
-                        mask |= 1 << t;
+                        mask |= 1L << t;
                     }
                 }
                 long[] g = groups.computeIfAbsent(mask, m -> new long[5]);       // Σvolume, Σweight, Σvisits, max volume, max weight
@@ -579,19 +579,19 @@ final class ZoneQuotaAllocation {
                 total = Math.addExact(total, request.totalVolume());
             }
             int n = groups.size();
-            int[] prefixMask = new int[n];
+            long[] prefixMask = new long[n];
             long[] prefixVolume = new long[n];
             long[] prefixWeight = new long[n];
             long[] prefixVisits = new long[n];
-            int[] groupMask = new int[n];
+            long[] groupMask = new long[n];
             long[] groupMaxVolume = new long[n];
             long[] groupMaxWeight = new long[n];
             int k = 0;
-            int mask = 0;
+            long mask = 0L;
             long volume = 0L;
             long weight = 0L;
             long visits = 0L;
-            for (Map.Entry<Integer, long[]> entry : groups.entrySet()) {
+            for (Map.Entry<Long, long[]> entry : groups.entrySet()) {
                 mask |= entry.getKey();
                 volume = Math.addExact(volume, entry.getValue()[0]);
                 weight = Math.addExact(weight, entry.getValue()[1]);
@@ -616,7 +616,7 @@ final class ZoneQuotaAllocation {
                 long visits = 0L;
                 boolean unlimitedVisits = false;
                 for (int t = 0; t < types.size(); t++) {
-                    if (s[t] == 0 || (prefixMask[k] & (1 << t)) == 0) {
+                    if (s[t] == 0 || (prefixMask[k] & (1L << t)) == 0) {
                         continue;
                     }
                     VehicleType type = types.get(t);
@@ -633,7 +633,7 @@ final class ZoneQuotaAllocation {
                 }
                 boolean fitsLargest = false;
                 for (int t = 0; t < types.size() && !fitsLargest; t++) {
-                    fitsLargest = s[t] > 0 && (groupMask[k] & (1 << t)) != 0
+                    fitsLargest = s[t] > 0 && (groupMask[k] & (1L << t)) != 0
                             && types.get(t).maxVolume() >= groupMaxVolume[k] && types.get(t).maxWeight() >= groupMaxWeight[k];
                 }
                 if (!fitsLargest) {
