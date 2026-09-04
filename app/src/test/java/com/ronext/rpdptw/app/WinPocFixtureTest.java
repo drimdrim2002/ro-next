@@ -1,6 +1,8 @@
 package com.ronext.rpdptw.app;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
@@ -43,6 +45,7 @@ import com.ronext.rpdptw.solve.RoutePropagator;
 import com.ronext.rpdptw.solve.Solution;
 import com.ronext.rpdptw.solve.StructureCheck;
 import com.ronext.rpdptw.solve.VehicleZoneFillConstruction;
+import com.ronext.rpdptw.solve.ZoneQuotaAllocationAccess;
 import com.ronext.rpdptw.solve.ZoneQuotaBalancedFillConstruction;
 
 import tools.jackson.databind.JsonNode;
@@ -51,6 +54,7 @@ import tools.jackson.databind.ObjectMapper;
 /**
  * T44 — 실물 fixture(data/win_poc_case_floor.json, 주문 452·차량 31·정차 28)에서 H23이 전량 배정하고
  * 경로마다 구역 1종·차급·부피·무게·정차·시간창·reqDate를 지키며 H3보다 사전식으로 좋다 (heuristics 문서 §8 T44).
+ * score 전체 일치와 `Allocation.truncated == false`는 T52(존 배정 DP 개정의 회귀 고정)다.
  * 규약 JSON → PlanInput 매핑은 테스트 전용이다 — 정식 adapter는 Stage 6이 만들고 이 매핑을 대체한다.
  */
 class WinPocFixtureTest {
@@ -76,8 +80,9 @@ class WinPocFixtureTest {
         EvaluationResult evaluated = Evaluator.evaluate(problem, profile, solution);
         assertTrue(evaluated instanceof EvaluationResult.Feasible, "H23 must be Feasible");
         long[] score = ((EvaluationResult.Feasible) evaluated).score();
-        assertEquals(0L, score[0]);
-        assertEquals(31L, score[1]);
+        // T52 — 존 배정 DP 개정(성분별 희소 DP + 폭 제한) 전후로 실물 답이 그대로임을 고정한다
+        assertArrayEquals(new long[] {0L, 31L, 4_198_408L, 1_002_069L}, score);
+        assertFalse(ZoneQuotaAllocationAccess.truncated(problem), "실물 fixture는 폭 제한에 닿지 않는다");
 
         // 같은 입력이면 같은 해 (결정성, X8)
         long[] again = ((EvaluationResult.Feasible) Evaluator.evaluate(

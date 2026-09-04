@@ -23,8 +23,8 @@ acceptance·종료 4조건)와 독립 재검증·결과 모델까지 서 있다.
   `RandomRemoval`·`RouteRemoval`·`StringRemoval`·`GreedyInsertion`·`RegretInsertion`·`AdaptiveWeights`) ·
   `verify`(`SolutionVerifier`·`VerificationResult`·`VerifyViolation`·`RouteReplay` + 결과 모델
   `SolveResult`·`UnassignedReason`·`RunStamp`·`ResultAssembler`) +
-  `solver-profile`의 `ProfileRegistry` + 테스트(solver-core 41클래스 117개, solver-profile 1클래스 1개,
-  app 3클래스 4개).
+  `solver-profile`의 `ProfileRegistry` + 테스트(solver-core 42클래스 123개, solver-profile 1클래스 1개,
+  app 3클래스 4개 + 테스트 전용 접근자 `ZoneQuotaAllocationAccess`).
   `solve`·`verify`에 하위 패키지는 없다.
   `api`·`run`·`input`·`storage`는 **아직 빈 패키지**다 — 그 타입들을 grep해서 안 나오는 게
   정상이고, 아직 안 만든 것이지 다른 데 있는 게 아니다.
@@ -32,6 +32,9 @@ acceptance·종료 4조건)와 독립 재검증·결과 모델까지 서 있다.
   4-초기해 코드는 [stage-04-heuristics](docs/implementation/stage-04-initial-solution-heuristics.md)의
   §2 파일 표·§3 시그니처·§5 의사코드와 1:1이다 (구현 중 정정 3건은 그 문서 frontmatter `revisions`
   2026-09-02 항목 — `apply`의 `Problem` 인자, T25 정차 한도 28, `InsertionSearch.Cache`).
+  존 배정 DP(`ZoneQuotaAllocation`)는 2026-09-04 개정으로 **기권이 없다** — 성분별 희소 DP +
+  총량 폭 제한(`MAX_TOTAL_STATES` 262,144, 넘치면 `Allocation.truncated`)
+  ([stage-04-zone-quota-allocation-scaling](docs/implementation/stage-04-zone-quota-allocation-scaling.md)).
   실물 맞춤 H23·H24(존 배정 DP + 존 내부 적재 2종)의 근거·실측은
   [survey §2.5](docs/implementation/stage-04-initial-solution-heuristics-survey.md)에 있다 —
   실물 fixture에서 H23이 미배정 0·31대(H3는 15). 이 수치는 app 모듈의 T44(`WinPocFixtureTest`)가
@@ -53,8 +56,10 @@ acceptance·종료 4조건)와 독립 재검증·결과 모델까지 서 있다.
   `revisions` 2026-09-04 항목. Stage 3이 2026-09-02에 추가했는데 Stage 5 문면이 그 전이었다).
   **다음 작업은 Stage 6** — [stage-06](docs/implementation/stage-06-app-assembly.md) — 앱 조립.
   손대기 전에 **해당 단계의 문서를** 읽는다.
-- T25(`InitialSolutionScaleTest`)·T11(`AlnsScaleTest`)은 규모 측정이라 수십 초 걸린다 — 단일 테스트를 돌릴 때는
-  `-Dtest='!InitialSolutionScaleTest,!AlnsScaleTest' -Dsurefire.failIfNoSpecifiedTests=false`로 뺄 수 있다.
+- T25(`InitialSolutionScaleTest`)·T11(`AlnsScaleTest`)·T51(`ZoneQuotaAllocationScaleTest`)은 규모 측정이라
+  수십 초 걸린다 — 단일 테스트를 돌릴 때는
+  `-Dtest='!InitialSolutionScaleTest,!AlnsScaleTest,!ZoneQuotaAllocationScaleTest' -Dsurefire.failIfNoSpecifiedTests=false`로
+  뺄 수 있다.
   app 모듈의 T12b(`WinPocAlnsTest`)도 실물 fixture에 ALNS 20초라 그만큼 걸린다.
 - 문서·커밋 메시지는 한국어다. 용어(`Request`/pair/`Problem`/`Solution`/bank/profile/재검증/
   solveKey)는 문서 표기를 그대로 쓴다 — 같은 개념에 새 이름을 붙이지 않는다.

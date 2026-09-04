@@ -2,7 +2,7 @@
 title: Stage 4 — 존 배정 DP(`ZoneQuotaAllocation`)의 기권 제거와 메모리 상한 (설계안)
 stage: 4
 date: 2026-09-04
-status: 설계안 — 계약 문서(stage-04-initial-solution-heuristics.md) 개정 전. 구현은 §8의 개정을 먼저 반영한 뒤 한다
+status: 계약 반영됨 — 구현 중
 plan: ../implementation-plan.md
 sources:
   - stage-04-initial-solution-heuristics.md (§3.4 시그니처 · §4.3 종료 보장 · §4.4 기권 · §5 H23·H24 공통 의사코드 · §7 X20~X23 · §8 T38~T44)
@@ -328,10 +328,10 @@ min(남은_t, maxNeed(z,t))`가 **§4.3 의미의 상한**이다: 덮든 못 덮
 | T45 | `ZoneQuotaAllocationTest.manyTypesNoLongerAbstain` | T39의 입력(유형이 서로 다른 17대) + 20종×각 1대 + 3종×각 67대(Π 314,432): H23·H24 `abstains == false`, `allocate` 완주, `truncated == false`(도달 상태가 상한에 못 미침), 존마다 배정 차량이 `compat(z)` 유형뿐 | X20 대체 |
 | T46 | `ZoneQuotaAllocationTest.abundantTypeLeavesStateVector` | 풍부 유형 1개(대수 ≥ Σ maxNeed) + 희소 유형 2개 + 존 3개: 예산 오버로드에 `Π(희소 대수+1) × (존 수+1)`을 넘겨도 `truncated == false`(풍부 차원이 상태에 없다는 증거) · 배정 값이 손 계산 최적과 같음 · 풍부 유형 소비 ≤ 대수 | §2.3 |
 | T47 | `ZoneQuotaAllocationTest.componentsSolvedIndependently` | 서로 호환이 없는 두 묶음(유형 A·존 a / 유형 B·존 b): `components`가 2개 · `vehiclesByZone`이 두 묶음을 각각 단독 문제로 돌린 결과와 같음 · 예산을 큰 묶음 하나 크기로 줘도 `truncated == false` | §2.2 |
-| T48 | `ZoneQuotaAllocationTest.truncationIsDeterministicAndValid` | T38 입력에 예산 2를 주입: `truncated == true` · 두 번 실행 결과 동일(X8) · 차량 중복 배정 없음 · 존마다 호환 유형만 · 그 `Allocation`으로 H23 `construct` → `Evaluator` Feasible | §2.5·X27 |
+| T48 | `ZoneQuotaAllocationTest.truncationIsDeterministicAndValid` | T38 입력에 예산 2를 주입: `truncated == true` · 두 번 실행 결과 동일(X8) · 차량 중복 배정 없음 · 존마다 호환 유형만. **구현 정정** — `Allocation`을 H23에 주입하는 경로가 없어(진입점에 예산 인자 없음) Feasible 확인은 기본 예산의 `construct`로 한다 | §2.5·X27 |
 | T49 | `ZoneQuotaAllocationTest.frontierBoundedByMaxNeed` | 호환 안 되는 유형 1대·호환 유형 100대·존 1개(필요 3대): 프론티어 벡터마다 `s_t ≤ maxNeed(z,t)` · 호환 안 되는 유형은 0 · 프론티어 크기 ≤ 4 (100대가 아니라 수요 3에 묶임) | §2.1·§5 |
 | T50 | `ZoneQuotaAllocationTest.uncoverableZoneTakesAtMostMaxNeed` | 공급 < 수요인 존: 배정 대수 ≤ maxNeed · 호환 안 되는 차 0 · 완주 (X21 보강) | X21 |
-| T51 | `ZoneQuotaAllocationScaleTest.largeFleetCompletesWithinBudget` | **규모.** 3종×각 67대·존 20(Π 314,432)과 20종×각 1대·존 20(Π 2²⁰): 기본 예산에서 완주·`truncated == false` · 예산 1,000에서 `truncated == true`이되 완주·유효(T48 조건) · 소요 출력(한도 아님, T25와 같은 취급) | §5 |
+| T51 | `ZoneQuotaAllocationScaleTest.largeFleetCompletesWithinBudget` | **규모.** 3종×각 67대(Π 314,432)·20종×각 1대(Π 2²⁰)를 존 수를 바꿔 가며. **구현 실측(2026-09-04)이 설계 예상을 정정한다** — 존 20에서는 기본 예산에서도 `truncated == true`다(층당 폭 = 262,144/존 수라 존이 많을수록 좁다). 존 5·7이면 `false`. 어느 경우든 완주·유효·결정적이고, 예산 1,000에서도 같다. 소요 출력(한도 아님) | §5 |
 | T52 | `WinPocFixtureTest` (**app**, T44 확장) | 기존 단언에 **score 전체 일치** `[0, 31, 4,198,408, 1,002,069]`를 더한다 — ①~④ 적용 후 실물 답이 그대로임을 고정 (`truncated == false`도 단언). 달라지면 §2.3 동률 발동 여부부터 본다 | §2 회귀 |
 | 재확인 | T38 · T40 · T41 · T42 · T43 · T25 | 무변경으로 통과해야 한다. T25 합성(1종·31대, Π 32)은 상태 ≤ 32라 ③과 현 코드가 동일 | §2.4 |
 
@@ -361,8 +361,10 @@ min(남은_t, maxNeed(z,t))`가 **§4.3 의미의 상한**이다: 덮든 못 덮
 ## 9. 하지 않는 것 · 미해결 질문
 
 **하지 않는 것.**
-- 프론티어 memo(같은 R 벡터면 프론티어가 같다 — 존마다 `Map<R, List<int[]>>`) — 시간 최적화이고 상한은 §5로
-  이미 구조다. 넣으면 memo 크기 ≤ Σ 프론티어 ≤ Π_{compat}(maxNeed+1)² 벡터를 §5 공식에 더해야 한다. 재량.
+- ~~프론티어 memo~~ — **2026-09-04 구현에서 채택했다.** 캐시 없는 `covers` 재계산 때문에 실물 fixture의
+  `allocate`가 ~50 ms에서 1,030 ms로 늘었고(H23 502 → 1,050 ms), 존마다 `TreeMap<R, List<int[]>>`을 두니
+  H23 ~550 ms로 돌아왔다. memo 항목 수 ≤ 그 층의 서로 다른 R 수 ≤ 층 상태 수이고 존이 끝나면 버리므로
+  §5의 상수 상한을 깨지 않는다 (층 하나 분량의 임시 객체와 같은 급).
 - H23·H24 2단계(존 내부 적재)·leftover pass·1-1 교환 — 무변경.
 - 존 배정을 DP가 아닌 greedy + 존 간 교환으로 하는 안 — H3 개선판의 별도 설계.
 - `ConstructionOutcome`·`InitialSolutionResult` 변경 — §6 대안 A는 Stage 8이 필요를 확인하면.

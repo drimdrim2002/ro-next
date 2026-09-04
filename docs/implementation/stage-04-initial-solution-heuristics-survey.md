@@ -204,7 +204,9 @@ H23이 best로 선정됐고 경로별 감사(구역 1종·차급·부피·무게
 
 둘 다 넣는 이유는 §7 원칙 그대로다 — 공통 부품은 하나(`ZoneQuotaAllocation`)지만 존 내부 축이
 다르고(2차원 균형 greedy vs 정확한 부분집합 DP), 어느 쪽이 실물·다른 입력에서 남을지는 T25·Stage 8
-실측이 정한다. **판정은 Java 정식 평가뿐이다** — 위 표는 근사이고 heuristics §8 T38~T43과 실물 실행이
+실측이 정한다. 존 배정 DP의 규모 한계(차종 조합 수 > 65,536에서의 기권)는 2026-09-04에 제거됐다 —
+[stage-04-zone-quota-allocation-scaling](stage-04-zone-quota-allocation-scaling.md).
+**판정은 Java 정식 평가뿐이다** — 위 표는 근사이고 heuristics §8 T38~T43과 실물 실행이
 계약이다.
 
 ## 3. 채택 14개 — 축과 우선순위

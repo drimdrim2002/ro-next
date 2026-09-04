@@ -19,13 +19,24 @@ import com.ronext.rpdptw.problem.Problem;
 /**
  * H23·H24 공통 — 존 → 차량 유형 대수 배정 DP (heuristics 문서 §3.4·§5 H23 공통).
  * 상태 = 남은 유형별 대수 벡터, 전이 = 프론티어(최소 덮개 · 한 대 모자란 최대 비덮개 · 빈 집합),
- * 값 = (Σ부족, Σ낭비, Σ사용 대수) 사전식. 상태 수 ≤ Π(대수+1) ≤ MAX_COMBINATIONS — 구조로 종료한다 (§4.3).
+ * 값 = (Σ부족, Σ낭비, Σ사용 대수) 사전식. 호환 성분마다 독립 실행하고 도달 상태만 보관하며,
+ * 성분당 보관 상태 총량이 MAX_TOTAL_STATES를 넘으면 값 순으로 잘라 근사한다 — 기권하지 않는다 (§4.3).
  */
 final class ZoneQuotaAllocation {
 
-    /** Π(유형별 대수 + 1) 한계 — 넘으면 H23·H24 기권 (§4.4·X20). */
-    static final long MAX_COMBINATIONS = 65_536L;
+    /** 성분 하나의 DP가 층 전체에 보관하는 상태 수 총량 (재량 상수). 넘치면 값 순으로 잘라 근사한다. */
+    static final int MAX_TOTAL_STATES = 262_144;
     static final String NO_ZONE = VehicleZoneFillConstruction.NO_ZONE;
+
+    /** 상태 키 순서 — 마지막 유형부터 첫 유형 순으로 비교 (종전 혼합 진법 키 오름차순과 같은 순서). */
+    static final Comparator<int[]> KEY_ORDER = (a, b) -> {
+        for (int i = a.length - 1; i >= 0; i--) {
+            if (a[i] != b[i]) {
+                return a[i] < b[i] ? -1 : 1;
+            }
+        }
+        return 0;
+    };
 
     private ZoneQuotaAllocation() {}
 
@@ -36,8 +47,12 @@ final class ZoneQuotaAllocation {
     /** 존 = anchor side zoneId(부재 "(none)")별 Request. */
     record Zone(String zoneId, List<RequestId> members) {}
 
-    /** 유형 목록·존 순서대로의 존 목록·존별 배정 차량. 배정 없는 존은 빈 목록. */
-    record Allocation(List<VehicleType> types, List<Zone> zones, Map<String, List<VehicleId>> vehiclesByZone) {}
+    /** 유형 목록·존 순서대로의 존 목록·존별 배정 차량. 배정 없는 존은 빈 목록. truncated = 폭 제한이 잘라냈으면 true. */
+    record Allocation(List<VehicleType> types, List<Zone> zones,
+                      Map<String, List<VehicleId>> vehiclesByZone, boolean truncated) {}
+
+    /** 호환 성분 — 유형 index 목록(유형 순서)·존 index 목록(존 순서). 존이 없는 성분은 만들지 않는다 (X24). */
+    record Component(List<Integer> typeIndexes, List<Integer> zoneIndexes) {}
 
     /** 유형 순서 = (maxVolume ASC, maxWeight ASC, 첫 VehicleId ASC). 근무창·depot·속도는 유형에 넣지 않는다. */
     static List<VehicleType> vehicleTypes(Problem problem) {
@@ -78,18 +93,6 @@ final class ZoneQuotaAllocation {
         return types;
     }
 
-    /** Π(대수 + 1) — abstains()가 본다. 한계를 넘으면 그 이상은 세지 않는다. */
-    static long combinations(List<VehicleType> types) {
-        long product = 1L;
-        for (VehicleType type : types) {
-            product = Math.multiplyExact(product, type.vehicles().size() + 1L);
-            if (product > MAX_COMBINATIONS) {
-                return product;
-            }
-        }
-        return product;
-    }
-
     /** 존 순서 = (호환 유형 수 ASC, Σvolume DESC, zoneId ASC). 호환 차량 0대인 Request는 존에 넣지 않는다. */
     static List<Zone> zones(Problem problem, List<VehicleType> types) {
         Map<String, List<RequestId>> grouped = new TreeMap<>();
@@ -108,6 +111,67 @@ final class ZoneQuotaAllocation {
                 .thenComparing(Comparator.comparingLong((Zone z) -> totalVolume(problem, z.members())).reversed())
                 .thenComparing(Zone::zoneId));
         return zones;
+    }
+
+    /**
+     * 호환 성분 — 정점 = 유형 ∪ 존, 간선 z–t ⇔ t ∈ compat(z). union-find를 유형 순서 → 존 순서로 돌아 결정적이다.
+     * 성분 순서 = 성분에 든 첫 존의 존 순서. 존이 없는 성분(호환 존이 하나도 없는 유형)은 돌려주지 않는다 (X24).
+     */
+    static List<Component> components(List<VehicleType> types, List<Zone> zones, Problem problem) {
+        int typeCount = types.size();
+        int[] parent = new int[typeCount + zones.size()];
+        for (int i = 0; i < parent.length; i++) {
+            parent[i] = i;
+        }
+        for (int z = 0; z < zones.size(); z++) {
+            for (int t = 0; t < typeCount; t++) {
+                if (compatible(types.get(t), zones.get(z))) {
+                    union(parent, t, typeCount + z);
+                }
+            }
+        }
+        Map<Integer, List<Integer>> typesByRoot = new LinkedHashMap<>();
+        for (int t = 0; t < typeCount; t++) {
+            typesByRoot.computeIfAbsent(find(parent, t), r -> new ArrayList<>()).add(t);
+        }
+        Map<Integer, List<Integer>> zonesByRoot = new LinkedHashMap<>();
+        List<Component> components = new ArrayList<>();
+        for (int z = 0; z < zones.size(); z++) {
+            int root = find(parent, typeCount + z);
+            List<Integer> members = zonesByRoot.get(root);
+            if (members == null) {
+                members = new ArrayList<>();
+                zonesByRoot.put(root, members);
+                components.add(new Component(typesByRoot.getOrDefault(root, List.of()), members));
+            }
+            members.add(z);
+        }
+        return components;
+    }
+
+    private static boolean compatible(VehicleType type, Zone zone) {
+        for (RequestId id : zone.members()) {
+            if (type.compatible().contains(id)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static int find(int[] parent, int x) {
+        while (parent[x] != x) {
+            parent[x] = parent[parent[x]];
+            x = parent[x];
+        }
+        return x;
+    }
+
+    private static void union(int[] parent, int a, int b) {
+        int ra = find(parent, a);
+        int rb = find(parent, b);
+        if (ra != rb) {
+            parent[Math.max(ra, rb)] = Math.min(ra, rb);
+        }
     }
 
     static int compatibleTypeCount(List<VehicleType> types, RequestId requestId) {
@@ -146,69 +210,68 @@ final class ZoneQuotaAllocation {
         return (request.pickup().isPresent() ? 1 : 0) + (request.delivery().isPresent() ? 1 : 0);
     }
 
+    /** 존이 유형 t를 최대로 쓸 수 있는 대수 — 호환 아니면 0, 아니면 자원별 올림의 최대 (최소 1). 용량·한도 부재는 그 항 0. */
+    static int maxNeed(Demand demand, VehicleType type) {
+        int index = demand.types.indexOf(type);
+        if (index < 0 || (demand.compat & (1 << index)) == 0) {
+            return 0;
+        }
+        long need = 1L;
+        if (type.maxVolume() > 0L) {
+            need = Math.max(need, ceilDiv(demand.totalVolume, type.maxVolume()));
+        }
+        if (type.maxWeight() > 0L) {
+            need = Math.max(need, ceilDiv(demand.totalWeight, type.maxWeight()));
+        }
+        if (type.maxStopCount().isPresent() && type.maxStopCount().getAsInt() > 0) {
+            need = Math.max(need, ceilDiv(demand.totalVisits, type.maxStopCount().getAsInt()));
+        }
+        return (int) Math.min(need, Integer.MAX_VALUE);
+    }
+
+    private static long ceilDiv(long a, long b) {
+        return (a + b - 1L) / b;
+    }
+
+    /** 존 전이 하나의 값 (부족, 낭비, Σs) — s에 든 유형만 합한다. */
+    static long[] value(Demand demand, List<VehicleType> types, int[] s) {
+        long capacity = 0L;
+        long used = 0L;
+        for (int t = 0; t < s.length; t++) {
+            if (s[t] == 0) {
+                continue;
+            }
+            capacity = Math.addExact(capacity, s[t] * types.get(t).maxVolume());
+            used += s[t];
+        }
+        boolean covers = demand.covers(s);
+        long shortage = covers ? 0L : Math.max(1L, demand.totalVolume - capacity);
+        long waste = covers ? capacity - demand.totalVolume : 0L;
+        return new long[] {shortage, waste, used};
+    }
+
     static Allocation allocate(Problem problem) {
+        return allocate(problem, MAX_TOTAL_STATES);
+    }
+
+    static Allocation allocate(Problem problem, int maxTotalStates) {
         List<VehicleType> types = vehicleTypes(problem);
         List<Zone> zones = zones(problem, types);
         int typeCount = types.size();
-        int[] counts = new int[typeCount];
-        long[] radix = new long[typeCount + 1];
-        radix[0] = 1L;
-        for (int t = 0; t < typeCount; t++) {
-            counts[t] = types.get(t).vehicles().size();
-            radix[t + 1] = radix[t] * (counts[t] + 1);
-        }
-
-        // 상태 키 = 혼합 진법으로 부호화한 남은 대수 벡터. 배열 인덱스 순회라 순서가 고정된다 (결정성).
-        int size = (int) radix[typeCount];
-        List<Layer> layers = new ArrayList<>();
-        Layer states = new Layer(size);
-        states.value[encodeIndex(counts, radix)] = new long[] {0L, 0L, 0L};
-        layers.add(states);
-        for (Zone zone : zones) {
-            Demand demand = Demand.of(problem, types, zone).cached(radix);
-            Layer next = new Layer(size);
-            for (int from = 0; from < size; from++) {
-                long[] base = states.value[from];
-                if (base == null) {
-                    continue;
-                }
-                int[] remaining = decode(from, counts, radix);
-                for (int[] s : frontier(remaining, demand)) {
-                    boolean covers = demand.covers(s);
-                    long capacity = 0L;
-                    int used = 0;
-                    int to = from;
-                    for (int t = 0; t < typeCount; t++) {
-                        capacity = Math.addExact(capacity, s[t] * types.get(t).maxVolume());
-                        used += s[t];
-                        to -= (int) (s[t] * radix[t]);
-                    }
-                    long shortage = covers ? 0L : Math.max(1L, demand.totalVolume - capacity);
-                    long waste = covers ? capacity - demand.totalVolume : 0L;
-                    long[] value = new long[] {base[0] + shortage, base[1] + waste, base[2] + used};
-                    if (next.value[to] == null || compare(value, next.value[to]) < 0) {   // 동률 = 먼저 계산된 값 유지
-                        next.value[to] = value;
-                        next.parent[to] = from;
-                        next.chosen[to] = s;
-                    }
-                }
-            }
-            states = next;
-            layers.add(states);
-        }
-
-        int best = -1;
-        for (int key = 0; key < size; key++) {                                   // 동률 = 남은 벡터 사전식 최소 (인덱스 오름차순)
-            if (states.value[key] != null && (best < 0 || compare(states.value[key], states.value[best]) < 0)) {
-                best = key;
+        Demand[] demands = new Demand[zones.size()];
+        int[][] maxNeeds = new int[zones.size()][];
+        for (int z = 0; z < zones.size(); z++) {
+            demands[z] = Demand.of(problem, types, zones.get(z));
+            maxNeeds[z] = new int[typeCount];
+            for (int t = 0; t < typeCount; t++) {
+                maxNeeds[z][t] = maxNeed(demands[z], types.get(t));
             }
         }
+
         Map<String, int[]> quotas = new LinkedHashMap<>();
-        int key = best;
-        for (int z = zones.size() - 1; z >= 0; z--) {
-            Layer layer = layers.get(z + 1);
-            quotas.put(zones.get(z).zoneId(), layer.chosen[key]);
-            key = layer.parent[key];
+        boolean truncated = false;
+        for (Component component : components(types, zones, problem)) {
+            truncated |= solveComponent(types, zones, demands, maxNeeds, component, maxTotalStates, quotas);
         }
 
         int[] cursor = new int[typeCount];
@@ -223,27 +286,137 @@ final class ZoneQuotaAllocation {
             }
             vehiclesByZone.put(zone.zoneId(), List.copyOf(vehicles));
         }
-        return new Allocation(types, zones, vehiclesByZone);
+        return new Allocation(types, zones, vehiclesByZone, truncated);
+    }
+
+    /** 성분 하나의 희소 DP — 존별 (유형 → 대수)를 quotas에 넣고, 폭 제한이 잘라냈으면 true. */
+    private static boolean solveComponent(
+            List<VehicleType> types, List<Zone> zones, Demand[] demands, int[][] maxNeeds,
+            Component component, int maxTotalStates, Map<String, int[]> quotas) {
+        int typeCount = types.size();
+        List<Integer> zoneIndexes = component.zoneIndexes();
+        int zoneCount = zoneIndexes.size();
+
+        // 풍부 유형 — 대수가 Σ maxNeed 이상이면 남은 대수가 열거 범위를 제한하지 못한다 → 상태 벡터에서 뺀다.
+        List<Integer> stateDims = new ArrayList<>();
+        List<Integer> abundantDims = new ArrayList<>();
+        for (int t : component.typeIndexes()) {
+            long need = 0L;
+            for (int z : zoneIndexes) {
+                need += maxNeeds[z][t];
+            }
+            if (types.get(t).vehicles().size() >= need) {
+                abundantDims.add(t);
+            } else {
+                stateDims.add(t);
+            }
+        }
+        int dims = stateDims.size();
+        int abundant = abundantDims.size();
+
+        int[] start = new int[dims];
+        for (int i = 0; i < dims; i++) {
+            start[i] = types.get(stateDims.get(i)).vehicles().size();
+        }
+        List<Layer> layers = new ArrayList<>();
+        layers.add(Layer.initial(start, abundant));
+
+        boolean truncated = false;
+        long stored = 1L;
+        int[] range = new int[typeCount];
+        for (int zi = 0; zi < zoneCount; zi++) {
+            int zoneIndex = zoneIndexes.get(zi);
+            Demand demand = demands[zoneIndex];
+            int[] maxNeedZ = maxNeeds[zoneIndex];
+            Layer from = layers.get(zi);
+            TreeMap<int[], Entry> next = new TreeMap<>(KEY_ORDER);
+            TreeMap<int[], List<int[]>> frontiers = new TreeMap<>(KEY_ORDER);   // 같은 R이면 프론티어도 같다 (존마다 새로)
+            for (int i = 0; i < from.size; i++) {                                  // 층은 KEY_ORDER 오름차순
+                int[] key = from.key(i);
+                System.arraycopy(maxNeedZ, 0, range, 0, typeCount);
+                for (int d = 0; d < dims; d++) {
+                    range[stateDims.get(d)] = Math.min(key[d], maxNeedZ[stateDims.get(d)]);
+                }
+                long[] base = from.value(i);
+                List<int[]> frontier = frontiers.get(range);
+                if (frontier == null) {
+                    frontier = frontier(range, demand);
+                    frontiers.put(range.clone(), frontier);
+                }
+                for (int[] s : frontier) {
+                    long[] delta = value(demand, types, s);
+                    long[] candidate = {base[0] + delta[0], base[1] + delta[1], base[2] + delta[2]};
+                    int[] to = new int[dims];
+                    for (int d = 0; d < dims; d++) {
+                        to[d] = key[d] - s[stateDims.get(d)];
+                    }
+                    Entry existing = next.get(to);
+                    if (existing != null && compare(candidate, existing.value) >= 0) {   // 동률 = 먼저 계산된 값 유지
+                        continue;
+                    }
+                    int[] taken = new int[abundant];
+                    for (int a = 0; a < abundant; a++) {
+                        taken[a] = s[abundantDims.get(a)];
+                    }
+                    next.put(to, new Entry(candidate, i, taken));
+                }
+            }
+            long cap = Math.max(1L, (maxTotalStates - stored) / (zoneCount - zi));
+            List<Map.Entry<int[], Entry>> entries = new ArrayList<>(next.entrySet());
+            if (entries.size() > cap) {
+                entries.sort((a, b) -> compare(a.getValue().value, b.getValue().value));   // 안정 정렬 → 2차 키 KEY_ORDER
+                entries = new ArrayList<>(entries.subList(0, (int) cap));
+                entries.sort((a, b) -> KEY_ORDER.compare(a.getKey(), b.getKey()));
+                truncated = true;
+            }
+            Layer layer = Layer.of(entries, dims, abundant);
+            layers.add(layer);
+            stored += layer.size;
+        }
+
+        int best = 0;
+        Layer last = layers.get(zoneCount);
+        for (int i = 1; i < last.size; i++) {                                      // 동률 = 남은 벡터 KEY_ORDER 최소
+            if (compare(last.value(i), last.value(best)) < 0) {
+                best = i;
+            }
+        }
+        int index = best;
+        for (int zi = zoneCount - 1; zi >= 0; zi--) {
+            Layer layer = layers.get(zi + 1);
+            Layer previous = layers.get(zi);
+            int parent = layer.parent[index];
+            int[] quota = new int[typeCount];
+            for (int d = 0; d < dims; d++) {
+                quota[stateDims.get(d)] = previous.key(parent)[d] - layer.key(index)[d];
+            }
+            for (int a = 0; a < abundant; a++) {
+                quota[abundantDims.get(a)] = layer.abundant[index * abundant + a];
+            }
+            quotas.put(zones.get(zoneIndexes.get(zi)).zoneId(), quota);
+            index = parent;
+        }
+        return truncated;
     }
 
     /**
-     * 프론티어 — 유형 순서로 재귀 나열(covers가 되는 순간 그 유형에서 중단)한 s 중
+     * 프론티어 — 유형 순서로 열거 범위 range 안에서 재귀 나열(covers가 되는 순간 그 유형에서 중단)한 s 중
      * (a) 최소 덮개 · (b) 한 대 모자란 최대 비덮개 · (c) 빈 집합.
      */
-    static List<int[]> frontier(int[] remaining, Demand demand) {
+    static List<int[]> frontier(int[] range, Demand demand) {
         List<int[]> out = new ArrayList<>();
-        enumerate(0, new int[remaining.length], remaining, demand, out);
+        enumerate(0, new int[range.length], range, demand, out);
         return out;
     }
 
-    private static void enumerate(int t, int[] s, int[] remaining, Demand demand, List<int[]> out) {
+    private static void enumerate(int t, int[] s, int[] range, Demand demand, List<int[]> out) {
         if (t == s.length) {
-            classify(s, remaining, demand, out);
+            classify(s, range, demand, out);
             return;
         }
-        for (int c = 0; c <= remaining[t]; c++) {
+        for (int c = 0; c <= range[t]; c++) {
             s[t] = c;
-            enumerate(t + 1, s, remaining, demand, out);
+            enumerate(t + 1, s, range, demand, out);
             if (demand.covers(s)) {                                            // 이후 유형은 0인 상태 — 이미 덮으면 더 늘릴 이유가 없다
                 break;
             }
@@ -251,7 +424,7 @@ final class ZoneQuotaAllocation {
         s[t] = 0;
     }
 
-    private static void classify(int[] s, int[] remaining, Demand demand, List<int[]> out) {
+    private static void classify(int[] s, int[] range, Demand demand, List<int[]> out) {
         int typeCount = s.length;
         boolean empty = true;
         for (int c : s) {
@@ -275,7 +448,7 @@ final class ZoneQuotaAllocation {
         }
         boolean extendable = false;
         for (int t = 0; t < typeCount; t++) {
-            if (remaining[t] > s[t]) {
+            if (range[t] > s[t]) {
                 extendable = true;
                 probe[t]++;
                 boolean covers = demand.covers(probe);
@@ -299,32 +472,54 @@ final class ZoneQuotaAllocation {
         return 0;
     }
 
-    private static int encodeIndex(int[] vector, long[] radix) {
-        long key = 0L;
-        for (int t = 0; t < vector.length; t++) {
-            key += vector[t] * radix[t];
-        }
-        return (int) key;
-    }
+    /** 다음 층을 만드는 동안의 상태 하나 — 값·직전 층 index·풍부 유형의 대수(키에 없어 따로 들고 간다). */
+    private record Entry(long[] value, int parent, int[] abundant) {}
 
-    private static int[] decode(long key, int[] counts, long[] radix) {
-        int[] vector = new int[counts.length];
-        for (int t = 0; t < counts.length; t++) {
-            vector[t] = (int) ((key / radix[t]) % (counts[t] + 1));
-        }
-        return vector;
-    }
-
-    /** DP 한 층 — 인덱스 = 남은 대수 벡터의 부호화 키. value null = 도달 불가. */
+    /** DP 한 층 — 도달 상태만 평면 배열로 (키 dims개 · 값 3개 · parent · 풍부 유형 대수). KEY_ORDER 오름차순. */
     private static final class Layer {
-        final long[][] value;
+        final int size;
+        final int dims;
+        final int[] keys;
+        final long[] values;
         final int[] parent;
-        final int[][] chosen;
+        final int[] abundant;
 
-        Layer(int size) {
-            value = new long[size][];
-            parent = new int[size];
-            chosen = new int[size][];
+        private Layer(int size, int dims, int abundantCount) {
+            this.size = size;
+            this.dims = dims;
+            this.keys = new int[size * dims];
+            this.values = new long[size * 3];
+            this.parent = new int[size];
+            this.abundant = new int[size * abundantCount];
+        }
+
+        static Layer initial(int[] start, int abundantCount) {
+            Layer layer = new Layer(1, start.length, abundantCount);
+            System.arraycopy(start, 0, layer.keys, 0, start.length);
+            layer.parent[0] = -1;
+            return layer;
+        }
+
+        static Layer of(List<Map.Entry<int[], Entry>> entries, int dims, int abundantCount) {
+            Layer layer = new Layer(entries.size(), dims, abundantCount);
+            for (int i = 0; i < entries.size(); i++) {
+                Map.Entry<int[], Entry> entry = entries.get(i);
+                System.arraycopy(entry.getKey(), 0, layer.keys, i * dims, dims);
+                System.arraycopy(entry.getValue().value(), 0, layer.values, i * 3, 3);
+                layer.parent[i] = entry.getValue().parent();
+                System.arraycopy(entry.getValue().abundant(), 0, layer.abundant, i * abundantCount, abundantCount);
+            }
+            return layer;
+        }
+
+        int[] key(int index) {
+            int[] key = new int[dims];
+            System.arraycopy(keys, index * dims, key, 0, dims);
+            return key;
+        }
+
+        long[] value(int index) {
+            return new long[] {values[index * 3], values[index * 3 + 1], values[index * 3 + 2]};
         }
     }
 
@@ -335,6 +530,9 @@ final class ZoneQuotaAllocation {
     static final class Demand {
         private final List<VehicleType> types;
         final long totalVolume;
+        final long totalWeight;
+        final long totalVisits;
+        final int compat;
         private final int[] prefixMask;
         private final long[] prefixVolume;
         private final long[] prefixWeight;
@@ -342,13 +540,15 @@ final class ZoneQuotaAllocation {
         private final int[] groupMask;
         private final long[] groupMaxVolume;
         private final long[] groupMaxWeight;
-        private long[] radix;                                                   // covers 결과 캐시 — 벡터 부호화 키 (0 미계산 · 1 거짓 · 2 참)
-        private byte[] cache;
 
-        private Demand(List<VehicleType> types, long totalVolume, int[] prefixMask, long[] prefixVolume,
-                       long[] prefixWeight, long[] prefixVisits, int[] groupMask, long[] groupMaxVolume, long[] groupMaxWeight) {
+        private Demand(List<VehicleType> types, long totalVolume, long totalWeight, long totalVisits, int compat,
+                       int[] prefixMask, long[] prefixVolume, long[] prefixWeight, long[] prefixVisits,
+                       int[] groupMask, long[] groupMaxVolume, long[] groupMaxWeight) {
             this.types = types;
             this.totalVolume = totalVolume;
+            this.totalWeight = totalWeight;
+            this.totalVisits = totalVisits;
+            this.compat = compat;
             this.prefixMask = prefixMask;
             this.prefixVolume = prefixVolume;
             this.prefixWeight = prefixWeight;
@@ -405,32 +605,11 @@ final class ZoneQuotaAllocation {
                 groupMaxWeight[k] = entry.getValue()[4];
                 k++;
             }
-            return new Demand(types, total, prefixMask, prefixVolume, prefixWeight, prefixVisits, groupMask, groupMaxVolume, groupMaxWeight);
-        }
-
-        /** 같은 존 안에서 covers(s)는 s에만 의존한다 — 벡터 수 ≤ Π(대수+1)라 배열 하나로 전부 기억한다. */
-        Demand cached(long[] radix) {
-            this.radix = radix;
-            this.cache = new byte[(int) radix[radix.length - 1]];
-            return this;
+            return new Demand(types, total, weight, visits, mask, prefixMask, prefixVolume, prefixWeight, prefixVisits,
+                    groupMask, groupMaxVolume, groupMaxWeight);
         }
 
         boolean covers(int[] s) {
-            if (cache == null) {
-                return compute(s);
-            }
-            long key = 0L;
-            for (int t = 0; t < s.length; t++) {
-                key += s[t] * radix[t];
-            }
-            int index = (int) key;
-            if (cache[index] == 0) {
-                cache[index] = compute(s) ? (byte) 2 : (byte) 1;
-            }
-            return cache[index] == 2;
-        }
-
-        private boolean compute(int[] s) {
             for (int k = 0; k < prefixMask.length; k++) {
                 long volume = 0L;
                 long weight = 0L;

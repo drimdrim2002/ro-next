@@ -28,8 +28,7 @@ public final class ZoneQuotaBalancedFillConstruction implements ConstructionHeur
 
     @Override
     public boolean abstains(Problem problem) {
-        return ZoneQuotaAllocation.combinations(ZoneQuotaAllocation.vehicleTypes(problem))
-                > ZoneQuotaAllocation.MAX_COMBINATIONS;
+        return false;
     }
 
     @Override

@@ -40,8 +40,7 @@ public final class ZoneQuotaSubsetFillConstruction implements ConstructionHeuris
 
     @Override
     public boolean abstains(Problem problem) {
-        return ZoneQuotaAllocation.combinations(ZoneQuotaAllocation.vehicleTypes(problem))
-                > ZoneQuotaAllocation.MAX_COMBINATIONS;
+        return false;
     }
 
     @Override
