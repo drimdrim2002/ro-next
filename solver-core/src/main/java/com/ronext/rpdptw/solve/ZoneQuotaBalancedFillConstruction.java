@@ -33,7 +33,14 @@ public final class ZoneQuotaBalancedFillConstruction implements ConstructionHeur
 
     @Override
     public Solution construct(Problem problem, Profile profile) {
-        Allocation allocation = ZoneQuotaAllocation.allocate(problem);
+        return fill(problem, profile, ZoneQuotaAllocation.allocate(problem), ID);
+    }
+
+    /**
+     * 배정이 주어졌을 때의 존 내부 적재 + 1-1 교환 + leftover pass — H23·H25 공용
+     * (heuristics 문서 §5 H23 의사코드의 "배정 =" 아래 전부). id는 방어 카운터 예외 메시지에 쓰는 호출 기법의 id다.
+     */
+    static Solution fill(Problem problem, Profile profile, Allocation allocation, String id) {
         Solution current = InsertionSearch.emptySolution(problem);
         int bound = 3 * problem.requests().size();
         int iterations = 0;
@@ -47,7 +54,7 @@ public final class ZoneQuotaBalancedFillConstruction implements ConstructionHeur
             }
             List<RequestId> zoneLeftovers = new ArrayList<>();
             for (int i = 0; i < order.size(); i++) {
-                InsertionSearch.checkOuterLoop(ID, ++iterations, bound);
+                InsertionSearch.checkOuterLoop(id, ++iterations, bound);
                 RequestId requestId = order.get(i);
                 Request request = problem.request(requestId);
                 double mean = meanVolume(problem, order, i + 1);
@@ -74,7 +81,7 @@ public final class ZoneQuotaBalancedFillConstruction implements ConstructionHeur
                 loads.get(chosen).add(request);
             }
             for (RequestId requestId : sortedByVolumeDesc(problem, zoneLeftovers)) {
-                InsertionSearch.checkOuterLoop(ID, ++iterations, bound);
+                InsertionSearch.checkOuterLoop(id, ++iterations, bound);
                 Solution exchanged = exchange(problem, profile, current, bins, requestId);
                 if (exchanged != null) {
                     current = exchanged;                                            // 성공 = bank −1
@@ -89,7 +96,7 @@ public final class ZoneQuotaBalancedFillConstruction implements ConstructionHeur
             }
         }
         for (RequestId requestId : requestOrder(problem, allocation, leftovers)) {     // leftover pass
-            InsertionSearch.checkOuterLoop(ID, ++iterations, bound);
+            InsertionSearch.checkOuterLoop(id, ++iterations, bound);
             List<Candidate> cands = InsertionSearch.candidates(problem, profile, current, requestId);
             if (!cands.isEmpty()) {
                 current = InsertionSearch.apply(problem, current, cands.getFirst());

@@ -22,7 +22,7 @@ import com.ronext.rpdptw.problem.Problem;
 
 class ConstructionHeuristicsTest {
 
-    /** T19 — 24개 각각이 바깥 루프 상한 안에서 끝나고(예외 없음), 방어 카운터 초과는 예외 (X13). */
+    /** T19 — 25개 각각이 바깥 루프 상한 안에서 끝나고(예외 없음), 방어 카운터 초과는 예외 (X13). */
     @Test
     void outerLoopBoundedByRequestCount() {
         List<Problem> problems = List.of(
@@ -46,7 +46,7 @@ class ConstructionHeuristicsTest {
         assertThrows(IllegalStateException.class, () -> InsertionSearch.checkOuterLoop("x", 6, 5));
     }
 
-    /** T20 — 24개 결과 전부 StructureCheck 위반 0 · pair 원자성 · XOR. PD 포함 문제로도. */
+    /** T20 — 25개 결과 전부 StructureCheck 위반 0 · pair 원자성 · XOR. PD 포함 문제로도. */
     @Test
     void structureHoldsForEveryHeuristic() {
         for (Problem problem : List.of(ConstructionFixtures.ring(8, 3, 30_000L, 10_000L), ConstructionFixtures.mixed())) {
@@ -80,7 +80,7 @@ class ConstructionHeuristicsTest {
     }
 
     @Test
-    void defaultsAreTwentyFourInPriorityOrder() {
+    void defaultsAreTwentyFiveInPriorityOrder() {
         List<ConstructionHeuristic> defaults = InitialSolutionBuilder.defaults();
         assertEquals(List.of(
                 "scarcity-regret2", "urgency-regret3", "vehicle-zone-fill", "deadline-sequential",
@@ -89,7 +89,8 @@ class ConstructionHeuristicsTest {
                 "slack-preserving-sequential", "vehicle-fill-remaining-regret", "weakest-fit-decreasing",
                 "constrained-path-extension", "farthest-seed-global-cheapest", "hilbert-split",
                 "nearest-neighbor-split", "gap-sweep-bidirectional", "spatiotemporal-cluster",
-                "squeaky-wheel-sequential", "zone-quota-balanced-fill", "zone-quota-subset-fill"),
+                "squeaky-wheel-sequential", "zone-quota-balanced-fill", "zone-quota-subset-fill",
+                "zone-quota-exchange-fill"),
                 defaults.stream().map(ConstructionHeuristic::id).toList());
         assertEquals(Optional.empty(), Optional.empty());
     }

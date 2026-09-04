@@ -9,7 +9,7 @@ Stage 2 완료 (2026-08-17) · Stage 3 완료 (2026-09-02) · Stage 4-초기해 
 Stage 4-ALNS 완료 (2026-09-02, **2026-09-04 개정 반영**) · Stage 5 완료 (2026-09-04)** —
 구 placeholder(`com.ronext.optimizer`, 수제 `HttpServer`, 합성 데모 `AlnsBatchEngine`)와 GCP 잔재는
 삭제됐고, 디스크의 코드는 확정 설계와 같은 3모듈 구조다. 정식 평가(전파·metric·profile)와
-초기해 construction 24개 포트폴리오(기본 8 + 확장 14 + 실물 맞춤 2)와 ALNS 본체(연산자 5개·적응 가중치·
+초기해 construction 25개 포트폴리오(기본 8 + 확장 14 + 실물 맞춤 3)와 ALNS 본체(연산자 5개·적응 가중치·
 acceptance·종료 4조건)와 독립 재검증·결과 모델까지 서 있다.
 
 - **확정 설계**: AWS ECS Fargate 위 단일 Spring Boot 서비스, 저장은 S3만.
@@ -18,13 +18,13 @@ acceptance·종료 4조건)와 독립 재검증·결과 모델까지 서 있다.
   `problem`(`Problem`·`NodeRef`) · `eval`(사실 값·`Evaluation`·profile SPI·`DefaultProfile`·`Scores`) ·
   `solve`(`Solution`·`StructureCheck`·`RoutePropagator`·`Evaluator` + 초기해: `InsertionSearch`·
   `ConstructionHeuristic` SPI·`InitialSolutionBuilder`·`InitialSolutionResult`·`ConstructionOutcome`·
-  construction 24개 `*Construction`·`GiantTourSplit`·`ZoneQuotaAllocation` + ALNS: `AlnsSolver`·
+  construction 25개 `*Construction`·`GiantTourSplit`·`ZoneQuotaAllocation` + ALNS: `AlnsSolver`·
   `AlnsConfig`·`AlnsResult`·`AlnsRunStats`(`Termination` 중첩)·`DestroyOperator`·`RepairOperator`·
   `RandomRemoval`·`RouteRemoval`·`StringRemoval`·`GreedyInsertion`·`RegretInsertion`·`AdaptiveWeights`) ·
   `verify`(`SolutionVerifier`·`VerificationResult`·`VerifyViolation`·`RouteReplay` + 결과 모델
   `SolveResult`·`UnassignedReason`·`RunStamp`·`ResultAssembler`) +
-  `solver-profile`의 `ProfileRegistry` + 테스트(solver-core 42클래스 124개, solver-profile 1클래스 1개,
-  app 3클래스 4개 + 테스트 전용 접근자 `ZoneQuotaAllocationAccess`).
+  `solver-profile`의 `ProfileRegistry` + 테스트(solver-core 43클래스 127개, solver-profile 1클래스 1개,
+  app 3클래스 5개 + 테스트 전용 접근자 `ZoneQuotaAllocationAccess`).
   `solve`·`verify`에 하위 패키지는 없다.
   `api`·`run`·`input`·`storage`는 **아직 빈 패키지**다 — 그 타입들을 grep해서 안 나오는 게
   정상이고, 아직 안 만든 것이지 다른 데 있는 게 아니다.
@@ -40,6 +40,10 @@ acceptance·종료 4조건)와 독립 재검증·결과 모델까지 서 있다.
   [survey §2.5](docs/implementation/stage-04-initial-solution-heuristics-survey.md)에 있다 —
   실물 fixture에서 H23이 미배정 0·31대(H3는 15). 이 수치는 app 모듈의 T44(`WinPocFixtureTest`)가
   고정한다(규약 JSON → `PlanInput` 매핑은 그 테스트 전용이고, 정식 어댑터는 Stage 6).
+  H25(`ZoneQuotaExchangeFillConstruction`, greedy 존 배정 + 구역 간 교환 → H23의 `fill` 재사용)는
+  2026-09-04에 25번째로 편입됐고 **잔류·폐기가 아직 미결이다** — 실물에서 미배정 70(H3 15 · H23 0)이라
+  [stage-04-h25 §8](docs/implementation/stage-04-h25-zone-quota-exchange.md)의 "H25 폐기" 행에 해당하지만,
+  구역을 지운 변형에서는 순위가 뒤집힌다(H25 0 · H3 122). **결정은 사용자 몫이고 그 전까지 코드는 그대로 둔다.**
   4-ALNS 코드는 [stage-04-alns](docs/implementation/stage-04-alns.md)의 §2 파일 표·§3 시그니처·§4 절차와
   1:1이다 (구현 중 확정 5건은 그 문서 frontmatter `revisions` 2026-09-02 "구현 직전 정합" 항목 —
   `Termination`은 `AlnsRunStats` 중첩, `repair`가 `Profile`을 받음, `RegretInsertion`은 `InsertionSearch.Cache`,

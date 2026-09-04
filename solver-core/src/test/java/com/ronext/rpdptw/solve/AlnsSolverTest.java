@@ -45,7 +45,7 @@ class AlnsSolverTest {
         return config(60L, OptionalLong.of(maxSteps), OptionalLong.empty(), OptionalLong.empty(), seed, 0.05);
     }
 
-    /** T1 — 소형 fixture에서 포트폴리오 24개 중 최선 대비 개선 (2026-09-02 실측: 거리 44151 → 38764). */
+    /** T1 — 소형 fixture에서 포트폴리오 25개 중 최선 대비 개선 (2026-09-02 실측: 거리 44151 → 38764). */
     @Test
     void improvesOverInitialOnSmallFixture() {
         Problem problem = smallFixture();

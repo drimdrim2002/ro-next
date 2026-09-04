@@ -35,8 +35,8 @@
 ### 1.1 초기해 포트폴리오의 한 칸
 
 이 저장소의 초기해[^initial-solution]는 하나가 아니다. `InitialSolutionBuilder.build(problem, profile)`가 결정적 construction
-**24개**(H1~H24)를 전부 돌려 각 결과를 정식 평가(`Evaluator`)에 넣고, 사전식 점수[^lexicographic-score]가 가장 좋은 하나를 고른다.
-H23은 그 24개 중 23번째이고, 실물 fixture에서는 이 H23이 선택된다.
+**25개**(H1~H25)를 전부 돌려 각 결과를 정식 평가(`Evaluator`)에 넣고, 사전식 점수[^lexicographic-score]가 가장 좋은 하나를 고른다.
+H23은 그 25개 중 23번째이고, 실물 fixture에서는 이 H23이 선택된다.
 
 ```text
 InitialSolutionBuilder.build(problem, profile)
@@ -480,7 +480,7 @@ return current;
 존 적재   O(m_z · L²)         존 요청마다 bin 수 m_z × (위치 L × 전파 L)  — PICKUP_DELIVERY는 위치가 L²
 ```
 
-실물 fixture(452건·31대·유형 6종·조합 25,920)에서 전체 507 ms. 초기해 24개 중 무거운 축이지만(H3 136 ms),
+실물 fixture(452건·31대·유형 6종·조합 25,920)에서 전체 507 ms. 초기해 25개 중 무거운 축이지만(H3 136 ms),
 regret 계열[^regret](H1·H2)보다는 싸다.
 
 ---
@@ -553,14 +553,14 @@ mvn test -pl app -Dtest=WinPocFixtureTest
     (차급·구역·정차 한도·근무창 등)을 더한 "rich" 변형이다.
 
 [^construction]: **construction (heuristic)** — 빈 해에서 시작해 요청을 하나씩 넣어 첫 해를 만드는 기법. 이 뒤에 오는 ALNS
-    (Adaptive Large Neighborhood Search)가 그 해를 부수고 다시 고치며 개선한다. 이 저장소에서는 construction이 24개이고
+    (Adaptive Large Neighborhood Search)가 그 해를 부수고 다시 고치며 개선한다. 이 저장소에서는 construction이 25개이고
     난수를 쓰지 않는다.
 
 [^vehicle-class]: **차급** — 차량의 톤수 등급(T1, T1.9, T2.5, T3.5, T5 등). 주문마다 "이 차급까지만 진입 가능"이 지정될 수 있어
     (`allowedVehicleFeatures`), 그 주문과 차량의 **호환** 여부를 가른다. 호환은 `Problem`이 동결 시점에 미리 계산해
     `compatibleVehicles(requestId)`로 제공한다 — 차급·capability·구역·차고 조건을 모두 통과한 차량 집합.
 
-[^initial-solution]: **초기해** — ALNS가 출발점으로 삼는 첫 `Solution`. 여기서는 24개 construction 결과 중 정식 평가 점수가 가장 좋은 것.
+[^initial-solution]: **초기해** — ALNS가 출발점으로 삼는 첫 `Solution`. 여기서는 25개 construction 결과 중 정식 평가 점수가 가장 좋은 것.
 
 [^lexicographic-score]: **사전식 점수** — `long[]`을 앞 원소부터 비교하는 순서. 기본 profile(`DefaultProfile`)의 축은
     **(미배정 수, 사용 차량 수, 총 거리 m, 총 운행시간 s)** 네 개이고, 앞 축이 같을 때만 뒤 축을 본다. 가중합으로 뭉개지 않는다.
@@ -620,7 +620,7 @@ mvn test -pl app -Dtest=WinPocFixtureTest
     차량 단위로 존을 고르다 보니 존이 여러 차에 조각나고, 뒤에 남은 작은 차들이 반만 찬다 — 실물 15 미배정의 원인이다.
 
 [^spi]: **SPI (Service Provider Interface)** — 구현체를 여러 개 꽂아 넣을 수 있게 만든 인터페이스. `ConstructionHeuristic`을
-    구현한 24개 클래스가 `InitialSolutionBuilder`에 목록으로 등록된다.
+    구현한 25개 클래스가 `InitialSolutionBuilder`에 목록으로 등록된다.
 
 [^hard-soft]: **hard / soft 제약** — hard는 어기면 해가 무효인 제약(용량·시간창·정차 한도·구역 단일성·차급 등), soft는 어겨도
     되지만 점수가 나빠지는 것. 이 저장소에서 construction과 ALNS의 삽입은 hard를 전부 통과한 후보만 받는다.

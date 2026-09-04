@@ -11,7 +11,7 @@ import com.ronext.rpdptw.eval.Scores;
 import com.ronext.rpdptw.problem.Problem;
 
 /**
- * 포트폴리오 실행기 — 24개를 우선순위 순으로 실행해 정식 평가로 최선 하나를 고른다 (heuristics 문서 §6).
+ * 포트폴리오 실행기 — 25개를 우선순위 순으로 실행해 정식 평가로 최선 하나를 고른다 (heuristics 문서 §6).
  * 선택 권위는 Evaluator뿐이다. 동률이면 우선순위가 앞선 기법이 이긴다 (§7 X7).
  */
 public final class InitialSolutionBuilder {
@@ -20,7 +20,7 @@ public final class InitialSolutionBuilder {
 
     private InitialSolutionBuilder() {}
 
-    /** 우선순위 순으로 고정된 24개 — 기본 8 + 확장 14 + 실물 맞춤 2 (§5). */
+    /** 우선순위 순으로 고정된 25개 — 기본 8 + 확장 14 + 실물 맞춤 3 (§5). */
     public static List<ConstructionHeuristic> defaults() {
         return List.of(
                 new ScarcityRegret2Construction(),
@@ -46,12 +46,13 @@ public final class InitialSolutionBuilder {
                 new SpatiotemporalClusterConstruction(),
                 new SqueakyWheelSequentialConstruction(),
                 new ZoneQuotaBalancedFillConstruction(),
-                new ZoneQuotaSubsetFillConstruction());
+                new ZoneQuotaSubsetFillConstruction(),
+                new ZoneQuotaExchangeFillConstruction());
 
     }
 
     /**
-     * 24개를 순서대로 실행해 정식 평가로 최선 하나를 고른다. 기권한 기법은 건너뛴다.
+     * 25개를 순서대로 실행해 정식 평가로 최선 하나를 고른다. 기권한 기법은 건너뛴다.
      * 전원 기권이면 빈 해(전 Request bank)를 반환한다. profile은 인자다 — Problem에 담기지 않으며,
      * 호출자가 탐색·재검증에 같은 인스턴스를 넘긴다 (Domain §8.4 MUST).
      */

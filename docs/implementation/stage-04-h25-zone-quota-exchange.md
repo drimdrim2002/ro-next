@@ -2,7 +2,8 @@
 title: Stage 4 — H25 `zone-quota-exchange-fill` 설계안 (greedy 존 배정 + 구역 간 교환, H3 비교용)
 stage: 4
 date: 2026-09-04
-status: 설계안 — 구현 전. 계약 문서(stage-04-initial-solution-heuristics.md)는 §9의 목록대로 **구현 직전에** 개정한다
+status: 구현·실측 완료 (2026-09-04). §9의 계약 개정은 반영됐고, §8에 실측 결과가 들어 있다.
+  H25의 잔류·폐기 결정(§8 결정 표)은 **사용자 몫으로 남아 있다**
 plan: ../implementation-plan.md
 sources:
   - stage-04-initial-solution-heuristics.md (§3.2 SPI · §3.4 존 배정 · §4.1~§4.4 공통 기반 · §5 H3/H23/H24 의사코드 · §7 X · §8 T)
@@ -12,6 +13,11 @@ sources:
   - stage-04-zone-quota-allocation-scaling.md (§2.1 ① 값 정의 · §3 `value`·`Allocation.truncated` — 이 설계가 공유하는 부품. **구현 순서: scaling 먼저, H25 다음**)
 revisions:
   - 2026-09-04 최초 작성 — 사용자 확정("greedy + 교환은 직접 구현해 보고 H3과 비교")의 설계. 코드·계약 무변경
+  - 2026-09-04 **구현·실측 세션** — §9 계약 개정 전부 반영. 구현 중 정정 3건:
+    (1) X 번호를 X29~X34로 밀었다(X28은 scaling 설계가 "차종 65종 이상"으로 먼저 씀),
+    (2) T55에서 "H23 `abstains` true" 단언을 뺐다 — scaling 구현으로 H23의 기권이 사라졌다(§10 Q3이 예고한 대로),
+    (3) `Demand.cached` 언급 삭제 — scaling 구현이 그 메서드를 없앴다. H25가 피하는 것은 `frontier` 나열이다.
+    §8에 실측 결과 절 추가
   - 2026-09-04 사용자 결정 반영 — §10 Q1~Q5 확정(MAX_SCANS 50 · **best-improvement**, 품질 같으면 first · T25 합성 변형 · T56b는 실측 후 · 25번째).
     §4.3 의사코드를 best-improvement로, §3 `value` 시그니처·값 정의를 scaling 설계 §3·§2.1 ①과 같은 문장으로. T45~T48 → T53~T56, X24~X29 → X28~X33 (scaling 설계가 T45~T52·X24~X27을 씀)
 ---
@@ -83,10 +89,10 @@ H3에는 이 단계가 없고, H23의 1-1 교환은 **한 구역 안에서 주�
 | `solve/InitialSolutionBuilder.java` | 기존 · 1줄 | `defaults()` 끝에 H25 추가 (25번째) |
 
 새 파일은 1개다. `Solution`·`Route`·`InsertionSearch`·`Evaluator`·`Problem`·`Profile`은 수정하지 않는다.
-`ZoneQuotaAllocation.Demand`는 **재사용한다** — `Demand.of(problem, types, zone)`·`covers(s)`·`totalVolume`이
-package-private이라 같은 패키지의 H25가 그대로 부를 수 있다(확인: `static final class Demand`, `static Demand of(...)`,
-`boolean covers(int[] s)`). 단 **`Demand.cached(radix)`는 부르지 않는다** — 그것이 `byte[Π]`를 잡는 곳이라
-H25가 부르면 기권 없는 설계가 무너진다(§6 X30).
+`ZoneQuotaAllocation.Demand`는 **재사용한다** — `Demand.of(problem, types, zone)`·`covers(s)`·`totalVolume`·`compat`이
+package-private이라 같은 패키지의 H25가 그대로 부를 수 있다. 단 **`ZoneQuotaAllocation.frontier`는 부르지 않는다** —
+프론티어 나열만이 Π에 비례할 수 있는 곳이라, H25가 부르면 기권 없는 설계가 무너진다(§6 X31).
+(설계 시점의 `Demand.cached(radix)`는 scaling 구현이 없앴다 — 지금 피할 대상은 `frontier`뿐이다.)
 
 ---
 
@@ -105,14 +111,13 @@ public final class ZoneQuotaExchangeFillConstruction implements ConstructionHeur
     /** greedy 덮개 + 구역 간 교환으로 만든 배정 — 반환형은 DP와 같은 Allocation (§4.1~§4.3). */
     static ZoneQuotaAllocation.Allocation allocate(Problem problem);
 
-    /** 스캔 기록·비교용 오버로드 — 스캔마다 (Σ부족, Σ낭비, Σ사용 대수)를 남기고(T54) 스캔 규칙을 고른다(§8 재료 ④). H22의 priorityTrace와 같은 수법. */
-    static ZoneQuotaAllocation.Allocation allocate(Problem problem, List<long[]> valueTrace, ScanRule rule);
-    /** BEST = 스캔마다 최선 이웃 하나 적용 (기본, §4.3) · FIRST = 처음 개선되는 이웃 적용 후 재스캔 (비교 전용). */
-    enum ScanRule { BEST, FIRST }
+    /** 스캔 기록용 오버로드 — 이웃을 적용할 때마다 (Σ부족, Σ낭비, Σ사용 대수)를 남긴다(T54). H22의 priorityTrace와 같은 수법.
+     *  설계 시점의 `ScanRule` 인자는 **구현하지 않았다** — §8 재료 ④의 BEST/FIRST 비교가 끝났으므로 남길 이유가 없다(§8.3-3). */
+    static ZoneQuotaAllocation.Allocation allocate(Problem problem, List<long[]> valueTrace);
 }
 
 final class ZoneQuotaAllocation {
-    // 기존 — 무변경 (vehicleTypes·zones·allocate 진입점). Allocation은 scaling 설계가 truncated 필드를 더한다 — H25는 false로 만든다
+    // 기존 — 무변경 (vehicleTypes·zones·allocate 진입점). Allocation의 truncated는 scaling이 더했다 — H25는 false로 만든다
     static List<VehicleType> vehicleTypes(Problem problem);
     static List<Zone> zones(Problem problem, List<VehicleType> types);
     static Allocation allocate(Problem problem);
@@ -128,17 +133,17 @@ final class ZoneQuotaAllocation {
 
 public final class ZoneQuotaBalancedFillConstruction implements ConstructionHeuristic {
     // 기존 construct(problem, profile) = fill(problem, profile, ZoneQuotaAllocation.allocate(problem))
-    /** 추출 — 배정이 주어졌을 때의 존 내부 적재 + 1-1 교환 + leftover pass (계약 §5 H23 의사코드의 "배정 =" 아래 전부). */
-    static Solution fill(Problem problem, Profile profile, ZoneQuotaAllocation.Allocation allocation);
+    /** 추출 — 배정이 주어졌을 때의 존 내부 적재 + 1-1 교환 + leftover pass (계약 §5 H23 의사코드의 "배정 =" 아래 전부).
+     *  id는 방어 카운터 예외 메시지에 쓰는 호출 기법의 id다 (H23/H25 구분). */
+    static Solution fill(Problem problem, Profile profile, ZoneQuotaAllocation.Allocation allocation, String id);
 }
 ```
 
 - `RandomGenerator` 인자는 어디에도 없다(계약 §3 결정성 보증 그대로).
 - `Allocation`을 그대로 반환하는 이유: `fill`이 `allocation.zones()`·`vehiclesByZone()`·`types()`만 보므로
   배정을 만든 쪽이 DP든 greedy+교환이든 구분하지 않는다. **H23 2단계가 두 기법에서 한 코드**라는 것이 §8 비교의 전제다.
-- `fill` 추출 시 `checkOuterLoop`의 id 인자는 호출한 기법의 id를 넘긴다(예외 메시지에 H23/H25가 구분되게) —
-  시그니처에 `String id`를 하나 더 두거나, H25가 자기 id로 감싸는 것 중 구현 재량. **전제:** 추출은 동작 무변경이고
-  T40·T44가 그것을 잡는다.
+- `fill` 추출 시 `checkOuterLoop`의 id 인자는 호출한 기법의 id를 넘긴다(예외 메시지에 H23/H25가 구분되게).
+  **구현 채택: 시그니처에 `String id`를 하나 더 둔다.** 추출은 동작 무변경이고 T40·T44가 그것을 잡는다.
 
 ---
 
@@ -152,17 +157,17 @@ H25가 새로 정의하는 것은 (1) greedy 덮개 (2) 교환 이웃과 순회 
 ```text
 types = ZoneQuotaAllocation.vehicleTypes(problem)      // 유형 순서 (maxVolume ASC, maxWeight ASC, 첫 VehicleId ASC)
 zones = ZoneQuotaAllocation.zones(problem, types)      // 존 순서 (호환 유형 수 ASC, Σvolume DESC, zoneId ASC)
-demand_z = Demand.of(problem, types, z)  for z in zones   // cached()는 부르지 않는다 (§2)
+demand_z = Demand.of(problem, types, z)  for z in zones   // frontier()는 부르지 않는다 (§2)
 remaining[t] = |types[t].vehicles|
 s_z = 0 벡터  for z in zones                            // 존별 유형 대수 — 이것이 "배정"이다
 pool = 미배정 차량 — s에 안 든 대수. 값 기여 0. 교환에서 존처럼 다룬다 (§4.3)
-compat_z = { t : types[t].compatible ∩ z.members ≠ ∅ }   // 그 존에 한 건이라도 실을 수 있는 유형
+compat_z = demand_z.compat                              // 그 존에 한 건이라도 실을 수 있는 유형 (Demand가 이미 만든 마스크)
 ```
 
 ### 4.2 greedy 덮개 (존 순서대로 1회)
 
 survey §2.5의 "존 순서 greedy(제약 많은 존 우선·낭비 최소)"를 **프론티어 나열 없이** 선형으로 다시 쓴 것이다.
-DP의 프론티어 나열은 Π에 비례할 수 있어 기권 없는 기법이 쓸 수 없다(§6 X30).
+DP의 프론티어 나열은 Π에 비례할 수 있어 기권 없는 기법이 쓸 수 없다(§6 X31).
 
 ```text
 for z in zones:                                                      (존 순서 고정)
@@ -218,8 +223,8 @@ return Allocation(types, zones, vehiclesByZone, truncated = false)
   "일반적으로 해 품질이 낫고 시간 차이는 크지 않다. 품질 차이가 없으면 first-improvement로." 스캔당 이웃 수는
   실물 규모에서 ≈ 7,100(§5)이라 전체를 보는 비용이 작고, 결정성은 순회 순서로 동률을 깨면 first와 똑같이 고정된다.
   **first-improvement와의 품질 차이는 §8 재료 ④가 잰다** — 같으면 first로 바꾼다(§10 Q2).
-- 비교를 위해 스캔 규칙을 인자로 받는 package-private 오버로드를 둔다(§3 `allocate(problem, valueTrace, rule)`).
-  기본 진입점은 best 하나이고, first는 그 비교 실행에서만 돈다.
+- 비교(§8 재료 ④)는 일회성 스크래치로 first-improvement 분기를 임시로 넣어 쟀고, **측정 뒤 지웠다** —
+  디스크의 `allocate`는 best 하나다(§8.3-3). `ScanRule`은 구현되지 않았다.
 - pool을 존처럼 다루면 "남는 구역의 차를 pool로 돌려 낭비를 줄이기"(MOVE A→pool)와 "모자란 구역에 pool의 차를 주기"
   (MOVE pool→A), "큰 차를 pool의 작은 차로 갈아태우기"(SWAP A↔pool)가 이웃 정의 하나로 다 나온다.
 - Σ사용 대수가 값의 3번 축이라 MOVE A→pool은 낭비가 같아도 대수가 줄면 채택된다 — DP와 같은 축 순서다.
@@ -251,7 +256,7 @@ H3 what-if 삽입)가 섞인다.** 그래서 H25 > H3 결과만으로 "교환 �
 ```
 
 - 교환의 참 상한은 "V가 유한 격자 위에서 엄격 감소"이지만 그 격자는 부피 단위(×1000 long)라 카운터로 못 쓴다.
-  그래서 H22의 R=5와 같은 수법으로 **스캔 수를 재량 상수로 자른다.** 상한 도달은 X28대로 정상 종료다 — 개선 도중에
+  그래서 H22의 R=5와 같은 수법으로 **스캔 수를 재량 상수로 자른다.** 상한 도달은 X29대로 정상 종료다 — 개선 도중에
   잘린 근사이고, 그 사실은 `valueTrace` 길이 = MAX_SCANS로 드러난다.
 - 방어 카운터: greedy 덧셈이 `2·m·Z`를 넘으면 IllegalStateException(계약 §4.3 X13과 같은 취급). 교환은 스캔 상한이
   그 자체로 카운터다.
@@ -272,12 +277,12 @@ H3 what-if 삽입)가 섞인다.** 그래서 H25 > H3 결과만으로 "교환 �
 
 | # | 상황 | 처리 | 근거 |
 |---|---|---|---|
-| X28 | H25 교환이 MAX_SCANS에 도달 | 정상 종료 — 그때까지의 최선 배정으로 2단계 진행. 예외 아님. `valueTrace` 길이로 관측 | §5 |
-| X29 | H25 greedy에서 어떤 존을 공급 부족으로 못 덮음 | 그 존은 s = 0 (DP (c)와 동일). 교환이 pool에서 MOVE로 부분 배정을 만들 수 있고, 그래도 남으면 fill의 leftover pass가 기존 경로·미사용 차량에 삽입 (X21과 같은 경로) | §4.2 |
-| X30 | 차량 유형 조합 수 Π(대수+1) > 65,536 (H23·H24 기권 입력) | H25는 **기권하지 않고** 돈다. `Demand.cached`·프론티어 나열을 쓰지 않으므로 Π 크기 배열이 없다 — 이것이 기권 없음의 근거 | §2·§4.2 |
-| X31 | 존이 하나도 없음 (`zoneId` 전부 부재) | 단일 존 `(none)` — greedy가 전 차량 중 최소 덮개를 고르고 나머지는 pool. H23과 같은 퇴화 | 계약 §4.4 |
-| X32 | 정차 한도 부재 | `covers`의 방문 수 축이 +∞로 처리됨(기존 `Demand.compute`) · fill은 X23대로 부피 best-fit 퇴화. 기권 없음 | 계약 X23 |
-| X33 | MOVE/SWAP 이웃이 하나도 조건을 만족하지 않음 (예: 차량 1대) | 스캔 1회에 개선 0 → 즉시 종료. greedy 배정 그대로 | §4.3 |
+| X29 | H25 교환이 MAX_SCANS에 도달 | 정상 종료 — 그때까지의 최선 배정으로 2단계 진행. 예외 아님. `valueTrace` 길이로 관측 | §5 |
+| X30 | H25 greedy에서 어떤 존을 공급 부족으로 못 덮음 | 그 존은 s = 0 (DP (c)와 동일). 교환이 pool에서 MOVE로 부분 배정을 만들 수 있고, 그래도 남으면 fill의 leftover pass가 기존 경로·미사용 차량에 삽입 (X21과 같은 경로) | §4.2 |
+| X31 | 차량 유형 조합 수 Π(대수+1)가 큼 | H25는 **기권하지 않고** 돈다. `frontier` 나열을 쓰지 않으므로 Π 크기 배열이 없다 — 이것이 기권 없음의 근거 | §2·§4.2 |
+| X32 | 존이 하나도 없음 (`zoneId` 전부 부재) | 단일 존 `(none)` — greedy가 전 차량 중 최소 덮개를 고르고 나머지는 pool. H23과 같은 퇴화 | 계약 §4.4 |
+| X33 | 정차 한도 부재 | `covers`의 방문 수 축이 +∞로 처리됨(기존 `Demand.compute`) · fill은 X23대로 부피 best-fit 퇴화. 기권 없음 | 계약 X23 |
+| X34 | 개선하는 MOVE/SWAP 이웃이 하나도 없음 (예: 차량 1대) | 스캔 1회에 개선 0 → 즉시 종료. greedy 배정 그대로 | §4.3 |
 
 X3(전원 기권)의 기권 가능 목록은 바뀌지 않는다 — H25는 거기 들지 않는다.
 
@@ -289,12 +294,12 @@ X3(전원 기권)의 기권 가능 목록은 바뀌지 않는다 — H25는 거�
 
 | # | 테스트 | 내용 | 대응 |
 |---|---|---|---|
-| T53 | `ZoneQuotaExchangeFillConstructionTest.exchangeReachesDpValueOnHallFixture` | T38의 입력(큰 차 1·작은 차 2 · 큰 차 금지 존 A·자유 존 B)에서 H25 `allocate`의 최종 `V`가 DP `allocate`의 `V`와 **같다** — greedy가 큰 차를 잘못 두더라도 SWAP이 바로잡는다. `value()` 추출이 DP 결과를 바꾸지 않았음도 같은 테스트가 잡는다(DP `V`가 추출 전 기대값과 동일) | §4.3·§3 |
-| T54 | `ZoneQuotaExchangeFillConstructionTest.scansStrictlyImproveAndTerminate` | greedy가 부족을 남기고 MOVE 한 번으로 풀리는 입력(존 A에 작은 차 2대 필요·B에 1대 필요·작은 차 3대, greedy 순서상 B가 2대를 먼저 가져가는 수치): `valueTrace`가 사전식 **엄격 감소**하고 길이 ≤ MAX_SCANS · 두 번 실행해 trace 동일 (X8) · 이웃이 없는 입력(차량 1대)에서 trace 길이 1 (X33) | §4.3·§5 |
-| T55 | `ZoneQuotaExchangeFillConstructionTest.neverAbstainsBeyondCombinationLimit` | T39의 입력(유형이 서로 다른 17대 → Π = 2¹⁷)에서 H23 `abstains` true · H25 `abstains` false · H25 `construct` 정상 종료·`StructureCheck` 통과·Feasible (X30) | §6 X30 |
+| T53 | `ZoneQuotaExchangeFillConstructionTest.exchangeReachesDpValueOnHallFixture` | T38의 입력(큰 차 1·작은 차 2 · 큰 차 금지 존 A·자유 존 B)에서 H25 `allocate`의 최종 `V`가 DP `allocate`의 `V`와 **같다** — greedy가 큰 차를 잘못 두더라도 SWAP이 바로잡는다. 차량 중복 배정 없음·`truncated == false` | §4.3·§3 |
+| T54 | `ZoneQuotaExchangeFillConstructionTest.scansStrictlyImproveAndTerminate` | greedy가 부족을 남기고 교환으로 풀리는 입력: `valueTrace`가 사전식 **엄격 감소**하고 길이 ≤ MAX_SCANS · 두 번 실행해 trace 동일 (X8) · 개선 이웃이 없는 입력(차량 1대)에서 trace 길이 **0** (X34). §4.3 의사코드가 `best 적용` 뒤에만 trace를 남기므로 개선 0회면 0이다 — 설계 문면의 "길이 1"을 정정 | §4.3·§5 |
+| T55 | `ZoneQuotaExchangeFillConstructionTest.neverAbstainsBeyondCombinationLimit` | 유형이 서로 다른 17대(Π = 2¹⁷)에서 H25 `abstains` false · `construct` 정상 종료·`StructureCheck` 통과·Feasible (X31). **H23 `abstains` true 단언은 뺐다** — scaling 구현으로 H23의 기권이 사라졌다(§10 Q3이 예고). H23은 이제 비교 재료다 | §6 X31 |
 | T56 | `WinPocFixtureTest.zoneQuotaExchangeFillComparedOnRealFixture` (**app 모듈**) | 실물 fixture에서 **같은 실행 안에** H3·H25·H23을 돌려 기법마다 (미배정, 차량, 거리, 운행시간, 소요)와 H25·H23의 배정 값 `V`를 **표로 출력**한다. 단언은 H25의 `StructureCheck`·Feasible·재실행 동일 score(X8)·경로 감사(T44의 `audit` 재사용)뿐. **`H25 ≤ H3`(사전식) 단언은 넣지 않는다** — 실측 후 §8이 정한다(넣으면 T56b) | §8 |
 
-T17·T19·T20(24개 전부 순회)은 목록이 `defaults()`이면 자동으로 25개를 돈다 — 문구만 "25개"로.
+T17·T19·T20(포트폴리오 전부 순회)은 목록이 `defaults()`이면 자동으로 25개를 돈다 — 계약 문면만 "25개"로 고쳤다.
 T15의 기권 목록·T16은 무변경(H25는 기권하지 않음).
 
 ---
@@ -307,7 +312,7 @@ T15의 기권 목록·T16은 무변경(H25는 기권하지 않음).
 |---|---|---|
 | ① 실물 fixture | T56 | 본 비교 |
 | ② 실물에서 `zoneId`를 지운 변형 | notes §4.3 (a) | 존 없을 때 세 기법의 퇴화형 |
-| ③ H23이 기권하는 입력 | T55의 17대 입력을 실물 규모로 늘린 합성(전제: T25 합성 문제의 차량을 전부 다른 유형으로) | **H25가 존재하는 이유** — 이때 H3 vs H25만 남는다 |
+| ③ 차종이 전부 다른 입력 (종전 H23 기권 조건) | T25 합성 문제의 차량 31대를 전부 다른 유형으로 (Π = 2³¹) | **H25가 존재하던 이유** — scaling 뒤에는 H23도 돌므로 H3·H23과 나란히 비교한다 (§10 Q3) |
 
 기록 열: 기법 · 미배정 · 차량 · 거리 · 운행시간 · 소요 · (H25·H23) 배정 값 `V = (Σ부족, Σ낭비, Σ대수)` · H25 스캔 수.
 
@@ -324,9 +329,92 @@ T15의 기권 목록·T16은 무변경(H25는 기권하지 않음).
 - ②에서 순위가 ①과 뒤집히면 notes §4.2 축 ① 표에 그 사실을 적는다. ②는 H25의 채택 여부를 바꾸지 않는다.
 - ③에서 H25 ≤ H3이면 ①의 결과와 무관하게 "기권 시 대체" 역할은 H3에 남는다.
 - 시간(소요)은 채택 여부를 바꾸지 않는다.
-- **재료 ④ — 스캔 규칙 비교.** 같은 세 입력에서 `ScanRule.BEST`와 `FIRST`의 최종 점수·배정 값 `V`·스캔 수·소요를
+- **재료 ④ — 스캔 규칙 비교.** 같은 세 입력에서 best-improvement와 first-improvement의 최종 점수·배정 값 `V`·스캔 수·소요를
   나란히 잰다. 사용자 결정(2026-09-04): 품질(점수 사전식)이 같으면 FIRST로 바꾸고 BEST와 오버로드를 지운다.
   BEST가 한 입력에서라도 좋으면 BEST 유지.
+
+---
+
+### 8.1 실측 결과 (2026-09-04 구현 세션)
+
+측정: app 모듈, JDK 25, `DefaultProfile`. ①은 **T56이 CI에서 매번 찍는다.** ②③④는 이 세션의
+일회성 스크래치로 쟀고 **커밋하지 않았다**(§7이 정한 시험은 T53~T56뿐이다) — 아래 수치가 그 기록이다.
+
+**① 실물 fixture** (`data/win_poc_case_floor.json` · 주문 452 · 차량 31 · 차종 6)
+
+| 기법 | 미배정 | 차량 | 거리(m) | 운행시간(s) | 소요 | 배정 값 `V` |
+|---|---:|---:|---:|---:|---:|---|
+| H3 `vehicle-zone-fill` | 15 | 31 | 4,515,433 | 1,003,093 | 220 ms | — (적재율 기준, 같은 값 함수 없음) |
+| **H25** `zone-quota-exchange-fill` | **70** | 31 | 4,465,885 | 974,959 | 70 ms | **[2, 9,330, 31]** · 교환 적용 10회 |
+| H23 `zone-quota-balanced-fill` | 0 | 31 | 4,198,408 | 1,002,069 | 610 ms | [0, 12,290, 31] |
+
+**② 실물에서 `zoneId`를 지운 변형** (canonical `RequestSide.zoneId`를 전부 비운다 — 단일 존 `(none)`)
+
+| 기법 | 미배정 | 차량 | 거리(m) | 운행시간(s) | 소요 | 배정 값 `V` |
+|---|---:|---:|---:|---:|---:|---|
+| H3 | 122 | 31 | 8,893,065 | 1,272,468 | 72 ms | — |
+| **H25** | **0** | 31 | 7,370,815 | 1,179,191 | 112 ms | [0, 2,140, 30] · 교환 적용 0회 |
+| H23 | 0 | **30** | 8,287,231 | 1,214,161 | 167 ms | [0, 390, 29] |
+
+**③ 차종이 전부 다른 변형** (실물의 차량 31대 용량을 1 단위씩 깎아 31종 · Π = 2³¹ · 종전 H23 기권 조건)
+
+| 기법 | 미배정 | 차량 | 거리(m) | 운행시간(s) | 소요 |
+|---|---:|---:|---:|---:|---:|
+| H3 | 16 | 31 | 4,518,241 | 1,003,248 | 125 ms |
+| **H25** | 51 | 31 | 5,230,361 | 988,403 | **47 ms — 완주** |
+| H23 | **미완주 — `OutOfMemoryError`** (기본 heap도 `-Xmx8g`도 동일) | | | | |
+
+**④ 스캔 규칙 (BEST vs FIRST)**
+
+| 입력 | BEST — `V` · 적용 · 최종 score | FIRST — `V` · 적용 · 최종 score |
+|---|---|---|
+| ① | [2, 9,330, 31] · 10 · **[70, 31, 4,465,885, 974,959]** | [1, 11,270, 31] · 24 · **[48, 31, 4,570,878, 988,991]** |
+| ② | [0, 2,140, 30] · 0 · [0, 31, 7,370,815, 1,179,191] | 동일 (교환이 한 번도 개선하지 않는다) |
+
+배정 단계 소요는 둘 다 실물에서 2~4 ms — 시간 차이는 없다.
+
+### 8.2 ①의 70건이 어디서 왔는가 (존별 진단)
+
+배정 값 `V`가 [2, 9,330, 31]로 DP의 [0, 12,290, 31]과 크게 다르지 않은데 최종 미배정이 70인 이유를
+존별로 뜯었다. **부족 2는 두 존이 `covers`를 만족하지 못했다는 뜻이고, 그 두 존이 손실의 전부다:**
+
+| 존 | 건 | 방문 | Σvol | H25 배정 | 용량 | `covers` |
+|---|---:|---:|---:|---|---:|---|
+| ZONE_18 | 58 | 58 | 26,980 | T4(14,000·정차 28) × **2** | 28,000 | **false** — 정차 2×28 = 56 < 58 |
+| ZONE_17 | 39 | 39 | 32,360 | T3 × 2 + T4 × 1 | 34,300 | **false** |
+
+원인은 **값 함수의 평탄면(plateau)이다.** 부족 = `covers`면 0, 아니면 `max(1, Σvol − 용량)`이라,
+용량이 수요를 넘긴 순간 부족은 **1에서 더 내려가지 않는다.** 그래서 교환은 "차를 한 대 더 주면 부족이 준다"를
+용량이 찰 때까지만 따라가고, 그 뒤 `covers`를 실제로 켜는 축(정차 수·Hall 조건)에는 **기울기가 없어** 멈춘다.
+greedy가 최소 덮개로 깎아 두는 것이 이 평탄면을 만든다 — 정차 한도가 빡빡한 존에서 대수가 하나 모자란 채로
+"부족 1"에 눌러앉는다. DP는 프론티어가 **덮는 벡터만** 후보로 내므로 이 평탄면을 지나가지 않는다.
+
+즉 70은 구현 결함이 아니라 **"greedy 최소 덮개 + 1대 이웃 + DP와 같은 값 함수"의 조합이 갖는 성질**이다.
+§8 결정 표의 "배정 값이 같은데 점수만 다르면 버그 후보" 행에는 해당하지 않는다 — 값이 다르다([2,·] vs [0,·]).
+
+### 8.3 §8 결정 표의 어느 행인가
+
+**①에서 H25(70) ≤ H3(15)** — 사전식 1번 축에서 진다. 결정 표의 마지막에서 세 번째 행,
+**"H25 ≤ H3 → H25 폐기"**에 해당한다. 다만 아래 세 가지를 함께 놓고 **사용자가 정한다**
+(이 문서와 코드는 결정 전까지 그대로 둔다):
+
+1. **②에서는 순위가 뒤집힌다** — 구역이 없으면 H25가 미배정 0으로 H3(122)를 크게 이기고 H23과 동률
+   (차량 수만 31 vs 30으로 진다). 계약 §8은 "②는 채택 여부를 바꾸지 않는다"이지만, 이 사실은
+   [notes §4.2 축 ①](../notes/initial-solution-heuristics-h1-h24.md)에 적었다.
+2. **③에서 H23이 죽는다** — 차종 31종에서 존 배정 DP가 `-Xmx8g`로도 `OutOfMemoryError`로 끝난다.
+   프론티어 나열(`frontier`)이 존마다 Π_{t∈compat(z)}(maxNeed+1)에 비례하고 `MAX_TOTAL_STATES`는
+   **층 상태 수**만 자르지 그 목록을 자르지 않기 때문이다. H25는 같은 입력을 47 ms에 완주한다.
+   heuristics §7 **X20의 "메모리는 입력과 무관"은 이 실측과 어긋난다** — scaling 설계의 후속 사안이고
+   이 세션은 고치지 않았다. 그러나 ③에서도 H25(51)는 H3(16)보다 나쁘므로,
+   계약 §8의 "③에서 H25 ≤ H3이면 기권 시 대체 역할은 H3에 남는다"가 그대로 적용된다.
+3. **④는 규칙이 닿지 않는다** — FIRST가 ①에서 **더 좋고**(48 vs 70) ②에서 같다. Q2가 정한 두 갈래
+   ("품질이 같으면 FIRST" / "BEST가 한 입력에서라도 좋으면 BEST")는 어느 쪽도 발동하지 않는다.
+   그래서 **사용자가 확정한 best-improvement를 그대로 두었고**, BEST/FIRST 선택 코드(`ScanRule`)는
+   비교가 끝났으므로 남기지 않았다. FIRST로 바꿀지는 위 1~3과 함께 사용자가 정한다.
+
+**개선 방향(참고, 구현 안 함).** 70의 원인이 값 함수의 평탄면이므로, ① 부족을 `max(1, ·)` 대신
+"덮지 못한 축의 실제 결손"(정차 부족분·Hall 결손)까지 세거나, ② 이웃을 2대 이동으로 넓히면 달라질 수 있다.
+둘 다 **DP와 같은 값 함수를 쓴다는 이 설계의 전제(§4.4)를 깨므로** 여기서 하지 않는다.
 
 ---
 
