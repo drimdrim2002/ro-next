@@ -6,11 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 배차 최적화(RPDPTW) 서비스. **Stage 0 완료 (2026-08-10) · Stage 1 완료 (2026-08-16) ·
 Stage 2 완료 (2026-08-17) · Stage 3 완료 (2026-09-02) · Stage 4-초기해 완료 (2026-09-02) ·
-Stage 4-ALNS 완료 (2026-09-02, **2026-09-04 개정 반영**)** —
+Stage 4-ALNS 완료 (2026-09-02, **2026-09-04 개정 반영**) · Stage 5 완료 (2026-09-04)** —
 구 placeholder(`com.ronext.optimizer`, 수제 `HttpServer`, 합성 데모 `AlnsBatchEngine`)와 GCP 잔재는
 삭제됐고, 디스크의 코드는 확정 설계와 같은 3모듈 구조다. 정식 평가(전파·metric·profile)와
 초기해 construction 24개 포트폴리오(기본 8 + 확장 14 + 실물 맞춤 2)와 ALNS 본체(연산자 5개·적응 가중치·
-acceptance·종료 4조건)까지 서 있고, **재검증은 아직 0**이다.
+acceptance·종료 4조건)와 독립 재검증·결과 모델까지 서 있다.
 
 - **확정 설계**: AWS ECS Fargate 위 단일 Spring Boot 서비스, 저장은 S3만.
 - **현 코드**: 4개 pom + `RoNextApplication` + `application.yml` +
@@ -20,11 +20,13 @@ acceptance·종료 4조건)까지 서 있고, **재검증은 아직 0**이다.
   `ConstructionHeuristic` SPI·`InitialSolutionBuilder`·`InitialSolutionResult`·`ConstructionOutcome`·
   construction 24개 `*Construction`·`GiantTourSplit`·`ZoneQuotaAllocation` + ALNS: `AlnsSolver`·
   `AlnsConfig`·`AlnsResult`·`AlnsRunStats`(`Termination` 중첩)·`DestroyOperator`·`RepairOperator`·
-  `RandomRemoval`·`RouteRemoval`·`StringRemoval`·`GreedyInsertion`·`RegretInsertion`·`AdaptiveWeights`) +
-  `solver-profile`의 `ProfileRegistry` + 테스트(solver-core 38클래스 102개, solver-profile 1클래스 1개,
+  `RandomRemoval`·`RouteRemoval`·`StringRemoval`·`GreedyInsertion`·`RegretInsertion`·`AdaptiveWeights`) ·
+  `verify`(`SolutionVerifier`·`VerificationResult`·`VerifyViolation`·`RouteReplay` + 결과 모델
+  `SolveResult`·`UnassignedReason`·`RunStamp`·`ResultAssembler`) +
+  `solver-profile`의 `ProfileRegistry` + 테스트(solver-core 42클래스 117개, solver-profile 1클래스 1개,
   app 3클래스 4개).
-  `solve`에 하위 패키지는 없다.
-  `verify`·`api`·`run`·`input`·`storage`는 **아직 빈 패키지**다 — 그 타입들을 grep해서 안 나오는 게
+  `solve`·`verify`에 하위 패키지는 없다.
+  `api`·`run`·`input`·`storage`는 **아직 빈 패키지**다 — 그 타입들을 grep해서 안 나오는 게
   정상이고, 아직 안 만든 것이지 다른 데 있는 게 아니다.
 - Stage 1–3 코드는 각 stage 문서의 §1 파일 표·§2 시그니처·§3~§4 절차와 1:1이고,
   4-초기해 코드는 [stage-04-heuristics](docs/implementation/stage-04-initial-solution-heuristics.md)의
@@ -44,8 +46,12 @@ acceptance·종료 4조건)까지 서 있고, **재검증은 아직 0**이다.
   기존 경로는 후보에서 제외"(`InsertionSearch.collect`는 예외 대신 후보 0개를 낸다 — 비삼각 이동표에서는
   방문을 빼는 것만으로 뒤 방문이 창을 넘긴다, N9), q를 비율에서 **절대 개수 5~20**으로,
   §4.5 acceptance의 **축 가드**(앞 두 축이 동률일 때만 확률 수락), `StringRemoval` 신설(destroy 3종).
-  **다음 작업은 Stage 5** — [stage-05](docs/implementation/stage-05-verification-and-result.md) —
-  재검증(`verify`, ALNS 결과의 `best`·`bestEvaluation`·`bestScore`를 캐시 없이 대조)과 결과 모델.
+  Stage 5 코드는 [stage-05](docs/implementation/stage-05-verification-and-result.md)의 §1 파일 표·
+  §2 시그니처·§3 절차·§4 결과 모델과 1:1이다. `RouteReplay`는 `RoutePropagator`를 부르지 않는
+  **두 번째 구현**이고(Domain §10.1), 진입점 `SolutionVerifier.verify`에 탐색 예산 인자가 없다는 것이
+  "예산 무관 검증"의 장치다. 2026-09-04 개정 1건 반영 — `ZONE_MIX` 편입(그 문서 frontmatter
+  `revisions` 2026-09-04 항목. Stage 3이 2026-09-02에 추가했는데 Stage 5 문면이 그 전이었다).
+  **다음 작업은 Stage 6** — [stage-06](docs/implementation/stage-06-app-assembly.md) — 앱 조립.
   손대기 전에 **해당 단계의 문서를** 읽는다.
 - T25(`InitialSolutionScaleTest`)·T11(`AlnsScaleTest`)은 규모 측정이라 수십 초 걸린다 — 단일 테스트를 돌릴 때는
   `-Dtest='!InitialSolutionScaleTest,!AlnsScaleTest' -Dsurefire.failIfNoSpecifiedTests=false`로 뺄 수 있다.

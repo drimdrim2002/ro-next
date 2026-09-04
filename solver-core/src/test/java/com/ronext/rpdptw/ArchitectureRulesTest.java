@@ -38,5 +38,21 @@ class ArchitectureRulesTest {
                     .resideInAPackage("com.ronext.rpdptw.solve..")
                     // 설정: 아직 패키지가 비어 있어도 테스트가 실패하지 않고 통과하도록 허용
                     .allowEmptyShould(true);
+
+    /**
+     * [규칙 2] 'solve'(탐색/ALNS 엔진) 패키지는 'verify'(독립 재검증) 패키지를 절대로 참조할 수 없습니다.
+     *
+     * - 이유: 탐색이 재검증 코드를 끌어 쓰면 두 코드가 한 몸이 되어 이중 기입(같은 규칙을 두 번
+     *        따로 구현해 서로를 검산하는 장치)이 무너지기 때문입니다.
+     */
+    @ArchTest
+    static final ArchRule SOLVE_MUST_NOT_DEPEND_ON_VERIFY =
+            noClasses()
+                    .that()
+                    .resideInAPackage("com.ronext.rpdptw.solve..")
+                    .should()
+                    .dependOnClassesThat()
+                    .resideInAPackage("com.ronext.rpdptw.verify..")
+                    .allowEmptyShould(true);
 }
 

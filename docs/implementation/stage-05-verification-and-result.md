@@ -45,6 +45,15 @@ revisions:
     `DEPOT_WINDOW` 설명을 Domain §7.1에 맞춤 (있는 출·도착만)
   - 2026-08-16 무게·부피 식별자에서 단위·스케일 접미 제거 — `Visit.loadWeight`/`loadVolume`,
     용량 식의 `totalWeight`/`maxWeight` 등. 내부 단위는 Domain §3.1. 규칙 변경 없음
+  - 2026-09-04 **`ZONE_MIX` 편입** — Domain §3.4 경로 구역 단일성이 2026-09-02에 복원되며
+    stage-03이 `Violation.ZONE_MIX`를 추가했는데(그 문서 revisions·E44·T17) 이 문서는
+    2026-08-16이 최종이라 반영되지 않았다. 빠뜨리면 구체 구역이 섞인 경로가 재검증을
+    통과한다 — Domain §10.2 검사 항목의 "§3.4 호환성"·참조형 문장("hard 축이 늘면
+    재검증은 자동으로 따라간다")의 이행이다. §2.2 Kind에 `ZONE_MIX` 추가 ·
+    §2.3 replay 절차 요약에 구역 단일성 · E25 · T13 추가. 다른 절차·판정 무변경.
+    구현 세션 메모 — T5는 `passesValidSolutionAndAgreesWithSolve`(1일) ·
+    `passesMultiDaySolutionAndAgreesWithSolve`(다일 E19) · `passesWaitInDepotAndWindowBoundaries`(E8·E9)
+    세 메서드로 나눠 구현했다 (단언 내용은 §8 T5 행 그대로)
 ---
 
 # Stage 5 — 재검증과 결과
@@ -187,6 +196,7 @@ public record VerifyViolation(Kind kind,
         DEPOT_WINDOW,                     // 차고 창 밖 있는 출·도착 (Domain §7.1, D4 신설)
         CAPACITY_WEIGHT, CAPACITY_VOLUME, END_LOAD_NOT_ZERO,
         MAX_STOP_COUNT, MAX_DRIVE_TIME, MAX_DRIVE_DIST,
+        ZONE_MIX,                         // 경로 구역 단일성 (Domain §3.4·§7.1-6, 2026-09-04 편입)
         INCOMPATIBLE_VEHICLE, PROFILE_HARD,
         // 점수 대조 (Domain §10.2·§6.4)
         SCORE_MISMATCH
@@ -204,7 +214,7 @@ final class RouteReplay {                               // package-private — v
     }
     /** Domain §7.1 절차를 처음부터: initialLoad → 출발(start 있으면 근무창 ∩ startDepot 창,
         waitInDepot; 없으면 앞 arc 없음·첫 방문 arrival = spanStart) →
-        방문 루프(arrival→대기→시간창→reqDate→load 곡선, 창을 넘으면 다음 창으로 미룸) →
+        방문 루프(arrival→대기→시간창→reqDate→load 곡선→구역 단일성, 창을 넘으면 다음 창으로 미룸) →
         endDepot 도착의 차고 창 + PICKUP_ONLY만 −수요 → 휴식 계산 → 한도 → 종료 load == 0.
         이동은 problem.travel()만 (§4 MUST). solve.RoutePropagator 코드를 재사용하지 않는다.
         창을 걷는 코드(fitArc/fitService 상당)도 **여기서 따로 구현한다** (Stage 3 노트 N8). */
@@ -253,7 +263,8 @@ final class RouteReplay {                               // package-private — v
 4. 관문    1–3 위반이 하나라도 있으면 여기서 Fail — 구조가 깨진 경로의 물리 재계산은
           무의미하다 (Domain §6.5의 순서: 구조 검사 → 정식 평가와 동형).
 5. 재전파  경로마다 RouteReplay.replay (§2.3) — 적재 곡선(0 ≤ load ≤ capacity, 종료 0),
-          시간창·reqDate·근무창·차고 창, maxStop·maxDrive 한도까지 전부 다시 계산.
+          시간창·reqDate·근무창·차고 창, 구역 단일성(ZONE_MIX), maxStop·maxDrive 한도까지
+          전부 다시 계산.
           위반 경로는 기록하고 나머지 경로도 계속 검사한다 (원인을 최대한 모아 보고).
           "이동표 사용"(§10.2)은 검사 항목이 아니라 구조다 — replay가 problem.travel()
           밖의 어떤 이동값도 얻을 수 없다 (표는 모든 쌍 완비, Stage 2 §4 절차 5).
@@ -476,6 +487,7 @@ solve와 verify는 서로를 모른다.
 | E20 | 창 밖에 배치된 이동·서비스가 섞인 오염 해 | 절차 5-a의 포함 검사에서 WORK_WINDOW → FAIL | Domain §10.2 |
 | E21 | endDepot 도착이 차고 창 밖인 해 | DEPOT_WINDOW → FAIL (미루지 않는다 — Stage 3 E36과 같은 해석) | Domain §7.1 |
 | E22 | 현행 fixture 모양(창 1개·차고 전일창·endDepot 없음) | `interWorkWindowRestTimeSec == 0`, `departureSec == serviceEndSec`, DEPOT_WINDOW 미발화 — D4 전과 같은 값 | Stage 3 E40 |
+| E25 | 한 경로의 구체 zoneId가 둘 이상 (A → ALL → B) | ZONE_MIX → FAIL (at = 두 번째 구체 구역의 첫 방문). A → ALL → A·ALL → ALL은 통과. 차고 zoneId는 세지 않는다 — 2026-09-04 편입 | Domain §3.4·§7.1-6 |
 
 ---
 
@@ -500,8 +512,9 @@ Problem은 Stage 1~3 경로로 손 조립한다 (fixture JSON 파싱은 Stage 6 
 | T10 | `ResultAssemblerTest.derivesUnassignedReasons` | 4사유 각 1건: 호환 0대 → NO_COMPATIBLE_VEHICLE / 전 호환 차량 용량 미달 → CAPACITY / 창 도달 불가 → TIME_WINDOW_INFEASIBLE (E12 포함) / 단독 가능 → NOT_PLACED | (Plan 범위 문장 "unassigned+reason") |
 | T11 | `ResultAssemblerTest.deterministicOrderingAndStatus` | routes·unassigned 정렬, 같은 입력 → 동등 `SolveResult`, status 항상 DONE | (Plan 범위 문장 "결과 모델" — §11.1 결정성) |
 | T12 | `SolutionVerifierTest.failsOnWorkAndDepotWindow` | **D4 확정분.** 유효한 다일 해에서 ① 한 이동이 근무창 틈에 걸치도록 오염 → WORK_WINDOW (E20, 절차 5-a) ② endDepot 도착이 차고 창 밖이 되도록 오염 → DEPOT_WINDOW (E21) ③ 오염 없는 대조군은 `Pass` | (Plan 범위 문장 "독립 재검증(전체 해)" — Domain §10.2 검사 항목) |
+| T13 | `SolutionVerifierTest.failsOnZoneMix` | E25: A → ALL → B 오염 → `Fail`, Kind = ZONE_MIX (at = B 방문) · A → ALL → A 대조군은 `Pass` | (Plan 범위 문장 "독립 재검증(전체 해)" — Domain §10.2의 "§3.4 호환성") |
 
-T5~T12는 Plan DoD 요약 문장 밖이지만 Plan Stage 5 범위 문장("독립 재검증(전체 해, 캐시 없이),
+T5~T13은 Plan DoD 요약 문장 밖이지만 Plan Stage 5 범위 문장("독립 재검증(전체 해, 캐시 없이),
 결과 모델, 검증된 해 ↔ 결과 일치 테스트")의 직접 검증이다 — Plan §1의 편입(2026-08-11)에 따라
 이 표 전부가 완료 기준이다.
 
