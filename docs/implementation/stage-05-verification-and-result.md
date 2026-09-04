@@ -53,7 +53,14 @@ revisions:
     §2.3 replay 절차 요약에 구역 단일성 · E25 · T13 추가. 다른 절차·판정 무변경.
     구현 세션 메모 — T5는 `passesValidSolutionAndAgreesWithSolve`(1일) ·
     `passesMultiDaySolutionAndAgreesWithSolve`(다일 E19) · `passesWaitInDepotAndWindowBoundaries`(E8·E9)
-    세 메서드로 나눠 구현했다 (단언 내용은 §8 T5 행 그대로)
+    세 메서드로 나눠 구현했다 (단언 내용은 §8 T5 행 그대로).
+    **문서 공백에서 코드가 고른 것 1건** — §2.3의 위반 귀속 규약은 "두 창 축이 같은 시각에 함께
+    소진"만 정하고, **각 축은 단독으로 가능한데 두 축이 서로 엇갈려 겹치지 않는 경우**(예: 근무창
+    매일 08–18시, 고객 창 19–20시)는 정하지 않는다. `RouteReplay`는 이때도 절차 문장에 먼저 적힌
+    축으로 기록한다(절차 0 → `WORK_WINDOW`, 절차 2 → `TIME_WINDOW`). `RoutePropagator`의 두 포인터는
+    두 목록 중 먼저 끝나는 쪽을 내므로 **절차 0·절차 2 양쪽에서** 라벨이 갈릴 수 있다 — 가능/불가
+    판정과 시각은 두 구현이 같고 FAILED 원인 라벨만 다르다 (창 배치를 50만 건 무작위 대조해 시각·
+    가능 판정 divergence 0 확인, 2026-09-04)
 ---
 
 # Stage 5 — 재검증과 결과

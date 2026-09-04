@@ -23,7 +23,7 @@ acceptance·종료 4조건)와 독립 재검증·결과 모델까지 서 있다.
   `RandomRemoval`·`RouteRemoval`·`StringRemoval`·`GreedyInsertion`·`RegretInsertion`·`AdaptiveWeights`) ·
   `verify`(`SolutionVerifier`·`VerificationResult`·`VerifyViolation`·`RouteReplay` + 결과 모델
   `SolveResult`·`UnassignedReason`·`RunStamp`·`ResultAssembler`) +
-  `solver-profile`의 `ProfileRegistry` + 테스트(solver-core 42클래스 117개, solver-profile 1클래스 1개,
+  `solver-profile`의 `ProfileRegistry` + 테스트(solver-core 41클래스 117개, solver-profile 1클래스 1개,
   app 3클래스 4개).
   `solve`·`verify`에 하위 패키지는 없다.
   `api`·`run`·`input`·`storage`는 **아직 빈 패키지**다 — 그 타입들을 grep해서 안 나오는 게
