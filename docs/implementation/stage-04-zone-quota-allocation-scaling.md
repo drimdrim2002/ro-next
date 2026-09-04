@@ -2,7 +2,7 @@
 title: Stage 4 — 존 배정 DP(`ZoneQuotaAllocation`)의 기권 제거와 메모리 상한 (설계안)
 stage: 4
 date: 2026-09-04
-status: 계약 반영됨 — 구현 중
+status: 구현 완료 (15372a1) — 계약 반영·테스트 green
 plan: ../implementation-plan.md
 sources:
   - stage-04-initial-solution-heuristics.md (§3.4 시그니처 · §4.3 종료 보장 · §4.4 기권 · §5 H23·H24 공통 의사코드 · §7 X20~X23 · §8 T38~T44)
