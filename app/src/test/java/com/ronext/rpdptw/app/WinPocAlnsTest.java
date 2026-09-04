@@ -24,7 +24,7 @@ import com.ronext.rpdptw.solve.ZoneQuotaBalancedFillConstruction;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * T15 — 실물 fixture 회귀 (stage-04-alns §7, 2026-09-04). H23의 해를 §3.2 오버로드에 넣어 돌린다
+ * T12b — 실물 fixture 회귀 (stage-04-alns §7, 2026-09-04). H23의 해를 §3.2 오버로드에 넣어 돌린다
  * (포트폴리오 24개는 다시 돌리지 않는다 — 그 선택은 T44가 고정했다). 단언은 예외 없는 정상 종료(§4.3 개정의
  * 실증 — 개정 전에는 첫 반복에서 죽었다) · 미배정 0 · 차량 31 · 거리 < 초기해다.
  * 품질 판정선(Win 대비 몇 %)은 두지 않는다 — 그건 Stage 8이고 시간 한도에 따라 값이 달라진다.
@@ -48,9 +48,9 @@ class WinPocAlnsTest {
                 .solve(problem, profile, initial);
         AlnsRunStats stats = result.stats();
 
-        System.out.printf("[T15] initial=%s best=%s%n",
+        System.out.printf("[T12b] initial=%s best=%s%n",
                 Arrays.toString(initialScore), Arrays.toString(result.bestScore()));
-        System.out.printf("[T15] iterations=%d accepted=%d infeasibleDiscarded=%d bestImproved=%d elapsedMillis=%d termination=%s%n",
+        System.out.printf("[T12b] iterations=%d accepted=%d infeasibleDiscarded=%d bestImproved=%d elapsedMillis=%d termination=%s%n",
                 stats.iterations(), stats.accepted(), stats.infeasibleDiscarded(), stats.bestImproved(),
                 stats.elapsedMillis(), stats.termination());
 

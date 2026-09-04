@@ -5,6 +5,10 @@ date: 2026-08-10
 supersedes: docs/deprecated/implementation-15phase/ (ARCHIVED)
 master: docs/master-design.md
 revisions:
+  - 2026-09-04 4-ALNS DoD 판정 문장 정정 — stage-04-alns 문서 §7이 2026-09-04 개정으로
+    T7b·T7c·T10b·**T12b**를 더했는데 이 문서는 "T1–T12"로 남아 있었다. T12b(app 모듈 실물 fixture
+    회귀)는 그 범위 밖이라 두 문서가 어긋났고, stage 문서 §7 말미의 "이 표가 완료 기준 전부"에 맞춘다.
+    DoD의 실질 무변경 — 빠져 있던 테스트를 판정 문장에 넣은 것뿐이다
   - 2026-09-02 Stage 4 초기해 실물 맞춤 2개(H23·H24) 편입 — 22 → **24개**, 축소 목표 24 → 4
     (heuristics 문서 §5 H23·H24, survey §2.5)
   - 2026-09-02 Stage 4 초기해 포트폴리오 확장 — 문헌·실전 솔버 조사
@@ -360,7 +364,8 @@ Stage 3의 평가 없이는 “더 나은 해”를 정의할 수 없다.
 - **규모**: Stage 2와 같은 합성 문제로 ALNS 1회 — 시간 한도 안에 몇 번 반복했는지 기록한다.
   여기서도 실물 JSON을 읽지 않는다. 실물 fixture 전 구간 실행은 Stage 6.
   (품질을 Win과 맞추는 목표는 Stage 8.)  
-- 판정: `mvn verify` green + Stage 4 문서 §7의 T1–T12.
+- 판정: `mvn verify` green + Stage 4 문서 §7 표 전부
+  (T1–T12 + T7b·T7c·T10b·T12b — T12b는 `app` 모듈의 실물 fixture 회귀, 2026-09-04 추가).
 
 **용어 메모**
 

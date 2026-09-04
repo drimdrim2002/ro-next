@@ -49,7 +49,7 @@ acceptance·종료 4조건)까지 서 있고, **재검증은 아직 0**이다.
   손대기 전에 **해당 단계의 문서를** 읽는다.
 - T25(`InitialSolutionScaleTest`)·T11(`AlnsScaleTest`)은 규모 측정이라 수십 초 걸린다 — 단일 테스트를 돌릴 때는
   `-Dtest='!InitialSolutionScaleTest,!AlnsScaleTest' -Dsurefire.failIfNoSpecifiedTests=false`로 뺄 수 있다.
-  app 모듈의 T15(`WinPocAlnsTest`)도 실물 fixture에 ALNS 20초라 그만큼 걸린다.
+  app 모듈의 T12b(`WinPocAlnsTest`)도 실물 fixture에 ALNS 20초라 그만큼 걸린다.
 - 문서·커밋 메시지는 한국어다. 용어(`Request`/pair/`Problem`/`Solution`/bank/profile/재검증/
   solveKey)는 문서 표기를 그대로 쓴다 — 같은 개념에 새 이름을 붙이지 않는다.
 

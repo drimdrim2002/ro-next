@@ -45,6 +45,21 @@ revisions:
     영역에 갇힌다. (4) **`StringRemoval` 신설** (destroy 3종). 600초·seed 3개 실측:
     현행 3,499,570 m(마지막 개선 30.4초) → 개정안 3,393,528 m(반복 6배, 마지막 개선 499.8초).
     기존 엔진(Win) 3,545,031 m 대비 −4.3%. 기각·보류 내역은 §4.4 말미
+  - 2026-09-04 **구현 세션 실측 정정** (위 개정을 코드에 반영한 직후) — §7 T12b 행이 자신을
+    "§4.3 개정의 실증(개정 전에는 첫 반복에서 죽었다)"이라고 적은 것을 고쳤다. 개정 4건을 전부 반영한
+    기본값에서는 이 fixture에서 §4.3의 후보 제외가 **20초 실행당 0~1회**로 드물고 실행마다 갈린다 —
+    축 가드와 작은 q가 `current`를 H23 해에서 즉시 떼어 놓아 그 취약한 인접(단독 제거 452건 중 1건,
+    `WIN_6449`)이 사라지기 때문이다. 개정 전 조합(destroy 2·q 45~60)으로는 8회/832반복이 그대로
+    재현되므로 **위 2026-09-04 항목의 기록은 옳다** — 개정이 스스로 그 상황을 없앤 것이다.
+    §4.3 개정의 결정적 검증은 **T7b**가 맡는다. 같은 근거로 E10의 "8/999회"에 개정 전 조합임을
+    명시했고, T12b 행의 "초기해가 대부분을 차지" 문구도 정정했다 (H23 construction 실측 ~1.6초라
+    예산의 거의 전부가 ALNS다). 설계·계약 무변경 — 테스트 단언은 그대로다
+  - 2026-09-04 **T15 → T12b 개칭** — 2026-09-04 개정이 새 app 모듈 테스트에 붙인 `T15`가
+    [heuristics 문서 §8](stage-04-initial-solution-heuristics.md)의 T15
+    (`InitialSolutionBuilderTest.abstainedHeuristicsAreSkipped`)와 충돌했다. 두 문서 모두
+    "번호는 §7의 T1–T12에 이어서 붙인다 / T13–T44는 heuristics 소유"를 선언했으므로 T13 이상은
+    이 문서가 쓸 수 없다. 이 문서의 확장 관례(T7b·T7c·T10b)를 따라 **T12b**로 바꾸고 §7 표에서
+    T12 뒤로 옮겼다. 클래스명(`WinPocAlnsTest`)·단언·범위는 무변경 — 번호만 바뀐다
   - 2026-08-10 최초 작성
   - 2026-08-10 탐색 예산을 `AlnsConfig`가 소유 (Domain §2.5.1) — idle 종료 조건 추가,
     profile 인자화, 비교를 `Scores.compare`로
@@ -559,7 +574,7 @@ best 갱신은 항상 strict: Scores.compare(draftScore, bestScore) < 0 일 때�
 | N6 | **Stage 5 인계**: 재검증 진입값은 `AlnsResult.best`(분해는 Stage 3 N6 — routes/bank가 곧 domain 타입 분해값)와 `bestEvaluation`(점수 대조 대상, §10.2)이다. verify가 `solve` 타입을 직접 받을 수 없으므로(ArchUnit) 변환 어댑팅은 Stage 5가 정의한다 |
 | N7 | **경로 단위 전파는 근사가 아니다**: `RoutePropagator`는 그 경로의 정확한 물리·hard 판정이다(§7). 다만 호환성·profile hard·해 전체 집계는 `Evaluator`만 하므로, 수락 직전의 전체 정식 평가는 생략할 수 없다 (§4.2-e가 항상 돈다) |
 | N9 | **제거는 feasibility를 보존하지 않는다** (2026-09-04 실측): 이동표는 입력에 있는 구간의 D·U를 그대로 쓰므로(`TravelMatrix.prepare` — 무보정) 삼각부등식·대칭이 성립하지 않는다. 실물 fixture 표본 150곳 331만 삼중쌍에서 거리 위반 111,381건(중앙값 864 m·최대 25,934 m)·시간 위반 65,506건(중앙값 163 s·최대 999 s)이다. 그래서 방문 하나를 빼면 앞뒤 직행이 경유보다 오래 걸려 뒤 방문이 시간창·reqDate·근무창을 넘길 수 있다 — **"기존 경로는 항상 Feasible"은 불변식이 아니다.** 처리는 §4.3의 후보 제외 + 기존 E10 폐기로 끝난다(destroy 연산자에 복구 로직을 넣지 않는다). 재검증(Stage 5)·벤치 해석(Stage 8)도 이 성질을 전제해야 한다 |
-| N10 | **T11(합성 문제)은 해의 품질을 잴 수 없다** (2026-09-04): 그 문제의 이동표는 전 arc가 같은 값(1,000 m·80 s)이라 방문 순서를 어떻게 바꿔도 거리·시간 축이 변하지 않는다. "반복은 도는데 전부 동점"은 버그가 아니라 입력의 성질이다. 품질·개선폭 판정은 실물 fixture(T15)와 Stage 8에서만 한다 |
+| N10 | **T11(합성 문제)은 해의 품질을 잴 수 없다** (2026-09-04): 그 문제의 이동표는 전 arc가 같은 값(1,000 m·80 s)이라 방문 순서를 어떻게 바꿔도 거리·시간 축이 변하지 않는다. "반복은 도는데 전부 동점"은 버그가 아니라 입력의 성질이다. 품질·개선폭 판정은 실물 fixture(T12b)와 Stage 8에서만 한다 |
 | N8 | **초기해 Infeasible은 버그다** (2026-09-02 개정): 종전 N8은 "`build(problem)`이 profile을 받지 않으므로 profile hard를 지킬 방법이 없다"를 근거로 Infeasible 초기해를 정상 경로로 두고 빈 해 강등을 규정했다. 그 전제가 사라졌다 — `build(problem, profile)`이 profile을 받고 §4.3-②가 후보 단계에서 hard를 보므로, construction 결과의 Infeasible은 논리적으로 불가능하다. "Stage 8에서 필요가 확인되면"으로 미뤄 뒀던 개선을, 포트폴리오 선택이 정식 평가로 이뤄지는 이상 Infeasible 후보를 만들어 버리는 것이 낭비라 당겨 적용했다. 빈 해 강등(E16)은 폐기, E16b는 존치 |
 
 ---
@@ -578,7 +593,7 @@ best 갱신은 항상 strict: Scores.compare(draftScore, bestScore) < 0 일 때�
 | E7b | PICKUP_ONLY 삽입 위치 | pickup NodeId를 각 위치 0..n. delivery 위치 쌍을 만들지 않는다 | §1.3·§1.4 |
 | E8 | 동점 (cmp == 0) | current 교체 수락, best는 불변 (strict <) | §8.3·Stage 3 E27 인계 |
 | E9 | 시간 한도가 초기해 생성 중 지남 | 반복 0회, initial = best 반환 — FAILED 아님 | §12 "탐색 중단 = 정상" |
-| E10 | draft'가 Evaluator Infeasible | 폐기 + 카운트. 연산자는 경로 전파로 사전 검증하므로 default profile에서 빈발하면 연산자 버그 신호 — profile hard가 있는 고객은 버그 없이도 잦을 수 있다 (N8. 로그로 관찰). **이동표가 삼각부등식을 지키지 않으면 destroy만으로도 발생한다** — default profile에서도 정상이고 버그 신호가 아니다 (N9·§4.3, 2026-09-04 실측 8/999회) | §8.1 (hard 감점 통과 금지) |
+| E10 | draft'가 Evaluator Infeasible | 폐기 + 카운트. 연산자는 경로 전파로 사전 검증하므로 default profile에서 빈발하면 연산자 버그 신호 — profile hard가 있는 고객은 버그 없이도 잦을 수 있다 (N8. 로그로 관찰). **이동표가 삼각부등식을 지키지 않으면 destroy만으로도 발생한다** — default profile에서도 정상이고 버그 신호가 아니다 (N9·§4.3. 2026-09-04 실측 8/999회는 **개정 전 조합**(destroy 2·q 45~60)의 값이다 — 개정 후 기본값에서는 20초 실행당 0~1회로 드물다, T12b) | §8.1 (hard 감점 통과 금지) |
 | E11 | 한 trial이 deadline을 넘겨 끝남 | 다음 반복 조건에서 종료 — 약간의 초과는 허용 (연산자는 deadline을 모른다) | §12·재량 |
 | E11b | idle 한도와 시간 한도가 동시에 걸림 | 검사 순서대로 첫 번째 것을 `termination`에 기록 (TIME_LIMIT 우선). 어느 쪽이든 정상 종료 | §3.3 |
 | E12 | 연산자가 비호환 차량에 삽입 | 정상 경로에선 불가능(§4.3 사전 필터). 뚫리면 Evaluator INCOMPATIBLE_VEHICLE → 폐기 | §3.4·Stage 3 §4.2 |
@@ -598,8 +613,8 @@ jqwik류 property 라이브러리를 추가하지 않는다 (Stage 0 §4.2가 te
 고정). property 테스트는 seed 루프로 손수 만든다. Problem은 Stage 1·2 경로로 손 조립한다
 (fixture JSON 파싱은 Stage 6 — Stage 1 §7과 동일 원칙).
 
-**예외는 T15 하나다** (2026-09-04 추가) — 실물 fixture를 읽어야 하므로 `app` 모듈에 두고
-T44(`WinPocFixtureTest`)의 **테스트 전용 매핑을 재사용**한다. 그 매핑은 T44·T15 전용이고
+**예외는 T12b 하나다** (2026-09-04 추가) — 실물 fixture를 읽어야 하므로 `app` 모듈에 두고
+T44(`WinPocFixtureTest`)의 **테스트 전용 매핑을 재사용**한다. 그 매핑은 T44·T12b 전용이고
 정식 adapter는 Stage 6이 만든다 (heuristics 문서 §8 T44와 같은 규칙).
 
 | # | 테스트 | 내용 | 대응 DoD 문장 |
@@ -618,19 +633,19 @@ T44(`WinPocFixtureTest`)의 **테스트 전용 매핑을 재사용**한다. 그 
 | T10 | `AlnsSolverTest.stopsOnIdleLimits` | 넉넉한 시간 한도 + 작은 `idleSteps`(및 별도 케이스로 `idleSec`) → 한도 훨씬 전에 종료하고 `termination`이 IDLE_STEPS / IDLE_TIME. worse 수락이 일어나도 idle 카운터가 리셋되지 않음을 단언 (§4.2-f) | (본 개정에서 추가된 종료 조건의 직접 검증) |
 | T10b | `AlnsSolverTest.worseAcceptanceRequiresEqualLeadingAxes` | **2026-09-04 추가.** `worseAcceptStartProbability = 1.0`으로 두고, 손 조립으로 (a) 미배정이 1건 늘어난 draft와 (b) 미배정·차량 수는 같고 거리만 나쁜 draft를 각각 만들어 → (a)는 **절대 수락되지 않고** (b)는 수락되는 것을 단언 (§4.5 축 가드) | (§4.5 개정의 직접 검증) |
 | T11 | `AlnsScaleTest.runsOnFullScaleSyntheticProblem` | **규모 측정.** Stage 2 T12와 **같은 합성 문제**(장소 453·주문 452·차량 31·이동표 453² 전 쌍)로 `AlnsSolver.solve` 1회 → 시간 한도 안에 정상 종료. **시간 한도 안에서 몇 번 반복했는지(`AlnsRunStats`의 반복·수락 수, `elapsedMillis`)를 출력해 기록한다.** 해의 품질·개선폭은 판정하지 않는다 (그건 Stage 8). 실물 JSON은 읽지 않는다 — 입력은 프로그램으로 조립한다. **품질을 판정할 수 없는 이유**: 이 합성 문제의 이동표는 전 arc가 같은 값이라 거리·시간 축이 재배치로 변하지 않는다 (노트 N10, 2026-09-04) | Plan Stage 4 "**규모**" 문장 |
-| T15 | `app` 모듈 `WinPocAlnsTest`(T44의 테스트 전용 매핑 재사용) | **2026-09-04 추가 — 실물 fixture 회귀.** `data/win_poc_case_floor.json`을 Problem까지 올리고, H23(`ZoneQuotaBalancedFillConstruction`)의 해를 §3.2 오버로드에 넣어 돌린다 (포트폴리오 24개를 다시 돌리지 않는다 — 그 선택은 T44가 이미 고정했고 CI 시간을 줄인다). 단언은 **예외 없이 정상 종료**(§4.3 개정의 실증 — 개정 전에는 첫 반복에서 죽었다) · `bestScore[0] == 0` · `[1] == 31` · 거리 < 초기해. 반복 수·`infeasibleDiscarded`·거리를 출력해 Stage 8 표의 입력으로 남긴다. **품질 판정선(Win 대비 몇 %)은 두지 않는다** — 그건 Stage 8이고, 시간 한도에 따라 값이 달라진다. 시간 한도는 CI에서 짧게 (초기해가 대부분을 차지하므로 수십 초) | (§4.3·§4.4·§4.5 개정의 통합 검증) |
 | T12 | `AlnsSolverTest.profileHardIsHonoredFromConstruction` | **2026-09-02 개정** (종전 `infeasibleInitialFallsBackToEmptySolution`은 E16 폐기와 함께 폐기). 테스트 전용 hard 제약 profile("경로당 방문 1개 초과 금지")로 solve → 초기해가 **Feasible**이고 넣지 못한 Request는 bank에 남는다 · 루프 전체가 예외 없이 진행 · 결과 유효. 별도 케이스: §3.2 오버로드에 **Evaluator Infeasible인 손 조립 초기해**를 넣으면 `IllegalStateException` (§4.2-2). 경로 단위 `HardConstraint`는 경로가 없는 빈 해를 거부할 수 없어 E16b는 SPI로 재현 불가 — 빌더의 E16b 검사는 방어용으로만 남는다 (2026-09-02) | (§4.3-② 후보 검증의 직접 검증) |
+| T12b | `app` 모듈 `WinPocAlnsTest`(T44의 테스트 전용 매핑 재사용) | **2026-09-04 추가 — 실물 fixture 회귀.** `data/win_poc_case_floor.json`을 Problem까지 올리고, H23(`ZoneQuotaBalancedFillConstruction`)의 해를 §3.2 오버로드에 넣어 돌린다 (포트폴리오 24개를 다시 돌리지 않는다 — 그 선택은 T44가 이미 고정했고 CI 시간을 줄인다). 단언은 **예외 없이 정상 종료** · `bestScore[0] == 0` · `[1] == 31` · 거리 < 초기해. 반복 수·`infeasibleDiscarded`·거리를 출력해 Stage 8 표의 입력으로 남긴다. **품질 판정선(Win 대비 몇 %)은 두지 않는다** — 그건 Stage 8이고, 시간 한도에 따라 값이 달라진다. 시간 한도는 CI에서 짧게 (초기해 H23은 실측 ~1.6초라 예산의 거의 전부가 ALNS다 — 20초면 테스트가 ~21초). **§4.3 개정의 실증은 이 테스트가 아니라 T7b가 맡는다** (2026-09-04 구현 세션 정정) — 개정 후 기본값에서는 §4.3의 후보 제외가 20초 실행당 0~1회로 드물고 실행마다 갈려서, 이 테스트만으로는 그 경로를 밟았다고 보장할 수 없다. 개정 전 조합으로는 8회/832반복이 재현된다 (E10) | (§4.3·§4.4·§4.5 개정의 통합 검증) |
 
 T3–T10은 Plan DoD 요약 문장 밖이지만 Plan Stage 4 범위 문장("초기해 생성, destroy/repair(pair 단위),
 acceptance, 시간 한도 종료")의 직접 검증이다 — Plan §1의 편입(2026-08-11)에 따라 이 표 전부가
 완료 기준이다.
 
-**이 표는 `4-ALNS`의 완료 기준 전부다 (2026-09-02, T7b·T7c·T10b·T15는 2026-09-04 추가).**
+**이 표는 `4-ALNS`의 완료 기준 전부다 (2026-09-02, T7b·T7c·T10b·T12b는 2026-09-04 추가).**
 초기해 포트폴리오의 테스트(T13–T44, T44는 app 모듈의 실물 fixture 테스트)는
 [heuristics 문서 §8](stage-04-initial-solution-heuristics.md)이 소유하며 `4-초기해`에서
 먼저 green이 된다. T1·T5·T9·T11·T12는 기본 경로(포트폴리오로 초기해를 만드는 경로)를 쓰고,
-나머지는 §3.2 오버로드에 손 조립 초기해(T15는 H23의 해)를 넣어 포트폴리오와 무관하게 돌릴 수 있다.
-T11·T15는 규모·실물 실행이라 수십 초 걸린다 — 단일 테스트 실행 시 제외하는 방법은 CLAUDE.md의
+나머지는 §3.2 오버로드에 손 조립 초기해(T12b는 H23의 해)를 넣어 포트폴리오와 무관하게 돌릴 수 있다.
+T11·T12b는 규모·실물 실행이라 수십 초 걸린다 — 단일 테스트 실행 시 제외하는 방법은 CLAUDE.md의
 명령 절에 있다.
 
 ---
