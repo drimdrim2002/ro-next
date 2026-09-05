@@ -37,7 +37,7 @@ public final class ZoneQuotaBalancedFillConstruction implements ConstructionHeur
     }
 
     /**
-     * 배정이 주어졌을 때의 존 내부 적재 + 1-1 교환 + leftover pass — H23·H25 공용
+     * 배정이 주어졌을 때의 존 내부 적재 + 1-1 교환 + leftover pass
      * (heuristics 문서 §5 H23 의사코드의 "배정 =" 아래 전부). id는 방어 카운터 예외 메시지에 쓰는 호출 기법의 id다.
      */
     static Solution fill(Problem problem, Profile profile, Allocation allocation, String id) {

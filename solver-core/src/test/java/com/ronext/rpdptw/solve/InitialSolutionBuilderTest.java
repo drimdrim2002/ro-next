@@ -79,7 +79,7 @@ class InitialSolutionBuilderTest {
         assertTrue(result.outcomes().stream().allMatch(o -> o.status() == ConstructionOutcome.Status.ABSTAINED));
     }
 
-    /** T17 — 25개 각각을 직접 Evaluator.evaluate → 전부 Feasible. profile hard 있는 문제에서도 (X5·X14). */
+    /** T17 — 24개 각각을 직접 Evaluator.evaluate → 전부 Feasible. profile hard 있는 문제에서도 (X5·X14). */
     @Test
     void everyConstructionResultIsFeasible() {
         List<Problem> problems = List.of(

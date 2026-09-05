@@ -37,7 +37,6 @@ import com.ronext.rpdptw.eval.RouteFacts;
 import com.ronext.rpdptw.eval.Scores;
 import com.ronext.rpdptw.eval.VisitFacts;
 import com.ronext.rpdptw.problem.Problem;
-import com.ronext.rpdptw.solve.ConstructionHeuristic;
 import com.ronext.rpdptw.solve.EvaluationResult;
 import com.ronext.rpdptw.solve.Evaluator;
 import com.ronext.rpdptw.solve.PropagationResult;
@@ -48,7 +47,6 @@ import com.ronext.rpdptw.solve.StructureCheck;
 import com.ronext.rpdptw.solve.VehicleZoneFillConstruction;
 import com.ronext.rpdptw.solve.ZoneQuotaAllocationAccess;
 import com.ronext.rpdptw.solve.ZoneQuotaBalancedFillConstruction;
-import com.ronext.rpdptw.solve.ZoneQuotaExchangeFillConstruction;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -99,50 +97,6 @@ class WinPocFixtureTest {
         for (Route route : solution.routes()) {
             audit(problem, route);
         }
-    }
-
-    /**
-     * T56 — 같은 실행 안에서 H3·H25·H23을 돌려 (미배정, 차량, 거리, 운행시간, 소요)와 H25·H23의 배정 값 V를
-     * 표로 출력한다. 단언은 H25의 구조·Feasible·재실행 동일 score·경로 감사뿐이다 —
-     * `H25 ≤ H3` 판정은 실측을 보고 사용자가 정한다 (stage-04-h25 §8).
-     */
-    @Test
-    void zoneQuotaExchangeFillComparedOnRealFixture() throws Exception {
-        Problem problem = Problem.freeze(new PlanNormalizer().normalize(toInput(new ObjectMapper().readTree(FIXTURE.toFile()))));
-        DefaultProfile profile = new DefaultProfile();
-
-        System.out.println("T56 실물 fixture — 기법 | 미배정 | 차량 | 거리(m) | 운행시간(s) | 소요(ms)");
-        long[] h3 = report("H3  vehicle-zone-fill       ", problem, profile, new VehicleZoneFillConstruction());
-        long[] h25 = report("H25 zone-quota-exchange-fill", problem, profile, new ZoneQuotaExchangeFillConstruction());
-        long[] h23 = report("H23 zone-quota-balanced-fill", problem, profile, new ZoneQuotaBalancedFillConstruction());
-        System.out.println("T56 배정 값 V (Σ부족, Σ낭비, Σ대수) — H25 " + Arrays.toString(
-                ZoneQuotaAllocationAccess.exchangeAllocationValue(problem))
-                + " · H23(DP) " + Arrays.toString(ZoneQuotaAllocationAccess.dpAllocationValue(problem))
-                + " · H25 교환 적용 수 " + ZoneQuotaAllocationAccess.exchangeScanCount(problem));
-        System.out.println("T56 사전식 비교 — H25 vs H3 " + Scores.compare(h25, h3)
-                + " · H25 vs H23 " + Scores.compare(h25, h23));
-
-        Solution solution = new ZoneQuotaExchangeFillConstruction().construct(problem, profile);
-        assertTrue(StructureCheck.check(problem, solution).isEmpty());
-        EvaluationResult evaluated = Evaluator.evaluate(problem, profile, solution);
-        assertTrue(evaluated instanceof EvaluationResult.Feasible, "H25 must be Feasible");
-        assertArrayEquals(h25, ((EvaluationResult.Feasible) evaluated).score());          // 재실행 동일 score (X8)
-        for (Route route : solution.routes()) {
-            audit(problem, route);
-        }
-    }
-
-    /** 기법 하나를 돌려 표 한 줄을 찍고 score를 돌려준다. */
-    private static long[] report(String label, Problem problem, DefaultProfile profile, ConstructionHeuristic heuristic) {
-        long started = System.nanoTime();
-        Solution solution = heuristic.construct(problem, profile);
-        long elapsedMillis = (System.nanoTime() - started) / 1_000_000L;
-        EvaluationResult evaluated = Evaluator.evaluate(problem, profile, solution);
-        assertTrue(evaluated instanceof EvaluationResult.Feasible, heuristic.id());
-        long[] score = ((EvaluationResult.Feasible) evaluated).score();
-        System.out.println("T56 " + label + " | " + score[0] + " | " + score[1] + " | " + score[2] + " | "
-                + score[3] + " | " + elapsedMillis);
-        return score;
     }
 
     /** 경로 감사 — 구역 1종 · 차급 · 부피 · 무게 · 정차 28 · 시간창 · reqDate. 전파는 정식 코드 경로다. */

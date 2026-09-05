@@ -14,8 +14,6 @@ revisions:
   - 2026-09-02 초기해 포트폴리오 확장 인지 — heuristics 문서의 확장 14개 편입(8 → 22개,
     [survey](stage-04-initial-solution-heuristics-survey.md))으로 개수 언급만 갱신.
     이 문서의 ALNS 계약은 무변경 (초기해는 진입점일 뿐)
-  - 2026-09-04 초기해 포트폴리오 24 → **25개**(실물 맞춤 H25 편입) — 이 문서가 소유한 ALNS 본체
-    규정은 무변경이고 개수 문면만 갱신했다. 근거 [stage-04-h25](stage-04-h25-zone-quota-exchange.md)
   - 2026-09-02 **4-ALNS 구현 직전 정합** — (1) 초기해 개수 22 → **24개**(기본 8 + 확장 14 +
     실물 맞춤 2, [survey §2.5](stage-04-initial-solution-heuristics-survey.md))로 본문 8곳 갱신,
     §7 말미 초기해 테스트 범위 T13–T37 → **T13–T44**. (2) 문서가 정하지 않았던 것을 확정:
@@ -131,7 +129,7 @@ green이 된 뒤 이 문서를 시작한다 (Plan §2.2). 다만 **의존은 한
 핵심 구도 — Domain §9.1의 한 스텝을 Stage 3 타입 위에 그대로 올린다:
 
 ```text
-[Problem (동결)]  ──InitialSolutionBuilder(25개 포트폴리오)──▶  [initial Solution] = current = best
+[Problem (동결)]  ──InitialSolutionBuilder(24개 포트폴리오)──▶  [initial Solution] = current = best
                                                       │
       ┌────────── 반복 (시간·step·idle 한도까지, Domain §12) ─────────────┐
       │ current ─destroy(pair 단위)─▶ draft ─repair(pair 삽입)─▶ draft'  │
@@ -160,7 +158,7 @@ green이 된 뒤 이 문서를 시작한다 (Plan §2.2). 다만 **의존은 한
 | **고정** | 종료 조건 도달(시간·step·idle) = 정상 종료 — 그 시점 best를 반환하고 재검증으로 넘긴다 | §12·Master §2 |
 | **고정** | 탐색은 `Problem`·이동표·profile을 수정하지 않는다 (읽기 전용) | §5 MUST |
 | **고정** | 탐색 예산은 `AlnsConfig`에만 있다. `Problem`에서 예산을 읽는 코드 금지 | §2.5.1 MUST NOT |
-| 재량 | 초기해 휴리스틱·개수(본 문서: **결정적 construction 25개 포트폴리오** — [상세](stage-04-initial-solution-heuristics.md)) | §9.3 |
+| 재량 | 초기해 휴리스틱·개수(본 문서: **결정적 construction 24개 포트폴리오** — [상세](stage-04-initial-solution-heuristics.md)) | §9.3 |
 | 재량 | 연산자 목록(본 문서: destroy **3** + repair 2)·q 범위·적응 가중치 | §9.3 |
 | 재량 | acceptance 세부(동점·worse 수락 확률)·예산 기본값·시드 정책. 단 **축 가드(§4.5)는 재량이 아니라 N1의 귀결**이다 — 스칼라 Δ가 없으면 확률만으로는 열화의 크기를 구분할 수 없다 | §9.3 |
 | 재량 | 삽입 후보 shortlist·증분 계산 (도입 시 노트 N4의 대조 테스트 필수) | §9.2·§6.4 |
@@ -178,7 +176,7 @@ Solution·전파·평가·ALNS", Stage 0 §3.1). 하위 패키지를 만들지 �
 | `solve/AlnsConfig.java` | **탐색 예산**(시간·step·idle 한도·seed) + 알고리즘 튜닝 (§3.3) | Domain §2.5.1·§9.3 |
 | `solve/AlnsResult.java` | 탐색 산출: best + `Evaluation`(③) + `long[] score`(④) + 통계 | Domain §9·§10.2 |
 | `solve/AlnsRunStats.java` | 간단한 실행 통계 (반복·수락·경과·종료 사유) — 추적 장치 아님. `enum Termination`은 이 record 안에 중첩 (별도 파일 없음, 2026-09-02) | Domain §11.1 |
-| `solve/InitialSolutionBuilder.java` | 초기해 포트폴리오 실행기 — 결정적 construction 25개를 돌려 정식 평가로 best 1개 선택. **파일·기법 상세는 [stage-04-initial-solution-heuristics.md](stage-04-initial-solution-heuristics.md)** | Domain §9.3 재량 |
+| `solve/InitialSolutionBuilder.java` | 초기해 포트폴리오 실행기 — 결정적 construction 24개를 돌려 정식 평가로 best 1개 선택. **파일·기법 상세는 [stage-04-initial-solution-heuristics.md](stage-04-initial-solution-heuristics.md)** | Domain §9.3 재량 |
 | `solve/DestroyOperator.java` | destroy SPI: pair 단위로 빼서 bank로 | Domain §9.1 |
 | `solve/RepairOperator.java` | repair SPI: bank의 Request를 pair 삽입 | Domain §9.1 |
 | `solve/RandomRemoval.java` | 배정된 Request 중 무작위 q개 제거 | 재량 기본 연산자 |
@@ -256,7 +254,7 @@ public record AlnsResult(
     Evaluation bestEvaluation,               // 층 ③ — Stage 5 재검증의 대조 대상 (§10.2)
     long[] bestScore,                        // 층 ④ — 〃 (Arrays.equals로 대조)
     Evaluation initialEvaluation,            // DoD "초기해 대비 개선"의 기준값
-                                             //   = 포트폴리오 25개 중 최선의 평가 (기준이 올라간다)
+                                             //   = 포트폴리오 24개 중 최선의 평가 (기준이 올라간다)
     long[] initialScore,                     // 〃 (개선 판정은 score로 — Scores.compare)
     AlnsRunStats stats) {}
 
@@ -326,7 +324,7 @@ public record AlnsConfig(
 ```java
 public final class InitialSolutionBuilder {
     /**
-     * 결정적 construction 25개(기본 8 + 확장 14 + 실물 맞춤 3)를 우선순위 순으로 실행해 정식 평가(Evaluator)로 best 하나를
+     * 결정적 construction 24개(기본 8 + 확장 14 + 실물 맞춤 2)를 우선순위 순으로 실행해 정식 평가(Evaluator)로 best 하나를
      * 고른다. 난수를 쓰지 않으므로 같은 Problem·Profile이면 같은 초기해.
      * 삽입 못 한 Request는 bank에 남는다 (유효한 해, §9.1).
      * profile을 받는다 — 후보 검증이 profile hard까지 보기 때문이다 (§4.3, 2026-09-02).
@@ -355,7 +353,7 @@ public final class AdaptiveWeights {
 여기서는 ALNS가 의존하는 계약만 적는다.
 
 ```text
-1. 우선순위 순으로 고정된 결정적 construction 25개를 순서대로 실행한다 (난수 없음).
+1. 우선순위 순으로 고정된 결정적 construction 24개를 순서대로 실행한다 (난수 없음).
    그 Problem에서 성립하지 않는 기법은 기권하고 건너뛴다 (예: PICKUP_DELIVERY가 있으면
    savings·sweep 계열).
 2. 각 결과는 StructureCheck 통과 + Evaluator Feasible이어야 한다 — 아니면 예외(버그).
@@ -621,7 +619,7 @@ T44(`WinPocFixtureTest`)의 **테스트 전용 매핑을 재사용**한다. 그 
 
 | # | 테스트 | 내용 | 대응 DoD 문장 |
 |---|---|---|---|
-| T1 | `AlnsSolverTest.improvesOverInitialOnSmallFixture` | 소형 fixture(손 조립 — depot 왕복 차량 2대(무게 20,000)·DELIVERY_ONLY 10건(4시간 창)·PICKUP_DELIVERY 2건, 좌표 유래 이동표, 좌표는 테스트 상수) + 고정 seed + `maxSteps` 상한 → `Scores.compare(bestScore, initialScore) < 0`. **기준값이 포트폴리오 25개 중 최선**이라 이 단언은 엄격하다 — 2026-09-02 실측: 순수 배송 소형 문제(8~16건·차량 2~3대·창 유무) 48건 중 23건은 포트폴리오가 이미 ALNS와 같은 점수(개선 0)라 종전의 "두 클러스터 배송" 설계를 버리고 PD를 섞었다(PD 포함 48건 중 개선 0은 3건). 채택 fixture: 최선 spatiotemporal-cluster [0, 2, 44151, 37307] → ALNS [0, 2, 38764, ·], seed 6개·step 500~1500 전부 개선 | "소형 fixture에서 초기해 대비 개선 확인" |
+| T1 | `AlnsSolverTest.improvesOverInitialOnSmallFixture` | 소형 fixture(손 조립 — depot 왕복 차량 2대(무게 20,000)·DELIVERY_ONLY 10건(4시간 창)·PICKUP_DELIVERY 2건, 좌표 유래 이동표, 좌표는 테스트 상수) + 고정 seed + `maxSteps` 상한 → `Scores.compare(bestScore, initialScore) < 0`. **기준값이 포트폴리오 24개 중 최선**이라 이 단언은 엄격하다 — 2026-09-02 실측: 순수 배송 소형 문제(8~16건·차량 2~3대·창 유무) 48건 중 23건은 포트폴리오가 이미 ALNS와 같은 점수(개선 0)라 종전의 "두 클러스터 배송" 설계를 버리고 PD를 섞었다(PD 포함 48건 중 개선 0은 3건). 채택 fixture: 최선 spatiotemporal-cluster [0, 2, 44151, 37307] → ALNS [0, 2, 38764, ·], seed 6개·step 500~1500 전부 개선 | "소형 fixture에서 초기해 대비 개선 확인" |
 | T2 | `AlnsInvariantPropertyTest.structureHoldsUnderRandomSteps` | seed ~20개 × 랜덤 연산자 시퀀스 ~200스텝: **destroy 직후와 repair 직후 각각** `StructureCheck.check` 위반 0 단언 + 각 스텝의 배정↔bank 이동이 Request 단위(부분 pair 이동 없음)임을 단언. PICKUP_DELIVERY 포함 문제로 수행. **연산자 목록에 `StringRemoval`을 포함하고, 삼각부등식을 어기는 이동표로도 수행한다** (§4.3의 후보 제외 경로를 밟게 — 2026-09-04) | "pair·XOR 불변식이 탐색 중 유지되는 property 테스트 (랜덤 스텝 N회 후 구조 검사)" |
 | T3 | `AlnsSolverTest.stopsAtTimeLimitAndReturnsBest` | 아주 짧은 한도로 solve → 정상 반환·best 존재·`stats.elapsedMillis` 기록·`termination == TIME_LIMIT` (E9 포함: 한도 0 → initial 반환) | (Plan 범위 문장 "시간 한도 종료") |
 | T4 | `AlnsSolverTest.reportedEvaluationMatchesFreshEvaluation` | solve 후 `Evaluator.evaluate(problem, profile, result.best())`를 새로 실행 → `bestEvaluation`은 record 동등, `bestScore`는 `Arrays.equals` (§6.4 "캐시 = 재계산", 체크리스트 #7 — Stage 5 대조의 전제) | (Plan 범위 문장 "acceptance" — 수락 권위가 정식 평가임의 증명) |
@@ -636,7 +634,7 @@ T44(`WinPocFixtureTest`)의 **테스트 전용 매핑을 재사용**한다. 그 
 | T10b | `AlnsSolverTest.worseAcceptanceRequiresEqualLeadingAxes` | **2026-09-04 추가.** `worseAcceptStartProbability = 1.0`으로 두고, 손 조립으로 (a) 미배정이 1건 늘어난 draft와 (b) 미배정·차량 수는 같고 거리만 나쁜 draft를 각각 만들어 → (a)는 **절대 수락되지 않고** (b)는 수락되는 것을 단언 (§4.5 축 가드) | (§4.5 개정의 직접 검증) |
 | T11 | `AlnsScaleTest.runsOnFullScaleSyntheticProblem` | **규모 측정.** Stage 2 T12와 **같은 합성 문제**(장소 453·주문 452·차량 31·이동표 453² 전 쌍)로 `AlnsSolver.solve` 1회 → 시간 한도 안에 정상 종료. **시간 한도 안에서 몇 번 반복했는지(`AlnsRunStats`의 반복·수락 수, `elapsedMillis`)를 출력해 기록한다.** 해의 품질·개선폭은 판정하지 않는다 (그건 Stage 8). 실물 JSON은 읽지 않는다 — 입력은 프로그램으로 조립한다. **품질을 판정할 수 없는 이유**: 이 합성 문제의 이동표는 전 arc가 같은 값이라 거리·시간 축이 재배치로 변하지 않는다 (노트 N10, 2026-09-04) | Plan Stage 4 "**규모**" 문장 |
 | T12 | `AlnsSolverTest.profileHardIsHonoredFromConstruction` | **2026-09-02 개정** (종전 `infeasibleInitialFallsBackToEmptySolution`은 E16 폐기와 함께 폐기). 테스트 전용 hard 제약 profile("경로당 방문 1개 초과 금지")로 solve → 초기해가 **Feasible**이고 넣지 못한 Request는 bank에 남는다 · 루프 전체가 예외 없이 진행 · 결과 유효. 별도 케이스: §3.2 오버로드에 **Evaluator Infeasible인 손 조립 초기해**를 넣으면 `IllegalStateException` (§4.2-2). 경로 단위 `HardConstraint`는 경로가 없는 빈 해를 거부할 수 없어 E16b는 SPI로 재현 불가 — 빌더의 E16b 검사는 방어용으로만 남는다 (2026-09-02) | (§4.3-② 후보 검증의 직접 검증) |
-| T12b | `app` 모듈 `WinPocAlnsTest`(T44의 테스트 전용 매핑 재사용) | **2026-09-04 추가 — 실물 fixture 회귀.** `data/win_poc_case_floor.json`을 Problem까지 올리고, H23(`ZoneQuotaBalancedFillConstruction`)의 해를 §3.2 오버로드에 넣어 돌린다 (포트폴리오 25개를 다시 돌리지 않는다 — 그 선택은 T44가 이미 고정했고 CI 시간을 줄인다). 단언은 **예외 없이 정상 종료** · `bestScore[0] == 0` · `[1] == 31` · 거리 < 초기해. 반복 수·`infeasibleDiscarded`·거리를 출력해 Stage 8 표의 입력으로 남긴다. **품질 판정선(Win 대비 몇 %)은 두지 않는다** — 그건 Stage 8이고, 시간 한도에 따라 값이 달라진다. 시간 한도는 CI에서 짧게 (초기해 H23은 실측 ~1.6초라 예산의 거의 전부가 ALNS다 — 20초면 테스트가 ~21초). **§4.3 개정의 실증은 이 테스트가 아니라 T7b가 맡는다** (2026-09-04 구현 세션 정정) — 개정 후 기본값에서는 §4.3의 후보 제외가 20초 실행당 0~1회로 드물고 실행마다 갈려서, 이 테스트만으로는 그 경로를 밟았다고 보장할 수 없다. 개정 전 조합으로는 8회/832반복이 재현된다 (E10) | (§4.3·§4.4·§4.5 개정의 통합 검증) |
+| T12b | `app` 모듈 `WinPocAlnsTest`(T44의 테스트 전용 매핑 재사용) | **2026-09-04 추가 — 실물 fixture 회귀.** `data/win_poc_case_floor.json`을 Problem까지 올리고, H23(`ZoneQuotaBalancedFillConstruction`)의 해를 §3.2 오버로드에 넣어 돌린다 (포트폴리오 24개를 다시 돌리지 않는다 — 그 선택은 T44가 이미 고정했고 CI 시간을 줄인다). 단언은 **예외 없이 정상 종료** · `bestScore[0] == 0` · `[1] == 31` · 거리 < 초기해. 반복 수·`infeasibleDiscarded`·거리를 출력해 Stage 8 표의 입력으로 남긴다. **품질 판정선(Win 대비 몇 %)은 두지 않는다** — 그건 Stage 8이고, 시간 한도에 따라 값이 달라진다. 시간 한도는 CI에서 짧게 (초기해 H23은 실측 ~1.6초라 예산의 거의 전부가 ALNS다 — 20초면 테스트가 ~21초). **§4.3 개정의 실증은 이 테스트가 아니라 T7b가 맡는다** (2026-09-04 구현 세션 정정) — 개정 후 기본값에서는 §4.3의 후보 제외가 20초 실행당 0~1회로 드물고 실행마다 갈려서, 이 테스트만으로는 그 경로를 밟았다고 보장할 수 없다. 개정 전 조합으로는 8회/832반복이 재현된다 (E10) | (§4.3·§4.4·§4.5 개정의 통합 검증) |
 
 T3–T10은 Plan DoD 요약 문장 밖이지만 Plan Stage 4 범위 문장("초기해 생성, destroy/repair(pair 단위),
 acceptance, 시간 한도 종료")의 직접 검증이다 — Plan §1의 편입(2026-08-11)에 따라 이 표 전부가
@@ -666,7 +664,7 @@ T11·T12b는 규모·실물 실행이라 수십 초 걸린다 — 단일 테스�
 | profile별 탐색 예산 차등 (profile은 hard 제약·score 축만 소유) | 안 함 | Domain §8.4·§2.5.1 |
 | property 라이브러리(jqwik 등) 의존 추가 | 안 함 | Stage 0 §4.2 |
 | `Solution`·`Evaluator` 등 Stage 3 타입 변경 | 안 함 (그대로 소비) | Stage 3 §2–§4 |
-| 초기해 기법 25개의 파일·의사코드·기권 규칙·테스트 | [stage-04-initial-solution-heuristics.md](stage-04-initial-solution-heuristics.md) | 이 문서는 ALNS 본체만 소유 |
+| 초기해 기법 24개의 파일·의사코드·기권 규칙·테스트 | [stage-04-initial-solution-heuristics.md](stage-04-initial-solution-heuristics.md) | 이 문서는 ALNS 본체만 소유 |
 
 ---
 
