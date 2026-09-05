@@ -1,10 +1,10 @@
 # `ZoneQuotaAllocation` — 존 배정 DP는 어떻게 최적화하는가
 
-> **성격**: 코드 해설 노트(비규범). [H23 코드 해설](zone-quota-balanced-fill-construction.md)의 §2.1을 깊게 파고든 보강 자료다.
+> **성격**: 코드 해설 노트(비규범). [H23 코드 해설](heuristics/zone-quota-balanced-fill-construction.md)의 §2.1을 깊게 파고든 보강 자료다.
 > 규범은 [heuristics 문서 §3.4·§5 H23 공통](../implementation/stage-04-initial-solution-heuristics.md), 근거 실측은
 > [survey §2.5](../implementation/stage-04-initial-solution-heuristics-survey.md)다. 어긋나면 그쪽이 이긴다.
 >
-> **대상 독자**: [H23 코드 해설](zone-quota-balanced-fill-construction.md)을 읽은 사람. 그 문서의 용어 각주(bank·오라클·Hall 조건 등)를
+> **대상 독자**: [H23 코드 해설](heuristics/zone-quota-balanced-fill-construction.md)을 읽은 사람. 그 문서의 용어 각주(bank·오라클·Hall 조건 등)를
 > 전제한다. DP 자체는 처음이라고 가정하고 한 예제를 끝까지 손으로 푼다.
 >
 > **대상 파일**: `solver-core/src/main/java/com/ronext/rpdptw/solve/ZoneQuotaAllocation.java` (약 330줄).
@@ -516,7 +516,7 @@ route M1 [a1:D, a2:D]   route S1 [c1:D]   route S2 [c2:D]   bank []
 
 ## 용어 각주
 
-이 문서에만 나오는 용어다. bank·오라클·Hall 조건·프론티어·정차 한도 등은 [H23 코드 해설의 각주](zone-quota-balanced-fill-construction.md#용어-각주)를 본다.
+이 문서에만 나오는 용어다. bank·오라클·Hall 조건·프론티어·정차 한도 등은 [H23 코드 해설의 각주](heuristics/zone-quota-balanced-fill-construction.md#용어-각주)를 본다.
 
 [^state]: **상태(state)** — DP가 "지금까지 무엇을 했는지" 중 앞으로의 선택에 영향을 주는 정보만 남긴 요약. 여기서는 어느 존에 무엇을
     줬는지는 잊고 "남은 대수"만 기억한다. 같은 남은 대수에 도달한 두 경로는 앞으로 똑같이 행동하므로, 값이 나쁜 쪽은 버려도 된다 —

@@ -6,6 +6,7 @@ sources:
   - ../implementation/stage-04-initial-solution-heuristics-survey.md (§2 근거 · §2.5 실물 실측 · §5 비교 프로토콜)
   - ../implementation/stage-04-alns.md (§4 repair 연산자 — §4.1 "ALNS가 하는 일과 같은 계열" 판단 근거)
 revisions:
+  - 2026-09-05 H23·H24 코드 해설 노트 — §2 H23·H24, notes/heuristics/
   - 2026-09-05 H3·H22·H2·H14·H18 코드 해설 노트를 notes/heuristics/로 이동
   - 2026-09-05 H3 코드 해설 노트 링크 — §2 H3 vehicle-zone-fill
   - 2026-09-05 H22·H2·H14·H18 코드 해설 노트 링크 — §6.1 squeaky-wheel, §6.2 urgency-regret3, §6.3 vehicle-fill-remaining-regret, §6.4·§6.5 hilbert-split
@@ -326,6 +327,8 @@ H3는 차 한 대씩 순서대로 구역을 고르다 보니 구역이 조각나
 먼저 바닥나 부피를 버리게 되므로 뒤로 미루고, 양수 중 가장 작은 차가 가장 잘 맞는 차다. 마지막으로
 못 실은 주문은 **이미 실린 더 작은 주문과 1:1로 맞바꿔** 보고, 그래도 남으면 다른 경로에 넣어 본다.
 
+코드 수준 해설은 [zone-quota-balanced-fill 노트](heuristics/zone-quota-balanced-fill-construction.md).
+
 ### H24 `zone-quota-subset-fill` — 같은 배분 위에서 "정확히 딱 맞는 조합" 찾기
 
 **목적.** H23과 **1단계는 완전히 같고 2단계만 다르다.** 구역 안을 채울 때 하나씩 순서대로 담는 대신
@@ -337,6 +340,8 @@ H3는 차 한 대씩 순서대로 구역을 고르다 보니 구역이 조각나
 **부분집합 합 동적 계획법**으로 부피·무게·정차 수를 만족하는 조합을 찾는다. 그다음 그 조합을 실제로
 실어 보고, **시간창 때문에 실패한 주문이 있으면 그것을 제외 목록에 넣고 다시 계산한다**(실패에서 배우는
 되먹임). 반복할 때마다 제외가 늘거나 개수 상한이 줄어들어 반드시 끝난다.
+
+코드 수준 해설은 [zone-quota-subset-fill 노트](heuristics/zone-quota-subset-fill-construction.md).
 
 ---
 
@@ -494,7 +499,7 @@ ALNS 말고도 생긴다. 난수가 없어 결정적이다. 비용은 ×B라 초
 
 §4.2 표의 "무가정 자기 교정", "후회값", "차량 단위", "공간 순서 + 최적 절단" 같은 말을 배경 지식 없이 읽을 수 있게
 **작은 예시**로 다시 쓴 것이다. §2의 항목보다 길고, 규칙의 원본은 여전히 계약 §5다. H23은
-[zone-quota-balanced-fill 노트](zone-quota-balanced-fill-construction.md)가 따로 다룬다.
+[zone-quota-balanced-fill 노트](heuristics/zone-quota-balanced-fill-construction.md)가 따로 다룬다.
 
 ### 6.0 먼저 — 네 방법이 공통으로 쓰는 "비용"
 
