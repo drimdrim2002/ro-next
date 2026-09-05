@@ -2,7 +2,7 @@
 title: Stage 4 — 존 배정 DP(`ZoneQuotaAllocation`)의 값 함수 재설계 (설계안)
 stage: 4
 date: 2026-09-05
-status: 구현 완료 (2026-09-05 세션 E) — 계약 반영·T59~T61·실측 §5.5·T52 갱신. 커밋 해시는 후속 status 커밋
+status: 구현 완료 (9938b33) — 계약 반영·T59~T61·실측 §5.5·T52 갱신 (2026-09-05 세션 E)
 plan: ../implementation-plan.md
 sources:
   - stage-04-initial-solution-heuristics.md (§3.4 존 배정 시그니처 · §4.3 종료 보장 · §5 H23·H24 공통 의사코드 · §7 X20~X29 · §8 T38~T58)
