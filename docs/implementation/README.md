@@ -45,6 +45,7 @@ frontmatter `revisions`에 반영돼 있어야 하고, 본문에 "해소 선행"
 | 4-초기해 | [stage-04-initial-solution-heuristics-survey.md](stage-04-initial-solution-heuristics-survey.md) | ↑의 **근거 문서** — 문헌·솔버 조사, 확장 14개의 출처·기각 사유·24 → 4 비교 프로토콜 (계약 아님) | 작성됨 |
 | 4-초기해 | [stage-04-h25-zone-quota-exchange.md](stage-04-h25-zone-quota-exchange.md) | H25 `zone-quota-exchange-fill`(greedy 존 배정 + 구역 간 교환) 설계·실측 — **폐기 결정(2026-09-05), 코드 미편입.** §8이 그 근거 수치를 갖는다 | 폐기 기록 |
 | 4-초기해 | [stage-04-zone-value-function.md](stage-04-zone-value-function.md) | 존 배정 DP 값 함수 재설계 — 축 `(부족, 대수, 낭비, 결손)`. 실물 동률 209개(17% 2단계 실패)의 퇴화 수정, 변형 5개 실측·T52 조건부 갱신 | 설계안 (2026-09-05 구현) |
+| 4-초기해 | [stage-04-zone-quota-frontier-budget.md](stage-04-zone-quota-frontier-budget.md) | 존 배정 DP 프론티어의 잎 예산·절단 규칙 재설계 — R별 memo·선착순 배분을 존당 1회 공유 열거로(실물 ZONE_29 2,348,844 → 1,933잎, 답 동일), 후보 상한. 31종 실측 | 설계안 — 사용자 결정 대기 |
 | 4-ALNS | [stage-04-alns.md](stage-04-alns.md) | ALNS(destroy/repair, pair 단위)·acceptance·종료 — 초기해 green 이후 | 작성됨 |
 | 5 | [stage-05-verification-and-result.md](stage-05-verification-and-result.md) | 탐색과 독립 재검증(발행 게이트) + 결과 모델 | 작성됨 |
 | 6 | [stage-06-app-assembly.md](stage-06-app-assembly.md) | 솔버를 HTTP 서비스로: 접수·저장·비동기 풀이·조회 | 작성됨 |
