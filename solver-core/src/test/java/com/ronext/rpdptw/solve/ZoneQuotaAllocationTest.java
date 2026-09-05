@@ -92,15 +92,9 @@ class ZoneQuotaAllocationTest {
         assertFalse(allocation.truncated());                                         // 풍부 차원이 상태에 없다는 증거
         assertEquals(allocation.vehiclesByZone(), ZoneQuotaAllocation.allocate(problem).vehiclesByZone());
 
-        long[] total = {0L, 0L, 0L};
-        for (Zone zone : allocation.zones()) {
-            long[] value = ZoneQuotaAllocation.value(
-                    ZoneQuotaAllocation.Demand.of(problem, allocation.types(), zone), allocation.types(), quota(allocation, zone));
-            for (int i = 0; i < 3; i++) {
-                total[i] += value[i];
-            }
-        }
-        assertArrayEquals(new long[] {0L, 4_000L, 4L}, total);                        // 손 계산 최적: 한 존만 VB 2대, 나머지 둘은 VA 1대씩
+        // 손 계산 최적 (2026-09-05 축 순서 (부족, 대수, 낭비, 결손)): 세 존 전부 VA 1대씩 — 대수 3 · 낭비 3 × (4,000 − 2,000) · 결손 0 (여유 2,000 ≥ 1 × 평균 1,000).
+        // 종전 (부족, 낭비, 대수)에서는 한 존만 VB 2대·나머지 둘 VA 1대씩 (0, 4,000, 4)였다 — 대수 4 > 3이라 개정 뒤에는 진다.
+        assertArrayEquals(new long[] {0L, 3L, 6_000L, 0L}, valueSum(problem, allocation));
         assertTrue(countOfType(allocation, 4_000L) <= 10);                            // 풍부 유형 소비 ≤ 대수
         assertNoDuplicateVehicles(allocation);
     }
@@ -236,7 +230,99 @@ class ZoneQuotaAllocationTest {
         assertNoDuplicateVehicles(allocation);
     }
 
+    /** T59 — 대수가 낭비보다 앞선다 (2026-09-05 값 함수 개정): 종전 (부족, 낭비, 대수)는 S×2(낭비 2)를, 개정은 L 1대(낭비 3)를 고른다. */
+    @Test
+    void vehicleCountPrecedesWaste() {
+        List<Vehicle> vehicles = new ArrayList<>();
+        vehicles.addAll(fleet("S", 2, 6L, Optional.empty()));
+        vehicles.addAll(fleet("L", 1, 13L, Optional.empty()));
+        Problem problem = zoned(vehicles, List.of(new ZoneSpec("Z", 2, 5L, Set.of())));  // Σ 10 · 평균 단품 5
+
+        Allocation allocation = ZoneQuotaAllocation.allocate(problem);
+        assertFalse(allocation.truncated());
+        assertEquals(List.of(new VehicleId("L001")), allocation.vehiclesByZone().get("Z"));
+
+        Zone zone = allocation.zones().getFirst();
+        ZoneQuotaAllocation.Demand demand = ZoneQuotaAllocation.Demand.of(problem, allocation.types(), zone);
+        long[] chosen = ZoneQuotaAllocation.value(demand, allocation.types(), quota(allocation, zone));
+        assertEquals(ZoneQuotaAllocation.VALUE_AXES, chosen.length);
+        assertArrayEquals(new long[] {0L, 1L, 3L, 2L}, chosen);                       // L: 부족 0 · 대수 1 · 낭비 13 − 10 · 결손 max(0, 1 × 5 − 3)
+        long[] twoSmall = ZoneQuotaAllocation.value(demand, allocation.types(), new int[] {2, 0});
+        assertArrayEquals(new long[] {0L, 2L, 2L, 8L}, twoSmall);                     // S×2: 종전 값 함수의 선택 (낭비 2 < 3)
+        assertTrue(ZoneQuotaAllocation.compare(chosen, twoSmall) < 0);
+    }
+
+    /**
+     * T60 — 결손이 앞 세 축의 동률을 깬다: 존 A(1×4건, 평균 1)·존 B(2×2건, 평균 2)·유형 P(5)×1·Q(6)×1.
+     * {A←P, B←Q}와 {A←Q, B←P}는 (부족 0, 대수 2, 낭비 3)으로 같고 결손만 0·1이다. 종전 동률 규칙("먼저 계산된 값 유지")은
+     * 층 1을 KEY_ORDER로 순회해 (1,0) = A←Q 쪽을 먼저 계산하므로 {A←Q, B←P}를 골랐다 — 결손이 있어야 앞을 고른다.
+     */
+    @Test
+    void slackDeficitBreaksEqualCapacityTie() {
+        List<Vehicle> vehicles = new ArrayList<>();
+        vehicles.addAll(fleet("P", 1, 5L, Optional.empty()));
+        vehicles.addAll(fleet("Q", 1, 6L, Optional.empty()));
+        Problem problem = zoned(vehicles, List.of(
+                new ZoneSpec("A", 4, 1L, Set.of()),
+                new ZoneSpec("B", 2, 2L, Set.of())));
+
+        Allocation allocation = ZoneQuotaAllocation.allocate(problem);
+        assertFalse(allocation.truncated());
+        assertEquals(List.of("A", "B"), allocation.zones().stream().map(Zone::zoneId).toList());
+        assertEquals(List.of(new VehicleId("P001")), allocation.vehiclesByZone().get("A"));
+        assertEquals(List.of(new VehicleId("Q001")), allocation.vehiclesByZone().get("B"));
+        assertArrayEquals(new long[] {0L, 2L, 3L, 0L}, valueSum(problem, allocation));
+
+        List<ZoneQuotaAllocation.VehicleType> types = allocation.types();
+        ZoneQuotaAllocation.Demand a = ZoneQuotaAllocation.Demand.of(problem, types, allocation.zones().get(0));
+        ZoneQuotaAllocation.Demand b = ZoneQuotaAllocation.Demand.of(problem, types, allocation.zones().get(1));
+        long[] flipped = new long[ZoneQuotaAllocation.VALUE_AXES];
+        long[] aq = ZoneQuotaAllocation.value(a, types, new int[] {0, 1});
+        long[] bp = ZoneQuotaAllocation.value(b, types, new int[] {1, 0});
+        for (int i = 0; i < flipped.length; i++) {
+            flipped[i] = aq[i] + bp[i];
+        }
+        assertArrayEquals(new long[] {0L, 2L, 3L, 1L}, flipped);                      // 앞 세 축 동률 · 결손 1 (B: 1 × 2 − 1)
+    }
+
+    /** T61 — 빈 집합·비덮개·부피 0 존에서의 축 값 (X36·X37). 부족·낭비 정의는 종전 그대로다. */
+    @Test
+    void valueAxesOnUncoveredAndEmptyVectors() {
+        List<Vehicle> vehicles = new ArrayList<>();
+        vehicles.addAll(fleet("S", 3, 5L, Optional.empty()));
+        vehicles.addAll(fleet("L", 1, 20L, Optional.empty()));
+        Problem problem = zoned(vehicles, List.of(
+                new ZoneSpec("Z", 3, 4L, Set.of()),                                    // Σ 12 · 평균 4
+                new ZoneSpec("N", 2, 0L, Set.of())));                                  // 부피 0 요청만 — 평균 0
+        List<ZoneQuotaAllocation.VehicleType> types = ZoneQuotaAllocation.vehicleTypes(problem);
+        List<Zone> zones = ZoneQuotaAllocation.zones(problem, types);
+        Zone z = zones.stream().filter(zone -> zone.zoneId().equals("Z")).findFirst().orElseThrow();
+        Zone n = zones.stream().filter(zone -> zone.zoneId().equals("N")).findFirst().orElseThrow();
+
+        ZoneQuotaAllocation.Demand demand = ZoneQuotaAllocation.Demand.of(problem, types, z);
+        assertArrayEquals(new long[] {12L, 0L, 0L, 0L}, ZoneQuotaAllocation.value(demand, types, new int[] {0, 0}));   // (c) 빈 집합
+        assertArrayEquals(new long[] {2L, 2L, 0L, 8L}, ZoneQuotaAllocation.value(demand, types, new int[] {2, 0}));    // (b) S×2: 부족 12 − 10 · 낭비 0 · 결손 2 × 4
+        assertArrayEquals(new long[] {0L, 3L, 3L, 9L}, ZoneQuotaAllocation.value(demand, types, new int[] {3, 0}));    // S×3: 낭비 15 − 12 · 결손 3 × 4 − 3
+        assertArrayEquals(new long[] {0L, 1L, 8L, 0L}, ZoneQuotaAllocation.value(demand, types, new int[] {0, 1}));    // L: 낭비 8 ≥ 1 × 4 → 결손 0
+
+        ZoneQuotaAllocation.Demand empty = ZoneQuotaAllocation.Demand.of(problem, types, n);
+        assertArrayEquals(new long[] {0L, 1L, 5L, 0L}, ZoneQuotaAllocation.value(empty, types, new int[] {1, 0}));     // 평균 0 → 결손 0 (X37)
+    }
+
     // ---- 손조립 도우미 ----
+
+    /** 배정의 존별 value 합 — 4축. */
+    private static long[] valueSum(Problem problem, Allocation allocation) {
+        long[] total = new long[ZoneQuotaAllocation.VALUE_AXES];
+        for (Zone zone : allocation.zones()) {
+            long[] value = ZoneQuotaAllocation.value(
+                    ZoneQuotaAllocation.Demand.of(problem, allocation.types(), zone), allocation.types(), quota(allocation, zone));
+            for (int i = 0; i < total.length; i++) {
+                total[i] += value[i];
+            }
+        }
+        return total;
+    }
 
     /** T38·T48 공통 입력 — 큰 차 금지 존 A(작은 차 2대 몫)와 자유 존 B. */
     private static Problem hallConditionProblem() {

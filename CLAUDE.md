@@ -23,7 +23,7 @@ acceptance·종료 4조건)와 독립 재검증·결과 모델까지 서 있다.
   `RandomRemoval`·`RouteRemoval`·`StringRemoval`·`GreedyInsertion`·`RegretInsertion`·`AdaptiveWeights`) ·
   `verify`(`SolutionVerifier`·`VerificationResult`·`VerifyViolation`·`RouteReplay` + 결과 모델
   `SolveResult`·`UnassignedReason`·`RunStamp`·`ResultAssembler`) +
-  `solver-profile`의 `ProfileRegistry` + 테스트(solver-core 42클래스 125개, solver-profile 1클래스 1개,
+  `solver-profile`의 `ProfileRegistry` + 테스트(solver-core 42클래스 128개, solver-profile 1클래스 1개,
   app 3클래스 4개 + 테스트 전용 접근자 `ZoneQuotaAllocationAccess`).
   `solve`·`verify`에 하위 패키지는 없다.
   `api`·`run`·`input`·`storage`는 **아직 빈 패키지**다 — 그 타입들을 grep해서 안 나오는 게
@@ -35,6 +35,8 @@ acceptance·종료 4조건)와 독립 재검증·결과 모델까지 서 있다.
   존 배정 DP(`ZoneQuotaAllocation`)는 2026-09-04 개정으로 **기권이 없다** — 성분별 희소 DP +
   총량 폭 제한(`MAX_TOTAL_STATES` 262,144, 넘치면 `Allocation.truncated`) + 존당 프론티어 열거 잎 예산
   (`MAX_FRONTIER_LEAVES` 4,194,304 — 2026-09-05 추가. 이게 없으면 차종 31종에서 `-Xmx8g`도 OOM, X29).
+  값은 `(부족, 대수, 낭비, 결손)` 사전식(2026-09-05 개정,
+  [zone-value-function](docs/implementation/stage-04-zone-value-function.md)) — 앞 두 축이 정식 score와 같다.
   호환 마스크는 `long`이라
   **차종 ≤ 64**가 불변식이고 65종 이상은 X28(알려진 한계 — 가드 없음)
   ([stage-04-zone-quota-allocation-scaling](docs/implementation/stage-04-zone-quota-allocation-scaling.md)).

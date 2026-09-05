@@ -19,7 +19,8 @@ import com.ronext.rpdptw.problem.Problem;
 /**
  * H23·H24 공통 — 존 → 차량 유형 대수 배정 DP (heuristics 문서 §3.4·§5 H23 공통).
  * 상태 = 남은 유형별 대수 벡터, 전이 = 프론티어(최소 덮개 · 한 대 모자란 최대 비덮개 · 빈 집합),
- * 값 = (Σ부족, Σ낭비, Σ사용 대수) 사전식. 호환 성분마다 독립 실행하고 도달 상태만 보관하며,
+ * 값 = (Σ부족, Σ대수, Σ낭비, Σ결손) 사전식 — 앞 두 축이 정식 score (미배정, 차량 수)와 같은 순서다.
+ * 호환 성분마다 독립 실행하고 도달 상태만 보관하며,
  * 성분당 보관 상태 총량이 MAX_TOTAL_STATES를 넘으면 값 순으로 잘라 근사한다 — 기권하지 않는다 (§4.3).
  */
 final class ZoneQuotaAllocation {
@@ -33,6 +34,8 @@ final class ZoneQuotaAllocation {
      * 실물 fixture의 존별 실측 최대는 2,348,844잎(ZONE_29)이라 이 값은 그 1.8배다 — 답이 그대로다 (T52).
      */
     static final int MAX_FRONTIER_LEAVES = 4_194_304;
+    /** 값 축 수 — (Σ부족, Σ대수, Σ낭비, Σ결손). Layer.values의 stride이자 value()가 돌려주는 배열 길이. */
+    static final int VALUE_AXES = 4;
     static final String NO_ZONE = VehicleZoneFillConstruction.NO_ZONE;
 
     /** 상태 키 순서 — 마지막 유형부터 첫 유형 순으로 비교 (종전 혼합 진법 키 오름차순과 같은 순서). */
@@ -243,7 +246,11 @@ final class ZoneQuotaAllocation {
         return (a + b - 1L) / b;
     }
 
-    /** 존 전이 하나의 값 (부족, 낭비, Σs) — s에 든 유형만 합한다. */
+    /**
+     * 존 전이 하나의 값 (부족, 대수, 낭비, 결손) — s에 든 유형만 합한다 (zone-value-function §2.6).
+     * 결손 = max(0, Σs × ⌊Σvolume_z / n_z⌋ − 낭비), Σs = 0이면 0 — "존의 차 한 대마다 평균 단품 하나가 더 들어갈 여유"의 부족분.
+     * Demand·types·s 외에는 읽지 않는다 (§2.4 경계 — 이동표·시간창·요청 순서는 2단계 몫).
+     */
     static long[] value(Demand demand, List<VehicleType> types, int[] s) {
         long capacity = 0L;
         long used = 0L;
@@ -257,7 +264,8 @@ final class ZoneQuotaAllocation {
         boolean covers = demand.covers(s);
         long shortage = covers ? 0L : Math.max(1L, demand.totalVolume - capacity);
         long waste = covers ? capacity - demand.totalVolume : 0L;
-        return new long[] {shortage, waste, used};
+        long deficit = used == 0L ? 0L : Math.max(0L, Math.multiplyExact(used, demand.totalVolume / demand.count) - waste);
+        return new long[] {shortage, used, waste, deficit};
     }
 
     static Allocation allocate(Problem problem) {
@@ -360,7 +368,10 @@ final class ZoneQuotaAllocation {
                 }
                 for (int[] s : frontier) {
                     long[] delta = value(demand, types, s);
-                    long[] candidate = {base[0] + delta[0], base[1] + delta[1], base[2] + delta[2]};
+                    long[] candidate = new long[VALUE_AXES];
+                    for (int axis = 0; axis < VALUE_AXES; axis++) {
+                        candidate[axis] = base[axis] + delta[axis];
+                    }
                     int[] to = new int[dims];
                     for (int d = 0; d < dims; d++) {
                         to[d] = key[d] - s[stateDims.get(d)];
@@ -524,7 +535,7 @@ final class ZoneQuotaAllocation {
     /** 다음 층을 만드는 동안의 상태 하나 — 값·직전 층 index·풍부 유형의 대수(키에 없어 따로 들고 간다). */
     private record Entry(long[] value, int parent, int[] abundant) {}
 
-    /** DP 한 층 — 도달 상태만 평면 배열로 (키 dims개 · 값 3개 · parent · 풍부 유형 대수). KEY_ORDER 오름차순. */
+    /** DP 한 층 — 도달 상태만 평면 배열로 (키 dims개 · 값 VALUE_AXES개 · parent · 풍부 유형 대수). KEY_ORDER 오름차순. */
     private static final class Layer {
         final int size;
         final int dims;
@@ -537,7 +548,7 @@ final class ZoneQuotaAllocation {
             this.size = size;
             this.dims = dims;
             this.keys = new int[size * dims];
-            this.values = new long[size * 3];
+            this.values = new long[size * VALUE_AXES];
             this.parent = new int[size];
             this.abundant = new int[size * abundantCount];
         }
@@ -554,7 +565,7 @@ final class ZoneQuotaAllocation {
             for (int i = 0; i < entries.size(); i++) {
                 Map.Entry<int[], Entry> entry = entries.get(i);
                 System.arraycopy(entry.getKey(), 0, layer.keys, i * dims, dims);
-                System.arraycopy(entry.getValue().value(), 0, layer.values, i * 3, 3);
+                System.arraycopy(entry.getValue().value(), 0, layer.values, i * VALUE_AXES, VALUE_AXES);
                 layer.parent[i] = entry.getValue().parent();
                 System.arraycopy(entry.getValue().abundant(), 0, layer.abundant, i * abundantCount, abundantCount);
             }
@@ -568,7 +579,9 @@ final class ZoneQuotaAllocation {
         }
 
         long[] value(int index) {
-            return new long[] {values[index * 3], values[index * 3 + 1], values[index * 3 + 2]};
+            long[] value = new long[VALUE_AXES];
+            System.arraycopy(values, index * VALUE_AXES, value, 0, VALUE_AXES);
+            return value;
         }
     }
 
@@ -578,6 +591,7 @@ final class ZoneQuotaAllocation {
      */
     static final class Demand {
         private final List<VehicleType> types;
+        final int count;                                                    // 존의 요청 수 — 평균 단품 부피 = totalVolume / count
         final long totalVolume;
         final long totalWeight;
         final long totalVisits;
@@ -590,10 +604,11 @@ final class ZoneQuotaAllocation {
         private final long[] groupMaxVolume;
         private final long[] groupMaxWeight;
 
-        private Demand(List<VehicleType> types, long totalVolume, long totalWeight, long totalVisits, long compat,
+        private Demand(List<VehicleType> types, int count, long totalVolume, long totalWeight, long totalVisits, long compat,
                        long[] prefixMask, long[] prefixVolume, long[] prefixWeight, long[] prefixVisits,
                        long[] groupMask, long[] groupMaxVolume, long[] groupMaxWeight) {
             this.types = types;
+            this.count = count;
             this.totalVolume = totalVolume;
             this.totalWeight = totalWeight;
             this.totalVisits = totalVisits;
@@ -654,8 +669,8 @@ final class ZoneQuotaAllocation {
                 groupMaxWeight[k] = entry.getValue()[4];
                 k++;
             }
-            return new Demand(types, total, weight, visits, mask, prefixMask, prefixVolume, prefixWeight, prefixVisits,
-                    groupMask, groupMaxVolume, groupMaxWeight);
+            return new Demand(types, zone.members().size(), total, weight, visits, mask,
+                    prefixMask, prefixVolume, prefixWeight, prefixVisits, groupMask, groupMaxVolume, groupMaxWeight);
         }
 
         boolean covers(int[] s) {

@@ -43,11 +43,14 @@ revisions:
 `data/win_poc_case_floor.json` — 주문 452건 · 차량 31대 · 차당 정차 28회 한도 · 단일 차고.
 **2026-09-04 단일 실행**(`InitialSolutionBuilder.build` 1회, 기본 프로필). 24개 전부 실행됐다(건너뛴 것 0개).
 \* H23·H24의 소요는 존 배정 DP 개정([scaling](../implementation/stage-04-zone-quota-allocation-scaling.md))
-뒤 재실측값이다(개정 전 502·786 ms). 점수 네 축은 개정 전후가 완전히 같다 — heuristics §8 T52가 고정한다.
+뒤 재실측값이다(개정 전 502·786 ms). 점수 네 축은 그 개정 전후가 완전히 같았다.
+2026-09-05 **값 함수 개정**([zone-value-function](../implementation/stage-04-zone-value-function.md) — 축
+`(부족, 대수, 낭비, 결손)`) 뒤 H23 score는 `[0, 31, 4,194,052, 1,004,144]`(T52 확정)이고 T52가 그 값을
+고정한다. H24도 같은 배정을 쓰므로 바뀔 수 있다 — 구현 세션 실측은 그 문서 §5.5. 순위는 그대로다.
 
 | 순위 | # | id | 미배정 | 차량 | 거리(m) | 운행시간(s) | 소요 |
 |---:|---:|---|---:|---:|---:|---:|---:|
-| **1** | **H23** | **`zone-quota-balanced-fill`** | **0** | 31 | 4,198,408 | 1,002,069 | 550 ms* |
+| **1** | **H23** | **`zone-quota-balanced-fill`** | **0** | 31 | 4,198,408 (값 함수 개정 후 4,194,052 — T52 확정) | 1,002,069 (개정 후 1,004,144) | 550 ms* |
 | 2 | H24 | `zone-quota-subset-fill` | 8 | 31 | 3,942,905 | 974,992 | 836 ms* |
 | 3 | H3 | `vehicle-zone-fill` | 15 | 31 | 4,515,433 | 1,003,093 | 137 ms |
 | 4 | H22 | `squeaky-wheel-sequential` | 47 | 31 | 4,666,316 | 967,429 | 399 ms |

@@ -194,7 +194,7 @@ Solomon I1의 `α1·Δ거리 + α2·밀림`, jsprit의 `TW폭·계수 + depot거
 | 기법 | 미배정 | 차량 | 거리(m) | 운행시간(s) | 소요 |
 |---|---:|---:|---:|---:|---:|
 | H3 `vehicle-zone-fill` (종전 1위) | 15 | 31 | 4,515,433 | 1,003,093 | 136 ms |
-| **H23 `zone-quota-balanced-fill`** | **0** | 31 | 4,198,408 | 1,002,069 | 507 ms |
+| **H23 `zone-quota-balanced-fill`** | **0** | 31 | 4,198,408 → 4,194,052 (2026-09-05 값 함수 개정 후, T52 확정) | 1,002,069 → 1,004,144 | 507 ms |
 | H24 `zone-quota-subset-fill` | 8 | 31 | 3,942,905 | 974,992 | 773 ms |
 | 24개 합계 | | | | | 14.3 s (H21 7.0 s) |
 
@@ -207,7 +207,8 @@ H23이 best로 선정됐고 경로별 감사(구역 1종·차급·부피·무게
 실측이 정한다. 존 배정 DP의 규모 한계(차종 조합 수 > 65,536에서의 기권)는 2026-09-04에 제거됐다 —
 [stage-04-zone-quota-allocation-scaling](stage-04-zone-quota-allocation-scaling.md).
 **판정은 Java 정식 평가뿐이다** — 위 표는 근사이고 heuristics §8 T38~T43과 실물 실행이
-계약이다.
+계약이다. 존 배정 DP의 값 함수는 2026-09-05 개정 — 축 `(부족, 대수, 낭비, 결손)`,
+[stage-04-zone-value-function](stage-04-zone-value-function.md).
 
 ## 3. 채택 14개 — 축과 우선순위
 

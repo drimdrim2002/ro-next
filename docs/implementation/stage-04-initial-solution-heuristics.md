@@ -62,6 +62,12 @@ revisions:
   - 2026-09-05 존 배정 DP의 호환 마스크 **int → long** — 기권을 없애면서 종전 기권선이 맡던
     "차종 ≤ 16" 가드가 사라져 `1 << t`의 32종 초과 aliasing이 도달 가능해졌다. **차종 ≤ 64**가 불변식이 되고
     65종 이상은 X28에 한계로 등재만 한다(가드·기권 없음). 시험 T57
+  - 2026-09-05 **존 배정 DP 값 함수 개정** — 축 순서 `(부족, 대수, 낭비)` + 4번 축 결손
+    `Σ_z max(0, 대수_z × 평균단품_z − 낭비_z)`. 실물 동률 209개 중 17%가 2단계 실패였던 퇴화의 수정
+    (전 존을 덮고 전 차량을 쓰는 배정끼리 `(Σ부족, Σ낭비, Σ대수)`가 항등식으로 같다). 앞 두 축이 정식 score
+    `(미배정, 차량 수)`와 같은 순서가 된다. §3.4(`VALUE_AXES`·`value`·`Demand.count`)·§5 공통 블록·
+    §5 H23 실측 불릿·§7 X35~X39·§8 T44/T52 갱신·T59~T61·재확인 행.
+    근거 [stage-04-zone-value-function](stage-04-zone-value-function.md)
 ---
 
 # Stage 4 — 초기해 휴리스틱 포트폴리오
@@ -298,6 +304,8 @@ final class ZoneQuotaAllocation {
     static final int MAX_TOTAL_STATES = 262_144;
     /** 존 하나의 프론티어 열거가 도달할 수 있는 잎 수 총량 (재량 상수). 소진되면 열거 순서 접두만 남기고 근사한다. */
     static final int MAX_FRONTIER_LEAVES = 4_194_304;
+    /** 값 축 수 — (Σ부족, Σ대수, Σ낭비, Σ결손). Layer.values의 stride이자 value()가 돌려주는 배열 길이. */
+    static final int VALUE_AXES = 4;
 
     /** 프론티어 열거 결과 — 벡터 목록 · 소비한 잎 수 · 예산에 걸려 잘렸는가. */
     record Frontier(List<int[]> vectors, int leaves, boolean truncated) {}
@@ -319,7 +327,10 @@ final class ZoneQuotaAllocation {
     static List<Zone> zones(Problem problem, List<VehicleType> types);
     static List<Component> components(List<VehicleType> types, List<Zone> zones, Problem problem);
     static int maxNeed(Demand demand, VehicleType type);          // 존이 유형 t를 최대로 쓸 수 있는 대수
-    /** 존 전이 하나의 값 (부족, 낭비, Σs) — s에 든 유형만 합한다. */
+    /**
+     * 존 전이 하나의 값 (부족, 대수, 낭비, 결손) — s에 든 유형만 합한다 (zone-value-function §2.6).
+     * 결손 = max(0, Σs × ⌊Σvolume_z / n_z⌋ − 낭비), Σs = 0이면 0. Demand·types·s 외에는 읽지 않는다 (§2.4 경계).
+     */
     static long[] value(Demand demand, List<VehicleType> types, int[] s);
     static Allocation allocate(Problem problem);                  // = allocate(problem, MAX_TOTAL_STATES)
     static Allocation allocate(Problem problem, int maxTotalStates);   // 테스트 전용 오버로드 — 예산 주입
@@ -327,6 +338,7 @@ final class ZoneQuotaAllocation {
 ```
 
 - `Demand`(중첩)는 `compat` 마스크와 `totalWeight`·`totalVisits`를 노출한다 (maxNeed용). `covers` 결과 캐시는 없다.
+  **`count`(존의 요청 수)를 노출한다** — 평균 단품 부피 `⌊totalVolume / count⌋`가 `value`의 결손 축에 쓰인다 (2026-09-05).
   마스크 3개(`compat`·`prefixMask`·`groupMask`)는 **`long`**이고 유형 t의 비트는 `1L << t`다 —
   **차종 수 ≤ 64가 불변식**이고 65종 이상은 X28(알려진 한계)이다.
 - `frontier(int[] range, Demand demand, int cap)`의 첫 인자는 "남은 대수"가 아니라 **열거 범위 R**이다 —
@@ -998,11 +1010,16 @@ covers(s, z)  — s = 유형별 대수 벡터:
   (b) ¬covers(s) ∧ ∃t (R_t > s_t) ∧ ∀t (R_t = s_t ∨ covers(s + e_t)) — 한 대 모자란 최대 비덮개
   (c) s = 0
   부족·낭비·용량은 s에 든 유형만 합한다 (R_t = 0인 유형은 s_t = 0이라 자동으로 빠진다).
-DP: 상태 = 남은 유형별 대수 벡터. f(초기 = 전 대수) = (0, 0, 0).
-  존 순서대로: 상태마다 프론티어 s를 나열해 값 + (부족, 낭비, Σs) 로 상태 r − s를 갱신.
-    부족 = covers면 0, 아니면 max(1, Σvolume_z − Σ_t s_t·maxVolume_t) · 낭비 = covers면 Σ_t s_t·maxVolume_t − Σvolume_z, 아니면 0
-  값 비교 = (Σ부족 ASC, Σ낭비 ASC, Σ사용 대수 ASC) 사전식. 동률 = 먼저 계산된 값 유지 (존 순서·상태 순회
+DP: 상태 = 남은 유형별 대수 벡터. f(초기 = 전 대수) = (0, 0, 0, 0).
+  존 순서대로: 상태마다 프론티어 s를 나열해 값 + (부족, 대수, 낭비, 결손) 로 상태 r − s를 갱신.
+    용량 = Σ_{t∈s} s_t·maxVolume_t · 대수 = Σ_t s_t
+    부족 = covers면 0, 아니면 max(1, Σvolume_z − 용량) · 낭비 = covers면 용량 − Σvolume_z, 아니면 0
+    결손 = 대수 = 0이면 0, 아니면 max(0, 대수 × ⌊Σvolume_z / n_z⌋ − 낭비)       ← "차 한 대마다 평균 단품 하나"의 부족분 (n_z = 존 요청 수)
+  값 비교 = (Σ부족 ASC, Σ대수 ASC, Σ낭비 ASC, Σ결손 ASC) 사전식 — 앞 두 축이 정식 score (미배정, 차량 수)와 같은 순서다
+  (2026-09-05 개정, [zone-value-function §2.6](stage-04-zone-value-function.md)). 동률 = 먼저 계산된 값 유지 (존 순서·상태 순회
   순서·프론티어 나열 순서가 전부 고정이라 결정적).
+  전제: 낭비·결손은 부피로 잰다 — 실물의 묶는 자원이 부피(여유 4.4%, 무게 이용률 54%)이기 때문이고, 무게·정차는
+  covers(hard)와 maxNeed(열거 범위)가 본다. 값 함수는 Demand·유형 용량·s 밖의 것(이동표·시간창·요청 순서)을 읽지 않는다.
   존을 다 처리한 뒤 값 최소 상태(동률 = 남은 벡터 사전식 최소)에서 역추적 → 존별 (유형 → 대수)
   → 존별 차량 목록 = 유형 순서 × 유형 안 VehicleId ASC로 소비.
 DP는 **호환 성분마다 독립 실행**한다 (그래프 G: 정점 = 유형 ∪ 존, 간선 z–t ⇔ t ∈ compat(z)).
@@ -1059,9 +1076,11 @@ leftover pass: 전 존의 leftover를 ( 호환 유형 수 ASC, totalVolume DESC,
 - 요청 순서의 첫 키(호환 유형 수 ASC)가 필수다 — 부피순만이면 여유 0.12 CBM 존(ZONE_21)에서 13 미배정,
   호환 수 우선이면 2 (부피 수준 실측).
 - 종료: 존 내부 ≤ n, 교환 ≤ n (성공마다 bank −1, 실패는 다음 leftover로), leftover pass ≤ n → 바깥 루프 ≤ 3n.
-- **실물 fixture 정식 평가 실측 (2026-09-02, 스크래치 실행기)**: score [0, 31, 4,198,408, 1,002,069] · 507 ms —
+- **실물 fixture 정식 평가 실측**: score [0, 31, 4,194,052, 1,004,144] (2026-09-05 값 함수 개정 후 실측 · T52 확정.
+  개정 전 2026-09-02 실측 [0, 31, 4,198,408, 1,002,069] · 507 ms — [zone-value-function §5.1](stage-04-zone-value-function.md)) —
   452건 전량 배정·31대, 경로별 감사(구역 1종·차급·부피·무게·정차·시간창·reqDate) 31/31 PASS.
-  H3(15)보다 사전식으로 좋고 Win 엔진 결과(452 전량·31대)와 같은 축이다. 존 배정은 Win과 ZONE_19·21·23·29에서 동일.
+  H3(15)보다 사전식으로 좋고 Win 엔진 결과(452 전량·31대)와 같은 축이다. 존 배정은 Win과 ZONE_19·21·23·29에서 동일
+  (값 함수 개정 후에도 그 네 존은 그대로다 — 바뀐 존은 ZONE_15·16·17. 개정 후 H24는 [8, 31, 3,914,015, 975,885]).
 
 **H24 `zone-quota-subset-fill` — 존 내부: seed pool + subset-sum DP + 오라클 피드백.**
 
@@ -1175,6 +1194,11 @@ subsetSum(items, cap, wcap, nmin, nmax):
 | X27 | 근사(`truncated`)가 발생 | H23·H24는 정상 실행 — 2단계·leftover pass·정식 평가 모두 그대로. 포트폴리오 선택은 정식 평가가 하므로 근사가 나빴으면 다른 기법이 이긴다 | §6 |
 | X29 | 존의 프론티어 열거 잎 예산 소진 | 정상 근사 — 그 존의 남은 열거 범위는 보지 않고 `truncated = true`. 호출당 `cap = max(1, ·)`이라 빈 집합 (c)는 반드시 나오므로 전이 ②가 남고 DP는 완주한다 (X21과 같은 보장). 예외 아님 | §5 H23 공통 |
 | X28 | H23·H24에서 차종이 **65종 이상** | **알려진 한계 — 범위 밖.** 존 배정 DP의 호환 마스크가 `long`이라 유형 t의 비트 `1L << t`가 t ≥ 64에서 접힌다(예외 없이 답만 틀어진다). 가드·기권·예외를 두지 않는다 — `abstains`는 계속 `false`. 필요해지면 `BitSet` 별도 개정 | [scaling §2.6](stage-04-zone-quota-allocation-scaling.md) |
+| X35 | 공급이 넉넉한 입력에서 개정 후 DP가 종전보다 **적은 대수**를 배정 | 정상 — 정식 score의 2번 축과 같은 방향이다. 남는 차량은 leftover pass·ALNS가 쓴다. 변형 D 실측: 종전 33경로 → 30경로, 미배정 0 유지 | [zone-value-function §2.3](stage-04-zone-value-function.md) |
+| X36 | 덮지 못한 존의 (b) 벡터 — 낭비 0이라 결손 = 대수 × 평균 | 부족 축이 앞서므로 결과에 영향 없음. (c)는 대수 0 → 결손 0 | [zone-value-function §2.6](stage-04-zone-value-function.md) |
+| X37 | 존의 Σvolume = 0 (부피 없는 요청만) 또는 평균 단품이 0으로 내림 | 결손 항상 0 → 4번 축 무력. 정상 (앞 세 축이 그대로 정한다) | [zone-value-function §2.6](stage-04-zone-value-function.md) |
+| X38 | `MAX_TOTAL_STATES` 절단 정렬(값 ASC, `KEY_ORDER`)이 4축이 됨 | 절단이 작동하는 입력에서만 남는 상태 집합이 달라질 수 있다. 결정성(X8)은 그대로 — 정렬 키가 고정이다. T51 재확인 | [zone-value-function §3](stage-04-zone-value-function.md) |
+| X39 | 잎 예산이 바닥난 뒤의 상태는 프론티어가 (c)뿐 — 좋은 전이가 **후보에 없다** | **값 함수 개정은 고치지 못한다.** 값 함수는 후보 안에서만 고른다. 실물 26만·변형 A·E 26만·변형 D 현행 예산에서 작동 확인. 잎 예산·절단 규칙의 별건(zone-value-function §8 ③) | [zone-value-function §1.4](stage-04-zone-value-function.md) |
 
 ---
 
@@ -1220,9 +1244,9 @@ subsetSum(items, cap, wcap, nmin, nmax):
 | T41 | `ZoneQuotaSubsetFillConstructionTest.subsetSumFillsExactly` | 용량 10 bin 2개·요청 5,4,4,3,2,2: 부피 best-fit은 1건을 놓치고 subsetSum은 두 bin을 정확히 채움 · 부피 올림 양자화가 용량을 넘기지 않음 | §5 H24 |
 | T42 | `ZoneQuotaSubsetFillConstructionTest.countLowerBoundSpreadsSmallRequests` | 용량 8·정차 3 bin 2개·요청 4,4,3,3,1,1: 하한 없이는 첫 bin이 {4,4}를 먹어 둘째 bin이 정차 한도에 걸리고, 하한(6 − 3 = 3)이 있으면 전량 배정 | §5 H24 |
 | T43 | `ZoneQuotaSubsetFillConstructionTest.oracleFeedbackExcludesInfeasibleAndTerminates` | 시간창 때문에 함께 못 도는 요청이 순서화에서 실패 → 제외·nmax 축소 후 재DP가 \|pool\| 안에 끝나고 그 요청은 bank · 결과 StructureCheck 통과·Feasible (X22) | §5 H24 |
-| T44 | `WinPocFixtureTest.zoneQuotaBalancedFillAssignsEveryRequestOnRealFixture` (**app 모듈**) | `data/win_poc_case_floor.json`(주문 452·차량 31·정차 28)을 테스트 전용 매핑으로 `Problem`까지 올려 H23 실행 → bank 0·31경로·`Evaluator` Feasible·score[0]=0·재실행 동일 score(X8)·H3보다 `Scores.compare` 우위 · 경로마다 구역 1종·차급·부피·무게·정차 28·시간창·reqDate 감사. **score 전체 일치** `[0, 31, 4,198,408, 1,002,069]`·`Allocation.truncated == false` (2026-09-04 T52로 확장) | §5 H23 실측 |
+| T44 | `WinPocFixtureTest.zoneQuotaBalancedFillAssignsEveryRequestOnRealFixture` (**app 모듈**) | `data/win_poc_case_floor.json`(주문 452·차량 31·정차 28)을 테스트 전용 매핑으로 `Problem`까지 올려 H23 실행 → bank 0·31경로·`Evaluator` Feasible·score[0]=0·재실행 동일 score(X8)·H3보다 `Scores.compare` 우위 · 경로마다 구역 1종·차급·부피·무게·정차 28·시간창·reqDate 감사. **score 전체 일치** `[0, 31, 4,194,052, 1,004,144]`(2026-09-05 값 함수 개정 후 실측 · T52 확정. 개정 전 `[0, 31, 4,198,408, 1,002,069]`)·`Allocation.truncated == false` (2026-09-04 T52로 확장) | §5 H23 실측 |
 | T45 | `ZoneQuotaAllocationTest.manyTypesNoLongerAbstain` | 유형이 서로 다른 17대 · 20종×각 1대 · 3종×각 67대(Π 314,432): H23·H24 `abstains == false` · `allocate` 완주 · `truncated == false` · 존마다 배정 차량이 `compat(z)` 유형뿐 | X20 |
-| T46 | `ZoneQuotaAllocationTest.abundantTypeLeavesStateVector` | 풍부 유형 1개(대수 ≥ Σ maxNeed) + 희소 유형 2개 + 존 3개: 예산에 `Π(희소 대수+1) × (존 수+1)`을 넘겨도 `truncated == false`(풍부 차원이 상태에 없다는 증거) · 배정 값이 손 계산 최적과 같음 · 풍부 유형 소비 ≤ 대수 | §5 H23 공통 |
+| T46 | `ZoneQuotaAllocationTest.abundantTypeLeavesStateVector` | 풍부 유형 1개(대수 ≥ Σ maxNeed) + 희소 유형 2개 + 존 3개: 예산에 `Π(희소 대수+1) × (존 수+1)`을 넘겨도 `truncated == false`(풍부 차원이 상태에 없다는 증거) · 배정 값이 손 계산 최적과 같음(**2026-09-05 값 함수 개정 후 새 축 순서로 손 계산을 다시 한다** — [zone-value-function §7 재확인 행](stage-04-zone-value-function.md)) · 풍부 유형 소비 ≤ 대수 | §5 H23 공통 |
 | T47 | `ZoneQuotaAllocationTest.componentsSolvedIndependently` | 서로 호환이 없는 두 묶음(유형 A·존 a / 유형 B·존 b): `components`가 2개 · `vehiclesByZone`이 두 묶음을 각각 단독 문제로 돌린 결과와 같음 · 예산을 큰 묶음 하나 크기로 줘도 `truncated == false` | §5 H23 공통 |
 | T48 | `ZoneQuotaAllocationTest.truncationIsDeterministicAndValid` | T38 입력에 예산 2 주입: `truncated == true` · 두 번 실행 결과 동일(X8) · 차량 중복 배정 없음 · 존마다 호환 유형만. 근사가 나와도 H23은 정상 실행된다 — `construct` 진입점에 예산 인자가 없으므로 **기본 예산**으로 `Evaluator` Feasible을 확인한다 | X25·X27 |
 | T49 | `ZoneQuotaAllocationTest.frontierBoundedByMaxNeed` | 호환 안 되는 유형 1대·호환 유형 100대·존 1개(필요 3대): 프론티어 벡터마다 `s_t ≤ maxNeed(z,t)` · 호환 안 되는 유형은 0 · 프론티어 크기 ≤ 4 · 잎 예산에 걸리지 않음(`truncated == false`) | §4.3 |
@@ -1230,7 +1254,11 @@ subsetSum(items, cap, wcap, nmin, nmax):
 | T51 | `ZoneQuotaAllocationScaleTest.largeFleetCompletesWithinBudget` | **규모.** 3종×각 67대(Π 314,432)와 20종×각 1대(Π 2²⁰)를 존 수를 바꿔 가며: 존이 적으면(5·7) 기본 예산에서 `truncated == false`, 존 20이면 `truncated == true`이되 **완주·유효·결정적** · 예산 1,000에서도 같음 · 소요 출력(한도 아님, T25와 같은 취급). **2026-09-04 실측** — 존 5 14 ms(false) · 존 20 2.0 s(true) · 20종 존 7 709 ms(false) · 20종 존 20 1.3 s(true) | §4.3 |
 | T57 | `ZoneQuotaAllocationTest.thirtyThreeTypesUseLongMask` | 차종 33개·존마다 호환 유형이 다른 입력: 존마다 배정 차량이 `compat(z)` 유형뿐 — 마스크가 `int`면 t32가 t0으로 접혀 깨진다. `1L << t` 치환 누락은 경고가 없으므로 이 시험이 유일한 방어선이다 (T53~T56은 H25 대역) | X28·[scaling §2.6](stage-04-zone-quota-allocation-scaling.md) |
 | T58 | `ZoneQuotaAllocationScaleTest.frontierBudgetCapsEnumeration` | **규모.** 차종 31종(각 1대)·존 11개 합성: 잎 예산이 없으면 존마다 Π ≈ 2×10⁹을 열거하려다 `-Xmx8g`로도 OOM이던 입력이 **기본 heap에서 완주**한다(2026-09-05 실측 24.8초) · 배정 유효(중복 없음·`compat(z)` 유형뿐·대수 ≤ maxNeed) · 두 번 실행 동일(X8) · `truncated == true` · 소요 출력(한도 아님, T51과 같은 취급) | X29·[scaling §2.7](stage-04-zone-quota-allocation-scaling.md) |
-| T52 | `WinPocFixtureTest.zoneQuotaBalancedFillAssignsEveryRequestOnRealFixture` (**app 모듈**, T44 확장) | 위 T44 행의 **score 전체 일치**·`truncated == false` 단언이 그것이다. `ZoneQuotaAllocation`이 package-private이라 `truncated` 관측은 app 테스트 소스의 `com.ronext.rpdptw.solve.ZoneQuotaAllocationAccess`(테스트 전용 접근자)를 거친다 — 운영 코드의 가시성은 그대로다 | §2 회귀 |
+| T52 | `WinPocFixtureTest.zoneQuotaBalancedFillAssignsEveryRequestOnRealFixture` (**app 모듈**, T44 확장) | 위 T44 행의 **score 전체 일치**·`truncated == false` 단언이 그것이다. 기대값은 **값 함수 개정(2026-09-05)이 예측한 답** `[0, 31, 4,194,052, 1,004,144]`(T52 확정)이고, 갱신 조건은 [zone-value-function §5.4 (a)](stage-04-zone-value-function.md)의 네 가지다 — 종전 "개정 전과 같음"(scaling 회귀)에서 역할이 바뀌었다. `ZoneQuotaAllocation`이 package-private이라 `truncated` 관측은 app 테스트 소스의 `com.ronext.rpdptw.solve.ZoneQuotaAllocationAccess`(테스트 전용 접근자)를 거친다 — 운영 코드의 가시성은 그대로다 | §2 회귀 |
+| T59 | `ZoneQuotaAllocationTest.vehicleCountPrecedesWaste` | 존 1개(요청 5×2건)·유형 S(6)×2·L(13)×1: 종전 `(부족,낭비,대수)`는 S×2(낭비 2, 대수 2)를 골랐고, 개정은 **L(대수 1, 낭비 3)**을 고른다. `value()` 길이 4·각 항 손 계산과 일치 (`[0, 1, 3, max(0, 1×5 − 3) = 2]`) | [zone-value-function §2.3·§2.6](stage-04-zone-value-function.md) |
+| T60 | `ZoneQuotaAllocationTest.slackDeficitBreaksEqualCapacityTie` | 존 A(1×4건, 평균 1)·존 B(2×2건, 평균 2)·유형 P(5)×1·Q(6)×1: 두 배정 `{A←P, B←Q}`·`{A←Q, B←P}`가 `(0, 2, 3)`으로 동률. 결손은 각각 0·1이라 **앞을 고른다.** 입력은 종전 동률 규칙(층 상태 `KEY_ORDER` 순회 → "먼저 계산된 값 유지")이 **뒤를** 고르도록 존 이름·유형 순서를 맞춘다 — 그래야 결손이 골랐음이 시험된다 | [zone-value-function §2.2 D1](stage-04-zone-value-function.md) |
+| T61 | `ZoneQuotaAllocationTest.valueAxesOnUncoveredAndEmptyVectors` | (c) 빈 집합 → `(Σvolume_z, 0, 0, 0)` · 덮지 못하는 (b) 벡터 → 부족 ≥ 1, 낭비 0, 결손 = 대수×평균 · 부피 0 요청만 있는 존 → 결손 0. 부족·낭비 정의는 종전과 같은 값 | X36·X37 |
+| 재확인 | T38 · T45 · T47 ~ T51 · T57 · T58 · T40 ~ T43 | 값 함수 개정(2026-09-05) 뒤에도 유효성·결정성 단언은 무변경으로 통과해야 한다. T46의 손 계산은 새 축 순서로. T51의 `truncated` 행은 절단 정렬이 4축이 돼 남는 상태가 달라질 수 있으나 완주·유효·결정성 단언은 그대로 (X38) | [zone-value-function §3](stage-04-zone-value-function.md) |
 
 ---
 
