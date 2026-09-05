@@ -174,9 +174,11 @@ class ZoneQuotaAllocationTest {
         assertEquals(3, range[0]);                                                   // 호환 유형 (maxVolume 1,000) — 100대가 아니라 수요 3
         assertEquals(0, range[1]);                                                   // 호환 안 되는 유형 (maxVolume 5,000)
 
-        List<int[]> frontier = ZoneQuotaAllocation.frontier(range, demand);
-        assertTrue(frontier.size() <= 4, "frontier " + frontier.size());
-        for (int[] s : frontier) {
+        ZoneQuotaAllocation.Frontier frontier = ZoneQuotaAllocation.frontier(
+                range, demand, ZoneQuotaAllocation.MAX_FRONTIER_LEAVES);
+        assertFalse(frontier.truncated(), "잎 예산에 걸리지 않는다");
+        assertTrue(frontier.vectors().size() <= 4, "frontier " + frontier.vectors().size());
+        for (int[] s : frontier.vectors()) {
             for (int t = 0; t < types.size(); t++) {
                 assertTrue(s[t] <= range[t], "s[" + t + "]=" + s[t]);
             }

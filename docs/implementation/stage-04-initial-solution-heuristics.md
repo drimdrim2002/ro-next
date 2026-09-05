@@ -39,6 +39,13 @@ revisions:
     포트폴리오 22 → **24개**, 축소 목표 24 → 4. §2 파일 3개·§3.4 시그니처·§4.3 종료 상한·
     §4.4 기권 사유(유형 조합 수 > 65,536)·§5 표·의사코드·§7 X20~X23·§8 T38~T43 추가.
     `InsertionSearch.remove` 추가(H23 교환 전용). 근거는 survey §2.5. 기존 H1~H22 규정은 무변경
+  - 2026-09-05 **프론티어 열거 상한** — X20의 "메모리는 입력과 무관"이 `Layer`에만 참이었다.
+    `frontier` 열거는 `Π_{t∈compat(z)}(maxNeed+1)`에 비례해 차종 31종에서 `-Xmx8g`로도 OOM이다(실측).
+    존마다 열거 잎 예산 `MAX_FRONTIER_LEAVES`(4,194,304 — 실물 최대 소비 2,348,844의 1.8배)를 두고
+    소진되면 `Allocation.truncated = true`. **호출당 상한만으로는 안 된다** — memo 항목 수(≤ 층 상태 수)가
+    곱해져 31종에서 다시 OOM이다(반증 실측).
+    §3.4 시그니처(`Frontier` 레코드·`frontier(range, demand, cap)`)·§4.3 상한·§5 H23 의사코드·
+    §7 X20 정정·X29 추가·§8 T58. 근거 [scaling §2.7](stage-04-zone-quota-allocation-scaling.md)
   - 2026-09-02 **T44 실물 fixture 테스트** — `data/win_poc_case_floor.json`으로 H23 전량 배정·경로 감사·
     H3 대비 사전식 우위를 고정. solver-core 테스트는 JUnit만 쓰므로 Jackson이 있는 **app 모듈**에 두고,
     규약 JSON → `PlanInput` 매핑은 테스트 전용(Stage 6 adapter가 대체)
@@ -289,6 +296,11 @@ public final class InsertionSearch {
 final class ZoneQuotaAllocation {
     /** 성분 하나의 DP가 층 전체에 보관하는 상태 수 총량 (재량 상수). 넘치면 값 순으로 잘라 근사한다 — 기권하지 않는다. */
     static final int MAX_TOTAL_STATES = 262_144;
+    /** 존 하나의 프론티어 열거가 도달할 수 있는 잎 수 총량 (재량 상수). 소진되면 열거 순서 접두만 남기고 근사한다. */
+    static final int MAX_FRONTIER_LEAVES = 4_194_304;
+
+    /** 프론티어 열거 결과 — 벡터 목록 · 소비한 잎 수 · 예산에 걸려 잘렸는가. */
+    record Frontier(List<int[]> vectors, int leaves, boolean truncated) {}
 
     /** 차량 유형 = (호환 Request 집합, maxWeight, maxVolume, effectiveMaxStopCount)이 같은 차량들.
      *  유형 순서 (maxVolume ASC, maxWeight ASC, 첫 VehicleId ASC) · 유형 안 VehicleId ASC. */
@@ -317,8 +329,10 @@ final class ZoneQuotaAllocation {
 - `Demand`(중첩)는 `compat` 마스크와 `totalWeight`·`totalVisits`를 노출한다 (maxNeed용). `covers` 결과 캐시는 없다.
   마스크 3개(`compat`·`prefixMask`·`groupMask`)는 **`long`**이고 유형 t의 비트는 `1L << t`다 —
   **차종 수 ≤ 64가 불변식**이고 65종 이상은 X28(알려진 한계)이다.
-- `frontier(int[] range, Demand)`의 첫 인자는 "남은 대수"가 아니라 **열거 범위 R**이다 —
-  호출자가 `R_t = min(남은_t, maxNeed(z,t))`(호환 아니면 0)를 만들어 넘긴다.
+- `frontier(int[] range, Demand demand, int cap)`의 첫 인자는 "남은 대수"가 아니라 **열거 범위 R**이다 —
+  호출자가 `R_t = min(남은_t, maxNeed(z,t))`(호환 아니면 0)를 만들어 넘긴다. `cap`은 이 호출이 도달해도 되는
+  **잎 수**(≥ 1)이고, 존 하나가 `MAX_FRONTIER_LEAVES`를 나눠 쓴다 — 열거 순서상 첫 잎이 빈 집합이라
+  `cap = 1`이어도 프론티어 (c)는 반드시 나오고 DP의 전이 ②가 남는다 (X29).
 
 ---
 
@@ -393,10 +407,13 @@ construction 결과의 Infeasible은 **논리적으로 불가능** — 나오면
   H21 병합 ≤ |requests|−1 후 bin당 regret ≤ |requests| ·
   H22 고정 R=5 라운드 × 라운드당 |requests| ·
   H23·H24 존 배정 DP: 성분당 보관 상태 ≤ `MAX_TOTAL_STATES` + 존 수 ·
-    프론티어 열거 ≤ Π_{t∈compat(z)}(maxNeed(z,t)+1) — 못 덮는 존에서도 유형별 열거가
-    maxNeed에서 멈추므로 공급이 아니라 수요에 묶인다.
+    **존 하나의 프론티어 열거 잎 ≤ `MAX_FRONTIER_LEAVES`** (2026-09-05 신설 — 이것이 열거의 상한이다).
+    `R_t = min(남은_t, maxNeed(z,t))` 제한은 곱의 **인수 크기**만 수요에 묶고 **인수 개수 |compat(z)|**는
+    못 묶어 `Π_{t∈compat(z)}(maxNeed(z,t)+1)`가 여전히 지수다 — 차종 31종에서 존마다 2×10⁹이라
+    잎 예산이 없으면 `-Xmx8g`에서도 OOM이다 (실측, [scaling §2.7](stage-04-zone-quota-allocation-scaling.md)).
+    예산 소진은 정상 근사다 (X29).
     프론티어는 존마다 R 벡터로 memo한다 (같은 R이면 같은 프론티어 — 재량 최적화, 2026-09-04 채택):
-    memo 항목 수 ≤ 그 층의 서로 다른 R 수 ≤ 층 상태 수이고 존이 끝나면 버린다 ·
+    memo가 그 존의 잎 예산을 나눠 쓰므로 memo 전체가 들고 있는 벡터도 같은 상수에 묶이고, 존이 끝나면 버린다 ·
   H24 bin당 재DP ≤ |pool| (반복마다 제외 집합 +1 또는 nmax −1).
 방어 카운터가 기법별 상한(§5 표)을 넘으면 IllegalStateException — 조용히 자르지 않는다
 (stage-04 N2와 같은 취급: 구조 결함은 품질 문제가 아니라 버그다).
@@ -995,7 +1012,11 @@ DP는 **호환 성분마다 독립 실행**한다 (그래프 G: 정점 = 유형 
 상태는 **도달한 것만** 보관한다 (키 = 남은 대수 벡터, 순서 KEY_ORDER = 마지막 유형부터 첫 유형 ASC).
   성분이 보관하는 상태 총량이 MAX_TOTAL_STATES를 넘으면 층마다 (값 ASC, KEY_ORDER ASC)로 잘라
   근사하고 Allocation.truncated = true (X20). 자르는 폭 = max(1, ⌊남은 예산 / 남은 층 수⌋).
-종료: 성분당 보관 상태 ≤ MAX_TOTAL_STATES + 존 수 · 프론티어 열거 ≤ Π_{t∈compat(z)}(maxNeed(z,t)+1)
+프론티어 열거는 존마다 잎 예산 MAX_FRONTIER_LEAVES를 쓴다. 호출당 cap = max(1, 남은 예산) 잎까지만
+  열거하고, cap에 닿아 멈췄으면 Allocation.truncated = true (X29). 자르는 규칙은 값 순이 아니라
+  **열거 순서(유형 index ASC · 대수 ASC)의 접두**다 — 값으로 자르려면 자르려던 그 열거를 다 해야 한다.
+  cap ≥ 1이라 빈 집합 (c)는 항상 나오고 전이 ②가 남는다.
+종료: 성분당 보관 상태 ≤ MAX_TOTAL_STATES + 존 수 · 존당 프론티어 열거 잎 ≤ MAX_FRONTIER_LEAVES
   — 루프 상한이 아니라 구조 (§4.3). 기권 없음.
 ```
 
@@ -1144,7 +1165,7 @@ subsetSum(items, cap, wcap, nmin, nmax):
 | X17 | H21에서 병합 가능한 쌍이 0 | 요청당 클러스터 1개로 퇴화 — 단독 경로 위주 해. 유효 | §5 H21 |
 | X18 | H22에서 priority가 라운드 간 불변 | 불변점 — 이후 라운드도 같은 해이므로 조기 종료. R회를 다 돌지 않는 것은 정상 | §5 H22 |
 | X19 | H14에서 남은 호환 차량이 없는 요청 | `noAlt` 축이 최우선으로 끌어올린다 — big-M을 쓰지 않는다 (H1 onlyCandidate와 동일 수법) | §5 H14 |
-| X20 | H23·H24에서 차량 유형 조합 수가 큼 | **기권하지 않는다.** 성분당 보관 상태 총량이 `MAX_TOTAL_STATES`(262,144)를 넘으면 값 순으로 잘라 근사하고 `Allocation.truncated = true`. 상태 수 상한이 상수라 메모리는 입력과 무관 | §5 H23 공통 |
+| X20 | H23·H24에서 차량 유형 조합 수가 큼 | **기권하지 않는다.** 상한이 **둘**이다 — (1) 성분당 보관 상태 총량 > `MAX_TOTAL_STATES`(262,144)면 값 순으로 잘라 근사 (2) 존당 프론티어 열거 잎 > `MAX_FRONTIER_LEAVES`(4,194,304)면 열거 순서 접두만 남기고 근사. 둘 중 하나라도 작동하면 `Allocation.truncated = true`. **둘 다 있어야** 메모리·시간이 입력과 무관하다 — 2026-09-05 이전에는 (1)뿐이라 프론티어 열거가 Π에 비례했고, 차종 31종·존 11개에서 `-Xmx8g`로도 OOM이었다 (실측, [scaling §2.7](stage-04-zone-quota-allocation-scaling.md)) | §5 H23 공통 |
 | X21 | H23·H24 존 배정 DP에서 어떤 존도 못 덮음 (공급 < 수요) | 프론티어에 빈 집합(c)이 항상 있어 DP는 완주한다. 호환 안 되는 차는 그 존에 배정되지 않고 (b)도 `maxNeed`까지만 태운다 — 남은 차를 전부 쏟아붓지 않는다. 존 단위로 덮거나 비우고, 남은 요청은 leftover pass가 기존 경로·미사용 차량에 삽입한다 | §5 H23 |
 | X22 | H24 순서화(오라클)가 subset-sum이 고른 요청을 못 넣음 | 그 요청을 bin의 제외 집합에 넣고 nmax를 줄여 재DP. 반복은 bin당 ≤ \|pool\| — 조용히 자르지 않고 구조로 끝난다 | §5 H24 |
 | X23 | H23·H24에서 정차 한도 부재 | H23 예산 = 남은 부피(부피 best-fit으로 퇴화) · H24 subsetSum은 방문 수 축 없이 부피만 (nmin·nmax 무시). 기권하지 않는다 | §5 H23·H24 |
@@ -1152,6 +1173,7 @@ subsetSum(items, cap, wcap, nmin, nmax):
 | X25 | 성분의 존 수 + 1 > `MAX_TOTAL_STATES` | 폭 `cap = max(1, ·)`로 층마다 1 상태는 남긴다 — 총량이 존 수만큼 초과할 뿐 완주한다 | §5 H23 공통 |
 | X26 | 용량(`maxVolume`/`maxWeight`)이 0인 유형 | `maxNeed`에서 그 자원 항은 0 (나눗셈 없음). 호환이면 maxNeed ≥ 1로 후보에는 남고, 실을 수 없다는 판정은 `covers`·오라클이 한다 | §5 H23 공통 |
 | X27 | 근사(`truncated`)가 발생 | H23·H24는 정상 실행 — 2단계·leftover pass·정식 평가 모두 그대로. 포트폴리오 선택은 정식 평가가 하므로 근사가 나빴으면 다른 기법이 이긴다 | §6 |
+| X29 | 존의 프론티어 열거 잎 예산 소진 | 정상 근사 — 그 존의 남은 열거 범위는 보지 않고 `truncated = true`. 호출당 `cap = max(1, ·)`이라 빈 집합 (c)는 반드시 나오므로 전이 ②가 남고 DP는 완주한다 (X21과 같은 보장). 예외 아님 | §5 H23 공통 |
 | X28 | H23·H24에서 차종이 **65종 이상** | **알려진 한계 — 범위 밖.** 존 배정 DP의 호환 마스크가 `long`이라 유형 t의 비트 `1L << t`가 t ≥ 64에서 접힌다(예외 없이 답만 틀어진다). 가드·기권·예외를 두지 않는다 — `abstains`는 계속 `false`. 필요해지면 `BitSet` 별도 개정 | [scaling §2.6](stage-04-zone-quota-allocation-scaling.md) |
 
 ---
@@ -1203,10 +1225,11 @@ subsetSum(items, cap, wcap, nmin, nmax):
 | T46 | `ZoneQuotaAllocationTest.abundantTypeLeavesStateVector` | 풍부 유형 1개(대수 ≥ Σ maxNeed) + 희소 유형 2개 + 존 3개: 예산에 `Π(희소 대수+1) × (존 수+1)`을 넘겨도 `truncated == false`(풍부 차원이 상태에 없다는 증거) · 배정 값이 손 계산 최적과 같음 · 풍부 유형 소비 ≤ 대수 | §5 H23 공통 |
 | T47 | `ZoneQuotaAllocationTest.componentsSolvedIndependently` | 서로 호환이 없는 두 묶음(유형 A·존 a / 유형 B·존 b): `components`가 2개 · `vehiclesByZone`이 두 묶음을 각각 단독 문제로 돌린 결과와 같음 · 예산을 큰 묶음 하나 크기로 줘도 `truncated == false` | §5 H23 공통 |
 | T48 | `ZoneQuotaAllocationTest.truncationIsDeterministicAndValid` | T38 입력에 예산 2 주입: `truncated == true` · 두 번 실행 결과 동일(X8) · 차량 중복 배정 없음 · 존마다 호환 유형만. 근사가 나와도 H23은 정상 실행된다 — `construct` 진입점에 예산 인자가 없으므로 **기본 예산**으로 `Evaluator` Feasible을 확인한다 | X25·X27 |
-| T49 | `ZoneQuotaAllocationTest.frontierBoundedByMaxNeed` | 호환 안 되는 유형 1대·호환 유형 100대·존 1개(필요 3대): 프론티어 벡터마다 `s_t ≤ maxNeed(z,t)` · 호환 안 되는 유형은 0 · 프론티어 크기 ≤ 4 | §4.3 |
+| T49 | `ZoneQuotaAllocationTest.frontierBoundedByMaxNeed` | 호환 안 되는 유형 1대·호환 유형 100대·존 1개(필요 3대): 프론티어 벡터마다 `s_t ≤ maxNeed(z,t)` · 호환 안 되는 유형은 0 · 프론티어 크기 ≤ 4 · 잎 예산에 걸리지 않음(`truncated == false`) | §4.3 |
 | T50 | `ZoneQuotaAllocationTest.uncoverableZoneTakesAtMostMaxNeed` | 공급 < 수요인 존: 배정 대수 ≤ maxNeed · 호환 안 되는 차 0 · 완주 | X21 |
 | T51 | `ZoneQuotaAllocationScaleTest.largeFleetCompletesWithinBudget` | **규모.** 3종×각 67대(Π 314,432)와 20종×각 1대(Π 2²⁰)를 존 수를 바꿔 가며: 존이 적으면(5·7) 기본 예산에서 `truncated == false`, 존 20이면 `truncated == true`이되 **완주·유효·결정적** · 예산 1,000에서도 같음 · 소요 출력(한도 아님, T25와 같은 취급). **2026-09-04 실측** — 존 5 14 ms(false) · 존 20 2.0 s(true) · 20종 존 7 709 ms(false) · 20종 존 20 1.3 s(true) | §4.3 |
 | T57 | `ZoneQuotaAllocationTest.thirtyThreeTypesUseLongMask` | 차종 33개·존마다 호환 유형이 다른 입력: 존마다 배정 차량이 `compat(z)` 유형뿐 — 마스크가 `int`면 t32가 t0으로 접혀 깨진다. `1L << t` 치환 누락은 경고가 없으므로 이 시험이 유일한 방어선이다 (T53~T56은 H25 대역) | X28·[scaling §2.6](stage-04-zone-quota-allocation-scaling.md) |
+| T58 | `ZoneQuotaAllocationScaleTest.frontierBudgetCapsEnumeration` | **규모.** 차종 31종(각 1대)·존 11개 합성: 잎 예산이 없으면 존마다 Π ≈ 2×10⁹을 열거하려다 `-Xmx8g`로도 OOM이던 입력이 **기본 heap에서 완주**한다(2026-09-05 실측 24.8초) · 배정 유효(중복 없음·`compat(z)` 유형뿐·대수 ≤ maxNeed) · 두 번 실행 동일(X8) · `truncated == true` · 소요 출력(한도 아님, T51과 같은 취급) | X29·[scaling §2.7](stage-04-zone-quota-allocation-scaling.md) |
 | T52 | `WinPocFixtureTest.zoneQuotaBalancedFillAssignsEveryRequestOnRealFixture` (**app 모듈**, T44 확장) | 위 T44 행의 **score 전체 일치**·`truncated == false` 단언이 그것이다. `ZoneQuotaAllocation`이 package-private이라 `truncated` 관측은 app 테스트 소스의 `com.ronext.rpdptw.solve.ZoneQuotaAllocationAccess`(테스트 전용 접근자)를 거친다 — 운영 코드의 가시성은 그대로다 | §2 회귀 |
 
 ---

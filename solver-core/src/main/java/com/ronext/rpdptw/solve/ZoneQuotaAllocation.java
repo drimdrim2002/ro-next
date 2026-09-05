@@ -26,6 +26,13 @@ final class ZoneQuotaAllocation {
 
     /** 성분 하나의 DP가 층 전체에 보관하는 상태 수 총량 (재량 상수). 넘치면 값 순으로 잘라 근사한다. */
     static final int MAX_TOTAL_STATES = 262_144;
+    /**
+     * 존 하나의 프론티어 열거가 도달할 수 있는 잎 수 총량 (재량 상수). 존의 memo가 이 예산을 나눠 쓰고,
+     * 소진되면 열거 순서 접두만 남기고 근사한다 (X29). 잎 예산 하나가 시간과 메모리를 함께 묶는다 —
+     * 호출당 상한만 두면 memo 항목 수(≤ 층 상태 수)가 곱해져 메모리가 안 묶인다.
+     * 실물 fixture의 존별 실측 최대는 2,348,844잎(ZONE_29)이라 이 값은 그 1.8배다 — 답이 그대로다 (T52).
+     */
+    static final int MAX_FRONTIER_LEAVES = 4_194_304;
     static final String NO_ZONE = VehicleZoneFillConstruction.NO_ZONE;
 
     /** 상태 키 순서 — 마지막 유형부터 첫 유형 순으로 비교 (종전 혼합 진법 키 오름차순과 같은 순서). */
@@ -53,6 +60,9 @@ final class ZoneQuotaAllocation {
 
     /** 호환 성분 — 유형 index 목록(유형 순서)·존 index 목록(존 순서). 존이 없는 성분은 만들지 않는다 (X24). */
     record Component(List<Integer> typeIndexes, List<Integer> zoneIndexes) {}
+
+    /** 프론티어 열거 결과 — 벡터 목록 · 소비한 잎 수 · 잎 예산에 걸려 잘렸는가 (X29). */
+    record Frontier(List<int[]> vectors, int leaves, boolean truncated) {}
 
     /** 유형 순서 = (maxVolume ASC, maxWeight ASC, 첫 VehicleId ASC). 근무창·depot·속도는 유형에 넣지 않는다. */
     static List<VehicleType> vehicleTypes(Problem problem) {
@@ -331,6 +341,8 @@ final class ZoneQuotaAllocation {
             Layer from = layers.get(zi);
             TreeMap<int[], Entry> next = new TreeMap<>(KEY_ORDER);
             TreeMap<int[], List<int[]>> frontiers = new TreeMap<>(KEY_ORDER);   // 같은 R이면 프론티어도 같다 (존마다 새로)
+            int leafBudget = MAX_FRONTIER_LEAVES;                                  // 존마다 새로 — memo가 나눠 쓴다 (X29)
+
             for (int i = 0; i < from.size; i++) {                                  // 층은 KEY_ORDER 오름차순
                 int[] key = from.key(i);
                 System.arraycopy(maxNeedZ, 0, range, 0, typeCount);
@@ -340,7 +352,10 @@ final class ZoneQuotaAllocation {
                 long[] base = from.value(i);
                 List<int[]> frontier = frontiers.get(range);
                 if (frontier == null) {
-                    frontier = frontier(range, demand);
+                    Frontier enumerated = frontier(range, demand, leafBudget);
+                    leafBudget -= enumerated.leaves();
+                    truncated |= enumerated.truncated();
+                    frontier = enumerated.vectors();
                     frontiers.put(range.clone(), frontier);
                 }
                 for (int[] s : frontier) {
@@ -402,21 +417,55 @@ final class ZoneQuotaAllocation {
     /**
      * 프론티어 — 유형 순서로 열거 범위 range 안에서 재귀 나열(covers가 되는 순간 그 유형에서 중단)한 s 중
      * (a) 최소 덮개 · (b) 한 대 모자란 최대 비덮개 · (c) 빈 집합.
+     * cap은 이 호출이 도달해도 되는 잎 수(≥ 1)다 — 열거 순서상 첫 잎이 빈 집합이라 cap = 1이어도 (c)는 나온다 (X29).
+     * 자르는 규칙은 값 순이 아니라 열거 순서의 접두다: 값으로 자르려면 자르려던 그 열거를 다 해야 한다.
      */
-    static List<int[]> frontier(int[] range, Demand demand) {
-        List<int[]> out = new ArrayList<>();
-        enumerate(0, new int[range.length], range, demand, out);
-        return out;
+    static Frontier frontier(int[] range, Demand demand, int cap) {
+        Enumeration enumeration = new Enumeration(Math.max(1, cap));
+        enumerate(0, new int[range.length], range, demand, enumeration);
+        return new Frontier(List.copyOf(enumeration.out), enumeration.leaves, enumeration.truncated);
     }
 
-    private static void enumerate(int t, int[] s, int[] range, Demand demand, List<int[]> out) {
+    /** 열거 중 상태 — 남은 잎 예산·모은 벡터·절단 여부. 잎 예산이 시간과 메모리를 동시에 묶는다 (X29). */
+    private static final class Enumeration {
+        private final int cap;
+        private final List<int[]> out = new ArrayList<>();
+        private int leaves;
+        private boolean truncated;
+
+        private Enumeration(int cap) {
+            this.cap = cap;
+        }
+
+        /** 잎 하나를 소비한다. 예산이 남아 있으면 true. */
+        boolean visitLeaf() {
+            if (leaves == cap) {
+                truncated = true;
+                return false;
+            }
+            leaves++;
+            return true;
+        }
+
+        boolean exhausted() {
+            return leaves == cap;
+        }
+    }
+
+    private static void enumerate(int t, int[] s, int[] range, Demand demand, Enumeration enumeration) {
         if (t == s.length) {
-            classify(s, range, demand, out);
+            if (enumeration.visitLeaf()) {
+                classify(s, range, demand, enumeration.out);
+            }
             return;
         }
         for (int c = 0; c <= range[t]; c++) {
             s[t] = c;
-            enumerate(t + 1, s, range, demand, out);
+            enumerate(t + 1, s, range, demand, enumeration);
+            if (enumeration.exhausted()) {
+                enumeration.truncated |= c < range[t];                         // 남은 대안을 버렸으면 근사다 (X29)
+                break;
+            }
             if (demand.covers(s)) {                                            // 이후 유형은 0인 상태 — 이미 덮으면 더 늘릴 이유가 없다
                 break;
             }

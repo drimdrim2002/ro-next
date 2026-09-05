@@ -30,7 +30,7 @@ import com.ronext.rpdptw.solve.ZoneQuotaAllocation.Allocation;
 import com.ronext.rpdptw.solve.ZoneQuotaAllocation.Zone;
 
 /**
- * T51 — 규모 측정. 종전 기권선(Π > 65,536)을 훌쩍 넘는 두 함대에서 존 배정 DP가 완주하는지,
+ * T51·T58 — 규모 측정. 종전 기권선(Π > 65,536)을 훌쩍 넘는 두 함대에서 존 배정 DP가 완주하는지,
  * 예산을 조이면 근사로 내려가되 여전히 유효한지를 본다. 소요는 출력만 하고 판정하지 않는다 (T25와 같은 취급).
  */
 class ZoneQuotaAllocationScaleTest {
@@ -51,6 +51,30 @@ class ZoneQuotaAllocationScaleTest {
         }
         run("20종×1대·존 7 (Π 2²⁰)", zoned(twentyTypes, 7, 2, 3_000L), false);
         run("20종×1대·존 20 (Π 2²⁰)", zoned(twentyTypes, 20, 2, 3_000L), true);
+    }
+
+    /**
+     * T58 — 존마다 프론티어 잎 예산이 있어 차종 31종에서도 기본 heap으로 완주한다 (X29).
+     * 예산이 없던 2026-09-05 이전에는 존마다 Π(R+1) ≈ 2×10⁹을 열거하려다 `-Xmx8g`에서도 OutOfMemoryError였다.
+     */
+    @Test
+    void frontierBudgetCapsEnumeration() {
+        List<Vehicle> vehicles = new ArrayList<>();
+        for (int i = 1; i <= 31; i++) {                                                // 차종 31종 × 각 1대
+            vehicles.add(vehicle(String.format("V%03d", i), 20_000L + i * 7L,
+                    Optional.of(DEPOT), Optional.empty(), OptionalInt.of(28), Optional.empty()));
+        }
+        Problem problem = zoned(vehicles, 11, 20, 3_000L);                             // 존 11 × 각 20건
+        assertEquals(31, ZoneQuotaAllocation.vehicleTypes(problem).size());
+
+        long started = System.nanoTime();
+        Allocation allocation = ZoneQuotaAllocation.allocate(problem);
+        long millis = (System.nanoTime() - started) / 1_000_000L;
+        assertTrue(allocation.truncated(), "잎 예산이 실제로 잘라야 한다");
+        assertValid(problem, allocation);
+        assertTrue(sameAssignment(allocation, ZoneQuotaAllocation.allocate(problem)), "결정적이다");   // X8
+
+        System.out.println("T58 차종 31종·존 11 (Π 2³¹) — " + millis + " ms truncated=" + allocation.truncated());
     }
 
     /**
