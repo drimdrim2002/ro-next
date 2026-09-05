@@ -6,6 +6,7 @@ sources:
   - ../implementation/stage-04-initial-solution-heuristics-survey.md (§2 근거 · §2.5 실물 실측 · §5 비교 프로토콜)
   - ../implementation/stage-04-alns.md (§4 repair 연산자 — §4.1 "ALNS가 하는 일과 같은 계열" 판단 근거)
 revisions:
+  - 2026-09-05 H3 코드 해설 노트 링크 — §2 H3 vehicle-zone-fill
   - 2026-09-05 H22·H2·H14·H18 코드 해설 노트 링크 — §6.1 squeaky-wheel, §6.2 urgency-regret3, §6.3 vehicle-fill-remaining-regret, §6.4·§6.5 hilbert-split
   - 2026-09-04 §4 병렬 포트폴리오 선정 검토(5개 + 조건부 1개)·§5 24개 밖의 방향 추가. §3 마지막 항목 문구 정정
   - 2026-09-04 §6 포트폴리오 4개(H22·H2·H14·H18) 예시 설명 + §6.0 삽입 비용의 정의(차량 크기 미포함) + §6.5 힐베르트 순서 추가
@@ -116,6 +117,8 @@ revisions:
 구역마다 **가짜로 한 번 실어 본다** — 전원 다 실리는지, 적재율이 얼마인지만 보고 결과는 버린다.
 "전원 성공하면서 적재율 85% 넘는" 구역이 있으면 그중 적재율이 가장 높은 구역을, 없으면 그냥 적재율이
 가장 높은 구역을 **그때 진짜로 확정**한다. 아무 구역도 못 받은 차는 아예 쓰지 않는다.
+
+코드 수준 해설은 [vehicle-zone-fill 노트](vehicle-zone-fill-construction.md).
 
 ### H4 `deadline-sequential` — 마감 임박 순 (기준선)
 
