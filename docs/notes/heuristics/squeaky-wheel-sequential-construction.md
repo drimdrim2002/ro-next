@@ -1,7 +1,7 @@
 # `SqueakyWheelSequentialConstruction` (H22) 코드 해설
 
-> **성격**: 코드 해설 노트(비규범). 쉬운 말 설명은 [h1–h24 노트 §6.1](initial-solution-heuristics-h1-h24.md)이고,
-> 규범은 [heuristics 문서 §5 H22](../implementation/stage-04-initial-solution-heuristics.md)다. 둘과 이 노트가 어긋나면 그쪽이 이긴다.
+> **성격**: 코드 해설 노트(비규범). 쉬운 말 설명은 [h1–h24 노트 §6.1](../initial-solution-heuristics-h1-h24.md)이고,
+> 규범은 [heuristics 문서 §5 H22](../../implementation/stage-04-initial-solution-heuristics.md)다. 둘과 이 노트가 어긋나면 그쪽이 이긴다.
 >
 > **대상 독자**: CVRPTW[^cvrptw]를 아는 Java 개발자. 이 저장소의 용어(`Request`·`Problem`·bank 등)는 처음 본다고 가정하고,
 > 처음 나올 때마다 각주로 풀었다. 각주는 문서 끝 [용어 각주](#용어-각주)에 모여 있다.
@@ -45,7 +45,7 @@ InitialSolutionBuilder.build(problem, profile)
   → 각 Solution을 Evaluator로 평가 → 사전식 최선 1개
 ```
 
-포트폴리오 축으로는 **"무가정 자기 교정"**의 대표다 ([h1–h24 §4.2](initial-solution-heuristics-h1-h24.md)).
+포트폴리오 축으로는 **"무가정 자기 교정"**의 대표다 ([h1–h24 §4.2](../initial-solution-heuristics-h1-h24.md)).
 구역·좌표·차고 수·주문 유형을 전제로 두지 않고, 못 실린 요청에 숫자를 올리는 규칙만으로 순서를 고친다.
 1라운드는 H4와 같은 실행이라 H4를 슬롯에 따로 넣을 필요가 없다(§4.2).
 
@@ -176,7 +176,7 @@ H22(와 그것이 부르는 H4 오버로드, 그리고 `blame`)가 쓰는 메서
 
 기존 경로가 있으면 그 경로들을 먼저 보고, 미사용 호환 차량은 **문자열 ID가 가장 앞선 1대만** 새 경로 후보로 연다
 (`firstUnusedCompatible`). 새 경로 후보는 `byCost`의 첫째 칸 `newRoute = true`라, 기존 경로에 들어가는 자리보다
-항상 뒤다 — 차량 수가 점수 2번 축이기 때문이다 ([h1–h24 §6.0](initial-solution-heuristics-h1-h24.md)).
+항상 뒤다 — 차량 수가 점수 2번 축이기 때문이다 ([h1–h24 §6.0](../initial-solution-heuristics-h1-h24.md)).
 
 단일 방문 패턴(`DELIVERY_ONLY`·`PICKUP_ONLY`)에서 경로 방문 수가 `L`이면 삽입 슬롯은 `i = 0 … L`로 **`L + 1`곳**이다
 (`InsertionSearch.java` 246–252행). 각 슬롯마다 경로 전체를 다시 전파하므로 그 차량 하나당 `O(L²)`.
@@ -590,7 +590,7 @@ mvn test -pl solver-core -Dtest=SqueakyWheelSequentialConstructionTest
 ```
 
 실물 실측 (`data/win_poc_case_floor.json`, 주문 452 · 차량 31, 2026-09-04 단일 실행,
-[h1–h24 §1 표](initial-solution-heuristics-h1-h24.md)):
+[h1–h24 §1 표](../initial-solution-heuristics-h1-h24.md)):
 
 | 기법 | 미배정 | 차량 | 거리(m) | 운행시간(s) | 소요 | 24개 중 |
 |---|---:|---:|---:|---:|---:|---:|

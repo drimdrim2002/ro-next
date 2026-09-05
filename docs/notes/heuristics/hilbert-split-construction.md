@@ -1,8 +1,8 @@
 # `HilbertSplitConstruction` (H18) 코드 해설
 
-> **성격**: 코드 해설 노트(비규범). 쉬운 말 설명은 [h1–h24 노트 §6.4·§6.5](initial-solution-heuristics-h1-h24.md)이고,
-> 규범은 [heuristics 문서 §5 H18](../implementation/stage-04-initial-solution-heuristics.md)이다. 출처·채택 근거는
-> [survey H18 행](../implementation/stage-04-initial-solution-heuristics-survey.md)이다. 셋과 이 노트가 어긋나면 그쪽이 이긴다.
+> **성격**: 코드 해설 노트(비규범). 쉬운 말 설명은 [h1–h24 노트 §6.4·§6.5](../initial-solution-heuristics-h1-h24.md)이고,
+> 규범은 [heuristics 문서 §5 H18](../../implementation/stage-04-initial-solution-heuristics.md)이다. 출처·채택 근거는
+> [survey H18 행](../../implementation/stage-04-initial-solution-heuristics-survey.md)이다. 셋과 이 노트가 어긋나면 그쪽이 이긴다.
 > 이 문서는 §6.4–§6.5를 **코드 수준으로 연장**한다 — 대체하지 않는다.
 >
 > **대상 독자**: CVRPTW[^cvrptw]를 아는 Java 개발자. 이 저장소의 용어(`Request`·`Problem`·bank 등)는 처음 본다고 가정하고,
@@ -243,7 +243,7 @@ side  = 1L << 16    // = 65,536
 
 ### 4.2 `hilbertIndex` — 좌표 변환으로 인덱스 쌓기
 
-쉬운 말 쪽([h1–h24 §6.5](initial-solution-heuristics-h1-h24.md))은 이 곡선을 "한 붓으로 훑는 길"로 직관을 준다. **여기서부터는 코드가 하는 대입만** 본다.
+쉬운 말 쪽([h1–h24 §6.5](../initial-solution-heuristics-h1-h24.md))은 이 곡선을 "한 붓으로 훑는 길"로 직관을 준다. **여기서부터는 코드가 하는 대입만** 본다.
 
 ```73:91:solver-core/src/main/java/com/ronext/rpdptw/solve/HilbertSplitConstruction.java
     /** 표준 xy → d (Hilbert curve, side = 2^ORDER). */
@@ -651,7 +651,7 @@ H18 전용 테스트 클래스는 없다. 절단의 부등식은 T34가, 포트�
 
 T34의 next-fit은 "현재 차에 `appendPair`로 붙여 `validate`가 되면 확정, 안 되면 그 차를 닫고 다음 차. 차 없으면 bank"다. 앞 요청을 bank에 두고 뒤 묶음을 살리는 선택이 없다. Split의 ②가 그 선택이라, §4.6 워크스루처럼 1축이 더 좋을 수 있고, 나쁠 수는 없다.
 
-실물 실측 ([h1–h24 §1](initial-solution-heuristics-h1-h24.md), 2026-09-04, 정식 평가, 24개 중 **20위**):
+실물 실측 ([h1–h24 §1](../initial-solution-heuristics-h1-h24.md), 2026-09-04, 정식 평가, 24개 중 **20위**):
 
 | 기법 | 미배정 | 차량 | 거리(m) | 운행시간(s) | 소요 |
 |---|---:|---:|---:|---:|---:|
@@ -661,7 +661,7 @@ T34의 next-fit은 "현재 차에 `appendPair`로 붙여 `validate`가 되면 �
 
 > 이 표는 한 번의 실행 기록이고 T번호로 고정돼 있지 않다. 회귀로 고정된 실물 결과는 T44(H23)뿐이다.
 
-**가설:** 실물에서 약한 이유(미배정 165)는 측정된 사실이 아니다. [h1–h24 §6.4](initial-solution-heuristics-h1-h24.md)의 가설을 코드 용어로 옮기면: 실물은 한 경로가 구체 구역 1종만 담는다(`ZONE_MIX`). Hilbert 순열은 `zoneId`를 읽지 않으므로 σ에서 이웃한 두 요청이 다른 구역일 수 있고, 그 경계(`§4.3`의 C\|D)를 넘는 ③은 전파가 거절한다. 조각이 구역 경계마다 잘리고, B=2가 아니어도 짧은 조각이 차를 소비해 뒤 요청이 bank로 밀린다. 이 가설은 §4.3 (a) "구역을 지운 변형"이 Stage 8에서 검증한다 — 거기서 H18이 크게 오르지 않으면 축 ⑤의 대표를 바꾼다.
+**가설:** 실물에서 약한 이유(미배정 165)는 측정된 사실이 아니다. [h1–h24 §6.4](../initial-solution-heuristics-h1-h24.md)의 가설을 코드 용어로 옮기면: 실물은 한 경로가 구체 구역 1종만 담는다(`ZONE_MIX`). Hilbert 순열은 `zoneId`를 읽지 않으므로 σ에서 이웃한 두 요청이 다른 구역일 수 있고, 그 경계(`§4.3`의 C\|D)를 넘는 ③은 전파가 거절한다. 조각이 구역 경계마다 잘리고, B=2가 아니어도 짧은 조각이 차를 소비해 뒤 요청이 bank로 밀린다. 이 가설은 §4.3 (a) "구역을 지운 변형"이 Stage 8에서 검증한다 — 거기서 H18이 크게 오르지 않으면 축 ⑤의 대표를 바꾼다.
 
 실행 명령:
 

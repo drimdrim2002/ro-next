@@ -1,7 +1,7 @@
 # `VehicleFillRemainingRegretConstruction` (H14) 코드 해설
 
-> **성격**: 코드 해설 노트(비규범). 규범은 [heuristics 문서 §5 H14](../implementation/stage-04-initial-solution-heuristics.md)이고,
-> 쉬운 말 설명은 [초기해 24개 노트 §6.3](initial-solution-heuristics-h1-h24.md)(비용 정의는 §6.0)이다.
+> **성격**: 코드 해설 노트(비규범). 규범은 [heuristics 문서 §5 H14](../../implementation/stage-04-initial-solution-heuristics.md)이고,
+> 쉬운 말 설명은 [초기해 24개 노트 §6.3](../initial-solution-heuristics-h1-h24.md)(비용 정의는 §6.0)이다.
 > 셋과 이 노트가 어긋나면 **규범이 이긴다.** 이 노트는 §6.3을 코드 수준으로 연장할 뿐, 대체하지 않는다.
 >
 > **대상 독자**: CVRPTW[^cvrptw]를 아는 Java 개발자. 이 저장소의 용어(`Request`·`Problem`·bank 등)는 처음 본다고 가정하고,

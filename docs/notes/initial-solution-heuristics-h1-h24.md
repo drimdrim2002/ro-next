@@ -6,6 +6,7 @@ sources:
   - ../implementation/stage-04-initial-solution-heuristics-survey.md (§2 근거 · §2.5 실물 실측 · §5 비교 프로토콜)
   - ../implementation/stage-04-alns.md (§4 repair 연산자 — §4.1 "ALNS가 하는 일과 같은 계열" 판단 근거)
 revisions:
+  - 2026-09-05 H3·H22·H2·H14·H18 코드 해설 노트를 notes/heuristics/로 이동
   - 2026-09-05 H3 코드 해설 노트 링크 — §2 H3 vehicle-zone-fill
   - 2026-09-05 H22·H2·H14·H18 코드 해설 노트 링크 — §6.1 squeaky-wheel, §6.2 urgency-regret3, §6.3 vehicle-fill-remaining-regret, §6.4·§6.5 hilbert-split
   - 2026-09-04 §4 병렬 포트폴리오 선정 검토(5개 + 조건부 1개)·§5 24개 밖의 방향 추가. §3 마지막 항목 문구 정정
@@ -118,7 +119,7 @@ revisions:
 "전원 성공하면서 적재율 85% 넘는" 구역이 있으면 그중 적재율이 가장 높은 구역을, 없으면 그냥 적재율이
 가장 높은 구역을 **그때 진짜로 확정**한다. 아무 구역도 못 받은 차는 아예 쓰지 않는다.
 
-코드 수준 해설은 [vehicle-zone-fill 노트](vehicle-zone-fill-construction.md).
+코드 수준 해설은 [vehicle-zone-fill 노트](heuristics/vehicle-zone-fill-construction.md).
 
 ### H4 `deadline-sequential` — 마감 임박 순 (기준선)
 
@@ -542,7 +543,7 @@ profile의 점수 축과 `byCost` 양쪽에 같은 축을 더해야 하고, 그�
 
 **한계.** "앞으로 당기기"는 자리를 만들어 줄 뿐, 구역 × 차종 조합 같은 전역 구조는 못 찾는다 — 그건 H23의 몫이다.
 
-코드 수준 해설은 [squeaky-wheel-sequential 노트](squeaky-wheel-sequential-construction.md).
+코드 수준 해설은 [squeaky-wheel-sequential 노트](heuristics/squeaky-wheel-sequential-construction.md).
 
 ### 6.2 H2 — "시간대가 좁은 주문부터, 미루면 손해가 큰 것부터"
 
@@ -570,7 +571,7 @@ H14(차량 중심)도 시간을 1순위로 보지 않는다. H2는 시간을 1�
 **한계.** 매번 남은 주문 전부를 다시 계산하므로 H4보다 훨씬 비싸다(644 ms vs 77 ms). 시간창이 전부 비슷한
 입력(모두 "하루 종일")에서는 등급이 의미를 잃어 사실상 H1과 비슷한 답이 나온다.
 
-코드 수준 해설은 [urgency-regret3 노트](urgency-regret3-construction.md).
+코드 수준 해설은 [urgency-regret3 노트](heuristics/urgency-regret3-construction.md).
 
 ### 6.3 H14 — "차 한 대를 잡고 꽉 채워 보내되, 뒤차가 더 잘 할 주문은 남겨 둔다"
 
@@ -608,7 +609,7 @@ H14(차량 중심)도 시간을 1순위로 보지 않는다. H2는 시간을 1�
 좁다. 한 번 닫은 차는 다시 열지 않아 앞차의 실수를 뒤차가 못 고친다(그건 ALNS 몫). 매 삽입마다 뒤차 전부의
 "혼자 싣는 비용"을 계산하므로 519 ms.
 
-코드 수준 해설은 [vehicle-fill-remaining-regret 노트](vehicle-fill-remaining-regret-construction.md).
+코드 수준 해설은 [vehicle-fill-remaining-regret 노트](heuristics/vehicle-fill-remaining-regret-construction.md).
 
 ### 6.4 H18 — "주문을 한 줄로 세운 다음, 어디서 끊어 차를 나눌지를 계산으로 정한다"
 
@@ -643,7 +644,7 @@ H18·H19·H20·H8뿐이고 그중 차고 수와 무관하게 항상 도는 건 H
 다른 구역이면 같은 조각에 못 들어가 조각이 잘게 쪼개진다. 이걸 확인하지 못했으므로 §4.3 (a) "구역을 지운
 변형"을 Stage 8로 넘겼다 — 거기서 H18이 크게 오르지 않으면 이 축의 대표를 바꾼다.
 
-코드 수준 해설은 [hilbert-split 노트](hilbert-split-construction.md).
+코드 수준 해설은 [hilbert-split 노트](heuristics/hilbert-split-construction.md).
 
 ### 6.5 힐베르트 순서 — "지도를 한 붓으로 훑는 길을 정해 두고, 그 길에서 몇 번째로 만나느냐로 번호를 매긴다"
 
@@ -688,4 +689,4 @@ H18이 "끊기만 최적으로 하면 된다"고 말할 수 있는 근거다.
 다른 조각에 간다 — 어떤 공간 곡선도 못 피하는 성질이고, 그런 쌍을 한 차에 묶는 건 ALNS가 나중에 한다. 그리고
 구역·차종 같은 비지리 규칙은 전혀 모른다 — §6.4 가설의 원인.
 
-인덱스 산수·4×4 표·DP는 [hilbert-split 노트](hilbert-split-construction.md).
+인덱스 산수·4×4 표·DP는 [hilbert-split 노트](heuristics/hilbert-split-construction.md).

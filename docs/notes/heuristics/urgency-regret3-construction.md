@@ -1,7 +1,7 @@
 # `UrgencyRegret3Construction` (H2) 코드 해설
 
-> **성격**: 코드 해설 노트(비규범). 규범은 [heuristics 문서 §5 H2](../implementation/stage-04-initial-solution-heuristics.md)이고,
-> 쉬운 말 설명은 [h1-h24 §6.2](initial-solution-heuristics-h1-h24.md)다 (비용 정의는 같은 문서 §6.0).
+> **성격**: 코드 해설 노트(비규범). 규범은 [heuristics 문서 §5 H2](../../implementation/stage-04-initial-solution-heuristics.md)이고,
+> 쉬운 말 설명은 [h1-h24 §6.2](../initial-solution-heuristics-h1-h24.md)다 (비용 정의는 같은 문서 §6.0).
 > 셋이 어긋나면 규범이 이긴다. 이 노트는 §6.2를 코드 산수까지 연장한다.
 >
 > **대상 독자**: CVRPTW[^cvrptw]를 아는 Java 개발자. 이 저장소의 용어(`Request`·`Problem`·bank 등)는 처음 본다고 가정하고,
@@ -527,7 +527,7 @@ H2는 기권하지 않으므로 X3(전원 기권)의 경로에 서지 않는다.
 | T20 `ConstructionHeuristicsTest.structureHoldsForEveryHeuristic` | pair 원자성·XOR. PD 포함 문제 포함 |
 | T25 `InitialSolutionScaleTest.runsPortfolioOnFullScaleSyntheticProblem` | 규모 측정. 기법별 소요·미배정 출력 (한도 아님) |
 
-실물 실측([h1-h24 §1](initial-solution-heuristics-h1-h24.md), 2026-09-04, 정식 평가). 24개 중 **6위**.
+실물 실측([h1-h24 §1](../initial-solution-heuristics-h1-h24.md), 2026-09-04, 정식 평가). 24개 중 **6위**.
 
 | 기법 | 미배정 | 차량 | 거리(m) | 운행시간(s) | 소요 |
 |---|---:|---:|---:|---:|---:|
