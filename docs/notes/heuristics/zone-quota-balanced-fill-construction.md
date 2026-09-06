@@ -7,13 +7,14 @@
 >
 > 개정 근거: 기권 제거·희소 DP는 [scaling](../../implementation/stage-04-zone-quota-allocation-scaling.md),
 > 값 함수 `(부족, 대수, 낭비, 결손)`은 [zone-value-function](../../implementation/stage-04-zone-value-function.md),
+> 존당 1회 공유 열거·후보 상한은 [zone-quota-frontier-budget](../../implementation/stage-04-zone-quota-frontier-budget.md),
 > 실물 구조는 [survey §2.5](../../implementation/stage-04-initial-solution-heuristics-survey.md).
 >
 > **대상 독자**: CVRPTW[^cvrptw]를 아는 Java 개발자. 이 저장소의 용어(`Request`·`Problem`·bank 등)는 처음 본다고 가정하고,
 > 처음 나올 때마다 각주로 풀었다. 각주는 문서 끝 [용어 각주](#용어-각주)에 모여 있다.
 >
-> **대상 파일**: `solver-core/src/main/java/com/ronext/rpdptw/solve/ZoneQuotaBalancedFillConstruction.java` (205줄, 2026-09-05 기준).
-> 존 배정 결과는 `ZoneQuotaAllocation.java` (710줄)의 `allocate`가 낸다 — 그 710줄을 여기 풀지 않는다.
+> **대상 파일**: `solver-core/src/main/java/com/ronext/rpdptw/solve/ZoneQuotaBalancedFillConstruction.java` (205줄, 2026-09-06 기준 — 값 함수·열거 개정에도 이 파일은 바뀌지 않았다).
+> 존 배정 결과는 `ZoneQuotaAllocation.java` (817줄)의 `allocate`가 낸다 — 그 817줄을 여기 풀지 않는다.
 
 ---
 
@@ -104,7 +105,7 @@ public interface ConstructionHeuristic {
 
 `allocate(problem)` 한 번이 돌려주는 레코드:
 
-```60:62:solver-core/src/main/java/com/ronext/rpdptw/solve/ZoneQuotaAllocation.java
+```66:67:solver-core/src/main/java/com/ronext/rpdptw/solve/ZoneQuotaAllocation.java
     record Allocation(List<VehicleType> types, List<Zone> zones,
                       Map<String, List<VehicleId>> vehiclesByZone, boolean truncated) {}
 ```
@@ -114,25 +115,27 @@ public interface ConstructionHeuristic {
 | `types` | 차종. (호환 요청 집합, `maxWeight`, `maxVolume`, 정차 한도)가 같은 차량들의 묶음. 근무창·차고·속도는 유형에 없다 — 그 차이는 오라클이 본다. 순서 = `maxVolume` ASC, `maxWeight` ASC, 첫 `VehicleId` ASC. 유형 안 차량 = `VehicleId` ASC |
 | `zones` | 요청 `anchor` side의 `zoneId`로 묶은 목록. 부재 = `"(none)"`. **호환 차량 0대인 요청은 어느 존에도 안 들어간다** (처음부터 bank, X2). 존 순서 = (호환 유형 수 ASC, Σ부피 DESC, zoneId ASC) |
 | `vehiclesByZone` | 존마다 실제 `VehicleId` 목록. **한 차량은 정확히 한 존에만** 들어간다 — 상태가 대수를 차감하므로. 배정 없는 존은 빈 목록 |
-| `truncated` | 폭 제한이 상태를 잘랐으면 `true` (근사). H23은 이 플래그를 **읽지 않고** 2단계를 그대로 돈다 (X27) |
+| `truncated` | 아래 상한 셋 중 하나라도 작동해 근사가 됐으면 `true`. H23은 이 플래그를 **읽지 않고** 2단계를 그대로 돈다 (X27) |
 
 진입점:
 
-```271:273:solver-core/src/main/java/com/ronext/rpdptw/solve/ZoneQuotaAllocation.java
+```276:278:solver-core/src/main/java/com/ronext/rpdptw/solve/ZoneQuotaAllocation.java
     static Allocation allocate(Problem problem) {
         return allocate(problem, MAX_TOTAL_STATES);
     }
 ```
 
-상한 두 개 — **기권이 아니라 근사**:
+상한 세 개 — **기권이 아니라 근사**. 실물 fixture는 어느 것에도 닿지 않는다:
 
-| 상수 | 값 | 넘치면 |
-|---|---:|---|
-| `MAX_TOTAL_STATES` | 262,144 | 층마다 값 순으로 잘라 `truncated = true` (X20, 2026-09-04) |
-| `MAX_FRONTIER_LEAVES` | 4,194,304 | 그 존의 프론티어[^frontier] 열거를 접두만 남기고 `truncated = true` (X29, 2026-09-05). 이게 없으면 차종 31종에서 `-Xmx8g`도 OOM |
+| 상수 | 값 | 넘치면 | 실물 |
+|---|---:|---|---:|
+| `MAX_TOTAL_STATES` | 262,144 | 성분이 층 전체에 보관하는 상태 총량. 층마다 값 순으로 잘라 `truncated = true` (X20, 2026-09-04) | 층당 최대 25,727 |
+| `MAX_FRONTIER_LEAVES` | 4,194,304 | 존 하나의 프론티어[^frontier] 열거(**존당 한 번**, 2026-09-06)가 도달해도 되는 잎 수. 넘치면 열거 순서 접두만 남기고 `truncated = true` — 모든 상태가 같은 접두를 본다 (X29·X40). 이게 없으면 차종 31종에서 `-Xmx8g`도 OOM | 존당 최대 1,933잎 |
+| `MAX_FRONTIER_CANDIDATES` | 1,024 | 상태 하나가 받는 후보 수. 넘치면 사전식 접두만 남기고 `truncated = true` (X42, 2026-09-06) | 상태당 최대 526 |
 
 값 비교는 `(Σ부족, Σ대수, Σ낭비, Σ결손)` 사전식 — 앞 두 축이 정식 score(미배정, 차량 수)와 같다
 (2026-09-05, [zone-value-function](../../implementation/stage-04-zone-value-function.md)). 종전은 `(부족, 낭비, 대수)`.
+2026-09-06의 존당 1회 열거는 실물 답을 바꾸지 않았고(T52 그대로) `allocate` 소요를 592 → 460 ms로 줄였다.
 
 H23이 여기서 읽는 것은 `zones()`(순서 포함), `vehiclesByZone()`, 요청 정렬용 `types()` 셋이다. `truncated`는 안 읽는다.
 
@@ -197,7 +200,7 @@ T38 입력 (`hallConditionKeepsBigVehiclesOffRestrictedZones`):
 
 #### 한 차량은 한 존, 기권은 없다
 
-`allocate`가 `vehiclesByZone`을 만들 때 유형마다 커서(`cursor[t]`)를 앞으로만 민다 (295–305행).
+`allocate`가 `vehiclesByZone`을 만들 때 유형마다 커서(`cursor[t]`)를 앞으로만 민다 (300–312행).
 같은 `VehicleId`가 두 존에 나타날 수 없다. 공급이 수요보다 작으면 그 존의 목록이 비거나 `maxNeed`까지만 타고,
 못 실린 요청은 2단계 leftover pass가 맡는다 (X21). 조합이 커도 `abstains`는 `false` — 잘림은 `truncated`다.
 
@@ -242,7 +245,7 @@ H23이 부르는 것은 아래 표가 전부다. `Cache`·`standaloneDistMeter`�
 `PICKUP_DELIVERY`는 위치 쌍 `(i ≤ j)`이라 슬롯 `O(L²)` × 전파 `O(L)` → `O(L³)`. 정차 한도 근사는
 `visitCount`가 PD를 **2**로 센다.
 
-```222:224:solver-core/src/main/java/com/ronext/rpdptw/solve/ZoneQuotaAllocation.java
+```227:229:solver-core/src/main/java/com/ronext/rpdptw/solve/ZoneQuotaAllocation.java
     static int visitCount(Request request) {
         return (request.pickup().isPresent() ? 1 : 0) + (request.delivery().isPresent() ? 1 : 0);
     }
@@ -575,7 +578,7 @@ bins 순서는 **"전역 VehicleId ASC"가 아니다.** 70행 주석과 규범 �
 
 ### 5.2 종료 (규범 §4.3 · §5 H23)
 
-- **DP:** 성분당 보관 상태 ≤ `MAX_TOTAL_STATES` + 존 수, 존당 프론티어 잎 ≤ `MAX_FRONTIER_LEAVES`. 기권으로 막지 않는다. 예산 소진은 근사 (X20·X29).
+- **DP:** 성분당 보관 상태 ≤ `MAX_TOTAL_STATES` + 존 수, 존당 프론티어 잎 ≤ `MAX_FRONTIER_LEAVES`(존마다 한 번), 상태당 후보 ≤ `MAX_FRONTIER_CANDIDATES`. 기권으로 막지 않는다. 상한 초과는 근사 (X20·X29·X42).
 - **존 내부 적재:** 존 요청마다 규칙 (a) 삽입 또는 (b) 후보 0개 → 합 ≤ n.
 - **교환:** zoneLeftover마다 1회 → ≤ n. 성공이면 bank −1, 실패면 leftovers로.
 - **leftover pass:** ≤ n.
@@ -594,7 +597,7 @@ H23 | zone-quota-balanced-fill | zone-quota | 전 패턴 | ≤ 3n
 |---|---|
 | Z | 존 수 |
 | S | DP 상태 수. 표는 `Π(유형별 대수+1)`을 상한으로 적는다. 구현은 도달한 상태만 보관하고, 성분당 `MAX_TOTAL_STATES`(262,144)로 자른다 |
-| F | 존 하나에서 시도하는 프론티어 벡터 수. 잎은 `MAX_FRONTIER_LEAVES`로 잘린다 |
+| F | 상태 하나가 받는 프론티어 벡터 수 (≤ `MAX_FRONTIER_CANDIDATES`). 열거 자체는 존당 한 번이고 잎은 `MAX_FRONTIER_LEAVES`로 잘린다 |
 | G | 호환 그룹 수 — `covers`/Hall이 접두마다 도는 횟수 |
 | m_z | 그 존의 bin 수 |
 | L | 경로 방문 수. 단일 패턴이면 위치 `L+1` × 전파 `L` → `O(L²)`. PD면 위치가 `L²`이라 `L`이 한 번 더 |
@@ -603,7 +606,7 @@ H23 | zone-quota-balanced-fill | zone-quota | 전 패턴 | ≤ 3n
 실물에서 leftover가 몇 건 안 되니 전체 시간의 대부분은 1단계 DP다.
 
 실측 소요: 2026-09-02 **507 ms** (scaling 전, 표·survey). scaling 뒤 재실측 **550 ms\*** ([h1–h24 §1](../initial-solution-heuristics-h1-h24.md)).
-H3 137 ms보다 느리고, regret 계열 H1(830 ms)·H2(644 ms)보다 싸다.
+2026-09-06 존당 1회 열거 뒤 **496 ms**(그중 `allocate` 460 ms — 한 번 실행 기록). H3 137 ms보다 느리고, regret 계열 H1(830 ms)·H2(644 ms)보다 싸다.
 
 ---
 
@@ -611,7 +614,7 @@ H3 137 ms보다 느리고, regret 계열 H1(830 ms)·H2(644 ms)보다 싸다.
 
 규범과 코드는 1:1이다. 쉬운 말(§2 H23)과 코드가 어긋나 보이는 곳, 인접 기법과의 차이만 적는다. **수정 제안이 아니라 읽기 보조.**
 
-1. **`abstains`는 항상 `false`다.** 옛 노트·옛 규범 문면의 "65,536이면 기권"은 2026-09-04에 죽었다. 잘림은 `truncated` (X20·X29).
+1. **`abstains`는 항상 `false`다.** 옛 노트·옛 규범 문면의 "65,536이면 기권"은 2026-09-04에 죽었다. 잘림은 `truncated` (X20·X29·X42) — 상한이 셋이고 실물은 어느 것에도 닿지 않는다.
 2. **`fill`은 H23의 존 내부 적재다.** H24는 같은 `allocate` 위에서 자기 루프를 돌고, leftover pass만 `requestOrder`를 재사용한다.
 3. **`Load`는 오라클이 아니다.** 부피·방문 수의 장부. 유효성은 `candidatesFor`가 이미 답한 뒤에만 `add`한다.
 4. **키의 첫 축은 부호다.** 음수(정차 낭비)를 1로 밀어 뒤로 보낸다. 부피 best-fit만 쓰면 T40에서 3건이 남는다.
@@ -627,7 +630,7 @@ H3 137 ms보다 느리고, regret 계열 H1(830 ms)·H2(644 ms)보다 싸다.
 
 | 상황 | 동작 | 번호 |
 |---|---|---|
-| 유형 조합 수가 큼 | **기권하지 않는다.** 상태 총량 > 262,144 또는 프론티어 잎 > 4,194,304이면 `truncated = true`로 근사하고 2단계는 그대로 | **X20** · **X29** |
+| 유형 조합 수가 큼 | **기권하지 않는다.** 상태 총량 > 262,144, 존당 열거 잎 > 4,194,304, 상태당 후보 > 1,024 중 하나라도면 `truncated = true`로 근사하고 2단계는 그대로. 잘린 열거는 모든 상태가 같은 접두를 본다 | **X20** · **X29** · **X40** · **X42** |
 | 공급 < 수요라 어떤 존도 못 덮음 | 프론티어에 빈 집합(c)이 항상 있어 DP는 완주. 그 존 bins가 비면 적재 후보 0개 → leftover pass가 미사용 차로 시도 | **X21** |
 | 정차 한도 부재 | 키가 부피 best-fit으로 퇴화. 기권 아님 | **X23** |
 | 호환 차량 0대인 요청 | 존에 안 들어감 → §4.7 수집 → `candidates()` 빈 목록 → bank | X2 |
@@ -661,6 +664,7 @@ T39(`combinationsBoundAbstains`)는 **삭제**됐다 (2026-09-04, T45로 대체)
 | 2026-09-02 (값 함수 개정 전, survey §2.5) | 0 | 31 | **4,198,408** | **1,002,069** | 507 ms | scaling 전 DP |
 | 2026-09-04 뒤 재실측 ([h1–h24 §1](../initial-solution-heuristics-h1-h24.md)) | 0 | 31 | 4,198,408 | 1,002,069 | **550 ms\*** | scaling 뒤. 점수 축은 그때 그대로 |
 | **2026-09-05 값 함수 개정 후 (T52 확정)** | **0** | **31** | **4,194,052** | **1,004,144** | (T52는 소요를 안 고정) | 축 `(부족, 대수, 낭비, 결손)` |
+| 2026-09-06 존당 1회 열거 후 | 0 | 31 | 4,194,052 | 1,004,144 | 496 ms (`allocate` 460 ms) | 배정·점수 동일 — T52 무변경이 채택 조건이었다 ([frontier-budget §5.4](../../implementation/stage-04-zone-quota-frontier-budget.md)) |
 
 24개 중 **1위**. 같은 표의 H3는 미배정 **15** · 3위 · 137 ms. H24는 미배정 8.
 
@@ -725,7 +729,7 @@ mvn test -pl app -Dtest=WinPocFixtureTest
 
 [^stop-limit]: **정차 한도 (`effectiveMaxStopCount`)** — 한 경로가 방문할 수 있는 최대 횟수. 차량별 값이 있으면 그 값, 없으면 전역값, 둘 다 없으면 제약 없음. 소량 주문이 많은 존에서는 부피보다 이 한도가 먼저 찬다 — `key`가 이 축을 부피와 함께 보는 이유다.
 
-[^frontier]: **프론티어** — 한 존에 대해 실제로 시도할 차량 조합만 추린 집합. (a) 딱 덮는 최소 (b) 한 대 모자란 최대 (c) 아무것도 안 줌. 잎 수가 `MAX_FRONTIER_LEAVES`를 넘으면 열거 순서 접두만 남긴다 (X29).
+[^frontier]: **프론티어** — 한 존에 대해 실제로 시도할 차량 조합만 추린 집합. (a) 딱 덮는 최소 (b) 한 대 모자란 최대 (c) 아무것도 안 줌. 2026-09-06부터 존마다 **한 번** 열거해 두고(`ZoneFrontier`) 상태마다 자기 범위에 맞는 것을 뽑는다. 잎 수가 `MAX_FRONTIER_LEAVES`를 넘으면 열거 순서 접두만 남기고(X29·X40), 상태 하나의 후보가 `MAX_FRONTIER_CANDIDATES`를 넘으면 사전식 접두만 남긴다(X42). 상세는 [DP 보강 노트 §6](../zone-quota-allocation-dp.md).
 
 [^best-fit]: **best-fit** — 들어갈 수 있는 bin 중 남는 공간이 가장 적어지는 bin. H23의 키는 이 규칙을 "부피 − 평균 × 남은 정차" 축에 적용하고, 그 부호로 정차 낭비를 먼저 걸러낸다.
 

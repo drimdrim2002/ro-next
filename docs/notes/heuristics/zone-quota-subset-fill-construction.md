@@ -7,9 +7,12 @@
 > **대상 독자**: CVRPTW[^cvrptw]를 아는 Java 개발자. 이 저장소의 용어(`Request`·pair·bank·profile 등)는 처음 본다고 가정하고,
 > 처음 나올 때마다 각주로 풀었다. 각주는 문서 끝 [용어 각주](#용어-각주)에 모여 있다.
 >
-> **대상 파일**: `solver-core/src/main/java/com/ronext/rpdptw/solve/ZoneQuotaSubsetFillConstruction.java` (**284줄, 2026-09-02** 기준).
-> 공유 1단계 `ZoneQuotaAllocation.allocate`는 `ZoneQuotaAllocation.java` **710줄**이다 — **이 문서는 호출과 반환 필드만** 다루고,
+> **대상 파일**: `solver-core/src/main/java/com/ronext/rpdptw/solve/ZoneQuotaSubsetFillConstruction.java` (**284줄, 2026-09-02** 기준 — 이후 1단계 개정 세 건에도 이 파일은 바뀌지 않았다).
+> 공유 1단계 `ZoneQuotaAllocation.allocate`는 `ZoneQuotaAllocation.java` **817줄**(2026-09-06)이다 — **이 문서는 호출과 반환 필드만** 다루고,
 > 표를 어떻게 채우는지는 [H23 노트](zone-quota-balanced-fill-construction.md)와 [존 배정 DP 노트](../zone-quota-allocation-dp.md)로 보낸다.
+> 1단계 개정 근거: [scaling](../../implementation/stage-04-zone-quota-allocation-scaling.md) ·
+> [zone-value-function](../../implementation/stage-04-zone-value-function.md) ·
+> [zone-quota-frontier-budget](../../implementation/stage-04-zone-quota-frontier-budget.md).
 
 ---
 
@@ -82,9 +85,9 @@ public interface ConstructionHeuristic {
         Allocation allocation = ZoneQuotaAllocation.allocate(problem);
 ```
 
-H24는 H23과 **같은** `ZoneQuotaAllocation.allocate(problem)`을 부른다. 받는 것은 존 목록 `zones`와 존별 차량 `vehiclesByZone`이다. **한 차량은 정확히 한 존에만** 나타난다(대수를 차감하며 소비). 배정 없는 존은 빈 목록. `truncated`는 읽지 않는다 — 근사여도 2단계는 그대로(X27).
+H24는 H23과 **같은** `ZoneQuotaAllocation.allocate(problem)`을 부른다. 받는 것은 존 목록 `zones`와 존별 차량 `vehiclesByZone`이다. **한 차량은 정확히 한 존에만** 나타난다(대수를 차감하며 소비). 배정 없는 존은 빈 목록. `truncated`는 읽지 않는다 — 근사여도 2단계는 그대로(X27). 근사가 되는 조건은 상한 셋(상태 총량 `MAX_TOTAL_STATES` 262,144 · 존당 열거 잎 `MAX_FRONTIER_LEAVES` 4,194,304 · 상태당 후보 `MAX_FRONTIER_CANDIDATES` 1,024)이고 실물 fixture는 어느 것에도 닿지 않는다.
 
-표를 어떻게 채우는지(유형 묶기·프론티어·값 `(부족, 대수, 낭비, 결손)`·역추적)는 이 문서의 소유가 아니다. [H23 노트](zone-quota-balanced-fill-construction.md)와 [존 배정 DP 노트](../zone-quota-allocation-dp.md).
+표를 어떻게 채우는지(유형 묶기·존당 1회 프론티어 열거·값 `(부족, 대수, 낭비, 결손)`·역추적)는 이 문서의 소유가 아니다. [H23 노트](zone-quota-balanced-fill-construction.md)와 [존 배정 DP 노트](../zone-quota-allocation-dp.md).
 
 그 다음 H24는 **자기 루프**로 존을 채운다. `ZoneQuotaBalancedFillConstruction.fill`을 **부르지 않는다.** H23의 1-1 교환도 없다. leftover[^leftover] pass의 **요청 순서만** `ZoneQuotaBalancedFillConstruction.requestOrder`를 빌려 쓴다(117행).
 
@@ -436,7 +439,7 @@ H23 leftover와의 차이(코드 사실): H23은 1-1 교환 실패분 + 호환 0
 
 ### 5.2 종료 (규범 §4.3 · §5 H24)
 
-- 존 배정 DP: 구조 상한 (`MAX_TOTAL_STATES` · `MAX_FRONTIER_LEAVES`). 기권 없음.
+- 존 배정 DP: 구조 상한 (`MAX_TOTAL_STATES` · 존당 1회 열거의 `MAX_FRONTIER_LEAVES` · 상태당 `MAX_FRONTIER_CANDIDATES`). 기권 없음.
 - bin당 재DP: 매 반복 excluded +1 또는 nmax −1 → **≤ |pool|** (규범). 방어 카운터는 `pool.size()+1`(마지막 빈 반복).
 - leftover: ≤ n.
 - 존 잔여: unassigned 한 바퀴, 카운터 없음. 삽입 실패는 leftover로만 간다.
@@ -483,7 +486,7 @@ subsetSum 1회 = O(|pool| · C · B) 셀. 규범 불릿: fixture 최대 87 × 17
 | subsetSum이 빈 목록 | bin 종료 | 79–80행 |
 | nmax=0 또는 items 소진 | bin 종료 | 75–76행 |
 | 호환 차량 0대인 요청 | 존에 안 들어감. 빈 해 bank에 잔류 | X2 |
-| `truncated == true` | H24는 필드를 안 읽는다. 2단계·leftover·평가는 그대로 | X27 |
+| `truncated == true` (상한 셋 중 하나 작동 — X20·X29·X42) | H24는 필드를 안 읽는다. 2단계·leftover·평가는 그대로 | X27 |
 | 차종 ≥ 65 | 알려진 한계(마스크 `long`). `abstains`는 계속 false | X28 |
 | profile hard가 강해 삽입 0건 | 전부 bank. Feasible이므로 정상 | X14 |
 
@@ -509,6 +512,7 @@ T42의 **단위** `subsetSum`은 6건 전부를 넣는다. `{4,4}`가 첫 bin을
 |---|---:|---:|---:|---:|---:|
 | §1 표 · survey §2.5 · 규범 §5 H24 (2026-09-02) | **8** | **31** | **3,942,905** | **974,992** | 773 ms / 836 ms\* |
 | 값 함수 개정 후 (2026-09-05, 규범 §5 H23 불릿 · zone-value-function §5.5) | **8** | **31** | **3,914,015** | **975,885** | (같은 배정이라 2단계 거리만 변동) |
+| 존당 1회 열거 후 (2026-09-06, frontier-budget §5.4) | 8 | 31 | 3,914,015 | 975,885 | 배정이 그대로라 점수도 그대로. 차종 31종 변형에서만 5 → 4로 좋아졌다 |
 
 순위는 그대로 **2위**. 대조:
 
