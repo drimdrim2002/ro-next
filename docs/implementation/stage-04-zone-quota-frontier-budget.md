@@ -2,7 +2,7 @@
 title: Stage 4 — 존 배정 DP 프론티어 열거의 잎 예산·절단 규칙 재설계 (설계안)
 stage: 4
 date: 2026-09-05
-status: 구현 완료 (2026-09-06) — 계약 반영·T62~T64·실측 §5.4·T52 무변경. 커밋 해시는 후속 status 커밋
+status: 구현 완료 (d36bcff) — 계약 반영·T62~T64·실측 §5.4·T52 무변경 (2026-09-06)
 plan: ../implementation-plan.md
 sources:
   - stage-04-initial-solution-heuristics.md (§3.4 `frontier` 시그니처 · §4.3 종료 보장 · §5 공통 블록의 프론티어 memo 단락 · §7 X20·X29·X38·X39 · §8 T49·T51·T52·T58)
