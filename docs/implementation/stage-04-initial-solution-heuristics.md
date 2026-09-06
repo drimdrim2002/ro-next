@@ -68,6 +68,11 @@ revisions:
     `(미배정, 차량 수)`와 같은 순서가 된다. §3.4(`VALUE_AXES`·`value`·`Demand.count`)·§5 공통 블록·
     §5 H23 실측 불릿·§7 X35~X39·§8 T44/T52 갱신·T59~T61·재확인 행.
     근거 [stage-04-zone-value-function](stage-04-zone-value-function.md)
+  - 2026-09-06 **존 배정 DP 프론티어를 존당 1회 공유 열거로** — R별 memo·선착순 잎 배분 폐지. 층의 모든 R을 덮는 상자로 한 번
+    열거해 (c)·(a)·(b) 후보(확장 마스크)를 사전식 배열로 보관하고 상태마다 s ≤ R을 뽑되 (b)는 R 기준 재판정 — R마다 따로 열거한
+    것과 같은 집합. 실물 ZONE_29 소비 2,348,844 → 1,933잎, 26만 예산에서도 답 동일, 변형 D(33대) 절단 소멸.
+    상태당 후보 상한 `MAX_FRONTIER_CANDIDATES`(1,024 — 31종에서 전이 수 상한). `ZoneFrontier`. §3.4·§4.3·§5 공통 블록·
+    §7 X20/X29 문면·X40~X45·§8 T49 문면·T58 갱신·T62~T64. 근거 [stage-04-zone-quota-frontier-budget](stage-04-zone-quota-frontier-budget.md)
 ---
 
 # Stage 4 — 초기해 휴리스틱 포트폴리오
@@ -302,13 +307,26 @@ public final class InsertionSearch {
 final class ZoneQuotaAllocation {
     /** 성분 하나의 DP가 층 전체에 보관하는 상태 수 총량 (재량 상수). 넘치면 값 순으로 잘라 근사한다 — 기권하지 않는다. */
     static final int MAX_TOTAL_STATES = 262_144;
-    /** 존 하나의 프론티어 열거가 도달할 수 있는 잎 수 총량 (재량 상수). 소진되면 열거 순서 접두만 남기고 근사한다. */
+    /** 존 하나의 프론티어 열거(존당 1회)가 도달할 수 있는 잎 수 총량 — 시간·메모리 상한 (재량 상수). 소진되면 열거 순서 접두만 남기고 근사한다. */
     static final int MAX_FRONTIER_LEAVES = 4_194_304;
+    /** 상태 하나가 받는 후보 수 상한 (재량 상수) — 정렬 접두에서 멈추고 truncated. 실물 최대 526 위의 2의 거듭제곱 (frontier-budget §2.6). */
+    static final int MAX_FRONTIER_CANDIDATES = 1_024;
     /** 값 축 수 — (Σ부족, Σ대수, Σ낭비, Σ결손). Layer.values의 stride이자 value()가 돌려주는 배열 길이. */
     static final int VALUE_AXES = 4;
 
-    /** 프론티어 열거 결과 — 벡터 목록 · 소비한 잎 수 · 예산에 걸려 잘렸는가. */
+    /** 프론티어 열거 결과 — 벡터 목록 · 소비한 잎 수 · 예산에 걸려 잘렸는가 (래퍼 frontier()의 결과). */
     record Frontier(List<int[]> vectors, int leaves, boolean truncated) {}
+    /**
+     * 존 하나의 공유 프론티어 (frontier-budget §2.5) — 상자 box로 1회 열거한 (c)·(a)·(b) 후보(확장 마스크 포함)를 사전식 배열로 보관.
+     * forRange(R)는 s ≤ R을 접두 범위 탐색으로 뽑고 (b)는 R 기준으로 재판정한다 — R마다 따로 열거한 것과 같은 집합.
+     * 후보가 candidateCap개에 이르면 거기서 멈춘다 (정렬 접두).
+     */
+    static final class ZoneFrontier {
+        static ZoneFrontier enumerate(int[] box, Demand demand, int cap);
+        List<int[]> forRange(int[] range, int candidateCap);
+        int leaves();
+        boolean truncated();
+    }
 
     /** 차량 유형 = (호환 Request 집합, maxWeight, maxVolume, effectiveMaxStopCount)이 같은 차량들.
      *  유형 순서 (maxVolume ASC, maxWeight ASC, 첫 VehicleId ASC) · 유형 안 VehicleId ASC. */
@@ -342,9 +360,11 @@ final class ZoneQuotaAllocation {
   마스크 3개(`compat`·`prefixMask`·`groupMask`)는 **`long`**이고 유형 t의 비트는 `1L << t`다 —
   **차종 수 ≤ 64가 불변식**이고 65종 이상은 X28(알려진 한계)이다.
 - `frontier(int[] range, Demand demand, int cap)`의 첫 인자는 "남은 대수"가 아니라 **열거 범위 R**이다 —
-  호출자가 `R_t = min(남은_t, maxNeed(z,t))`(호환 아니면 0)를 만들어 넘긴다. `cap`은 이 호출이 도달해도 되는
-  **잎 수**(≥ 1)이고, 존 하나가 `MAX_FRONTIER_LEAVES`를 나눠 쓴다 — 열거 순서상 첫 잎이 빈 집합이라
-  `cap = 1`이어도 프론티어 (c)는 반드시 나오고 DP의 전이 ②가 남는다 (X29).
+  `cap`은 이 호출이 도달해도 되는 **잎 수**(≥ 1)다. 열거 순서상 첫 잎이 빈 집합이라 `cap = 1`이어도 프론티어 (c)는 반드시
+  나오고 DP의 전이 ②가 남는다 (X29). **2026-09-06부터 래퍼다** — `ZoneFrontier.enumerate(range, demand, cap).forRange(range, ∞)`와
+  같고 T49·T63이 그 자리에서 (c) 보장을 시험한다. DP 본체는 이 함수가 아니라 `ZoneFrontier`를 존마다 한 번 부른다:
+  상자 `B_t = min(대수_t, maxNeed(z,t))`로 열거해 두고 상태마다 `forRange(R, MAX_FRONTIER_CANDIDATES)`로 뽑는다
+  ([frontier-budget §3](stage-04-zone-quota-frontier-budget.md)).
 
 ---
 
@@ -424,8 +444,9 @@ construction 결과의 Infeasible은 **논리적으로 불가능** — 나오면
     못 묶어 `Π_{t∈compat(z)}(maxNeed(z,t)+1)`가 여전히 지수다 — 차종 31종에서 존마다 2×10⁹이라
     잎 예산이 없으면 `-Xmx8g`에서도 OOM이다 (실측, [scaling §2.7](stage-04-zone-quota-allocation-scaling.md)).
     예산 소진은 정상 근사다 (X29).
-    프론티어는 존마다 R 벡터로 memo한다 (같은 R이면 같은 프론티어 — 재량 최적화, 2026-09-04 채택):
-    memo가 그 존의 잎 예산을 나눠 쓰므로 memo 전체가 들고 있는 벡터도 같은 상수에 묶이고, 존이 끝나면 버린다 ·
+    프론티어는 **존마다 한 번** 열거해 공유한다 (2026-09-06 — 종전의 R별 memo·선착순 배분 폐지,
+    [frontier-budget](stage-04-zone-quota-frontier-budget.md)): 잎 예산은 그 한 번에 걸리고, 존의 공유 목록(벡터 ≤ 잎)도
+    같은 상수에 묶이며 존이 끝나면 버린다 · 상태당 후보 ≤ `MAX_FRONTIER_CANDIDATES` ⇒ 전이 ≤ 상태 × 후보 상한 ·
   H24 bin당 재DP ≤ |pool| (반복마다 제외 집합 +1 또는 nmax −1).
 방어 카운터가 기법별 상한(§5 표)을 넘으면 IllegalStateException — 조용히 자르지 않는다
 (stage-04 N2와 같은 취급: 구조 결함은 품질 문제가 아니라 버그다).
@@ -1029,12 +1050,16 @@ DP는 **호환 성분마다 독립 실행**한다 (그래프 G: 정점 = 유형 
 상태는 **도달한 것만** 보관한다 (키 = 남은 대수 벡터, 순서 KEY_ORDER = 마지막 유형부터 첫 유형 ASC).
   성분이 보관하는 상태 총량이 MAX_TOTAL_STATES를 넘으면 층마다 (값 ASC, KEY_ORDER ASC)로 잘라
   근사하고 Allocation.truncated = true (X20). 자르는 폭 = max(1, ⌊남은 예산 / 남은 층 수⌋).
-프론티어 열거는 존마다 잎 예산 MAX_FRONTIER_LEAVES를 쓴다. 호출당 cap = max(1, 남은 예산) 잎까지만
-  열거하고, cap에 닿아 멈췄으면 Allocation.truncated = true (X29). 자르는 규칙은 값 순이 아니라
-  **열거 순서(유형 index ASC · 대수 ASC)의 접두**다 — 값으로 자르려면 자르려던 그 열거를 다 해야 한다.
-  cap ≥ 1이라 빈 집합 (c)는 항상 나오고 전이 ②가 남는다.
-종료: 성분당 보관 상태 ≤ MAX_TOTAL_STATES + 존 수 · 존당 프론티어 열거 잎 ≤ MAX_FRONTIER_LEAVES
-  — 루프 상한이 아니라 구조 (§4.3). 기권 없음.
+프론티어 열거는 존마다 한 번이다 (2026-09-06) — 상자 B_t = min(대수_t, maxNeed(z,t))로 열거한 벡터를 존 z의 공유 프론티어 F_z에
+  보관한다: 열거 = 위 재귀 나열 그대로, 잎 예산 MAX_FRONTIER_LEAVES까지 — cap에 닿아 멈췄으면 Allocation.truncated = true (X29).
+  자르는 규칙은 값 순이 아니라 **열거 순서(유형 index ASC · 대수 ASC)의 접두**다 — 값으로 자르려면 자르려던 그 열거를 다 해야
+  한다. 모든 상태가 같은 접두를 본다 (X40). 잎 s의 분류: s = 0 → (c) · covers(s) ∧ ¬covers(s − e_min) → (a) ·
+  ¬covers(s) ∧ mask(s) ≠ ∅ → (b) 후보 (mask(s) = { t : B_t > s_t ∧ covers(s + e_t) }). F_z는 사전식(= 열거 순서) 배열.
+  상태마다 후보(R) = F_z에서 s ≤ R인 (c)·(a)와, (b) 후보 중 ∃t R_t > s_t ∧ ∀t (R_t = s_t ∨ t ∈ mask(s))인 것 —
+  이것이 (b)의 정의 그대로다 (X41). 접두 범위 탐색으로 뽑고, MAX_FRONTIER_CANDIDATES개에 이르면 멈춘다 (정렬 접두 ·
+  truncated = true, X42). cap ≥ 1이라 빈 집합 (c)는 항상 나오고 전이 ②가 남는다. 존이 끝나면 F_z를 버린다.
+종료: 성분당 보관 상태 ≤ MAX_TOTAL_STATES + 존 수 · 존당 프론티어 열거 잎 ≤ MAX_FRONTIER_LEAVES (1회) ·
+  상태당 후보 ≤ MAX_FRONTIER_CANDIDATES ⇒ 전이 ≤ 상태 × 후보 상한 — 루프 상한이 아니라 구조 (§4.3). 기권 없음.
 ```
 
 - 한 존을 여러 차량이 나누는 것은 (유형 → 대수)로 표현되고, 한 차량이 여러 존을 맡는 것은 상태가
@@ -1184,7 +1209,7 @@ subsetSum(items, cap, wcap, nmin, nmax):
 | X17 | H21에서 병합 가능한 쌍이 0 | 요청당 클러스터 1개로 퇴화 — 단독 경로 위주 해. 유효 | §5 H21 |
 | X18 | H22에서 priority가 라운드 간 불변 | 불변점 — 이후 라운드도 같은 해이므로 조기 종료. R회를 다 돌지 않는 것은 정상 | §5 H22 |
 | X19 | H14에서 남은 호환 차량이 없는 요청 | `noAlt` 축이 최우선으로 끌어올린다 — big-M을 쓰지 않는다 (H1 onlyCandidate와 동일 수법) | §5 H14 |
-| X20 | H23·H24에서 차량 유형 조합 수가 큼 | **기권하지 않는다.** 상한이 **둘**이다 — (1) 성분당 보관 상태 총량 > `MAX_TOTAL_STATES`(262,144)면 값 순으로 잘라 근사 (2) 존당 프론티어 열거 잎 > `MAX_FRONTIER_LEAVES`(4,194,304)면 열거 순서 접두만 남기고 근사. 둘 중 하나라도 작동하면 `Allocation.truncated = true`. **둘 다 있어야** 메모리·시간이 입력과 무관하다 — 2026-09-05 이전에는 (1)뿐이라 프론티어 열거가 Π에 비례했고, 차종 31종·존 11개에서 `-Xmx8g`로도 OOM이었다 (실측, [scaling §2.7](stage-04-zone-quota-allocation-scaling.md)) | §5 H23 공통 |
+| X20 | H23·H24에서 차량 유형 조합 수가 큼 | **기권하지 않는다.** 상한이 **둘**이다 — (1) 성분당 보관 상태 총량 > `MAX_TOTAL_STATES`(262,144)면 값 순으로 잘라 근사 (2) 존당(존마다 1회) 프론티어 열거 잎 > `MAX_FRONTIER_LEAVES`(4,194,304)면 열거 순서 접두만 남기고 근사 (3) 상태의 후보가 `MAX_FRONTIER_CANDIDATES`(1,024)에 닿으면 정렬 접두만 (X42). 어느 하나라도 작동하면 `Allocation.truncated = true`. **둘 다 있어야** 메모리·시간이 입력과 무관하다 — 2026-09-05 이전에는 (1)뿐이라 프론티어 열거가 Π에 비례했고, 차종 31종·존 11개에서 `-Xmx8g`로도 OOM이었다 (실측, [scaling §2.7](stage-04-zone-quota-allocation-scaling.md)) | §5 H23 공통 |
 | X21 | H23·H24 존 배정 DP에서 어떤 존도 못 덮음 (공급 < 수요) | 프론티어에 빈 집합(c)이 항상 있어 DP는 완주한다. 호환 안 되는 차는 그 존에 배정되지 않고 (b)도 `maxNeed`까지만 태운다 — 남은 차를 전부 쏟아붓지 않는다. 존 단위로 덮거나 비우고, 남은 요청은 leftover pass가 기존 경로·미사용 차량에 삽입한다 | §5 H23 |
 | X22 | H24 순서화(오라클)가 subset-sum이 고른 요청을 못 넣음 | 그 요청을 bin의 제외 집합에 넣고 nmax를 줄여 재DP. 반복은 bin당 ≤ \|pool\| — 조용히 자르지 않고 구조로 끝난다 | §5 H24 |
 | X23 | H23·H24에서 정차 한도 부재 | H23 예산 = 남은 부피(부피 best-fit으로 퇴화) · H24 subsetSum은 방문 수 축 없이 부피만 (nmin·nmax 무시). 기권하지 않는다 | §5 H23·H24 |
@@ -1192,13 +1217,19 @@ subsetSum(items, cap, wcap, nmin, nmax):
 | X25 | 성분의 존 수 + 1 > `MAX_TOTAL_STATES` | 폭 `cap = max(1, ·)`로 층마다 1 상태는 남긴다 — 총량이 존 수만큼 초과할 뿐 완주한다 | §5 H23 공통 |
 | X26 | 용량(`maxVolume`/`maxWeight`)이 0인 유형 | `maxNeed`에서 그 자원 항은 0 (나눗셈 없음). 호환이면 maxNeed ≥ 1로 후보에는 남고, 실을 수 없다는 판정은 `covers`·오라클이 한다 | §5 H23 공통 |
 | X27 | 근사(`truncated`)가 발생 | H23·H24는 정상 실행 — 2단계·leftover pass·정식 평가 모두 그대로. 포트폴리오 선택은 정식 평가가 하므로 근사가 나빴으면 다른 기법이 이긴다 | §6 |
-| X29 | 존의 프론티어 열거 잎 예산 소진 | 정상 근사 — 그 존의 남은 열거 범위는 보지 않고 `truncated = true`. 호출당 `cap = max(1, ·)`이라 빈 집합 (c)는 반드시 나오므로 전이 ②가 남고 DP는 완주한다 (X21과 같은 보장). 예외 아님 | §5 H23 공통 |
+| X29 | 존의 프론티어 열거 잎 예산 소진 | 정상 근사 — 그 존의 열거는 접두에서 멈추고 `truncated = true`. 존마다 한 번 열거하므로 **모든 상태가 같은 접두를 본다**(2026-09-06, X40). `cap = max(1, ·)`이라 빈 집합 (c)는 반드시 나오므로 전이 ②가 남고 DP는 완주한다 (X21과 같은 보장). 예외 아님 | §5 H23 공통 |
 | X28 | H23·H24에서 차종이 **65종 이상** | **알려진 한계 — 범위 밖.** 존 배정 DP의 호환 마스크가 `long`이라 유형 t의 비트 `1L << t`가 t ≥ 64에서 접힌다(예외 없이 답만 틀어진다). 가드·기권·예외를 두지 않는다 — `abstains`는 계속 `false`. 필요해지면 `BitSet` 별도 개정 | [scaling §2.6](stage-04-zone-quota-allocation-scaling.md) |
 | X35 | 공급이 넉넉한 입력에서 개정 후 DP가 종전보다 **적은 대수**를 배정 | 정상 — 정식 score의 2번 축과 같은 방향이다. 남는 차량은 leftover pass·ALNS가 쓴다. 변형 D 실측: 종전 33경로 → 30경로, 미배정 0 유지 | [zone-value-function §2.3](stage-04-zone-value-function.md) |
 | X36 | 덮지 못한 존의 (b) 벡터 — 낭비 0이라 결손 = 대수 × 평균 | 부족 축이 앞서므로 결과에 영향 없음. (c)는 대수 0 → 결손 0 | [zone-value-function §2.6](stage-04-zone-value-function.md) |
 | X37 | 존의 Σvolume = 0 (부피 없는 요청만) 또는 평균 단품이 0으로 내림 | 결손 항상 0 → 4번 축 무력. 정상 (앞 세 축이 그대로 정한다) | [zone-value-function §2.6](stage-04-zone-value-function.md) |
 | X38 | `MAX_TOTAL_STATES` 절단 정렬(값 ASC, `KEY_ORDER`)이 4축이 됨 | 절단이 작동하는 입력에서만 남는 상태 집합이 달라질 수 있다. 결정성(X8)은 그대로 — 정렬 키가 고정이다. T51 재확인 | [zone-value-function §3](stage-04-zone-value-function.md) |
-| X39 | 잎 예산이 바닥난 뒤의 상태는 프론티어가 (c)뿐 — 좋은 전이가 **후보에 없다** | **값 함수 개정은 고치지 못한다.** 값 함수는 후보 안에서만 고른다. 실물 26만·변형 A·E 26만·변형 D 현행 예산에서 작동 확인. 잎 예산·절단 규칙의 별건(zone-value-function §8 ③) | [zone-value-function §1.4](stage-04-zone-value-function.md) |
+| X39 | 잎 예산이 바닥난 뒤의 상태는 프론티어가 (c)뿐 — 좋은 전이가 **후보에 없다** | **값 함수 개정은 고치지 못한다.** 값 함수는 후보 안에서만 고른다. 실물 26만·변형 A·E 26만·변형 D 현행 예산에서 작동 확인. **2026-09-06 공유 열거로 해소** — 선착순 배분이 없어져 실물·D는 절단 자체가 없고 26만 예산에서도 답이 같다 ([frontier-budget §1.4](stage-04-zone-quota-frontier-budget.md)) | [zone-value-function §1.4](stage-04-zone-value-function.md) |
+| X40 | 공유 열거가 잎 예산에 잘린 존 | **모든 상태가 같은 접두**를 본다 — 선착순이 없다. 접두는 열거 순서(마지막 유형 = 가장 큰 차부터 변한다)라 큰 차 조합의 최소 덮개가 먼저 든다. `truncated = true` | [frontier-budget §2.5](stage-04-zone-quota-frontier-budget.md) |
+| X41 | (b) 재판정 — `R_t = s_t < B_t`인 t | 그 t는 조건에서 빠진다(R에서 확장 불가). mask = ∅인 비덮개는 어떤 R에서도 (b)가 아니라 보관하지 않는다. T62가 정의 그대로의 brute force와 대조한다 | [frontier-budget §2.5](stage-04-zone-quota-frontier-budget.md) |
+| X42 | 상태의 후보가 `MAX_FRONTIER_CANDIDATES`에 닿음 | 정렬 접두에서 멈춘다 — 작은 유형 대수가 0인 벡터(큰 차 조합)부터. (c)는 사전식 첫 원소라 항상 포함. `truncated = true`(정확히 상한 개수인 경우도 포함 — 보수적). 실물은 상태당 최대 526이라 닿지 않는다 | [frontier-budget §2.6](stage-04-zone-quota-frontier-budget.md) |
+| X43 | 메모리 — 존의 공유 목록 | ≤ 잎 × (24 + 4T) B. 실물 ≈ 1,000벡터 · 31종 ZONE_29 1.37M벡터 ≈ 215 MB. 존이 끝나면 버린다 — 성분 안에서 한 존 분량만 산다 | [frontier-budget §2.5](stage-04-zone-quota-frontier-budget.md) |
+| X44 | 층에 상태가 하나뿐 (성분의 첫 존) | B = R이라 종전 열거와 완전히 같다 | [frontier-budget §3](stage-04-zone-quota-frontier-budget.md) |
+| X45 | 못 덮는 존 (X21) | (b)는 R 기준 정확 — 변형 A(부족 2,030)·C(부족 503)에서 종전과 동일 답 | [frontier-budget §2.1](stage-04-zone-quota-frontier-budget.md) |
 
 ---
 
@@ -1249,16 +1280,20 @@ subsetSum(items, cap, wcap, nmin, nmax):
 | T46 | `ZoneQuotaAllocationTest.abundantTypeLeavesStateVector` | 풍부 유형 1개(대수 ≥ Σ maxNeed) + 희소 유형 2개 + 존 3개: 예산에 `Π(희소 대수+1) × (존 수+1)`을 넘겨도 `truncated == false`(풍부 차원이 상태에 없다는 증거) · 배정 값이 손 계산 최적과 같음(**2026-09-05 값 함수 개정 후 새 축 순서로 손 계산을 다시 한다** — [zone-value-function §7 재확인 행](stage-04-zone-value-function.md)) · 풍부 유형 소비 ≤ 대수 | §5 H23 공통 |
 | T47 | `ZoneQuotaAllocationTest.componentsSolvedIndependently` | 서로 호환이 없는 두 묶음(유형 A·존 a / 유형 B·존 b): `components`가 2개 · `vehiclesByZone`이 두 묶음을 각각 단독 문제로 돌린 결과와 같음 · 예산을 큰 묶음 하나 크기로 줘도 `truncated == false` | §5 H23 공통 |
 | T48 | `ZoneQuotaAllocationTest.truncationIsDeterministicAndValid` | T38 입력에 예산 2 주입: `truncated == true` · 두 번 실행 결과 동일(X8) · 차량 중복 배정 없음 · 존마다 호환 유형만. 근사가 나와도 H23은 정상 실행된다 — `construct` 진입점에 예산 인자가 없으므로 **기본 예산**으로 `Evaluator` Feasible을 확인한다 | X25·X27 |
-| T49 | `ZoneQuotaAllocationTest.frontierBoundedByMaxNeed` | 호환 안 되는 유형 1대·호환 유형 100대·존 1개(필요 3대): 프론티어 벡터마다 `s_t ≤ maxNeed(z,t)` · 호환 안 되는 유형은 0 · 프론티어 크기 ≤ 4 · 잎 예산에 걸리지 않음(`truncated == false`) | §4.3 |
+| T49 | `ZoneQuotaAllocationTest.frontierBoundedByMaxNeed` | 호환 안 되는 유형 1대·호환 유형 100대·존 1개(필요 3대): 프론티어 벡터마다 `s_t ≤ maxNeed(z,t)` · 호환 안 되는 유형은 0 · 프론티어 크기 ≤ 4 · 잎 예산에 걸리지 않음(`truncated == false`). 2026-09-06부터 `frontier()`는 `ZoneFrontier` 위임 래퍼 — 같은 단언이 그대로 성립 | §4.3 |
 | T50 | `ZoneQuotaAllocationTest.uncoverableZoneTakesAtMostMaxNeed` | 공급 < 수요인 존: 배정 대수 ≤ maxNeed · 호환 안 되는 차 0 · 완주 | X21 |
 | T51 | `ZoneQuotaAllocationScaleTest.largeFleetCompletesWithinBudget` | **규모.** 3종×각 67대(Π 314,432)와 20종×각 1대(Π 2²⁰)를 존 수를 바꿔 가며: 존이 적으면(5·7) 기본 예산에서 `truncated == false`, 존 20이면 `truncated == true`이되 **완주·유효·결정적** · 예산 1,000에서도 같음 · 소요 출력(한도 아님, T25와 같은 취급). **2026-09-04 실측** — 존 5 14 ms(false) · 존 20 2.0 s(true) · 20종 존 7 709 ms(false) · 20종 존 20 1.3 s(true) | §4.3 |
 | T57 | `ZoneQuotaAllocationTest.thirtyThreeTypesUseLongMask` | 차종 33개·존마다 호환 유형이 다른 입력: 존마다 배정 차량이 `compat(z)` 유형뿐 — 마스크가 `int`면 t32가 t0으로 접혀 깨진다. `1L << t` 치환 누락은 경고가 없으므로 이 시험이 유일한 방어선이다 (T53~T56은 H25 대역) | X28·[scaling §2.6](stage-04-zone-quota-allocation-scaling.md) |
-| T58 | `ZoneQuotaAllocationScaleTest.frontierBudgetCapsEnumeration` | **규모.** 차종 31종(각 1대)·존 11개 합성: 잎 예산이 없으면 존마다 Π ≈ 2×10⁹을 열거하려다 `-Xmx8g`로도 OOM이던 입력이 **기본 heap에서 완주**한다(2026-09-05 실측 24.8초) · 배정 유효(중복 없음·`compat(z)` 유형뿐·대수 ≤ maxNeed) · 두 번 실행 동일(X8) · `truncated == true` · 소요 출력(한도 아님, T51과 같은 취급) | X29·[scaling §2.7](stage-04-zone-quota-allocation-scaling.md) |
+| T58 | `ZoneQuotaAllocationScaleTest.frontierBudgetCapsEnumeration` | **규모.** 차종 31종(각 1대)·존 11개 합성: 잎 예산이 없으면 존마다 Π ≈ 2×10⁹을 열거하려다 `-Xmx8g`로도 OOM이던 입력이 **기본 heap에서 완주**한다(2026-09-05 실측 24.8초 · 2026-09-06 공유 열거 후 50.2초 — 후보 상한 1,024 안에서 상태당 후보가 늘어난 값, [frontier-budget §5.4](stage-04-zone-quota-frontier-budget.md)) · 배정 유효(중복 없음·`compat(z)` 유형뿐·대수 ≤ maxNeed) · 두 번 실행 동일(X8) · `truncated == true`(ZONE_29 예산 소진 + 후보 상한) · 소요 출력(한도 아님, T51과 같은 취급) | X29·[scaling §2.7](stage-04-zone-quota-allocation-scaling.md)·[frontier-budget §5.2](stage-04-zone-quota-frontier-budget.md) |
 | T52 | `WinPocFixtureTest.zoneQuotaBalancedFillAssignsEveryRequestOnRealFixture` (**app 모듈**, T44 확장) | 위 T44 행의 **score 전체 일치**·`truncated == false` 단언이 그것이다. 기대값은 **값 함수 개정(2026-09-05)이 예측한 답** `[0, 31, 4,194,052, 1,004,144]`(T52 확정)이고, 갱신 조건은 [zone-value-function §5.4 (a)](stage-04-zone-value-function.md)의 네 가지다 — 종전 "개정 전과 같음"(scaling 회귀)에서 역할이 바뀌었다. `ZoneQuotaAllocation`이 package-private이라 `truncated` 관측은 app 테스트 소스의 `com.ronext.rpdptw.solve.ZoneQuotaAllocationAccess`(테스트 전용 접근자)를 거친다 — 운영 코드의 가시성은 그대로다 | §2 회귀 |
 | T59 | `ZoneQuotaAllocationTest.vehicleCountPrecedesWaste` | 존 1개(요청 5×2건)·유형 S(6)×2·L(13)×1: 종전 `(부족,낭비,대수)`는 S×2(낭비 2, 대수 2)를 골랐고, 개정은 **L(대수 1, 낭비 3)**을 고른다. `value()` 길이 4·각 항 손 계산과 일치 (`[0, 1, 3, max(0, 1×5 − 3) = 2]`) | [zone-value-function §2.3·§2.6](stage-04-zone-value-function.md) |
 | T60 | `ZoneQuotaAllocationTest.slackDeficitBreaksEqualCapacityTie` | 존 A(1×4건, 평균 1)·존 B(2×2건, 평균 2)·유형 P(5)×1·Q(6)×1: 두 배정 `{A←P, B←Q}`·`{A←Q, B←P}`가 `(0, 2, 3)`으로 동률. 결손은 각각 0·1이라 **앞을 고른다.** 입력은 종전 동률 규칙(층 상태 `KEY_ORDER` 순회 → "먼저 계산된 값 유지")이 **뒤를** 고르도록 존 이름·유형 순서를 맞춘다 — 그래야 결손이 골랐음이 시험된다 | [zone-value-function §2.2 D1](stage-04-zone-value-function.md) |
 | T61 | `ZoneQuotaAllocationTest.valueAxesOnUncoveredAndEmptyVectors` | (c) 빈 집합 → `(Σvolume_z, 0, 0, 0)` · 덮지 못하는 (b) 벡터 → 부족 ≥ 1, 낭비 0, 결손 = 대수×평균 · 부피 0 요청만 있는 존 → 결손 0. 부족·낭비 정의는 종전과 같은 값 | X36·X37 |
 | 재확인 | T38 · T45 · T47 ~ T51 · T57 · T58 · T40 ~ T43 | 값 함수 개정(2026-09-05) 뒤에도 유효성·결정성 단언은 무변경으로 통과해야 한다. T46의 손 계산은 새 축 순서로. T51의 `truncated` 행은 절단 정렬이 4축이 돼 남는 상태가 달라질 수 있으나 완주·유효·결정성 단언은 그대로 (X38) | [zone-value-function §3](stage-04-zone-value-function.md) |
+| T62 | `ZoneQuotaAllocationTest.sharedFrontierEqualsPerRangeDefinition` | 유형 3종(S 4×2 · M 7×2 · L 20×1)·존 1개, 호환 그룹 2개(부피 6 요청은 L만 허용 — S·M을 아무리 더해도 못 덮는 방향, Hall): 상자 B = (2,2,1)로 `ZoneFrontier.enumerate` 한 번, **모든 R ≤ B (18개)** 에 대해 `forRange(R)`가 정의 그대로의 brute force((a)(b)(c)를 s ≤ R 전수로 판정)와 **집합으로 같고** 래퍼 `frontier(R, …)`와도 같다. B 기준 (b)와 R 기준 (b)가 갈리는 R을 단언한다 — `forRange((2,2,0)) = {(c)}`(B 기준이면 (2,2,0)이 남는다) · `(1,0,0) ∈ forRange((1,0,1))` ∧ `∉ forRange((2,2,1))` | [frontier-budget §2.5](stage-04-zone-quota-frontier-budget.md)·X41 |
+| T63 | `ZoneQuotaAllocationTest.frontierWrapperKeepsEmptySetUnderCapOne` | `frontier(B, demand, 1)` → 벡터 = {(c)}뿐 · `truncated == true` · `leaves == 1` — X29의 "cap = 1이어도 (c)는 나온다"가 래퍼에서도 유지 | X29 |
+| T64 | `ZoneQuotaAllocationTest.candidateCapIsDeterministicSortedPrefix` | T62 입력에서 `forRange(B, 2)`: 크기 2 · (c) 포함 · 전체 목록(3개, 사전식 오름차순)의 앞 2개와 동일 · 두 번 호출 동일 | X42 |
+| 재확인 | T52 (**app**) · T49 · T51 · T58 | **T52 무변경 통과가 채택 조건** — `[0, 31, 4,194,052, 1,004,144]` · `truncated == false`. T49는 래퍼로 같은 결과 | [frontier-budget §5.2](stage-04-zone-quota-frontier-budget.md) |
 
 ---
 

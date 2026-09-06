@@ -56,6 +56,7 @@ class ZoneQuotaAllocationScaleTest {
     /**
      * T58 — 존마다 프론티어 잎 예산이 있어 차종 31종에서도 기본 heap으로 완주한다 (X29).
      * 예산이 없던 2026-09-05 이전에는 존마다 Π(R+1) ≈ 2×10⁹을 열거하려다 `-Xmx8g`에서도 OutOfMemoryError였다.
+     * 2026-09-06 존당 1회 공유 열거 뒤에도 ZONE_29는 예산 소진·후보 상한(X42)으로 truncated다 — 소요는 출력만 한다.
      */
     @Test
     void frontierBudgetCapsEnumeration() {

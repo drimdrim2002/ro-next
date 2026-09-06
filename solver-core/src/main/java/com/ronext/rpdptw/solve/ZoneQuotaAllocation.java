@@ -1,6 +1,7 @@
 package com.ronext.rpdptw.solve;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -28,12 +29,16 @@ final class ZoneQuotaAllocation {
     /** 성분 하나의 DP가 층 전체에 보관하는 상태 수 총량 (재량 상수). 넘치면 값 순으로 잘라 근사한다. */
     static final int MAX_TOTAL_STATES = 262_144;
     /**
-     * 존 하나의 프론티어 열거가 도달할 수 있는 잎 수 총량 (재량 상수). 존의 memo가 이 예산을 나눠 쓰고,
-     * 소진되면 열거 순서 접두만 남기고 근사한다 (X29). 잎 예산 하나가 시간과 메모리를 함께 묶는다 —
-     * 호출당 상한만 두면 memo 항목 수(≤ 층 상태 수)가 곱해져 메모리가 안 묶인다.
-     * 실물 fixture의 존별 실측 최대는 2,348,844잎(ZONE_29)이라 이 값은 그 1.8배다 — 답이 그대로다 (T52).
+     * 존 하나의 프론티어 열거(존당 1회, ZoneFrontier)가 도달할 수 있는 잎 수 총량 — 시간·메모리 상한 (재량 상수).
+     * 소진되면 열거 순서 접두만 남기고 근사한다 (X29) — 모든 상태가 같은 접두를 본다 (X40). 벡터 ≤ 잎이라 존의 공유 목록도
+     * 이 상수에 묶인다 (X43). 실물 fixture는 존당 최대 1,933잎을 쓴다 (frontier-budget §2.7).
      */
     static final int MAX_FRONTIER_LEAVES = 4_194_304;
+    /**
+     * 상태 하나가 받는 후보 수 상한 (재량 상수) — 정렬 접두에서 멈추고 truncated (X42). 전이 수를 상태 × 후보로 묶는다.
+     * 실물 상태당 최대 526 위의 2의 거듭제곱 (frontier-budget §2.6).
+     */
+    static final int MAX_FRONTIER_CANDIDATES = 1_024;
     /** 값 축 수 — (Σ부족, Σ대수, Σ낭비, Σ결손). Layer.values의 stride이자 value()가 돌려주는 배열 길이. */
     static final int VALUE_AXES = 4;
     static final String NO_ZONE = VehicleZoneFillConstruction.NO_ZONE;
@@ -64,7 +69,7 @@ final class ZoneQuotaAllocation {
     /** 호환 성분 — 유형 index 목록(유형 순서)·존 index 목록(존 순서). 존이 없는 성분은 만들지 않는다 (X24). */
     record Component(List<Integer> typeIndexes, List<Integer> zoneIndexes) {}
 
-    /** 프론티어 열거 결과 — 벡터 목록 · 소비한 잎 수 · 잎 예산에 걸려 잘렸는가 (X29). */
+    /** 프론티어 열거 결과 — 벡터 목록 · 소비한 잎 수 · 잎 예산에 걸려 잘렸는가 (X29). 래퍼 frontier()의 결과 (T49·T63). */
     record Frontier(List<int[]> vectors, int leaves, boolean truncated) {}
 
     /** 유형 순서 = (maxVolume ASC, maxWeight ASC, 첫 VehicleId ASC). 근무창·depot·속도는 유형에 넣지 않는다. */
@@ -348,8 +353,12 @@ final class ZoneQuotaAllocation {
             int[] maxNeedZ = maxNeeds[zoneIndex];
             Layer from = layers.get(zi);
             TreeMap<int[], Entry> next = new TreeMap<>(KEY_ORDER);
-            TreeMap<int[], List<int[]>> frontiers = new TreeMap<>(KEY_ORDER);   // 같은 R이면 프론티어도 같다 (존마다 새로)
-            int leafBudget = MAX_FRONTIER_LEAVES;                                  // 존마다 새로 — memo가 나눠 쓴다 (X29)
+            int[] box = maxNeedZ.clone();                                          // 층의 모든 R을 덮는 상자 — 존마다 한 번 열거한다 (X40)
+            for (int d = 0; d < dims; d++) {
+                box[stateDims.get(d)] = Math.min(start[d], maxNeedZ[stateDims.get(d)]);
+            }
+            ZoneFrontier shared = ZoneFrontier.enumerate(box, demand, MAX_FRONTIER_LEAVES);
+            truncated |= shared.truncated();
 
             for (int i = 0; i < from.size; i++) {                                  // 층은 KEY_ORDER 오름차순
                 int[] key = from.key(i);
@@ -358,14 +367,8 @@ final class ZoneQuotaAllocation {
                     range[stateDims.get(d)] = Math.min(key[d], maxNeedZ[stateDims.get(d)]);
                 }
                 long[] base = from.value(i);
-                List<int[]> frontier = frontiers.get(range);
-                if (frontier == null) {
-                    Frontier enumerated = frontier(range, demand, leafBudget);
-                    leafBudget -= enumerated.leaves();
-                    truncated |= enumerated.truncated();
-                    frontier = enumerated.vectors();
-                    frontiers.put(range.clone(), frontier);
-                }
+                List<int[]> frontier = shared.forRange(range, MAX_FRONTIER_CANDIDATES);
+                truncated |= frontier.size() >= MAX_FRONTIER_CANDIDATES;           // 후보 상한에 닿음 (X42)
                 for (int[] s : frontier) {
                     long[] delta = value(demand, types, s);
                     long[] candidate = new long[VALUE_AXES];
@@ -426,100 +429,204 @@ final class ZoneQuotaAllocation {
     }
 
     /**
-     * 프론티어 — 유형 순서로 열거 범위 range 안에서 재귀 나열(covers가 되는 순간 그 유형에서 중단)한 s 중
-     * (a) 최소 덮개 · (b) 한 대 모자란 최대 비덮개 · (c) 빈 집합.
-     * cap은 이 호출이 도달해도 되는 잎 수(≥ 1)다 — 열거 순서상 첫 잎이 빈 집합이라 cap = 1이어도 (c)는 나온다 (X29).
-     * 자르는 규칙은 값 순이 아니라 열거 순서의 접두다: 값으로 자르려면 자르려던 그 열거를 다 해야 한다.
+     * 프론티어 — 열거 범위 range 안의 (a) 최소 덮개 · (b) 한 대 모자란 최대 비덮개 · (c) 빈 집합 (래퍼, T49·T63).
+     * ZoneFrontier.enumerate(range, demand, cap).forRange(range)와 같다. cap ≥ 1이라 (c)는 반드시 나온다 (X29).
+     * DP 본체는 이 함수가 아니라 ZoneFrontier를 존마다 한 번 부른다.
      */
     static Frontier frontier(int[] range, Demand demand, int cap) {
-        Enumeration enumeration = new Enumeration(Math.max(1, cap));
-        enumerate(0, new int[range.length], range, demand, enumeration);
-        return new Frontier(List.copyOf(enumeration.out), enumeration.leaves, enumeration.truncated);
+        ZoneFrontier shared = ZoneFrontier.enumerate(range, demand, cap);
+        return new Frontier(List.copyOf(shared.forRange(range, Integer.MAX_VALUE)), shared.leaves(), shared.truncated());
     }
 
-    /** 열거 중 상태 — 남은 잎 예산·모은 벡터·절단 여부. 잎 예산이 시간과 메모리를 동시에 묶는다 (X29). */
-    private static final class Enumeration {
-        private final int cap;
-        private final List<int[]> out = new ArrayList<>();
-        private int leaves;
-        private boolean truncated;
+    /**
+     * 존 하나의 공유 프론티어 (frontier-budget §2.5) — 상자 box로 한 번 열거한 (c)·(a)·"(b) 후보"(확장 마스크 포함)를
+     * 열거 순서 = 사전식(유형 index 0부터, 대수 ASC) 배열로 보관한다. forRange(R)는 s ≤ R을 접두 범위 탐색으로 뽑고
+     * (b)는 R 기준으로 재판정한다 — R마다 따로 열거한 것과 같은 집합이다: 가지치기가 s에만 의존해 방문 집합이 상자에
+     * 단조이고, (a)·(c)는 covers(s)만 보며, (b)_R(s) ⇔ ¬covers(s) ∧ ∃t R_t > s_t ∧ ∀t (R_t = s_t ∨ t ∈ mask(s)) 이기
+     * 때문이다 (X41). 잎 예산 cap에 닿으면 열거 순서 접두만 남고 truncated — 모든 상태가 같은 접두를 본다 (X40).
+     */
+    static final class ZoneFrontier {
+        private final int[][] vectors;                                          // 사전식 = 열거 순서 (정렬 불필요)
+        private final long[] masks;                                             // (b) 후보: 덮게 하는 확장 t의 비트 (1L << t). (a)·(c)는 -1
+        private final int leaves;
+        private final boolean truncated;
 
-        private Enumeration(int cap) {
-            this.cap = cap;
+        private ZoneFrontier(int[][] vectors, long[] masks, int leaves, boolean truncated) {
+            this.vectors = vectors;
+            this.masks = masks;
+            this.leaves = leaves;
+            this.truncated = truncated;
         }
 
-        /** 잎 하나를 소비한다. 예산이 남아 있으면 true. */
-        boolean visitLeaf() {
-            if (leaves == cap) {
-                truncated = true;
-                return false;
-            }
-            leaves++;
-            return true;
+        /** cap은 이 열거가 도달해도 되는 잎 수(≥ 1) — 열거 순서상 첫 잎이 빈 집합이라 cap = 1이어도 (c)는 나온다 (X29). */
+        static ZoneFrontier enumerate(int[] box, Demand demand, int cap) {
+            Enumeration enumeration = new Enumeration(Math.max(1, cap));
+            walk(0, new int[box.length], box, demand, enumeration);
+            return new ZoneFrontier(enumeration.out.toArray(int[][]::new), Arrays.copyOf(enumeration.masks, enumeration.out.size()),
+                    enumeration.leaves, enumeration.truncated);
         }
 
-        boolean exhausted() {
-            return leaves == cap;
+        int leaves() {
+            return leaves;
         }
-    }
 
-    private static void enumerate(int t, int[] s, int[] range, Demand demand, Enumeration enumeration) {
-        if (t == s.length) {
-            if (enumeration.visitLeaf()) {
-                classify(s, range, demand, enumeration.out);
-            }
-            return;
+        boolean truncated() {
+            return truncated;
         }
-        for (int c = 0; c <= range[t]; c++) {
-            s[t] = c;
-            enumerate(t + 1, s, range, demand, enumeration);
-            if (enumeration.exhausted()) {
-                enumeration.truncated |= c < range[t];                         // 남은 대안을 버렸으면 근사다 (X29)
-                break;
-            }
-            if (demand.covers(s)) {                                            // 이후 유형은 0인 상태 — 이미 덮으면 더 늘릴 이유가 없다
-                break;
-            }
-        }
-        s[t] = 0;
-    }
 
-    private static void classify(int[] s, int[] range, Demand demand, List<int[]> out) {
-        int typeCount = s.length;
-        boolean empty = true;
-        for (int c : s) {
-            empty &= c == 0;
+        /**
+         * 상태 R의 프론티어 — 사전식 배열 위 접두 범위 탐색 (유형 t에서 s_t ≤ R_t인 구간만 내려간다).
+         * candidateCap개에 이르면 멈춘다 (정렬 접두, X42). (c)는 첫 원소라 항상 든다.
+         */
+        List<int[]> forRange(int[] range, int candidateCap) {
+            List<int[]> out = new ArrayList<>();
+            collect(0, vectors.length, 0, range, candidateCap, out);
+            return out;
         }
-        if (empty) {
-            out.add(s.clone());                                                 // (c)
-            return;
-        }
-        int[] probe = s.clone();
-        if (demand.covers(s)) {
-            int smallest = 0;
-            while (s[smallest] == 0) {
-                smallest++;
+
+        private void collect(int lo, int hi, int t, int[] range, int cap, List<int[]> out) {
+            if (t == range.length) {
+                for (int i = lo; i < hi && out.size() < cap; i++) {
+                    if (masks[i] < 0L || acceptsAsB(vectors[i], masks[i], range)) {
+                        out.add(vectors[i]);
+                    }
+                }
+                return;
             }
-            probe[smallest]--;
-            if (!demand.covers(probe)) {
-                out.add(s.clone());                                             // (a)
+            int pos = lo;
+            while (pos < hi && out.size() < cap) {
+                int c = vectors[pos][t];
+                if (c > range[t]) {
+                    return;                                                     // 같은 접두 안에서 s_t는 오름차순
+                }
+                int end = upperBound(pos, hi, t, c);
+                collect(pos, end, t + 1, range, cap, out);
+                pos = end;
             }
-            return;
         }
-        boolean extendable = false;
-        for (int t = 0; t < typeCount; t++) {
-            if (range[t] > s[t]) {
-                extendable = true;
-                probe[t]++;
-                boolean covers = demand.covers(probe);
-                probe[t]--;
-                if (!covers) {
-                    return;
+
+        /** [lo, hi) 안에서 vectors[i][t] ≤ value인 마지막 다음 index (같은 접두 안에서 s_t는 오름차순). */
+        private int upperBound(int lo, int hi, int t, int value) {
+            int left = lo;
+            int right = hi;
+            while (left < right) {
+                int mid = (left + right) >>> 1;
+                if (vectors[mid][t] <= value) {
+                    left = mid + 1;
+                } else {
+                    right = mid;
                 }
             }
+            return left;
         }
-        if (extendable) {
-            out.add(s.clone());                                                 // (b)
+
+        /** (b)_R — ∃t R_t > s_t ∧ ∀t (R_t = s_t ∨ t ∈ mask). R_t = s_t < B_t인 t는 조건에서 빠진다 (X41). */
+        private static boolean acceptsAsB(int[] s, long mask, int[] range) {
+            boolean extendable = false;
+            for (int t = 0; t < s.length; t++) {
+                if (range[t] > s[t]) {
+                    extendable = true;
+                    if ((mask & (1L << t)) == 0L) {
+                        return false;
+                    }
+                }
+            }
+            return extendable;
+        }
+
+        /** 열거 중 상태 — 남은 잎 예산·모은 벡터와 마스크·절단 여부. 잎 예산이 시간과 메모리를 동시에 묶는다 (X29). */
+        private static final class Enumeration {
+            private final int cap;
+            private final List<int[]> out = new ArrayList<>();
+            private long[] masks = new long[64];
+            private int leaves;
+            private boolean truncated;
+
+            private Enumeration(int cap) {
+                this.cap = cap;
+            }
+
+            /** 잎 하나를 소비한다. 예산이 남아 있으면 true. */
+            boolean visitLeaf() {
+                if (leaves == cap) {
+                    truncated = true;
+                    return false;
+                }
+                leaves++;
+                return true;
+            }
+
+            boolean exhausted() {
+                return leaves == cap;
+            }
+
+            void keep(int[] s, long mask) {
+                if (out.size() == masks.length) {
+                    masks = Arrays.copyOf(masks, masks.length * 2);
+                }
+                masks[out.size()] = mask;
+                out.add(s.clone());
+            }
+        }
+
+        /** 유형 순서로 대수를 0..box_t 늘리며 재귀 나열 — 뒤 유형이 0인 채로 이미 덮이면 그 유형은 더 늘리지 않는다 (가지치기는 s에만 의존). */
+        private static void walk(int t, int[] s, int[] box, Demand demand, Enumeration enumeration) {
+            if (t == s.length) {
+                if (enumeration.visitLeaf()) {
+                    classify(s, box, demand, enumeration);
+                }
+                return;
+            }
+            for (int c = 0; c <= box[t]; c++) {
+                s[t] = c;
+                walk(t + 1, s, box, demand, enumeration);
+                if (enumeration.exhausted()) {
+                    enumeration.truncated |= c < box[t];                        // 남은 대안을 버렸으면 근사다 (X29)
+                    break;
+                }
+                if (demand.covers(s)) {                                         // 이후 유형은 0인 상태 — 이미 덮으면 더 늘릴 이유가 없다
+                    break;
+                }
+            }
+            s[t] = 0;
+        }
+
+        /** (c) s = 0 · (a) covers ∧ ¬covers(s − e_min) · (b) 후보: ¬covers이며 어떤 확장 t(box_t > s_t)가 덮는다 — 그 t들의 마스크와 함께. */
+        private static void classify(int[] s, int[] box, Demand demand, Enumeration enumeration) {
+            int typeCount = s.length;
+            boolean empty = true;
+            for (int c : s) {
+                empty &= c == 0;
+            }
+            if (empty) {
+                enumeration.keep(s, -1L);                                       // (c)
+                return;
+            }
+            int[] probe = s.clone();
+            if (demand.covers(s)) {
+                int smallest = 0;
+                while (s[smallest] == 0) {
+                    smallest++;
+                }
+                probe[smallest]--;
+                if (!demand.covers(probe)) {
+                    enumeration.keep(s, -1L);                                   // (a)
+                }
+                return;
+            }
+            long mask = 0L;
+            for (int t = 0; t < typeCount; t++) {
+                if (box[t] > s[t]) {
+                    probe[t]++;
+                    if (demand.covers(probe)) {
+                        mask |= 1L << t;
+                    }
+                    probe[t]--;
+                }
+            }
+            if (mask != 0L) {
+                enumeration.keep(s, mask);                                      // (b) 후보 — R 기준 판정은 forRange에서
+            }
         }
     }
 

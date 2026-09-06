@@ -309,7 +309,141 @@ class ZoneQuotaAllocationTest {
         assertArrayEquals(new long[] {0L, 1L, 5L, 0L}, ZoneQuotaAllocation.value(empty, types, new int[] {1, 0}));     // 평균 0 → 결손 0 (X37)
     }
 
+    /**
+     * T62 — 존당 1회 공유 열거가 R마다 따로 열거한 것과 같은 집합을 낸다 (frontier-budget §2.5 · X41).
+     * 부피 6 요청은 L만 허용이라 S·M을 아무리 더해도 못 덮는 방향이 있다(Hall) — 상자 B 기준 (b)와 R 기준 (b)가 갈리는 입력.
+     */
+    @Test
+    void sharedFrontierEqualsPerRangeDefinition() {
+        Problem problem = hallFrontierProblem();
+        List<ZoneQuotaAllocation.VehicleType> types = ZoneQuotaAllocation.vehicleTypes(problem);
+        assertEquals(List.of(4L, 7L, 20L), types.stream().map(ZoneQuotaAllocation.VehicleType::maxVolume).toList());
+        ZoneQuotaAllocation.Demand demand = ZoneQuotaAllocation.Demand.of(problem, types, ZoneQuotaAllocation.zones(problem, types).getFirst());
+        int[] box = {2, 2, 1};                                                        // min(대수, maxNeed) = (2, 2, 1)
+        ZoneQuotaAllocation.ZoneFrontier shared = ZoneQuotaAllocation.ZoneFrontier.enumerate(box, demand, ZoneQuotaAllocation.MAX_FRONTIER_LEAVES);
+        assertFalse(shared.truncated());
+
+        int ranges = 0;
+        for (int a = 0; a <= 2; a++) {
+            for (int b = 0; b <= 2; b++) {
+                for (int c = 0; c <= 1; c++) {
+                    int[] range = {a, b, c};
+                    Set<List<Integer>> expected = frontierByDefinition(demand, range);
+                    assertEquals(expected, asSet(shared.forRange(range, Integer.MAX_VALUE)), java.util.Arrays.toString(range));
+                    assertEquals(expected, asSet(ZoneQuotaAllocation.frontier(range, demand, ZoneQuotaAllocation.MAX_FRONTIER_LEAVES).vectors()),
+                            "wrapper " + java.util.Arrays.toString(range));
+                    ranges++;
+                }
+            }
+        }
+        assertEquals(18, ranges);
+
+        // B 기준 (b)와 R 기준 (b)가 갈리는 R — (2,2,0)은 상자 B에서는 (b)지만(L을 더하면 덮는다) L이 없는 R에서는 확장 불가라 (b)가 아니다
+        assertEquals(Set.of(List.of(0, 0, 0)), asSet(shared.forRange(new int[] {2, 2, 0}, Integer.MAX_VALUE)));
+        assertTrue(asSet(shared.forRange(new int[] {2, 2, 1}, Integer.MAX_VALUE)).contains(List.of(2, 2, 0)));
+        // (1,0,0)은 R = (1,0,1)에서만 (b) — S를 더 줄 수 있는 R = (2,2,1)에서는 S 확장이 못 덮으므로 (b)가 아니다
+        assertTrue(asSet(shared.forRange(new int[] {1, 0, 1}, Integer.MAX_VALUE)).contains(List.of(1, 0, 0)));
+        assertFalse(asSet(shared.forRange(new int[] {2, 2, 1}, Integer.MAX_VALUE)).contains(List.of(1, 0, 0)));
+    }
+
+    /** T63 — 래퍼에서도 cap = 1이면 (c)만 나오고 truncated다 (X29). */
+    @Test
+    void frontierWrapperKeepsEmptySetUnderCapOne() {
+        Problem problem = hallFrontierProblem();
+        List<ZoneQuotaAllocation.VehicleType> types = ZoneQuotaAllocation.vehicleTypes(problem);
+        ZoneQuotaAllocation.Demand demand = ZoneQuotaAllocation.Demand.of(problem, types, ZoneQuotaAllocation.zones(problem, types).getFirst());
+        ZoneQuotaAllocation.Frontier frontier = ZoneQuotaAllocation.frontier(new int[] {2, 2, 1}, demand, 1);
+        assertEquals(Set.of(List.of(0, 0, 0)), asSet(frontier.vectors()));
+        assertEquals(1, frontier.leaves());
+        assertTrue(frontier.truncated());
+    }
+
+    /** T64 — 후보 상한은 사전식 정렬 접두이고 (c)를 항상 포함하며 결정적이다 (X42). */
+    @Test
+    void candidateCapIsDeterministicSortedPrefix() {
+        Problem problem = hallFrontierProblem();
+        List<ZoneQuotaAllocation.VehicleType> types = ZoneQuotaAllocation.vehicleTypes(problem);
+        ZoneQuotaAllocation.Demand demand = ZoneQuotaAllocation.Demand.of(problem, types, ZoneQuotaAllocation.zones(problem, types).getFirst());
+        int[] box = {2, 2, 1};
+        ZoneQuotaAllocation.ZoneFrontier shared = ZoneQuotaAllocation.ZoneFrontier.enumerate(box, demand, ZoneQuotaAllocation.MAX_FRONTIER_LEAVES);
+        List<int[]> full = shared.forRange(box, Integer.MAX_VALUE);
+        assertEquals(3, full.size());                                                 // (c) · (a) L×1 · (b) S×2+M×2
+        for (int i = 1; i < full.size(); i++) {
+            assertTrue(java.util.Arrays.compare(full.get(i - 1), full.get(i)) < 0, "사전식 오름차순");
+        }
+        List<int[]> capped = shared.forRange(box, 2);
+        assertEquals(2, capped.size());
+        assertArrayEquals(new int[] {0, 0, 0}, capped.getFirst());
+        assertEquals(asList(full.subList(0, 2)), asList(capped));
+        assertEquals(asList(capped), asList(shared.forRange(box, 2)));
+    }
+
     // ---- 손조립 도우미 ----
+
+    /** T62~T64 공통 — 유형 S(4)×2 · M(7)×2 · L(20)×1, 존 Z = {부피 6 (L만 허용)} ∪ {부피 3 × 3 (전부 허용)}. covers(s) ⇔ s_L ≥ 1. */
+    private static Problem hallFrontierProblem() {
+        List<Vehicle> vehicles = new ArrayList<>();
+        vehicles.addAll(fleet("S", 2, 4L, Optional.of("S")));
+        vehicles.addAll(fleet("M", 2, 7L, Optional.of("M")));
+        vehicles.addAll(fleet("L", 1, 20L, Optional.of("L")));
+        return zoned(vehicles, List.of(
+                new ZoneSpec("Z", 1, 6L, Set.of("L")),
+                new ZoneSpec("Z", 3, 3L, Set.of("S", "M", "L"))));
+    }
+
+    /** 정의 그대로의 프론티어 — s ≤ range 전수: (c) s = 0 · (a) covers ∧ ¬covers(s − e_min) · (b) ¬covers ∧ ∃t range_t > s_t ∧ ∀t (range_t = s_t ∨ covers(s + e_t)). */
+    private static Set<List<Integer>> frontierByDefinition(ZoneQuotaAllocation.Demand demand, int[] range) {
+        Set<List<Integer>> out = new java.util.HashSet<>();
+        for (int a = 0; a <= range[0]; a++) {
+            for (int b = 0; b <= range[1]; b++) {
+                for (int c = 0; c <= range[2]; c++) {
+                    int[] s = {a, b, c};
+                    if (a == 0 && b == 0 && c == 0) {
+                        out.add(List.of(0, 0, 0));
+                        continue;
+                    }
+                    int[] probe = s.clone();
+                    if (demand.covers(s)) {
+                        int smallest = 0;
+                        while (s[smallest] == 0) {
+                            smallest++;
+                        }
+                        probe[smallest]--;
+                        if (!demand.covers(probe)) {
+                            out.add(List.of(a, b, c));
+                        }
+                        continue;
+                    }
+                    boolean extendable = false;
+                    boolean allCover = true;
+                    for (int t = 0; t < 3; t++) {
+                        if (range[t] > s[t]) {
+                            extendable = true;
+                            probe[t]++;
+                            allCover &= demand.covers(probe);
+                            probe[t]--;
+                        }
+                    }
+                    if (extendable && allCover) {
+                        out.add(List.of(a, b, c));
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
+    private static Set<List<Integer>> asSet(List<int[]> vectors) {
+        return new java.util.HashSet<>(asList(vectors));
+    }
+
+    private static List<List<Integer>> asList(List<int[]> vectors) {
+        List<List<Integer>> out = new ArrayList<>();
+        for (int[] v : vectors) {
+            out.add(java.util.Arrays.stream(v).boxed().toList());
+        }
+        return out;
+    }
 
     /** 배정의 존별 value 합 — 4축. */
     private static long[] valueSum(Problem problem, Allocation allocation) {

@@ -28,6 +28,8 @@ revisions:
     H25 설계([stage-04-h25](stage-04-h25-zone-quota-exchange.md))와 T·X 번호 정리 — 이 문서 T45~T52·X24~X27, H25는 T53~T56·X28~X33
   - 2026-09-05 §2.1 ①의 값 정의·§3 `value` 주석·T52 기대값은 [zone-value-function](stage-04-zone-value-function.md)이 대체한다
     (값 `(부족, 대수, 낭비, 결손)` 4축). 이 문서의 "답이 같다" 논증(§2.2·§2.3)은 값 함수가 무엇이든 성립하므로 무변경
+  - 2026-09-06 §2.7의 R별 memo·선착순 잎 배분과 "실물 최대 소비의 1.8배" 근거는 [zone-quota-frontier-budget](stage-04-zone-quota-frontier-budget.md)이
+    대체한다 — 존당 1회 공유 열거(실물 ZONE_29 소비 2,348,844 → 1,933잎). 상한 상수 4,194,304와 §5의 메모리 상한 문면은 유지
 ---
 
 # Stage 4 — 존 배정 DP의 기권 제거와 메모리 상한
